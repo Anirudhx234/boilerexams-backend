@@ -1,0 +1,20 @@
+[
+    {
+        "course": "MA 261",
+        "topics": ["Random", "Directional Derivatives", "Double Integrals"],
+        "dates": ["Random", "Fall 2019", "Spring 2022"],
+        "exams": ["Random", 1, 2, 3]
+    },
+    {
+        "course": "CS 180",
+        "topics": ["Random", "For Loops", "2D Arrays"],
+        "dates": ["Random", "Fall 2022", "Spring 2022"],
+        "exams": ["Random", 1, 2, 3]
+    },
+    {
+        "course": "CHM 116",
+        "topics": ["Random", "Ionic Bonding", "Stoichiometry"],
+        "dates": ["Random", "Fall 2022", "Spring 2022"],
+        "exams": ["Random", 1, 2, 3]
+    }
+]
