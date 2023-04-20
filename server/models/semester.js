@@ -5,10 +5,13 @@ const model = mongoose.model;
 
 const semester = new Schema({
   season: {
-    type: String
+    type: String,
+    enum: ['Spring', 'Summer', 'Fall', 'Winter'],
+    required: true
   },
   year: {
-    type: String
+    type: Number,
+    required: true
   }
 });
 

@@ -12,17 +12,20 @@ const question = new Schema({
     type: [Schema.Types.ObjectId],
     ref: 'topic'
   },
-  questionNumber: {
+  number: {
     type: Number
   },
-  questionBody: {
+  //TODO: Add collections to generalize body into 1 or more categories including Latex, code, images, etc.
+  body: {
     type: String
   },
+  // Answer choices are the content of each answer, rather than just letters enumerating the answers.
   answerChoices: {
     type: [String]
   },
+  // Index of correct answer
   correctAnswer: {
-    type: String
+    type: Number
   },
   correctlyAttempted: {
     type: Number
@@ -33,6 +36,7 @@ const question = new Schema({
   notAttempted: {
     type: Number
   },
+  //TODO: Generalize for multiple different solutions, different types, etc.
   solution: {
     type: String
   },

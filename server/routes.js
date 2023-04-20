@@ -41,14 +41,14 @@ app.post("/add-course", async (req, res) => {
 
 app.post("/add-exam", async (req, res) => {
     try {
-        let sem = await semester.findOne({ season: req.body.season, year: req.body.year });
+        let sem = await semester.findOne({ season: req.body.season, year: Number(req.body.year) });
         if (!sem) {
-            sem = await semester.create({ season: req.body.season, year: req.body.year });
+            sem = await semester.create({ season: req.body.season, year: Number(req.body.year) });
         }
-        let ex = await exam.create({ course: req.body.course, examNumber: req.body.number, semester: sem });
+        let ex = await exam.create({ course: req.body.course, number: req.body.number, semester: sem });
         await course.updateOne(
             { _id: req.body.course },
-            { $addToSet: { exams: ex._id, semesters: sem._id }}
+            { $addToSet: { exams: ex._id, semesters: sem._id } }
         );
         res.status(200).send("success");
     } catch (err) {

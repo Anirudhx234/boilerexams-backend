@@ -9,7 +9,6 @@ function App() {
   const [semesters, setSemesters] = useState([]);
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [selectedSemester, setSelectedSemester] = useState(null);
-  const [selectedCourseN, setSelectedCourseN] = useState("");
 
   const [newCourse, setNewCourse] = useState("");
   const [newCode, setNewCode] = useState("");
@@ -48,13 +47,11 @@ function App() {
     const c = e.target.value;
     setSelectedCourse(c);
     setSelectedSemester(null);
-    //setSelectedCourseN(c.name);
   };
 
   const handleSemesterSelect = (e) => {
     const c = e.target.value;
     setSelectedSemester(c);
-    //setSelectedCourseN(c.name);
   };
 
   const addCourse = () => {
@@ -116,7 +113,7 @@ function App() {
                 <select>
                   <option value="">Select an exam...</option>
                   {exams.filter(e => e.semester === selectedSemester).map(exam => (
-                    <option value={exam._id}>{exam.examNumber}</option>
+                    <option value={exam._id}>{exam.number}</option>
                   ))}
                 </select>
               </div>}
