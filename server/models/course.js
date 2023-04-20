@@ -13,13 +13,16 @@ const course = new Schema({
     unique: true
   },
   topics: {
-    type: [Schema.Types.ObjectId]
+    type: [Schema.Types.ObjectId],
+    ref: 'topic'
   },
   exams: {
-    type: [Schema.Types.ObjectId]
+    type: [Schema.Types.ObjectId],
+    ref: 'exam'
   },
   semesters: {
-    type: [Schema.Types.ObjectId]
+    type: [Schema.Types.ObjectId],
+    ref: 'semester'
   }
 });
 

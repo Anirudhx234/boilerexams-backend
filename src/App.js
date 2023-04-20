@@ -8,6 +8,7 @@ function App() {
   const [exams, setExams] = useState([]);
   const [semesters, setSemesters] = useState([]);
   const [selectedCourse, setSelectedCourse] = useState(null);
+  const [selectedSemester, setSelectedSemester] = useState(null);
   const [selectedCourseN, setSelectedCourseN] = useState("");
 
   const [newCourse, setNewCourse] = useState("");
@@ -23,13 +24,14 @@ function App() {
         .then(res => setTopics(res.data))
         .catch(err => console.error(err));
 
+      axios.post('http://localhost:5000/get-semesters/', { course: selectedCourse })
+        .then(res => setSemesters(res.data))
+        .catch(err => console.error(err));
+
       axios.post('http://localhost:5000/get-exams/', { course: selectedCourse })
         .then(res => setExams(res.data))
         .catch(err => console.error(err));
 
-      axios.post('http://localhost:5000/get-semesters/', { course: selectedCourse })
-        .then(res => setSemesters(res.data))
-        .catch(err => console.error(err));
     } else {
       setTopics([]);
       setExams([]);
@@ -45,6 +47,13 @@ function App() {
   const handleCourseSelect = (e) => {
     const c = e.target.value;
     setSelectedCourse(c);
+    setSelectedSemester(null);
+    //setSelectedCourseN(c.name);
+  };
+
+  const handleSemesterSelect = (e) => {
+    const c = e.target.value;
+    setSelectedSemester(c);
     //setSelectedCourseN(c.name);
   };
 
@@ -95,21 +104,22 @@ function App() {
               </div>
               <div>
                 <h4>Select a Semester</h4>
-                <select>
+                <select onChange={handleSemesterSelect}>
+                  <option value="">Select a semester...</option>
                   {semesters.map(semester => (
-                    <option key={semester._id} value={semester._id}>{semester.semester} {semester.year}</option>
+                    <option value={semester._id}>{semester.season} {semester.year}</option>
                   ))}
                 </select>
               </div>
-              <div>
+              {selectedSemester && <div>
                 <h4>Select an Exam</h4>
                 <select>
                   <option value="">Select an exam...</option>
-                  {exams.map(exam => (
-                    <option value={exam}>{exam}</option>
+                  {exams.filter(e => e.semester === selectedSemester).map(exam => (
+                    <option value={exam._id}>{exam.examNumber}</option>
                   ))}
                 </select>
-              </div>
+              </div>}
             </div>
           </>
         )}

@@ -6,12 +6,14 @@ const model = mongoose.model;
 const topic = new Schema({
   course: {
     type: [Schema.Types.ObjectId],
+    ref: 'course'
   },
   name: {
     type: String
   },
   questions: {
-    type: [Schema.Types.ObjectId]
+    type: [Schema.Types.ObjectId],
+    ref: 'question'
   }
 });
 

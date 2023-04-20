@@ -48,7 +48,7 @@ app.post("/add-exam", async (req, res) => {
         let ex = await exam.create({ course: req.body.course, examNumber: req.body.number, semester: sem });
         await course.updateOne(
             { _id: req.body.course },
-            { $addToSet: { exams: ex._id } }
+            { $addToSet: { exams: ex._id, semesters: sem._id }}
         );
         res.status(200).send("success");
     } catch (err) {
@@ -59,8 +59,35 @@ app.post("/add-exam", async (req, res) => {
 app.post("/add-topic");
 app.post("/add-semester");
 app.post("/add-question");
+
 app.get("/get-courses", async (req, res) => res.json(await course.find({})));
-//app.post("/get-exams", async (req, res) => res.json(await exam.find({})));
+
+app.post("/get-topics", async (req, res) => {
+    const courseTopics = await course.findById(req.body.course).populate("topics");
+    if (courseTopics) {
+        res.json(courseTopics.topics);
+    } else {
+        res.status(400).send("No course found");
+    }
+});
+
+app.post("/get-semesters", async (req, res) => {
+    const courseSemesters = await course.findById(req.body.course).populate("semesters");
+    if (courseSemesters) {
+        res.json(courseSemesters.semesters);
+    } else {
+        res.status(400).send("No course found");
+    }
+});
+
+app.post("/get-exams", async (req, res) => {
+    const courseExams = await course.findById(req.body.course).populate("exams");
+    if (courseExams) {
+        res.json(courseExams.exams);
+    } else {
+        res.status(400).send("No course found");
+    }
+});
 
 app.post("/upload-image", upload.single("file"), async (req, res) => {
     const params = {

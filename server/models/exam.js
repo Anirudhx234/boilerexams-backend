@@ -6,15 +6,18 @@ const model = mongoose.model;
 const exam = new Schema({
   course: {
     type: Schema.Types.ObjectId,
+    ref: 'course'
   },
   examNumber: {
     type: Number
   },
   semester: {
-    type: Schema.Types.ObjectId
+    type: Schema.Types.ObjectId,
+    ref: 'semester'
   },
   questions: {
-    type: [Schema.Types.ObjectId]
+    type: [Schema.Types.ObjectId],
+    ref: 'question'
   }
 });
 
