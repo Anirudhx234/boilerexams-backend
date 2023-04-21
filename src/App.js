@@ -9,6 +9,7 @@ function App() {
   const [semesters, setSemesters] = useState([]);
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [selectedSemester, setSelectedSemester] = useState(null);
+  const [selectedTopic, setSelectedTopic] = useState(null);
 
   const [newCourse, setNewCourse] = useState("");
   const [newCode, setNewCode] = useState("");
@@ -54,6 +55,11 @@ function App() {
     setSelectedSemester(c);
   };
 
+  const handleTopicSelect = (e) => {
+    const c = e.target.value;
+    setSelectedTopic(c);
+  }
+
   const addCourse = () => {
     if (newCode === "" || newCourse === "") {
       alert("Enter all data");
@@ -94,6 +100,7 @@ function App() {
               <div>
                 <h4>Select a Topic</h4>
                 <select>
+                  <option value="">Select a topic...</option>
                   {topics.map(topic => (
                     <option value={topic._id}>{topic.name}</option>
                   ))}
@@ -132,7 +139,7 @@ function App() {
           <button onClick={addCourse}>Add Course</button>
         </div>
         {selectedCourse && <div><div>
-          <h4>Add an Exam for {selectedCourse}</h4>
+          <h4>Add an Exam for {courses.find((e) => e._id === selectedCourse).name}</h4>
           <p>Season</p>
           <input type="text" value={season} onChange={(e) => setSeason(e.target.value)} />
           <p>Year</p>
