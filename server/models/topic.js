@@ -9,7 +9,8 @@ const topic = new Schema({
     ref: 'course'
   },
   name: {
-    type: String
+    type: String,
+    unique: true
   },
   questions: {
     type: [Schema.Types.ObjectId],

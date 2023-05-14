@@ -8,10 +8,21 @@
 
 .body {
   display: flex;
-  justify-content: space-evenly;
+  justify-content: center;
   flex-direction: row;
 }
 
-.column1, .column2 {
-  width: 10%;
+.column1 {
+  margin-right: 10rem;
+  width: 20rem;
+}
+
+.column2 {
+  margin-right: 5rem;
+  width: 10rem;
+}
+
+.column3 {
+  margin-left: 10rem;
+  width: 10rem;
 }
