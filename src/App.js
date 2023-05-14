@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import Select from 'react-select';
 import './App.css';
 
 function App() {
@@ -8,14 +9,16 @@ function App() {
   const [exams, setExams] = useState([]);
   const [semesters, setSemesters] = useState([]);
   const [selectedCourse, setSelectedCourse] = useState(null);
+  const [courseName, setCourseName] = useState(null);
   const [selectedSemester, setSelectedSemester] = useState(null);
-  const [selectedTopic, setSelectedTopic] = useState(null);
+  const [selectedTopics, setSelectedTopics] = useState([]);
 
   const [newCourse, setNewCourse] = useState("");
   const [newCode, setNewCode] = useState("");
   const [season, setSeason] = useState("");
   const [year, setYear] = useState("");
   const [number, setNumber] = useState();
+  const [topic, setTopic] = useState("");
 
   useEffect(() => {
     if (selectedCourse) {
@@ -42,11 +45,12 @@ function App() {
     axios.get('http://localhost:5000/get-courses/')
       .then(res => setCourses(res.data))
       .catch(err => console.error(err));
-  }, [selectedCourse]);
+  }, [selectedCourse, selectedTopics, selectedSemester]);
 
   const handleCourseSelect = (e) => {
     const c = e.target.value;
     setSelectedCourse(c);
+    setCourseName(courses.find((id) => id._id === c));
     setSelectedSemester(null);
   };
 
@@ -55,9 +59,20 @@ function App() {
     setSelectedSemester(c);
   };
 
-  const handleTopicSelect = (e) => {
-    const c = e.target.value;
-    setSelectedTopic(c);
+  const handleTopicChange = (selectedTopic) => {
+    setSelectedTopics(selectedTopic.map(topic => topic.value));
+  };
+
+  const addTopic = () => {
+    if (topic === "") {
+      alert("Enter a topic name");
+      return;
+    }
+
+    axios.post('http://localhost:5000/add-topic/', { name: topic })
+      .then((res) => (alert(res.data)))
+      .catch((err) => (alert(err)));
+    setTopic("");
   }
 
   const addCourse = () => {
@@ -69,6 +84,16 @@ function App() {
     axios.post('http://localhost:5000/add-course/', { code: newCode, name: newCourse })
       .then((res) => (alert(res.data)))
       .catch((err) => (alert(err)));
+    setSeason("");
+    setYear();
+    setNumber();
+  }
+
+  const assignTopics = () => {
+    axios.post('http://localhost:5000/add-topics-course/', { course: selectedCourse, topics: selectedTopics })
+      .then((res) => (alert(res.data)))
+      .catch((err) => (alert(err)));
+    setSelectedTopics([]);
   }
 
   const addExam = () => {
@@ -80,19 +105,50 @@ function App() {
     axios.post('http://localhost:5000/add-exam/', { course: selectedCourse, season: season, year: year, number: number })
       .then((res) => (alert(res.data)))
       .catch((err) => (alert(err)));
+    setNewCode("");
+    setNewCourse("");
   }
 
   return (
     <div className="body">
-      <div className="coumn1">
+      <div className="column1">
         <div>
-          <h3>Select a Course</h3>
-          <select onChange={handleCourseSelect}>
-            <option value="">Select a course...</option>
-            {courses.map(course => (
-              <option value={course._id}>{course.name}</option>
-            ))}
-          </select>
+          <h3>Add a Topic</h3>
+          <p>Name</p>
+          <input type="text" value={topic} onChange={(e) => setTopic(e.target.value)} />
+          <br></br>
+          <button onClick={addTopic}>Add Topic</button>
+        </div>
+        {selectedCourse && (
+          <div>
+            <h4>Select Topics for {courseName.name}</h4>
+            <Select
+              isMulti
+              name="colors"
+              // Topics already assigned to the course are not shown here. They can be seen in the middle column under Select a Topic.
+              options={topics.filter((topic) => !courseName.topics.includes(topic._id)).map(topic => ({
+                value: topic._id,
+                label: topic.name
+              }))}
+              className="basic-multi-select"
+              classNamePrefix="select"
+              onChange={handleTopicChange}
+            />
+            <button onClick={assignTopics}>Assign Topics</button>
+          </div>
+        )}
+      </div>
+      <div className="column2">
+        <div>
+          <div>
+            <h3>Select a Course</h3>
+            <select onChange={handleCourseSelect}>
+              <option value="">Select a course...</option>
+              {courses.map(course => (
+                <option value={course._id}>{course.name}</option>
+              ))}
+            </select>
+          </div>
         </div>
         {selectedCourse && (
           <>
@@ -101,7 +157,7 @@ function App() {
                 <h4>Select a Topic</h4>
                 <select>
                   <option value="">Select a topic...</option>
-                  {topics.map(topic => (
+                  {topics.filter((topic) => courseName.topics.includes(topic._id)).map(topic => (
                     <option value={topic._id}>{topic.name}</option>
                   ))}
                 </select>
@@ -128,7 +184,7 @@ function App() {
           </>
         )}
       </div>
-      <div className="column2">
+      <div className="column3">
         <div>
           <h3>Add a Course</h3>
           <p>Course Code</p>
@@ -139,7 +195,7 @@ function App() {
           <button onClick={addCourse}>Add Course</button>
         </div>
         {selectedCourse && <div><div>
-          <h4>Add an Exam for {courses.find((e) => e._id === selectedCourse).name}</h4>
+          <h4>Add an Exam for {courseName.name}</h4>
           <p>Season</p>
           <input type="text" value={season} onChange={(e) => setSeason(e.target.value)} />
           <p>Year</p>

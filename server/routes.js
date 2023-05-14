@@ -56,18 +56,41 @@ app.post("/add-exam", async (req, res) => {
     }
 })
 
-app.post("/add-topic");
+app.post("/add-topic", async (req, res) => {
+    topic.create(req.body)
+        .then(() => res.status(200).send("success"))
+        .catch((err) => res.status(400).send(err.message));
+});
+
+app.post("/add-topics-course", async (req, res) => {
+    console.log(req.body.topics);
+    try {
+        await topic.updateMany(
+            { _id: { $in: req.body.topics } },
+            { $addToSet: { course: req.body.course } }
+        );
+
+        await course.updateOne(
+            { _id: req.body.course },
+            { $addToSet: { topics: req.body.topics } }
+        );
+    } catch (error) {
+        console.error(error);
+        res.status(400).send(error);
+    }
+});
+
 app.post("/add-semester");
 app.post("/add-question");
 
 app.get("/get-courses", async (req, res) => res.json(await course.find({})));
 
 app.post("/get-topics", async (req, res) => {
-    const courseTopics = await course.findById(req.body.course).populate("topics");
-    if (courseTopics) {
-        res.json(courseTopics.topics);
+    let topics = await topic.find({});
+    if (topics) {
+        res.json(topics);
     } else {
-        res.status(400).send("No course found");
+        res.status(400).send("No topics found");
     }
 });
 
