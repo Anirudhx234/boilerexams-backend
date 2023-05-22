@@ -6,6 +6,7 @@ import './App.css';
 function App() {
   const [courses, setCourses] = useState([]);
   const [topics, setTopics] = useState([]);
+  const [courseTopics, setCourseTopics] = useState([]);
   const [exams, setExams] = useState([]);
   const [semesters, setSemesters] = useState([]);
   const [selectedCourse, setSelectedCourse] = useState(null);
@@ -16,24 +17,33 @@ function App() {
   const [newCourse, setNewCourse] = useState("");
   const [newCode, setNewCode] = useState("");
   const [season, setSeason] = useState("");
-  const [year, setYear] = useState("");
+  const [year, setYear] = useState();
   const [number, setNumber] = useState();
-  const [topic, setTopic] = useState("");
+  const [topicN, setTopicN] = useState("");
 
   useEffect(() => {
     if (selectedCourse) {
-      // Fetch topics for selected course
-      axios.post('http://localhost:5000/get-topics/', { course: selectedCourse })
+      // Fetch general topics
+      axios.get('http://localhost:5000/get-topics/')
         .then(res => setTopics(res.data))
         .catch(err => console.error(err));
 
+      axios.post('http://localhost:5000/get-course-topics/', { course: selectedCourse })
+        .then(res => setCourseTopics(res.data))
+        .catch(err => console.error(err));
+
+      // Fetch semesters for selected course
       axios.post('http://localhost:5000/get-semesters/', { course: selectedCourse })
         .then(res => setSemesters(res.data))
         .catch(err => console.error(err));
 
-      axios.post('http://localhost:5000/get-exams/', { course: selectedCourse })
-        .then(res => setExams(res.data))
-        .catch(err => console.error(err));
+      if (selectedSemester) {
+        // Fetch exams for selected course and semester
+        axios.post('http://localhost:5000/get-exams/', { course: selectedCourse, semester: selectedSemester })
+          .then(res => setExams(res.data))
+          .catch(err => console.error(err));
+      }
+      return;
 
     } else {
       setTopics([]);
@@ -45,12 +55,12 @@ function App() {
     axios.get('http://localhost:5000/get-courses/')
       .then(res => setCourses(res.data))
       .catch(err => console.error(err));
-  }, [selectedCourse, selectedTopics, selectedSemester]);
+  }, [selectedCourse, selectedSemester]);
 
   const handleCourseSelect = (e) => {
     const c = e.target.value;
     setSelectedCourse(c);
-    setCourseName(courses.find((id) => id._id === c));
+    setCourseName(courses.find((id) => id.id === c));
     setSelectedSemester(null);
   };
 
@@ -64,15 +74,15 @@ function App() {
   };
 
   const addTopic = () => {
-    if (topic === "") {
+    if (topicN === "") {
       alert("Enter a topic name");
       return;
     }
 
-    axios.post('http://localhost:5000/add-topic/', { name: topic })
-      .then((res) => (alert(res.data)))
+    axios.post('http://localhost:5000/add-topic/', { name: topicN })
+      .then((res) => (alert("Added topic")))
       .catch((err) => (alert(err)));
-    setTopic("");
+    setTopicN("");
   }
 
   const addCourse = () => {
@@ -82,7 +92,7 @@ function App() {
     }
 
     axios.post('http://localhost:5000/add-course/', { code: newCode, name: newCourse })
-      .then((res) => (alert(res.data)))
+      .then((res) => (alert("Added course")))
       .catch((err) => (alert(err)));
     setSeason("");
     setYear();
@@ -90,8 +100,8 @@ function App() {
   }
 
   const assignTopics = () => {
-    axios.post('http://localhost:5000/add-topics-course/', { course: selectedCourse, topics: selectedTopics })
-      .then((res) => (alert(res.data)))
+    axios.post('http://localhost:5000/add-course-topics/', { course: selectedCourse, topics: selectedTopics })
+      .then((res) => (alert("Added topics")))
       .catch((err) => (alert(err)));
     setSelectedTopics([]);
   }
@@ -103,10 +113,15 @@ function App() {
     }
 
     axios.post('http://localhost:5000/add-exam/', { course: selectedCourse, season: season, year: year, number: number })
-      .then((res) => (alert(res.data)))
+      .then((res) => (alert("Added exam")))
       .catch((err) => (alert(err)));
     setNewCode("");
     setNewCourse("");
+  }
+
+  const filteredTopics = () => {
+    let temp = courseTopics.map(topic => topic.name)
+    return topics.filter((topic) => !temp.includes(topic.name))
   }
 
   return (
@@ -115,7 +130,7 @@ function App() {
         <div>
           <h3>Add a Topic</h3>
           <p>Name</p>
-          <input type="text" value={topic} onChange={(e) => setTopic(e.target.value)} />
+          <input type="text" value={topicN} onChange={(e) => setTopicN(e.target.value)} />
           <br></br>
           <button onClick={addTopic}>Add Topic</button>
         </div>
@@ -126,8 +141,8 @@ function App() {
               isMulti
               name="colors"
               // Topics already assigned to the course are not shown here. They can be seen in the middle column under Select a Topic.
-              options={topics.filter((topic) => !courseName.topics.includes(topic._id)).map(topic => ({
-                value: topic._id,
+              options={filteredTopics().map(topic => ({
+                value: topic.id,
                 label: topic.name
               }))}
               className="basic-multi-select"
@@ -145,7 +160,7 @@ function App() {
             <select onChange={handleCourseSelect}>
               <option value="">Select a course...</option>
               {courses.map(course => (
-                <option value={course._id}>{course.name}</option>
+                <option value={course.id}>{course.name}</option>
               ))}
             </select>
           </div>
@@ -157,8 +172,8 @@ function App() {
                 <h4>Select a Topic</h4>
                 <select>
                   <option value="">Select a topic...</option>
-                  {topics.filter((topic) => courseName.topics.includes(topic._id)).map(topic => (
-                    <option value={topic._id}>{topic.name}</option>
+                  {courseTopics.map(topic => (
+                    <option value={topic.id}>{topic.name}</option>
                   ))}
                 </select>
               </div>
@@ -167,7 +182,7 @@ function App() {
                 <select onChange={handleSemesterSelect}>
                   <option value="">Select a semester...</option>
                   {semesters.map(semester => (
-                    <option value={semester._id}>{semester.season} {semester.year}</option>
+                    <option value={semester.id}>{semester.season} {semester.year}</option>
                   ))}
                 </select>
               </div>
@@ -175,8 +190,8 @@ function App() {
                 <h4>Select an Exam</h4>
                 <select>
                   <option value="">Select an exam...</option>
-                  {exams.filter(e => e.semester === selectedSemester).map(exam => (
-                    <option value={exam._id}>{exam.number}</option>
+                  {exams.map(exam => (
+                    <option value={exam.id}>{exam.number}</option>
                   ))}
                 </select>
               </div>}
@@ -197,9 +212,12 @@ function App() {
         {selectedCourse && <div><div>
           <h4>Add an Exam for {courseName.name}</h4>
           <p>Season</p>
-          <input type="text" value={season} onChange={(e) => setSeason(e.target.value)} />
+          <select onChange={(e) => setSeason(e.target.value)}>
+            <option value='FALL'>Fall</option>
+            <option value='SPRING'>Spring</option>
+          </select>
           <p>Year</p>
-          <input type="text" value={year} onChange={(e) => setYear(e.target.value)} />
+          <input type="number" value={year} onChange={(e) => setYear(e.target.value)} />
           <p>Exam Number</p>
           <input type="number" value={number} onChange={(e) => setNumber(e.target.value)} />
           <br></br>

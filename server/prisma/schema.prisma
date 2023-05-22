@@ -1,0 +1,65 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Course {
+  id        String     @id @default(uuid())
+  code      String     @unique
+  name      String     @unique
+  exams     Exam[]
+  topics    Topic[]
+  semesters Semester[]
+}
+
+model Exam {
+  id         String     @id @default(uuid())
+  number     Int
+  course     Course     @relation(fields: [courseId], references: [id])
+  courseId   String
+  semester   Semester   @relation(fields: [semesterId], references: [id])
+  semesterId String
+  questions  Question[]
+
+  @@unique([number, courseId, semesterId])
+}
+
+model Topic {
+  id        String     @id @default(uuid())
+  name      String     @unique
+  courses   Course[]
+  questions Question[]
+}
+
+model Question {
+  id            String   @id @default(uuid())
+  exam          Exam     @relation(fields: [examId], references: [id])
+  examId        String
+  topics        Topic[]
+  number        Int
+  body          String
+  answerChoices String[]
+  correctAnswer Int
+  attempted     Int
+  notAttempted  Int
+  solution      String
+}
+
+model Semester {
+  id      String   @id @default(uuid())
+  season  Season
+  year    Int
+  courses Course[]
+  exams   Exam[]
+
+  @@unique([season, year])
+}
+
+enum Season {
+  SPRING
+  FALL
+}
