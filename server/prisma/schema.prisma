@@ -12,6 +12,7 @@ model Course {
   code      String     @unique
   name      String     @unique
   exams     Exam[]
+  questions Question[]
   topics    Topic[]
   semesters Semester[]
 }
@@ -37,6 +38,8 @@ model Topic {
 
 model Question {
   id            String   @id @default(uuid())
+  course        Course   @relation(fields: [courseId], references: [id])
+  courseId      String
   exam          Exam     @relation(fields: [examId], references: [id])
   examId        String
   topics        Topic[]
@@ -44,9 +47,11 @@ model Question {
   body          String
   answerChoices String[]
   correctAnswer Int
-  attempted     Int
-  notAttempted  Int
+  attempted     Int      @default(0)
+  notAttempted  Int      @default(0)
   solution      String
+
+  @@unique([examId, number])
 }
 
 model Semester {

@@ -18,8 +18,8 @@ app.post("/add-course", async (req, res) => {
             name: name
         }
     })
-    .then((resp) => res.status(200).send(resp))
-    .catch((err) => res.status(400).send(err.message))
+        .then((resp) => res.status(200).send(resp))
+        .catch((err) => res.status(400).send(err.message))
 });
 
 app.post("/add-exam", async (req, res) => {
@@ -60,8 +60,8 @@ app.post("/add-exam", async (req, res) => {
             }
         }
     })
-    .then(exam => res.status(200).send(exam))
-    .catch((err) => res.status(400).send(err.message))
+        .then(exam => res.status(200).send(exam))
+        .catch((err) => res.status(400).send(err.message))
 })
 
 app.post("/add-topic", async (req, res) => {
@@ -71,8 +71,8 @@ app.post("/add-topic", async (req, res) => {
             name: name
         }
     })
-    .then(() => res.status(200).send("success"))
-    .catch((err) => res.status(400).send(err.message));
+        .then(() => res.status(200).send("success"))
+        .catch((err) => res.status(400).send(err.message));
 });
 
 app.post("/add-course-topics", async (req, res) => {
@@ -87,23 +87,52 @@ app.post("/add-course-topics", async (req, res) => {
             }
         }
     })
-    .then((response) => res.status(200).send(response))
-    .catch((err) => res.status(400).send(err.message));
+        .then((response) => res.status(200).send(response))
+        .catch((err) => res.status(400).send(err.message));
 });
 
 app.post("/add-semester");
-app.post("/add-question");
+
+app.post("/add-question", async (req, res) => {
+    const { course, exam, topics, number, body, answerChoices, correctAnswer, solution } = req.body
+    prisma.exam.update({
+        where: {
+            id: exam
+        },
+        data: {
+            questions: {
+                create: {
+                    course: {
+                        connect: {
+                            id: course
+                        }
+                    },
+                    topics: {
+                        connect: topics.map(topicId => ({ id: topicId }))
+                    },
+                    number: Number(number),
+                    body: body,
+                    answerChoices: answerChoices,
+                    correctAnswer: Number(correctAnswer),
+                    solution: solution
+                }
+            }
+        }
+    })
+        .then((response) => res.status(200).send(response))
+        .catch((err) => res.status(400).send(err.message));
+});
 
 app.get("/get-courses", async (req, res) => {
     prisma.course.findMany()
-    .then((courses) => res.status(200).send(courses))
-    .catch((err) => res.status(400).send(err.message))
+        .then((courses) => res.status(200).send(courses))
+        .catch((err) => res.status(400).send(err.message))
 });
 
 app.get("/get-topics", async (req, res) => {
     prisma.topic.findMany()
-    .then(topics => res.status(200).send(topics))
-    .catch((err) => res.status(400).send(err.message))
+        .then(topics => res.status(200).send(topics))
+        .catch((err) => res.status(400).send(err.message))
 });
 
 app.post("/get-course-topics", async (req, res) => {
@@ -116,15 +145,15 @@ app.post("/get-course-topics", async (req, res) => {
             topics: true
         }
     })
-    .then((course) => {
-        if (!course) {
-            res.status(200).send([])
-        }
-        else {
-            res.status(200).send(course.topics)
-        }
-    })
-    .catch((err) => res.status(400).send(err.message))
+        .then((course) => {
+            if (!course) {
+                res.status(200).send([])
+            }
+            else {
+                res.status(200).send(course.topics)
+            }
+        })
+        .catch((err) => res.status(400).send(err.message))
 });
 
 app.post("/get-semesters", async (req, res) => {
@@ -141,15 +170,15 @@ app.post("/get-semesters", async (req, res) => {
             }
         }
     })
-    .then((course) => {
-        if (!course) {
-            res.status(200).send([])
-        }
-        else {
-            res.status(200).send(course.semesters)
-        }
-    })
-    .catch((err) => res.status(400).send(err.message))
+        .then((course) => {
+            if (!course) {
+                res.status(200).send([])
+            }
+            else {
+                res.status(200).send(course.semesters)
+            }
+        })
+        .catch((err) => res.status(400).send(err.message))
 });
 
 app.post("/get-exams", async (req, res) => {
@@ -163,8 +192,57 @@ app.post("/get-exams", async (req, res) => {
             number: 'asc'
         }
     })
-    .then((exams) => res.status(200).send(exams))
-    .catch((err) => res.status(400).send(err.message))
+        .then((exams) => res.status(200).send(exams))
+        .catch((err) => res.status(400).send(err.message))
 });
+
+app.post("/get-exam-questions", async (req, res) => {
+    const { exam } = req.body
+    prisma.exam.findUnique({
+        where: {
+            id: exam
+        },
+        select: {
+            questions: {
+                orderBy: {
+                    number: 'asc'
+                }
+            }
+        }
+    })
+    .then((exam) => {
+        if(exam) {
+            res.status(200).send(exam.questions)
+        } else {
+            res.status(200).send([])
+        }
+    })
+    .catch((err) => res.status(400).send(err.message))
+})
+
+app.post("/get-topic-questions", async (req, res) => {
+    const { course, topic } = req.body;
+    prisma.topic.findUnique({
+        where: {
+            id: topic
+        },
+        select: {
+            questions: {
+                where: {
+                    id: course
+                }
+            }
+        }
+    })
+    .then((topic) => {
+        if (topic) {
+            res.status(200).send(topic.questions)
+        }
+        else {
+            res.status(200).send([])
+        }
+    })
+    .catch((err) => res.status(400).send(err.message))
+})
 
 module.exports = app;
