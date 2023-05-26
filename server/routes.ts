@@ -106,7 +106,7 @@ app.post("/add-question", async (req, res) => {
                         connect: {
                             id: course
                         }
-                    },
+                    }, 
                     topics: {
                         connect: topics.map(topicId => ({ id: topicId }))
                     },

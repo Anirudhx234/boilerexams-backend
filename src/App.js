@@ -14,9 +14,13 @@ function App() {
   const [courseName, setCourseName] = useState(null);
   const [selectedSemester, setSelectedSemester] = useState(null);
   const [selectedTopics, setSelectedTopics] = useState([]);
+  const [selectedQuestionTopic, setSelectedQuestionTopics] = useState([]);
   const [selectedExam, setSelectedExam] = useState(null);
+  const [examDetails, setExamDetails] = useState(null);
   const [selectedTopic, setSelectedTopic] = useState(null);
+  const [values, setValues] = useState([]);
   const [selectedQuestion, setSelectedQuestion] = useState(null);
+  const [questionDetails, setQuestionDetails] = useState(null);
 
   const [newCourse, setNewCourse] = useState("");
   const [newCode, setNewCode] = useState("");
@@ -24,13 +28,25 @@ function App() {
   const [year, setYear] = useState();
   const [number, setNumber] = useState();
   const [topicN, setTopicN] = useState("");
+  const [questionNumber, setQuestionNumber] = useState();
+  const [body, setBody] = useState("");
+
+  const [choice1, setChoice1] = useState("");
+  const [choice2, setChoice2] = useState("");
+  const [choice3, setChoice3] = useState("");
+  const [choice4, setChoice4] = useState("");
+  const [choice5, setChoice5] = useState("");
+
+  const [answerChoices, setAnswerChoices] = useState([]);
+  const [correctAnswer, setCorrectAnswer] = useState();
+  const [solution, setSolution] = useState("");
   const [checked, setChecked] = useState(false);
   const [questionChecked, setQuestionChecked] = useState(false);
 
   useEffect(() => {
     if (selectedCourse) {
 
-      if (selectedExam) {
+      if (selectedExam && !questionChecked) {
         axios.post('http://localhost:5000/get-exam-questions/', { exam: selectedExam })
           .then((res) => setQuestions(res.data))
           .catch(err => console.error(err))
@@ -73,13 +89,33 @@ function App() {
     axios.get('http://localhost:5000/get-courses/')
       .then(res => setCourses(res.data))
       .catch(err => console.error(err));
-  }, [selectedCourse, selectedSemester, selectedTopic, selectedExam]);
+  }, [selectedCourse, selectedSemester, selectedTopic, selectedExam, questionChecked]);
 
   const handleCourseSelect = (e) => {
     const c = e.target.value;
     setSelectedCourse(c);
     setCourseName(courses.find((id) => id.id === c));
     setSelectedSemester(null);
+  };
+  const handleExamSelect = (e) => {
+    const c = e.target.value;
+    setSelectedExam(c);
+    setExamDetails(exams.find((id) => id.id === c));
+  }
+  const handleQuestionSelect = (e) => {
+    const c = e.target.value;
+    setSelectedQuestion(c);
+    setQuestionDetails(questions.find((id) => id.id === c));
+    
+  }
+  const handleAddChoices = () => {
+    if (choice1 === "" || choice2 === "" || choice3 === "" || choice4 === "" ) {
+      alert("Enter all answer choices");
+      return;
+    }
+    const newValues = [choice1, choice2, choice3, choice4, choice5];
+    setAnswerChoices(newValues);
+    alert("Added answer choices");
   };
 
   const handleChecked = () => {
@@ -96,6 +132,10 @@ function App() {
   const handleTopicChange = (selectedTopic) => {
     setSelectedTopics(selectedTopic.map(topic => topic.value));
   };
+  const handleQuestionTopicChange = (selectedTopic) => {
+    setSelectedQuestionTopics(selectedQuestionTopic.map(topic => topic.value));
+  };
+
 
   const addTopic = () => {
     if (topicN === "") {
@@ -143,6 +183,13 @@ function App() {
     setNewCourse("");
   }
 
+  const addQuestion = () => {
+    axios.post('http://localhost:5000/add-question/', { course: selectedCourse, exam: selectedExam, topics: selectedQuestionTopic,
+    number: questionNumber, body: body, answerChoices: answerChoices, correctAnswer: correctAnswer, solution: solution })
+      .then((res) => (alert("Added Question")))
+      .catch((err) => (alert(err)));
+  }
+
   const filteredTopics = () => {
     let temp = courseTopics.map(topic => topic.name)
     return topics.filter((topic) => !temp.includes(topic.name))
@@ -176,43 +223,7 @@ function App() {
                   ))}
                 </select>
               </div>}
-              {!checked && <div><div>
-                <h4>Select a Semester</h4>
-                <select onChange={handleSemesterSelect}>
-                  <option value="">Select a semester...</option>
-                  {semesters.map(semester => (
-                    <option value={semester.id}>{semester.season} {semester.year}</option>
-                  ))}
-                </select>
-              </div>
-                {selectedSemester && <div>
-                  <h4>Select an Exam</h4>
-                  <select onChange={(e) => setSelectedExam(e.target.value)}>
-                    <option value="">Select an exam...</option>
-                    {exams.map(exam => (
-                      <option value={exam.id}>{exam.number}</option>
-                    ))}
-                  </select>
-                  {selectedExam && <div>
-                    <input type='checkbox' id='questionToggle' value={questionChecked} onChange={(e) => (setQuestionChecked(!questionChecked))} />
-                    <label for='questionToggle'>Add a Question</label>
-                    {!questionChecked && <div>
-                      <h4>Select a Question</h4>
-                      <select onChange={(e) => setSelectedQuestion(e.target.value)}>
-                        <option value="">Select an exam...</option>
-                        {questions.map(question => (
-                          <option value={question.id}>{question.number}</option>
-                        ))}
-                      </select>
-                    </div>}
-                  </div>}
-                </div>}</div>}
-            </div>
-          </>
-        )}
-      </div>
-      <div className="column2">
-        <div>
+              <div>
           <h3>Add a Topic</h3>
           <p>Name</p>
           <input type="text" value={topicN} onChange={(e) => setTopicN(e.target.value)} />
@@ -235,9 +246,108 @@ function App() {
               onChange={handleTopicChange}
             />
             <button onClick={assignTopics}>Assign Topics</button>
+           </div>
           </div>
-        </div>
+          )}
+              {!checked && <div><div>
+                <h4>Select a Semester</h4>
+                <select onChange={handleSemesterSelect}>
+                  <option value="">Select a semester...</option>
+                  {semesters.map(semester => (
+                    <option value={semester.id}>{semester.season} {semester.year}</option>
+                  ))}
+                </select>
+              </div>
+                {selectedSemester && <div>
+                  <h4>Select an Exam</h4>
+                  <select onChange={handleExamSelect}>
+                    <option value="">Select an exam...</option>
+                    {exams.map(exam => (
+                      <option value={exam.id}>{exam.number}</option>
+                    ))}
+                  </select>
+                  
+                  {selectedExam && <div>
+                    <input type='checkbox' id='questionToggle' value={questionChecked} onChange={(e) => (setQuestionChecked(!questionChecked))} />
+                    <label for='questionToggle'>Add a Question</label>
+                    {!questionChecked && <div>
+                      <h4>Select a Question</h4>
+                      <select onChange={handleQuestionSelect}>
+                        <option value="">Select an Question...</option>
+                        {questions.map( question => (
+                          <option value={question.id}>{question.number}</option>
+                        ))}
+                      </select>
+                    </div>}
+                  </div>}
+                  
+                </div>}</div>}
+            </div>
+          </>
         )}
+      </div>
+      <div className="column2">
+        {questionChecked && <div>
+                      <h4> Add a Question</h4>
+                      <p>Number</p>
+                      <input type = "number" value={questionNumber} onChange={(e) => setQuestionNumber(e.target.value)} />
+                      <p>Body</p>
+                      <input type = "text" value={body} onChange={(e) => setBody(e.target.value)} />
+
+                      <p>Answer Choice 1</p>
+                      <input type = "text" value={choice1} onChange={(e) => setChoice1(e.target.value)} />
+                      <p>Answer Choice 2</p>
+                      <input type = "text" value={choice2} onChange={(e) => setChoice2(e.target.value)} />
+                      <p>Answer Choice 3</p>
+                      <input type = "text" value={choice3} onChange={(e) => setChoice3(e.target.value)} />
+                      <p>Answer Choice 4</p>
+                      <input type = "text" value={choice4} onChange={(e) => setChoice4(e.target.value)} />
+                      <p>Answer Choice 5</p>
+                      <input type = "text" value={choice5} onChange={(e) => setChoice5(e.target.value)} />
+                      <br></br>
+                      <button onClick={handleAddChoices}>Change Answer Choices</button>
+
+                      <h4>Add Topics for Question</h4>
+                      <Select
+                        isMulti
+                        name="colors"
+                        // Topics already assigned to the course are not shown here. They can be seen in the middle column under Select a Topic.
+                        options={courseTopics.map(topic => ({
+                          value: topic.id,
+                          label: topic.name
+                        }))}
+                        className="basic-multi-select"
+                        classNamePrefix="select"
+                        onChange={handleQuestionTopicChange}
+                      />
+                      {/* <button onClick={assignTopics}>Assign Topics</button> */}
+
+                      <p>Correct Answer</p>
+                      <input type = "number" value = {correctAnswer} onChange = {(e) => setCorrectAnswer(e.target.value)} />
+                      {/*  Youtube Link */}
+                      <p>Solution</p>
+                      <input type = "text" value = {solution} onChange = {(e) => setSolution(e.target.value)} />
+                      <br></br>
+                      <button onClick={addQuestion}>Add Question</button>
+                  
+                    </div>}
+                    {selectedQuestion && selectedExam && !questionChecked && <div>
+                      <h3> Selected Question</h3>
+                      <h4>{courseName.code} Exam {selectedSemester.season} Question {questionDetails.number}</h4>
+
+                      <p>{questionDetails.number}. {questionDetails.body}</p>
+                      <p><span class="tab"></span>a. {questionDetails.answerChoices[0]} </p>
+                      <p><span class="tab"></span>b. {questionDetails.answerChoices[1]} </p>
+                      <p><span class="tab"></span>c. {questionDetails.answerChoices[2]} </p>
+                      <p><span class="tab"></span>d. {questionDetails.answerChoices[3]} </p>
+                      {questionDetails.answerChoices[4] && <div>
+                        <p><span class="tab"></span>e. {questionDetails.answerChoices[4]} </p>
+                        </div>}
+
+                      <h4>Question Topics</h4>
+                      
+                      </div>}
+
       </div>
       <div className="column3">
         <div>
