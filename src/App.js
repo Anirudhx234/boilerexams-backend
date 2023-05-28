@@ -47,13 +47,13 @@ function App() {
     if (selectedCourse) {
 
       if (selectedExam && !questionChecked) {
-        axios.post('http://localhost:5000/get-exam-questions/', { exam: selectedExam })
+        axios.get(`http://localhost:5000/exams/${selectedExam}/questions`)
           .then((res) => setQuestions(res.data))
           .catch(err => console.error(err))
         return
       }
       if (selectedTopic) {
-        axios.post('http://localhost:5000/get-topic-questions/', { topic: selectedTopic, course: selectedCourse })
+        axios.get(`http://localhost:5000/courses/${selectedCourse}/${selectedTopic}/questions/`)
           .then((res) => setQuestions(res.data))
           .catch(err => console.error(err));
         return
@@ -61,21 +61,21 @@ function App() {
 
       if (selectedSemester) {
         // Fetch exams for selected course and semester
-        axios.post('http://localhost:5000/get-exams/', { course: selectedCourse, semester: selectedSemester })
+        axios.get(`http://localhost:5000/courses/${selectedCourse}/${selectedSemester}/exams/`)
           .then(res => setExams(res.data))
           .catch(err => console.error(err));
         return;
       }
 
       // Fetch general topics
-      axios.get('http://localhost:5000/get-topics/')
+      axios.get('http://localhost:5000/topics/')
         .then(res => setTopics(res.data))
         .catch(err => console.error(err));
-      axios.post('http://localhost:5000/get-course-topics/', { course: selectedCourse })
+      axios.get(`http://localhost:5000/courses/${selectedCourse}/topics/`)
         .then(res => setCourseTopics(res.data))
         .catch(err => console.error(err));
       // Fetch semesters for selected course
-      axios.post('http://localhost:5000/get-semesters/', { course: selectedCourse })
+      axios.get(`http://localhost:5000/courses/${selectedCourse}/semesters/`)
         .then(res => setSemesters(res.data))
         .catch(err => console.error(err));
       return;
@@ -86,7 +86,7 @@ function App() {
     }
 
     // Fetch all courses
-    axios.get('http://localhost:5000/get-courses/')
+    axios.get('http://localhost:5000/courses/')
       .then(res => setCourses(res.data))
       .catch(err => console.error(err));
   }, [selectedCourse, selectedSemester, selectedTopic, selectedExam, questionChecked]);
@@ -155,7 +155,7 @@ function App() {
       return;
     }
 
-    axios.post('http://localhost:5000/add-course/', { code: newCode, name: newCourse })
+    axios.post('http://localhost:5000/course/', { code: newCode, name: newCourse })
       .then((res) => (alert("Added course")))
       .catch((err) => (alert(err)));
     setSeason("");
@@ -164,7 +164,7 @@ function App() {
   }
 
   const assignTopics = () => {
-    axios.post('http://localhost:5000/add-course-topics/', { course: selectedCourse, topics: selectedTopics })
+    axios.post('http://localhost:5000/course-topics/', { course: selectedCourse, topics: selectedTopics })
       .then((res) => (alert("Added topics")))
       .catch((err) => (alert(err)));
     setSelectedTopics([]);
@@ -176,7 +176,7 @@ function App() {
       return;
     }
 
-    axios.post('http://localhost:5000/add-exam/', { course: selectedCourse, season: season, year: year, number: number })
+    axios.post('http://localhost:5000/exam/', { course: selectedCourse, season: season, year: year, number: number })
       .then((res) => (alert("Added exam")))
       .catch((err) => (alert(err)));
     setNewCode("");
@@ -184,7 +184,7 @@ function App() {
   }
 
   const addQuestion = () => {
-    axios.post('http://localhost:5000/add-question/', { course: selectedCourse, exam: selectedExam, topics: selectedQuestionTopic,
+    axios.post('http://localhost:5000/question/', { course: selectedCourse, exam: selectedExam, topics: selectedQuestionTopic,
     number: questionNumber, body: body, answerChoices: answerChoices, correctAnswer: correctAnswer, solution: solution })
       .then((res) => (alert("Added Question")))
       .catch((err) => (alert(err)));

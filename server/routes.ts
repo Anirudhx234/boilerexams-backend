@@ -10,7 +10,7 @@ const Aws = require('aws-sdk');
 const dotenv = require("dotenv");
 dotenv.config();
 
-app.post("/add-course", async (req, res) => {
+app.post("/course", async (req, res) => {
     const { code, name } = req.body
     prisma.course.create({
         data: {
@@ -22,7 +22,7 @@ app.post("/add-course", async (req, res) => {
         .catch((err) => res.status(400).send(err.message))
 });
 
-app.post("/add-exam", async (req, res) => {
+app.post("/exam", async (req, res) => {
     const { course, season, year, number } = req.body
     const semester = await prisma.semester.upsert({
         where: {
@@ -64,7 +64,7 @@ app.post("/add-exam", async (req, res) => {
         .catch((err) => res.status(400).send(err.message))
 })
 
-app.post("/add-topic", async (req, res) => {
+app.post("/topic", async (req, res) => {
     const { name } = req.body
     prisma.topic.create({
         data: {
@@ -75,7 +75,7 @@ app.post("/add-topic", async (req, res) => {
         .catch((err) => res.status(400).send(err.message));
 });
 
-app.post("/add-course-topics", async (req, res) => {
+app.post("/course-topics", async (req, res) => {
     const { course, topics } = req.body;
     prisma.course.update({
         where: {
@@ -91,9 +91,7 @@ app.post("/add-course-topics", async (req, res) => {
         .catch((err) => res.status(400).send(err.message));
 });
 
-app.post("/add-semester");
-
-app.post("/add-question", async (req, res) => {
+app.post("/question", async (req, res) => {
     const { course, exam, topics, number, body, answerChoices, correctAnswer, solution } = req.body
     prisma.exam.update({
         where: {
@@ -123,23 +121,23 @@ app.post("/add-question", async (req, res) => {
         .catch((err) => res.status(400).send(err.message));
 });
 
-app.get("/get-courses", async (req, res) => {
+app.get("/courses", async (req, res) => {
     prisma.course.findMany()
         .then((courses) => res.status(200).send(courses))
         .catch((err) => res.status(400).send(err.message))
 });
 
-app.get("/get-topics", async (req, res) => {
+app.get("/topics", async (req, res) => {
     prisma.topic.findMany()
         .then(topics => res.status(200).send(topics))
         .catch((err) => res.status(400).send(err.message))
 });
 
-app.post("/get-course-topics", async (req, res) => {
-    const { course } = req.body
+app.get("/courses/:courseId/topics", async (req, res) => {
+    const { courseId } = req.params
     prisma.course.findUnique({
         where: {
-            id: course
+            id: courseId
         },
         select: {
             topics: true
@@ -156,11 +154,11 @@ app.post("/get-course-topics", async (req, res) => {
         .catch((err) => res.status(400).send(err.message))
 });
 
-app.post("/get-semesters", async (req, res) => {
-    const { course } = req.body
+app.get("/courses/:courseId/semesters", async (req, res) => {
+    const { courseId } = req.params
     prisma.course.findUnique({
         where: {
-            id: course
+            id: courseId
         },
         select: {
             semesters: {
@@ -181,12 +179,12 @@ app.post("/get-semesters", async (req, res) => {
         .catch((err) => res.status(400).send(err.message))
 });
 
-app.post("/get-exams", async (req, res) => {
-    const { course, semester } = req.body
+app.get("/courses/:courseId/:semesterId/exams", async (req, res) => {
+    const { courseId, semesterId } = req.params
     prisma.exam.findMany({
         where: {
-            courseId: course,
-            semesterId: semester
+            courseId: courseId,
+            semesterId: semesterId
         },
         orderBy: {
             number: 'asc'
@@ -196,11 +194,11 @@ app.post("/get-exams", async (req, res) => {
         .catch((err) => res.status(400).send(err.message))
 });
 
-app.post("/get-exam-questions", async (req, res) => {
-    const { exam } = req.body
+app.get("/exams/:examId/questions", async (req, res) => {
+    const { examId } = req.params
     prisma.exam.findUnique({
         where: {
-            id: exam
+            id: examId
         },
         select: {
             questions: {
@@ -220,16 +218,16 @@ app.post("/get-exam-questions", async (req, res) => {
     .catch((err) => res.status(400).send(err.message))
 })
 
-app.post("/get-topic-questions", async (req, res) => {
-    const { course, topic } = req.body;
+app.get("/courses/:courseId/:topicId/questions", async (req, res) => {
+    const { courseId, topicId } = req.params;
     prisma.topic.findUnique({
         where: {
-            id: topic
+            id: topicId
         },
         select: {
             questions: {
                 where: {
-                    id: course
+                    id: courseId
                 }
             }
         }
