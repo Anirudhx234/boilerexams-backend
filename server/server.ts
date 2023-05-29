@@ -1,14 +1,20 @@
-const express = require("express");
+const express2 = require("express");
 
-const Router = require("./routes.ts")
-
-const app = express();
-
+const router = express2();
 var cors = require('cors');
-app.use(cors());
-app.use(express.json());
-app.use(Router);
 
-app.listen(5000, () => {
-  console.log("Server is running at port 5000");
+const Router = require("./routes.ts");
+router.use(cors());
+router.use(express2.json());
+router.use(Router);
+
+router.get("/", (req, res) => {
+  res.send("Working");
 });
+
+const PORT = process.env.PORT || 8080;
+router.listen(PORT, () => {
+  console.log(`Server is running at port ${PORT}`);
+});
+
+module.exports = router;
