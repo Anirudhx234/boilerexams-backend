@@ -1,9 +1,0 @@
-runtime: nodejs20
-
-entrypoint: npm start
-
-env_variables:
-    PORT: 8080
-    DATABASE_URL: "postgresql://postgres:testing@localhost/postgres?host=/cloudsql/testing-387121:us-central1:testing-1234"
-    MATHPIX_ID: "boilerexams_gmail_com_a7d9fe_0dc934"
-    MATHPIX_KEY: "9d23dece308b5305a40efa607a7869ad46c10cf18730632581905b537026a8d4"
