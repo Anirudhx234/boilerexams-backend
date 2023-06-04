@@ -1,16 +1,12 @@
-const express2 = require("express");
+const express_server = require("express");
 
-const router = express2();
+const router = express_server();
 var cors = require('cors');
 
 const Router = require("./routes.ts");
 router.use(cors());
-router.use(express2.json());
+router.use(express_server.json());
 router.use(Router);
-
-router.get("/", (req, res) => {
-  res.send("Working");
-});
 
 const PORT = process.env.PORT || 8080;
 router.listen(PORT, () => {

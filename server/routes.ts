@@ -1,8 +1,8 @@
 const { PrismaClient, Season } = require('@prisma/client')
-const express = require('express');
+const express_routes = require('express');
 
 const prisma = new PrismaClient();
-const app = express();
+const app = express_routes();
 
 const multer = require('multer');
 const axios = require('axios');
@@ -15,11 +15,13 @@ app.get("/", (req, res) => {
 })
 
 app.post("/course", async (req, res) => {
-    const { code, name } = req.body
+    const { name, subject, number } = req.body
     prisma.course.create({
         data: {
-            code: code,
-            name: name
+            name: name,
+            subject: subject,
+            number: number
+
         }
     })
         .then((resp) => res.status(200).send(resp))
@@ -115,8 +117,8 @@ app.post("/question", async (req, res) => {
                     number: Number(number),
                     body: body,
                     answerChoices: answerChoices,
-                    correctAnswer: Number(correctAnswer),
-                    solution: solution
+                    correctChoiceIndex: Number(correctAnswer),
+                    solutionVideoLink: solution
                 }
             }
         }
@@ -292,3 +294,4 @@ app.post("/convert", upload.single("file"), async (req, res) => {
 })
 
 module.exports = app;
+export {}
