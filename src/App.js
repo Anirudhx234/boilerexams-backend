@@ -218,7 +218,7 @@ function App() {
   const addQuestion = () => {
     axios.post('https://testing-387121.uc.r.appspot.com/question/', {
       course: selectedCourse, exam: selectedExam, topics: selectedQuestionTopic,
-      number: questionNumber, body: parts[0], answerChoices: parts.slice(1, parts.length), correctAnswer: correctAnswer, solution: solution
+      number: questionNumber, body: parts[0], answerChoices: parts.slice(1, parts.length), correctChoiceIndex: correctAnswer, solutionVideoLink: solution
     })
       .then((res) => (alert("Added Question")))
       .catch((err) => (alert(err)));
