@@ -8,21 +8,29 @@ datasource db {
 }
 
 model Course {
-  id        String     @id @default(uuid())
-  code      String     @unique
-  name      String     @unique
-  exams     Exam[]
-  topics    Topic[]
-  semesters Semester[]
+  id              String     @id @default(uuid())
+  name            String     @unique
+  subject         String     @default("")
+  number          Int        @default(0)
+  backgroundColor String     @default("")
+  graphicLink     String     @default("")
+  published       Boolean    @default(false)
+  exams           Exam[]
+  questions       Question[]
+  semesters       Semester[] @relation("CourseToSemester")
+  topics          Topic[]    @relation("CourseToTopic")
+
+  @@unique([subject, number])
 }
 
 model Exam {
   id         String     @id @default(uuid())
   number     Int
-  course     Course     @relation(fields: [courseId], references: [id])
+  published  Boolean    @default(false)
   courseId   String
-  semester   Semester   @relation(fields: [semesterId], references: [id])
   semesterId String
+  course     Course     @relation(fields: [courseId], references: [id])
+  semester   Semester   @relation(fields: [semesterId], references: [id])
   questions  Question[]
 
   @@unique([number, courseId, semesterId])
@@ -31,35 +39,39 @@ model Exam {
 model Topic {
   id        String     @id @default(uuid())
   name      String     @unique
-  courses   Course[]
-  questions Question[]
+  courses   Course[]   @relation("CourseToTopic")
+  questions Question[] @relation("QuestionToTopic")
 }
 
 model Question {
-  id            String   @id @default(uuid())
-  exam          Exam     @relation(fields: [examId], references: [id])
-  examId        String
-  topics        Topic[]
-  number        Int
-  body          String
-  answerChoices String[]
-  correctAnswer Int
-  attempted     Int
-  notAttempted  Int
-  solution      String
+  id                 String   @id @default(uuid())
+  examId             String
+  number             Int
+  body               String
+  answerChoices      String[]
+  correctChoiceIndex Int
+  submissions        Int[]    @default([])
+  solutionVideoLink  String   @default("")
+  courseId           String
+  course             Course   @relation(fields: [courseId], references: [id])
+  exam               Exam     @relation(fields: [examId], references: [id])
+  topics             Topic[]  @relation("QuestionToTopic")
+
+  @@unique([examId, number])
 }
 
 model Semester {
   id      String   @id @default(uuid())
   season  Season
   year    Int
-  courses Course[]
   exams   Exam[]
+  courses Course[] @relation("CourseToSemester")
 
   @@unique([season, year])
 }
 
 enum Season {
   SPRING
+  SUMMER
   FALL
 }

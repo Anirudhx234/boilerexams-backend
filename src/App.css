@@ -10,19 +10,24 @@
   display: flex;
   justify-content: center;
   flex-direction: row;
+  flex-wrap: wrap;
 }
 
 .column1 {
-  margin-right: 10rem;
+  margin-right: 5rem;
   width: 20rem;
 }
 
 .column2 {
-  margin-right: 5rem;
-  width: 10rem;
+  margin-left: 5rem;
+  width: 20rem;
 }
 
-.column3 {
-  margin-left: 10rem;
-  width: 10rem;
+.displayQuestion {
+  width: 50rem
+}
+
+.break {
+  flex-basis: 100%;
+  height: 0;
 }
