@@ -89,7 +89,7 @@ app.post("/course-topics", async (req, res) => {
 });
 
 app.post("/questions", async (req, res) => {
-    const { course, exam, topics, number, body, answerChoices, correctChoiceIndex, solutionVideoLink } = req.body
+    const { course, exam, topics, number, body, answerChoices, correctChoiceIndex, solution } = req.body
     prisma.exam.update({
         where: {
             id: exam
@@ -109,7 +109,7 @@ app.post("/questions", async (req, res) => {
                     body: body,
                     answerChoices: answerChoices,
                     correctChoiceIndex: Number(correctChoiceIndex),
-                    solutionVideoLink: solutionVideoLink
+                    solutionVideoLink: solution
                 }
             }
         }
@@ -119,4 +119,4 @@ app.post("/questions", async (req, res) => {
 });
 
 module.exports = app;
-export { }
+export {}
