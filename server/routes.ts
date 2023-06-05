@@ -81,6 +81,115 @@ app.post("/topic", async (req, res) => {
         .catch((err) => res.status(400).send(err.message));
 });
 
+app.get("/courses/all", async (req, res) => {
+    prisma.course.findMany({
+      include: {
+        topics: {
+          include: {
+            questions: true
+          }
+        },
+        semesters: true,
+        exams: {
+          include: {
+            questions: true
+          }
+        }
+      }
+    })
+      .then((courses) => {
+        if (courses) {
+          res.status(200).send(courses);
+        } else {
+          res.status(404).send("Course not found");
+        }
+      })
+      .catch((err) => res.status(400).send(err));
+  });
+
+
+app.get("/courses/:courseAbbrev/topics", async(req, res) => {
+    const { courseAbbrev } = req.params;
+
+    const courseRegex = (courseAbbrev) => {
+        const regex = /([A-Z]+)(\d+)/;
+        const matches = courseAbbrev.match(regex);
+        if (matches) {
+            return {courseSubject: matches[1], courseNum: parseInt(matches[2])}
+        }
+        return {}
+    }
+
+    const {courseSubject, courseNum} = courseRegex(courseAbbrev);
+    if (!courseSubject || !courseNum) {
+        res.status(400).send("Invalid parameters")
+        return
+    }
+
+    prisma.course.findUnique({
+        where: {
+            subject_number: {
+                subject: courseSubject,
+                number: courseNum
+            },
+        }, 
+        select: {
+            topics: true
+        }
+    }).then((course) => {
+        if (course) {
+            res.status(200).send(course.topics)
+        }
+        else {
+            res.status(404).send("Topics Not found")
+        }
+    }).catch((err) => res.status(400).send(err.message))
+});
+
+
+app.get("/courses/:courseAbbrev/topics/questions", async (req, res) => {
+    const { courseAbbrev } = req.params;
+
+    const courseRegex = (courseAbbrev) => {
+        const regex = /([A-Z]+)(\d+)/;
+        const matches = courseAbbrev.match(regex);
+        if (matches) {
+            return {courseSubject: matches[1], courseNum: parseInt(matches[2])}
+        }
+        return {}
+    }
+
+    const {courseSubject, courseNum} = courseRegex(courseAbbrev);
+    if (!courseSubject || !courseNum) {
+        res.status(400).send("Invalid parameters")
+        return
+    }
+
+    prisma.course.findUnique({
+        where: {
+        subject_number: {
+            subject: courseSubject,
+            number: courseNum,
+        },
+        },
+        select: {
+        topics: {
+            include: {
+            questions: true,
+            },
+        },
+        },
+    })
+        .then((course) => {
+        if (course) {
+            res.status(200).send(course.topics);
+        } else {
+            res.status(404).send("Questions and Topics Not found");
+        }
+        })
+        .catch((err) => res.status(400).send(err.message));
+});
+
 app.post("/course-topics", async (req, res) => {
     const { course, topics } = req.body;
     prisma.course.update({
