@@ -148,10 +148,11 @@ app.get("/courses/:courseAbbrev/topics/questions", async (req, res) => {
         .catch((err) => res.status(400).send(err.message));
 });
 
-app.get("/courses/:courseAbbrev/exams", async(req, res) => {
-    const {courseAbbrev} =  req.params;
+// All exams metadata for a specific course
+app.get("/courses/:courseAbbrev/exams", async (req, res) => {
+    const { courseAbbrev } = req.params;
     //courseAbbrev is the course abbreviation and code (ex: MA166)
-    const {subject, number} = courseRegex(courseAbbrev);
+    const { subject, number } = courseRegex(courseAbbrev);
     if (!subject || !number) {
         return res.status(400).send("Invalid parameters")
     }
@@ -162,13 +163,13 @@ app.get("/courses/:courseAbbrev/exams", async(req, res) => {
                 subject: subject.toUpperCase(),
                 number: Number(number)
             },
-        }, 
+        },
         select: {
             exams: true
         }
     }).then((course) => {
         if (course) {
-           return res.status(200).send(course.exams)
+            return res.status(200).send(course.exams)
         }
         else {
             return res.status(404).send("Exams not found")
@@ -176,10 +177,11 @@ app.get("/courses/:courseAbbrev/exams", async(req, res) => {
     }).catch((err) => res.status(400).send(err.message))
 })
 
-app.get("/courses/:courseAbbrev/exams/questions", async(req, res) => {
-    const {courseAbbrev} =  req.params;
+// All exams with questions inlcuding topics for a specific course
+app.get("/courses/:courseAbbrev/exams/questions", async (req, res) => {
+    const { courseAbbrev } = req.params;
     //courseAbbrev is the course abbreviation and code (ex: MA166)
-    const {subject, number} = courseRegex(courseAbbrev);
+    const { subject, number } = courseRegex(courseAbbrev);
     if (!subject || !number) {
         return res.status(400).send("Invalid parameters")
     }
@@ -190,7 +192,7 @@ app.get("/courses/:courseAbbrev/exams/questions", async(req, res) => {
                 subject: subject.toUpperCase(),
                 number: Number(number)
             },
-        }, 
+        },
         select: {
             exams: {
                 include: {
@@ -203,18 +205,19 @@ app.get("/courses/:courseAbbrev/exams/questions", async(req, res) => {
             }
         }
     }).then((course) => {
-         if (course) {
+        if (course) {
             return res.status(200).send(course.exams)
-        } 
+        }
         else {
             return res.status(404).send("Exams and questions not found")
         }
     }).catch((err) => res.status(400).send(err.message))
-}) 
+})
 
-app.get("/courses/:courseAbbrev/exams/:season-:year-:examNumber", async(req, res) => {
-    const {courseAbbrev, season, year, examNumber} = req.params;
-    const {subject, number} = courseRegex(courseAbbrev)
+// All questions with id, number, and topics for an exam
+app.get("/courses/:courseAbbrev/exams/:season-:year-:examNumber", async (req, res) => {
+    const { courseAbbrev, season, year, examNumber } = req.params;
+    const { subject, number } = courseRegex(courseAbbrev)
     if (!subject || !number) {
         return res.status(400).send("Invalid parameters")
     }
@@ -225,15 +228,15 @@ app.get("/courses/:courseAbbrev/exams/:season-:year-:examNumber", async(req, res
                 subject: subject.toUpperCase(),
                 number: Number(number)
             },
-        }, 
+        },
         include: {
             semesters: {
                 where: {
                     season: Season[season as keyof typeof Season],
-                    year: Number(year)  
+                    year: Number(year)
                 },
             }
-        }   
+        }
     }).then((course) => {
         if (course) {
             prisma.exam.findUnique({
@@ -243,7 +246,7 @@ app.get("/courses/:courseAbbrev/exams/:season-:year-:examNumber", async(req, res
                         courseId: course.id,
                         semesterId: course.semesters[0].id
                     },
-                    
+
                 },
                 include: {
                     questions: {
@@ -256,15 +259,12 @@ app.get("/courses/:courseAbbrev/exams/:season-:year-:examNumber", async(req, res
                 }
             }).then((exam) => {
                 if (exam) {
-                    res.status(200).send(exam)
-                }
-                else {
-                    
+                    return res.status(200).send(exam)
                 }
             })
-            
+
         } else {
-            res.status(404).send("Exams and questions not found")
+            return res.status(404).send("Exams and questions not found")
         }
     }).catch((err) => res.status(400).send(err.message))
 
