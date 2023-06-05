@@ -83,30 +83,30 @@ app.post("/topic", async (req, res) => {
 
 app.get("/courses/all", async (req, res) => {
     prisma.course.findMany({
-        select: {
-            subject: true,
-            number: true,
-            backgroundColor: true,
-            topics: true,
-            semesters: true,
-            exams: {
-            include: {
-                questions: true,
-            },
-            },
+      include: {
+        topics: {
+          include: {
+            questions: true
+          }
         },
-        })
+        semesters: true,
+        exams: {
+          include: {
+            questions: true
+          }
+        }
+      }
+    })
+      .then((courses) => {
+        if (courses) {
+          res.status(200).send(courses);
+        } else {
+          res.status(404).send("Course not found");
+        }
+      })
+      .catch((err) => res.status(400).send(err));
+  });
 
-        .then((courses) => {
-            if (courses) {
-                res.status(200).send(courses)
-            } else {
-                res.status(200).send("Course not found")
-            }
-        })
-        .catch((err) => res.status(400).send(err))
-
-});
 
 app.get("/courses/:courseAbbrev/topics", async(req, res) => {
     const { courseAbbrev } = req.params;
@@ -141,7 +141,7 @@ app.get("/courses/:courseAbbrev/topics", async(req, res) => {
             res.status(200).send(course.topics)
         }
         else {
-            res.status(200).send("Topics Not found")
+            res.status(404).send("Topics Not found")
         }
     }).catch((err) => res.status(400).send(err.message))
 });
@@ -165,34 +165,29 @@ app.get("/courses/:courseAbbrev/topics/questions", async (req, res) => {
         return
     }
 
-  prisma.topic.findMany({
-    where: {
-      courses: {
-        some: {
-          AND: [
-            { subject: courseSubject },
-            { number: courseNum },
-          ],
+    prisma.course.findUnique({
+        where: {
+        subject_number: {
+            subject: courseSubject,
+            number: courseNum,
         },
-      },
-    },
-    include: {
-      questions: true,
-    },
-  })
-    .then((topics) => {
-        if(topics){
-            const topicsWithQuestions = topics.map((topic) => {
-            const { id, name, questions } = topic;
-            return { id, name, questions };
-        });
-        res.status(200).send(topicsWithQuestions);
-        }
-        else {
-            res.status(200).send("Topics and info not found")
-        }
+        },
+        select: {
+        topics: {
+            include: {
+            questions: true,
+            },
+        },
+        },
     })
-    .catch((err) => res.status(404).send(err.message));
+        .then((course) => {
+        if (course) {
+            res.status(200).send(course.topics);
+        } else {
+            res.status(404).send("Questions and Topics Not found");
+        }
+        })
+        .catch((err) => res.status(400).send(err.message));
 });
 
 app.post("/course-topics", async (req, res) => {
