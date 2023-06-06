@@ -4,7 +4,9 @@ const express = require('express');
 const prisma = new PrismaClient();
 const app = express();
 
-app.get("/id/courses/:courseId/topics", async (req, res) => {
+const cache = require('./caching');
+
+app.get("/id/courses/:courseId/topics", cache(300), async (req, res) => {
     const { courseId } = req.params
     prisma.course.findUnique({
         where: {
@@ -25,7 +27,7 @@ app.get("/id/courses/:courseId/topics", async (req, res) => {
         .catch((err) => res.status(400).send(err.message))
 });
 
-app.get("/id/courses/:courseId/semesters", async (req, res) => {
+app.get("/id/courses/:courseId/semesters", cache(300), async (req, res) => {
     const { courseId } = req.params
     prisma.course.findUnique({
         where: {
@@ -50,7 +52,7 @@ app.get("/id/courses/:courseId/semesters", async (req, res) => {
         .catch((err) => res.status(400).send(err.message))
 });
 
-app.get("/id/courses/:courseId/:semesterId/exams", async (req, res) => {
+app.get("/id/courses/:courseId/:semesterId/exams", cache(300), async (req, res) => {
     const { courseId, semesterId } = req.params
     prisma.exam.findMany({
         where: {
@@ -65,7 +67,7 @@ app.get("/id/courses/:courseId/:semesterId/exams", async (req, res) => {
         .catch((err) => res.status(400).send(err.message))
 });
 
-app.get("/id/exams/:examId/questions", async (req, res) => {
+app.get("/id/exams/:examId/questions", cache(300), async (req, res) => {
     const { examId } = req.params
     prisma.exam.findUnique({
         where: {
@@ -89,7 +91,7 @@ app.get("/id/exams/:examId/questions", async (req, res) => {
         .catch((err) => res.status(400).send(err.message))
 })
 
-app.get("/id/courses/:courseId/:topicId/questions", async (req, res) => {
+app.get("/id/courses/:courseId/:topicId/questions", cache(300), async (req, res) => {
     const { courseId, topicId } = req.params;
     prisma.topic.findUnique({
         where: {
@@ -114,7 +116,7 @@ app.get("/id/courses/:courseId/:topicId/questions", async (req, res) => {
         .catch((err) => res.status(400).send(err.message))
 })
 
-app.get("id/questions/:id", async (req, res) => {
+app.get("/id/questions/:id", cache(300), async (req, res) => {
     const { id } = req.params
     prisma.question.findUnique({
         where: {
