@@ -10,7 +10,7 @@ const courseRegex = (courseAbbrev) => {
     const regex = /([a-zA-Z]+)(\d+)/;
     const matches = courseAbbrev.match(regex);
     if (matches) {
-        return { subject: matches[1], number: matches[2] }
+        return { abbreviation: matches[1], number: matches[2] }
     }
     return {}
 }
@@ -58,15 +58,15 @@ app.get("/courses/all", cache(300), async (req, res) => {
 app.get("/courses/:courseAbbrev", cache(300), async (req, res) => {
     try {
         const { courseAbbrev } = req.params
-        const { subject, number } = courseRegex(courseAbbrev);
-        if (!subject || !number) {
+        const { abbreviation, number } = courseRegex(courseAbbrev);
+        if (!abbreviation || !number) {
             res.status(400).send("Invalid parameters")
             return
         }
         prisma.course.findUnique({
             where: {
-                subject_number: {
-                    subject: subject.toUpperCase(),
+                abbreviation_number: {
+                    abbreviation: abbreviation.toUpperCase(),
                     number: Number(number)
                 }
             }
@@ -96,15 +96,15 @@ app.get("/courses/:courseAbbrev/topics", cache(300), async (req, res) => {
     try {
         const { courseAbbrev } = req.params;
 
-        const { subject, number } = courseRegex(courseAbbrev);
-        if (!subject || !number) {
+        const { abbreviation, number } = courseRegex(courseAbbrev);
+        if (!abbreviation || !number) {
             return res.status(400).send("Invalid parameters")
         }
 
         prisma.course.findUnique({
             where: {
-                subject_number: {
-                    subject: subject.toUpperCase(),
+                abbreviation_number: {
+                    abbreviation: abbreviation.toUpperCase(),
                     number: Number(number)
                 },
             },
@@ -130,15 +130,15 @@ app.get("/courses/:courseAbbrev/topics/questions", cache(300), async (req, res) 
     try {
         const { courseAbbrev } = req.params;
 
-        const { subject, number } = courseRegex(courseAbbrev);
-        if (!subject || !number) {
+        const { abbreviation, number } = courseRegex(courseAbbrev);
+        if (!abbreviation || !number) {
             return res.status(400).send("Invalid parameters")
         }
 
         prisma.course.findUnique({
             where: {
-                subject_number: {
-                    subject: subject.toUpperCase(),
+                abbreviation_number: {
+                    abbreviation: abbreviation.toUpperCase(),
                     number: Number(number),
                 },
             },
@@ -173,15 +173,15 @@ app.get("/courses/:courseAbbrev/exams", cache(300), async (req, res) => {
     try {
         const { courseAbbrev } = req.params;
         //courseAbbrev is the course abbreviation and code (ex: MA166)
-        const { subject, number } = courseRegex(courseAbbrev);
-        if (!subject || !number) {
+        const { abbreviation, number } = courseRegex(courseAbbrev);
+        if (!abbreviation || !number) {
             return res.status(400).send("Invalid parameters")
         }
 
         prisma.course.findUnique({
             where: {
-                subject_number: {
-                    subject: subject.toUpperCase(),
+                abbreviation_number: {
+                    abbreviation: abbreviation.toUpperCase(),
                     number: Number(number)
                 },
             },
@@ -206,15 +206,15 @@ app.get("/courses/:courseAbbrev/exams/questions", cache(300), async (req, res) =
     try {
         const { courseAbbrev } = req.params;
         //courseAbbrev is the course abbreviation and code (ex: MA166)
-        const { subject, number } = courseRegex(courseAbbrev);
-        if (!subject || !number) {
+        const { abbreviation, number } = courseRegex(courseAbbrev);
+        if (!abbreviation || !number) {
             return res.status(400).send("Invalid parameters")
         }
 
         prisma.course.findUnique({
             where: {
-                subject_number: {
-                    subject: subject.toUpperCase(),
+                abbreviation_number: {
+                    abbreviation: abbreviation.toUpperCase(),
                     number: Number(number)
                 },
             },
@@ -246,19 +246,19 @@ app.get("/courses/:courseAbbrev/exams/questions", cache(300), async (req, res) =
 app.get("/courses/:courseAbbrev/exams/:season-:year-:examNumber", cache(300), async (req, res) => {
     try {
         const { courseAbbrev, season, year, examNumber } = req.params;
-        const { subject, number } = courseRegex(courseAbbrev);
+        const { abbreviation, number } = courseRegex(courseAbbrev);
         let season_type = Season[season.toUpperCase() as keyof typeof Season]
         if (!season_type) {
             return res.status(400).send("Invalid season");
         }
-        if (!subject || !number) {
+        if (!abbreviation || !number) {
             return res.status(400).send("Invalid parameters")
         }
 
         prisma.course.findUnique({
             where: {
-                subject_number: {
-                    subject: subject.toUpperCase(),
+                abbreviation_number: {
+                    abbreviation: abbreviation.toUpperCase(),
                     number: Number(number)
                 },
             },
@@ -310,12 +310,12 @@ app.get("/courses/:courseAbbrev/exams/:season-:year-:examNumber", cache(300), as
 app.get("/courses/:courseAbbrev/exams/:season-:year-:examNumber/questions", cache(300), async (req, res) => {
     try {
         const { courseAbbrev, season, year, examNumber } = req.params
-        const { subject, number } = courseRegex(courseAbbrev);
+        const { abbreviation, number } = courseRegex(courseAbbrev);
         let season_type = Season[season.toUpperCase() as keyof typeof Season]
         if (!season_type) {
             return res.status(400).send("Invalid season");
         }
-        if (!subject || !number) {
+        if (!abbreviation || !number) {
             return res.status(400).send("Invalid parameters")
         }
         const semester = await prisma.semester.findUnique({
@@ -331,8 +331,8 @@ app.get("/courses/:courseAbbrev/exams/:season-:year-:examNumber/questions", cach
         }
         prisma.course.findUnique({
             where: {
-                subject_number: {
-                    subject: subject.toUpperCase(),
+                abbreviation_number: {
+                    abbreviation: abbreviation.toUpperCase(),
                     number: Number(number)
                 }
             },
