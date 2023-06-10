@@ -31,8 +31,8 @@ model Exam {
   published  Boolean    @default(false)
   courseId   String
   semesterId String
-  course     Course     @relation(fields: [courseId], references: [id])
-  semester   Semester   @relation(fields: [semesterId], references: [id])
+  course     Course     @relation(fields: [courseId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  semester   Semester   @relation(fields: [semesterId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   questions  Question[]
 
   @@unique([number, courseId, semesterId])
@@ -55,8 +55,8 @@ model Question {
   submissions        Int[]    @default([])
   solutionVideoLink  String   @default("")
   courseId           String
-  course             Course   @relation(fields: [courseId], references: [id])
-  exam               Exam     @relation(fields: [examId], references: [id])
+  course             Course   @relation(fields: [courseId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  exam               Exam     @relation(fields: [examId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   topics             Topic[]  @relation("QuestionToTopic")
 
   @@unique([examId, number])
