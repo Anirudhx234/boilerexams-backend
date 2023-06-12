@@ -240,12 +240,13 @@ app.get("/courses/:courseAbbrev/exams/questions", cache(300), async (req, res) =
                 exams: {
                     include: {
                         questions: {
+                            select: {
+                                id: true,
+                                number: true,  
+                            },
                             orderBy: {
                                 number: 'asc'
                             },
-                            include: {
-                                topics: true
-                            }
                         },
                         semester: true
                     }
