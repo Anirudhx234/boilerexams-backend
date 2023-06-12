@@ -127,8 +127,16 @@ app.get("/courses/:courseAbbrev/topics", cache(300), async (req, res) => {
                 },
             },
             select: {
-                topics: true
-            }
+                topics: {
+                    include: {
+                        questions: {
+                            select: {
+                                id: true,
+                            },
+                        },
+                    },
+                },
+            },
         }).then((course) => {
             if (course) {
                 return res.status(200).send(course.topics)
@@ -204,8 +212,16 @@ app.get("/courses/:courseAbbrev/exams", cache(300), async (req, res) => {
                 },
             },
             select: {
-                exams: true
-            }
+                exams: {
+                     include: {
+                        questions: {
+                            select: {
+                                id: true,
+                            },
+                        },
+                    },
+                },
+            },
         }).then((course) => {
             if (course) {
                 return res.status(200).send(course.exams)
