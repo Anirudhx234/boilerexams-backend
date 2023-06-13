@@ -270,53 +270,35 @@ app.get("/courses/:courseAbbrev/exams/questions", cache(300), async (req, res) =
 })
 
 // Full question information for specific topic
-app.get("/courses/:courseAbbrev/:topic/questions", cache(300), async (req, res) => {
-    try {
-        const { courseAbbrev, topic } = req.params;
-
-        const { abbreviation, number } = courseRegex(courseAbbrev);
-        if (!abbreviation || !number) {
-            return res.status(400).send("Invalid parameters")
-        }
-
-        prisma.course.findUnique({
-            where: {
-                abbreviation_number: {
-                    abbreviation: abbreviation.toUpperCase(),
-                    number: Number(number),
-                },
-            },
-            select: {
-                topics: {
-                    where: {
-                        name: topic
-                    },
-                    include: {
-                        questions: {
-                            include: {
-                                exam: {
-                                    include: {
-                                        semester: true
-                                    }
-                                }
-                            }
+app.get("/courses/:courseAbbrev/topics/:topicName/questions", async (req, res) => {
+    const {courseAbbrev, topicName } = req.params;
+    prisma.topic.findUnique({
+        where: {
+            name: topicName
+        },
+        include: {
+            questions: {
+                include: {
+                    topics: true,
+                    exam: {
+                        select:{
+                            number: true,
+                            semester: true,
                         }
                     }
                 }
-            },
-        })
-            .then((course) => {
-                if (course) {
-                    res.status(200).send(course.topics);
-                } else {
-                    res.status(404).send("Topic and questions not found");
-                }
-            })
-            .catch((err) => res.status(400).send(err.message));
-    } catch (e) {
-        res.status(400).send(e)
-    }
-});
+            }
+        }
+    })
+      .then((topics) => {
+        if (topics) {
+          res.status(200).send(topics);
+        } else {
+          res.status(404).send("Topics not found");
+        }
+      })
+      .catch((err) => res.status(400).send(err));
+  });
 
 // All questions with id, number, and topics for an exam
 app.get("/courses/:courseAbbrev/exams/:season-:year-:examNumber", cache(300), async (req, res) => {
