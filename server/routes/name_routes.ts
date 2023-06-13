@@ -40,6 +40,13 @@ app.get("/courses", cache(300), async (req, res) => {
         .catch((err) => res.status(400).send(err.message))
 });
 
+// All topics metadata, no relations
+app.get("/topics", cache(300), async (req, res) => {
+    prisma.topic.findMany()
+        .then(topics => res.status(200).send(topics))
+        .catch((err) => res.status(400).send(err.message))
+});
+
 // All courses with relations
 app.get("/courses/all", cache(300), async (req, res) => {
     try {
@@ -102,13 +109,6 @@ app.get("/courses/:courseAbbrev", cache(300), async (req, res) => {
     }
 })
 
-// All topics metadata, no relations
-app.get("/topics", cache(300), async (req, res) => {
-    prisma.topic.findMany()
-        .then(topics => res.status(200).send(topics))
-        .catch((err) => res.status(400).send(err.message))
-});
-
 // All topics for a specific course, no other relations
 app.get("/courses/:courseAbbrev/topics", cache(300), async (req, res) => {
     try {
@@ -127,15 +127,7 @@ app.get("/courses/:courseAbbrev/topics", cache(300), async (req, res) => {
                 },
             },
             select: {
-                topics: {
-                    include: {
-                        questions: {
-                            select: {
-                                id: true,
-                            },
-                        },
-                    },
-                },
+                topics: true
             },
         }).then((course) => {
             if (course) {
@@ -168,13 +160,13 @@ app.get("/courses/:courseAbbrev/topics/questions", cache(300), async (req, res) 
                     number: Number(number),
                 },
             },
-            include: {
+            select: {
                 topics: {
                     include: {
                         questions: {
-                            include: {
-                                exam: true,
-                                topics: true
+                            select: {
+                                id: true,
+                                number: true
                             }
                         }
                     },
@@ -185,7 +177,7 @@ app.get("/courses/:courseAbbrev/topics/questions", cache(300), async (req, res) 
                 if (course) {
                     res.status(200).send(course.topics);
                 } else {
-                    res.status(404).send("Questions and Topics not found");
+                    res.status(404).send("Topics and questions not found");
                 }
             })
             .catch((err) => res.status(400).send(err.message));
@@ -194,8 +186,45 @@ app.get("/courses/:courseAbbrev/topics/questions", cache(300), async (req, res) 
     }
 });
 
-// All exams metadata for a specific course
+// All exams with semester (no questions)
 app.get("/courses/:courseAbbrev/exams", cache(300), async (req, res) => {
+    try {
+        const { courseAbbrev } = req.params;
+        //courseAbbrev is the course abbreviation and code (ex: MA166)
+        const { abbreviation, number } = courseRegex(courseAbbrev);
+        if (!abbreviation || !number) {
+            return res.status(400).send("Invalid parameters")
+        }
+
+        prisma.course.findUnique({
+            where: {
+                abbreviation_number: {
+                    abbreviation: abbreviation.toUpperCase(),
+                    number: Number(number)
+                },
+            },
+            select: {
+                exams: {
+                    include: {
+                        semester: true
+                    }
+                }
+            }
+        }).then((course) => {
+            if (course) {
+                return res.status(200).send(course.exams)
+            }
+            else {
+                return res.status(404).send("Exams and questions not found")
+            }
+        }).catch((err) => res.status(400).send(err.message))
+    } catch (e) {
+        res.status(400).send(e)
+    }
+})
+
+// All exams with question ids and numbers
+app.get("/courses/:courseAbbrev/exams/questions", cache(300), async (req, res) => {
     try {
         const { courseAbbrev } = req.params;
         //courseAbbrev is the course abbreviation and code (ex: MA166)
@@ -215,10 +244,15 @@ app.get("/courses/:courseAbbrev/exams", cache(300), async (req, res) => {
                 exams: {
                      include: {
                         questions: {
+                            orderBy: {
+                                number: 'asc'
+                            },
                             select: {
                                 id: true,
+                                number: true
                             },
                         },
+                        semester: true
                     },
                 },
             },
@@ -235,11 +269,11 @@ app.get("/courses/:courseAbbrev/exams", cache(300), async (req, res) => {
     }
 })
 
-// All exams with questions inlcuding topics for a specific course
-app.get("/courses/:courseAbbrev/exams/questions", cache(300), async (req, res) => {
+// Full question information for specific topic
+app.get("/courses/:courseAbbrev/:topic/questions", cache(300), async (req, res) => {
     try {
-        const { courseAbbrev } = req.params;
-        //courseAbbrev is the course abbreviation and code (ex: MA166)
+        const { courseAbbrev, topic } = req.params;
+
         const { abbreviation, number } = courseRegex(courseAbbrev);
         if (!abbreviation || !number) {
             return res.status(400).send("Invalid parameters")
@@ -249,37 +283,40 @@ app.get("/courses/:courseAbbrev/exams/questions", cache(300), async (req, res) =
             where: {
                 abbreviation_number: {
                     abbreviation: abbreviation.toUpperCase(),
-                    number: Number(number)
+                    number: Number(number),
                 },
             },
             select: {
-                exams: {
+                topics: {
+                    where: {
+                        name: topic
+                    },
                     include: {
                         questions: {
-                            select: {
-                                id: true,
-                                number: true,  
-                            },
-                            orderBy: {
-                                number: 'asc'
-                            },
-                        },
-                        semester: true
+                            include: {
+                                exam: {
+                                    include: {
+                                        semester: true
+                                    }
+                                }
+                            }
+                        }
                     }
-                },
-            }
-        }).then((course) => {
-            if (course) {
-                return res.status(200).send(course.exams)
-            }
-            else {
-                return res.status(404).send("Exams and questions not found")
-            }
-        }).catch((err) => res.status(400).send(err.message))
+                }
+            },
+        })
+            .then((course) => {
+                if (course) {
+                    res.status(200).send(course.topics);
+                } else {
+                    res.status(404).send("Topic and questions not found");
+                }
+            })
+            .catch((err) => res.status(400).send(err.message));
     } catch (e) {
         res.status(400).send(e)
     }
-})
+});
 
 // All questions with id, number, and topics for an exam
 app.get("/courses/:courseAbbrev/exams/:season-:year-:examNumber", cache(300), async (req, res) => {
