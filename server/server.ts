@@ -10,8 +10,9 @@ const id_routes = require("./routes/id_routes");
 const name_routes = require("./routes/name_routes");
 const post_routes = require("./routes/post_routes");
 const ocr_routes = require("./routes/ocr_routes");
-const put_routes = require("./routes/put_routes")
-app.use(id_routes, name_routes, post_routes, ocr_routes, put_routes);
+const put_routes = require("./routes/put_routes");
+const delete_routes = require("./routes/delete_routes")
+app.use(id_routes, name_routes, post_routes, ocr_routes, put_routes, delete_routes);
 
 app.get("/", (req, res) => {
   res.send("Working")
