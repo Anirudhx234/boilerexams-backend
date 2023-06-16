@@ -5,118 +5,121 @@ const prisma = new PrismaClient();
 const app = express_routes();
 
 app.post("/courses", async (req, res) => {
-    const { name, subject, number, backgroundColor, graphicLink } = req.body
-    prisma.course.create({
-        data: {
-            name: name,
-            subject: subject,
-            number: Number(number),
-            backgroundColor: backgroundColor,
-            graphicLink: graphicLink
-        }
-    })
-        .then((resp) => res.status(200).send(resp))
-        .catch((err) => res.status(400).send(err.message))
+    try {
+        const { name, subject, abbreviation, number, backgroundColor, graphicLink } = req.body
+        prisma.course.create({
+            data: {
+                name: name,
+                subject: subject,
+                abbreviation: abbreviation,
+                number: Number(number),
+                backgroundColor: backgroundColor,
+                graphicLink: graphicLink
+            }
+        })
+            .then((resp) => res.status(200).send(resp))
+            .catch((err) => res.status(400).send(err))
+    } catch (e) {
+        res.status(400).send(e)
+    }
 });
-
-app.post("/exams", async (req, res) => {
-    const { course, season, year, number } = req.body
-    const semester = await prisma.semester.upsert({
-        where: {
-            season_year: {
-                season: Season[season as keyof typeof Season],
-                year: Number(year)
-            }
-        },
-        update: {},
-        create: {
-            season: Season[season as keyof typeof Season],
-            year: Number(year)
-        }
-    })
-
-    prisma.course.update({
-        where: {
-            id: course
-        },
-        data: {
-            exams: {
-                create: {
-                    number: Number(number),
-                    semester: {
-                        connect: {
-                            id: semester.id
-                        }
-                    }
-                }
-            },
-            semesters: {
-                connect: {
-                    id: semester.id
-                }
-            }
-        }
-    })
-        .then(exam => res.status(200).send(exam))
-        .catch((err) => res.status(400).send(err.message))
-})
 
 app.post("/topics", async (req, res) => {
-    const { name } = req.body
-    prisma.topic.create({
-        data: {
-            name: name
-        }
-    })
-        .then(() => res.status(200).send("success"))
-        .catch((err) => res.status(400).send(err.message));
-});
-
-app.post("/course-topics", async (req, res) => {
-    const { course, topics } = req.body;
-    prisma.course.update({
-        where: {
-            id: course
-        },
-        data: {
-            topics: {
-                connect: topics.map(topicId => ({ id: topicId }))
+    try {
+        const { name } = req.body
+        prisma.topic.create({
+            data: {
+                name: name
             }
-        }
-    })
-        .then((response) => res.status(200).send(response))
-        .catch((err) => res.status(400).send(err.message));
+        })
+            .then((resp) => res.status(200).send(resp))
+            .catch((err) => res.status(400).send(err));
+    } catch (e) {
+        res.status(400).send(e)
+    }
 });
 
-app.post("/questions", async (req, res) => {
-    const { course, exam, topics, number, body, answerChoices, correctChoiceIndex, solution } = req.body
-    prisma.exam.update({
-        where: {
-            id: exam
-        },
-        data: {
-            questions: {
-                create: {
-                    course: {
-                        connect: {
-                            id: course
-                        }
-                    },
-                    topics: {
-                        connect: topics.map(topicId => ({ id: topicId }))
-                    },
-                    number: Number(number),
-                    body: body,
-                    answerChoices: answerChoices,
-                    correctChoiceIndex: Number(correctChoiceIndex),
-                    solutionVideoLink: solution
+app.post("/courses/:courseId/exams", async (req, res) => {
+    try {
+        const { courseId } = req.params
+        const { season, year, number } = req.body
+        const semester = await prisma.semester.upsert({
+            where: {
+                season_year: {
+                    season: Season[season.toUpperCase() as keyof typeof Season],
+                    year: Number(year)
+                }
+            },
+            update: {},
+            create: {
+                season: Season[season.toUpperCase() as keyof typeof Season],
+                year: Number(year)
+            }
+        })
+
+        prisma.course.update({
+            where: {
+                id: courseId
+            },
+            data: {
+                exams: {
+                    create: {
+                        number: Number(number),
+                        semesterId: semester.id
+                    }
+                },
+                semesters: {
+                    connect: {
+                        id: semester.id
+                    }
                 }
             }
-        }
-    })
-        .then((response) => res.status(200).send(response))
-        .catch((err) => res.status(400).send(err.message));
+        })
+            .then(course => res.status(200).send("Exam created"))
+            .catch((err) => res.status(400).send(err))
+    } catch (e) {
+        res.status(400).send(e)
+    }
+});
+
+app.post("/courses/:courseId/exams/:examId/questions", async (req, res) => {
+    try {
+        const { courseId, examId } = req.params
+        const { topics, number, body, answerChoices, correctChoiceIndex, solutionVideoLink } = req.body
+
+        await prisma.course.update({
+            where: {
+                id: courseId
+            },
+            data: {
+                topics: {
+                    connectOrCreate: topics.map((topic) => ({
+                        where: { name: topic }, create: { name: topic }
+                    }))
+                }
+            }
+        })
+
+        prisma.question.create({
+            data: {
+                courseId: courseId,
+                examId: examId,
+                topics: {
+                    connect: topics.map((topic) => ({ name: topic }))
+                },
+                number: Number(number),
+                body: body,
+                answerChoices: answerChoices,
+                correctChoiceIndex: Number(correctChoiceIndex),
+                solutionVideoLink: solutionVideoLink
+            }
+        })
+            .then((resp) => res.status(200).send(resp))
+            .catch((err) => res.status(400).send(err))
+    } catch (e) {
+        res.status(400).send(e)
+    }
 });
 
 module.exports = app;
-export {}
+export { }
