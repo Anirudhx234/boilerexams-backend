@@ -6,7 +6,7 @@ const app = express_routes();
 
 app.post("/courses", async (req, res) => {
     try {
-        const { name, subject, abbreviation, number, backgroundColor, graphicLink } = req.body
+        const { name, subject, abbreviation, number, backgroundColor, graphicLink, published } = req.body
         prisma.course.create({
             data: {
                 name: name,
@@ -14,7 +14,14 @@ app.post("/courses", async (req, res) => {
                 abbreviation: abbreviation,
                 number: Number(number),
                 backgroundColor: backgroundColor,
-                graphicLink: graphicLink
+                graphicLink: graphicLink,
+                published: published
+            },
+            include: {
+                exams: true,
+                semesters: true,
+                topics: true,
+                questions: true
             }
         })
             .then((resp) => res.status(200).send(resp))
@@ -30,6 +37,10 @@ app.post("/topics", async (req, res) => {
         prisma.topic.create({
             data: {
                 name: name
+            },
+            include: {
+                courses: true,
+                questions: true
             }
         })
             .then((resp) => res.status(200).send(resp))
@@ -57,17 +68,11 @@ app.post("/courses/:courseId/exams", async (req, res) => {
             }
         })
 
-        prisma.course.update({
+        await prisma.course.update({
             where: {
                 id: courseId
             },
             data: {
-                exams: {
-                    create: {
-                        number: Number(number),
-                        semesterId: semester.id
-                    }
-                },
                 semesters: {
                     connect: {
                         id: semester.id
@@ -75,7 +80,18 @@ app.post("/courses/:courseId/exams", async (req, res) => {
                 }
             }
         })
-            .then(course => res.status(200).send("Exam created"))
+
+        prisma.exam.create({
+            data: {
+                courseId: courseId,
+                number: Number(number),
+                semesterId: semester.id
+            },
+            include: {
+                questions: true
+            }
+        })
+            .then(exam => res.status(200).send(exam))
             .catch((err) => res.status(400).send(err))
     } catch (e) {
         res.status(400).send(e)
@@ -112,6 +128,9 @@ app.post("/courses/:courseId/exams/:examId/questions", async (req, res) => {
                 answerChoices: answerChoices,
                 correctChoiceIndex: Number(correctChoiceIndex),
                 solutionVideoLink: solutionVideoLink
+            },
+            include: {
+                topics: true
             }
         })
             .then((resp) => res.status(200).send(resp))
