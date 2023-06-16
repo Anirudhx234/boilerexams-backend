@@ -51,5 +51,19 @@ app.delete("/courses/:courseId/exams/:examId/questions/:questionId", async(req,r
     }).then((response) => res.status(200).send(response))
     .catch((err) => res.status(404).send(err.message))
 })
+
+app.delete("/topics/:topicId", async(req, res) => {
+    try {
+        const {topicId} = req.params;
+        prisma.topic.delete({
+            where: {
+                id: topicId
+            }
+        }).then((response) => res.status(200).send(response))
+        .catch((err) => res.status(404).send(err.message))
+    } catch(err) {
+        res.status(400).send(err)
+    }
+})
 module.exports = app;
 export {}
