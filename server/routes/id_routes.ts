@@ -116,11 +116,11 @@ app.get("/id/courses/:courseId/:topicId/questions", cache(300), async (req, res)
         .catch((err) => res.status(400).send(err.message))
 })
 
-app.get("/id/questions/:id", cache(300), async (req, res) => {
-    const { id } = req.params
+app.get("/id/questions/:questionId", cache(300), async (req, res) => {
+    const { questionId } = req.params
     prisma.question.findUnique({
         where: {
-            id: id
+            id: questionId
         },
         include: {
             topics: true

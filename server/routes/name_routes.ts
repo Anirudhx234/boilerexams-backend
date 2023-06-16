@@ -5,6 +5,7 @@ const prisma = new PrismaClient();
 const app = express();
 
 const cache = require('./caching');
+const _ = require('lodash')
 
 const courseRegex = (courseAbbrev) => {
     const regex = /([a-zA-Z]+)(\d+)/;
@@ -17,8 +18,32 @@ const courseRegex = (courseAbbrev) => {
 
 // All courses metadata, no relations
 app.get("/courses", cache(300), async (req, res) => {
-    prisma.course.findMany()
-        .then((courses) => res.status(200).send(courses))
+    prisma.course.findMany({
+        orderBy: [
+            {
+                subject: 'asc'
+            },
+            {
+                number: 'asc'
+            }
+        ]
+    })
+        .then((courses) => {
+            courses = _.groupBy(courses, 'subject')
+            let result: {subject: string, courses: Array<string>}[] = [];
+            _.forEach(courses, function(value, key) {
+                result.push({subject: key, courses: value})
+            });
+            result = _.orderBy(result, 'courses', 'desc')
+            res.status(200).send(result)
+        })
+        .catch((err) => res.status(400).send(err.message))
+});
+
+// All topics metadata, no relations
+app.get("/topics", cache(300), async (req, res) => {
+    prisma.topic.findMany()
+        .then(topics => res.status(200).send(topics))
         .catch((err) => res.status(400).send(err.message))
 });
 
@@ -84,13 +109,6 @@ app.get("/courses/:courseAbbrev", cache(300), async (req, res) => {
     }
 })
 
-// All topics metadata, no relations
-app.get("/topics", cache(300), async (req, res) => {
-    prisma.topic.findMany()
-        .then(topics => res.status(200).send(topics))
-        .catch((err) => res.status(400).send(err.message))
-});
-
 // All topics for a specific course, no other relations
 app.get("/courses/:courseAbbrev/topics", cache(300), async (req, res) => {
     try {
@@ -110,7 +128,7 @@ app.get("/courses/:courseAbbrev/topics", cache(300), async (req, res) => {
             },
             select: {
                 topics: true
-            }
+            },
         }).then((course) => {
             if (course) {
                 return res.status(200).send(course.topics)
@@ -142,13 +160,13 @@ app.get("/courses/:courseAbbrev/topics/questions", cache(300), async (req, res) 
                     number: Number(number),
                 },
             },
-            include: {
+            select: {
                 topics: {
                     include: {
                         questions: {
-                            include: {
-                                exam: true,
-                                topics: true
+                            select: {
+                                id: true,
+                                number: true
                             }
                         }
                     },
@@ -159,7 +177,7 @@ app.get("/courses/:courseAbbrev/topics/questions", cache(300), async (req, res) 
                 if (course) {
                     res.status(200).send(course.topics);
                 } else {
-                    res.status(404).send("Questions and Topics not found");
+                    res.status(404).send("Topics and questions not found");
                 }
             })
             .catch((err) => res.status(400).send(err.message));
@@ -168,41 +186,8 @@ app.get("/courses/:courseAbbrev/topics/questions", cache(300), async (req, res) 
     }
 });
 
-// All exams metadata for a specific course
+// All exams with semester (no questions)
 app.get("/courses/:courseAbbrev/exams", cache(300), async (req, res) => {
-    try {
-        const { courseAbbrev } = req.params;
-        //courseAbbrev is the course abbreviation and code (ex: MA166)
-        const { abbreviation, number } = courseRegex(courseAbbrev);
-        if (!abbreviation || !number) {
-            return res.status(400).send("Invalid parameters")
-        }
-
-        prisma.course.findUnique({
-            where: {
-                abbreviation_number: {
-                    abbreviation: abbreviation.toUpperCase(),
-                    number: Number(number)
-                },
-            },
-            select: {
-                exams: true
-            }
-        }).then((course) => {
-            if (course) {
-                return res.status(200).send(course.exams)
-            }
-            else {
-                return res.status(404).send("Exams not found")
-            }
-        }).catch((err) => res.status(400).send(err.message))
-    } catch (e) {
-        res.status(400).send(e)
-    }
-})
-
-// All exams with questions inlcuding topics for a specific course
-app.get("/courses/:courseAbbrev/exams/questions", cache(300), async (req, res) => {
     try {
         const { courseAbbrev } = req.params;
         //courseAbbrev is the course abbreviation and code (ex: MA166)
@@ -221,11 +206,7 @@ app.get("/courses/:courseAbbrev/exams/questions", cache(300), async (req, res) =
             select: {
                 exams: {
                     include: {
-                        questions: {
-                            include: {
-                                topics: true
-                            }
-                        }
+                        semester: true
                     }
                 }
             }
@@ -241,6 +222,83 @@ app.get("/courses/:courseAbbrev/exams/questions", cache(300), async (req, res) =
         res.status(400).send(e)
     }
 })
+
+// All exams with question ids and numbers
+app.get("/courses/:courseAbbrev/exams/questions", cache(300), async (req, res) => {
+    try {
+        const { courseAbbrev } = req.params;
+        //courseAbbrev is the course abbreviation and code (ex: MA166)
+        const { abbreviation, number } = courseRegex(courseAbbrev);
+        if (!abbreviation || !number) {
+            return res.status(400).send("Invalid parameters")
+        }
+
+        prisma.course.findUnique({
+            where: {
+                abbreviation_number: {
+                    abbreviation: abbreviation.toUpperCase(),
+                    number: Number(number)
+                },
+            },
+            select: {
+                exams: {
+                     include: {
+                        questions: {
+                            orderBy: {
+                                number: 'asc'
+                            },
+                            select: {
+                                id: true,
+                                number: true
+                            },
+                        },
+                        semester: true
+                    },
+                },
+            },
+        }).then((course) => {
+            if (course) {
+                return res.status(200).send(course.exams)
+            }
+            else {
+                return res.status(404).send("Exams not found")
+            }
+        }).catch((err) => res.status(400).send(err.message))
+    } catch (e) {
+        res.status(400).send(e)
+    }
+})
+
+// Full question information for specific topic
+app.get("/courses/:courseAbbrev/topics/:topicName/questions", async (req, res) => {
+    const {courseAbbrev, topicName } = req.params;
+    prisma.topic.findUnique({
+        where: {
+            name: topicName
+        },
+        include: {
+            questions: {
+                include: {
+                    topics: true,
+                    exam: {
+                        select:{
+                            number: true,
+                            semester: true,
+                        }
+                    }
+                }
+            }
+        }
+    })
+      .then((topics) => {
+        if (topics) {
+          res.status(200).send(topics);
+        } else {
+          res.status(404).send("Topics not found");
+        }
+      })
+      .catch((err) => res.status(400).send(err));
+  });
 
 // All questions with id, number, and topics for an exam
 app.get("/courses/:courseAbbrev/exams/:season-:year-:examNumber", cache(300), async (req, res) => {
@@ -283,6 +341,9 @@ app.get("/courses/:courseAbbrev/exams/:season-:year-:examNumber", cache(300), as
                     },
                     include: {
                         questions: {
+                            orderBy: {
+                                number: 'asc'
+                            },
                             select: {
                                 id: true,
                                 number: true,
