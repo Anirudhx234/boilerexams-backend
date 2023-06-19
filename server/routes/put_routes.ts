@@ -23,7 +23,7 @@ app.put("/courses/:courseId", async (req, res) => {
 app.put("/courses/:courseId/exams/:examId", async (req, res) => {
     try {
         const { courseId, examId } = req.params
-        const { season, year, number } = req.body
+        const { semester: { season, year }, number } = req.body
         let semesterId;
         if (season && year) {
             const semester = await prisma.semester.upsert({
@@ -61,6 +61,9 @@ app.put("/courses/:courseId/exams/:examId", async (req, res) => {
             data: {
                 semesterId: semesterId,
                 number: number
+            },
+            include: {
+                semester: true
             }
         })
             .then((resp) => res.status(200).send(resp))
@@ -82,7 +85,7 @@ app.put("/courses/:courseId/exams/:examId/questions/:questionId", async (req, re
             data: {
                 topics: {
                     connectOrCreate: topics.map((topic) => ({
-                        where: {name: topic}, create: {name: topic}
+                        where: { name: topic }, create: { name: topic }
                     }))
                 }
             }
@@ -96,8 +99,8 @@ app.put("/courses/:courseId/exams/:examId/questions/:questionId", async (req, re
                 courseId: courseId,
                 examId: examId,
                 topics: {
-                    set: topics.map((topic) => ({name: topic}))
-                },     
+                    set: topics.map((topic) => ({ name: topic }))
+                },
                 number: Number(number),
                 body: body,
                 answerChoices: answerChoices,
