@@ -48,7 +48,7 @@ app.get("/topics", cache(300), async (req, res) => {
 });
 
 // All courses with relations
-app.get("/courses/all", cache(300), async (req, res) => {
+app.get("/courses/all", async (req, res) => {
     try {
         prisma.course.findMany({
             include: {
@@ -60,7 +60,11 @@ app.get("/courses/all", cache(300), async (req, res) => {
                 semesters: true,
                 exams: {
                     include: {
-                        questions: true,
+                        questions: {
+                            include: {
+                                topics: true
+                            }
+                        },
                         semester: true,
                     }
                 }
