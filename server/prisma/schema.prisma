@@ -59,7 +59,7 @@ model Question {
   exam               Exam     @relation(fields: [examId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   topics             Topic[]  @relation("QuestionToTopic")
 
-  @@unique([examId, number])
+  // @@unique([examId, number])
 }
 
 model Semester {
