@@ -433,5 +433,21 @@ app.get("/courses/:courseAbbrev/exams/:season-:year-:examNumber/questions", cach
         res.status(400).send(e)
     }
 });
+app.get("/stats", cache(300), async(req, res) => {
+    try {
+        const questionsTotal = await prisma.question.count()
+
+        const questions = await prisma.question.findMany({})
+        let questionsAnswered = 0
+        await questions.forEach((question) => {
+            questionsAnswered += question.submissions.reduce((a,b) => a+b, 0)
+        })
+        res.status(200).send({questionsTotal, questionsAnswered})
+    } catch(e) {
+        res.status(400).send(e)
+    }
+
+
+})
 
 module.exports = app

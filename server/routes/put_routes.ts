@@ -130,6 +130,36 @@ app.put("/topics/:topicId", async (req, res) => {
         res.status(400).send(e)
     }
 })
+app.put("/questions/:questionId/submit/answerChoiceIndex=:index", async(req, res) => {
+    try {
+        const {questionId, index} = req.params
+        const answerChoiceIndex = Number(index)
+        let {submissions} = await prisma.question.findUnique({
+            where: {
+                id: questionId
+            },
+            select: {
+                submissions: true
+            }
+        })
+        if (!submissions) {
+            submissions = [0, 0, 0, 0, 0]
+        }
+        submissions[answerChoiceIndex] = submissions[answerChoiceIndex] + 1
+        prisma.question.update({
+            where: {
+                id: questionId
+            },
+            data: {
+                submissions: submissions
+            }
+        })
+        .then((resp) => res.status(200).send(resp))
+        .catch((err) => res.status(404).send(err))
+    } catch(e) {
+        res.status(400).send(e)
+    }
+})
 
 module.exports = app
 export { }
