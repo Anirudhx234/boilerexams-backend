@@ -251,7 +251,7 @@ app.post("/requests", async (req, res) => {
 
         const params = { embeds: [embed] };
         await axios.post(
-            "https://discord.com/api/webhooks/1122297199972335626/j770OhX7mwVN081BXzo5y8ZLRZtoq0QiDl803F8lIsrm2URo1gmh-XmDwHU0zi1wSWFE",
+            "https://discord.com/api/webhooks/1122664339103547423/Va97wFs0iiFGWeq3TsjFrrsLBAi-mllyrETYyotkE6o9geHLn0xLylfN-VrS-EX7aja5",
             params
         )
             .then((resp) => res.status(200).send(resp))
