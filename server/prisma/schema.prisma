@@ -23,6 +23,7 @@ model Course {
 
   @@unique([subject, number])
   @@unique([abbreviation, number])
+  @@unique([abbreviation, number, published])
 }
 
 model Exam {
@@ -36,6 +37,7 @@ model Exam {
   questions  Question[]
 
   @@unique([number, courseId, semesterId])
+  @@unique([number, courseId, semesterId, published])
 }
 
 model Topic {
