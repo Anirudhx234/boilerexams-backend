@@ -146,33 +146,21 @@ app.post("/courses/requests", async (req, res) => {
     try {
         const { subject, course } = req.body;
 
-        // Parse purdueIo for a valid Subject (MA, CS, AAE, ...)
-        const purdueIoSubjectRequest = await axios.get("https://api.purdue.io/odata/Subjects");
-        const subjects = await purdueIoSubjectRequest.data.value;
-        const purdueSubject = subjects.find(element => element.Abbreviation == "CS");
-
-        if (!purdueSubject) {
-            res.status(406).send(`Invalid Subject ${subject}`);
-            return;
-        }
-
         // Parse purdueIo for a valid course (MA265, CS180, AEE200, ...)
         const purdueIoCourseRequest = await axios.get(`https://api.purdue.io/odata/Courses?$filter=Subject/Abbreviation eq '${subject}'`);
         const courses = await purdueIoCourseRequest.data.value;
-        const purdueCourse = courses.find(element => element.Number == course);
+        const purdueCourse = courses.find(element => element.Number === course);
 
         if (!purdueCourse) {
-            res.status(406).send(`Invalid Course Number ${subject} ${course}`);
+            res.status(406).send(`Invalid Course ${subject} ${course}`);
             return;
         }
 
-        const newCourseRequest = { id: purdueCourse.Id, subject: purdueSubject.Abbreviation, course: purdueCourse.Number, requests: 1 };
+        const newCourseRequest = { id: purdueCourse.Id, subject: subject, course: course, requests: 1 };
 
         await prisma.courseRequest.upsert({
             where: {
-                subject_course: {
-                    id: newCourseRequest.id
-                }
+                id: newCourseRequest.id
             },
             create: newCourseRequest,
             update: {
@@ -219,11 +207,11 @@ app.post("/reports", async (req, res) => {
 
         let content: string | null;
 
-        if (pingableType == 0) {
+        if (pingableType === 0) {
             content = null;
-        } else if (pingableType == 1) {
+        } else if (pingableType === 1) {
             content = `<@${pingableId}>`;
-        } else if (pingableType == 2) {
+        } else if (pingableType === 2) {
             content = `<@&${pingableId}>`;
         } else {
             content = null;
