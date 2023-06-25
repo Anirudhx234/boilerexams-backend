@@ -147,16 +147,17 @@ app.post("/courses/requests", async (req, res) => {
         const { subject, course } = req.body;
 
         // Parse purdueIo for a valid course (MA265, CS180, AEE200, ...)
+        const courseNumber = course + "0".repeat(5 - course.length);
         const purdueIoCourseRequest = await axios.get(`https://api.purdue.io/odata/Courses?$filter=Subject/Abbreviation eq '${subject}'`);
         const courses = await purdueIoCourseRequest.data.value;
-        const purdueCourse = courses.find(element => element.Number === course);
+        const purdueCourse = courses.find(element => element.Number === courseNumber);
 
         if (!purdueCourse) {
-            res.status(406).send(`Invalid Course ${subject} ${course}`);
+            res.status(406).send(`Invalid Course ${subject} ${courseNumber}`);
             return;
         }
 
-        const newCourseRequest = { id: purdueCourse.Id, subject: subject, course: course, requests: 1 };
+        const newCourseRequest = { id: purdueCourse.Id, subject: subject, course: courseNumber, requests: 1 };
 
         await prisma.courseRequest.upsert({
             where: {
