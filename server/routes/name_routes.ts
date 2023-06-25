@@ -19,6 +19,9 @@ const courseRegex = (courseAbbrev) => {
 // All courses metadata, no relations
 app.get("/courses", cache(300), async (req, res) => {
     prisma.course.findMany({
+        where: {
+            published: true
+        },
         orderBy: [
             {
                 subject: 'asc'
@@ -30,9 +33,9 @@ app.get("/courses", cache(300), async (req, res) => {
     })
         .then((courses) => {
             courses = _.groupBy(courses, 'subject')
-            let result: {subject: string, courses: Array<string>}[] = [];
-            _.forEach(courses, function(value, key) {
-                result.push({subject: key, courses: value})
+            let result: { subject: string, courses: Array<string> }[] = [];
+            _.forEach(courses, function (value, key) {
+                result.push({ subject: key, courses: value })
             });
             result = _.orderBy(result, 'courses', 'desc')
             res.status(200).send(result)
@@ -94,15 +97,16 @@ app.get("/courses/:courseAbbrev", cache(300), async (req, res) => {
         }
         prisma.course.findUnique({
             where: {
-                abbreviation_number: {
+                abbreviation_number_published: {
                     abbreviation: abbreviation.toUpperCase(),
-                    number: Number(number)
-                }
+                    number: Number(number),
+                    published: true
+                },
             }
         })
-            .then((resp) => {
-                if (resp) {
-                    res.status(200).send(resp)
+            .then((course) => {
+                if (course) {
+                    res.status(200).send(course)
                 } else {
                     res.status(404).send("Course not found")
                 }
@@ -125,10 +129,11 @@ app.get("/courses/:courseAbbrev/topics", cache(300), async (req, res) => {
 
         prisma.course.findUnique({
             where: {
-                abbreviation_number: {
+                abbreviation_number_published: {
                     abbreviation: abbreviation.toUpperCase(),
-                    number: Number(number)
-                },
+                    number: Number(number),
+                    published: true
+                }
             },
             select: {
                 topics: true
@@ -159,15 +164,22 @@ app.get("/courses/:courseAbbrev/topics/questions", cache(300), async (req, res) 
 
         prisma.course.findUnique({
             where: {
-                abbreviation_number: {
+                abbreviation_number_published: {
                     abbreviation: abbreviation.toUpperCase(),
                     number: Number(number),
-                },
+                    published: true
+                }
+
             },
             select: {
                 topics: {
                     include: {
                         questions: {
+                            where: {
+                                exam: {
+                                    published: true
+                                }
+                            },
                             select: {
                                 id: true,
                                 number: true
@@ -178,7 +190,7 @@ app.get("/courses/:courseAbbrev/topics/questions", cache(300), async (req, res) 
             },
         })
             .then((course) => {
-                if (course) {
+                if (course && course.topics) {
                     res.status(200).send(course.topics);
                 } else {
                     res.status(404).send("Topics and questions not found");
@@ -202,13 +214,17 @@ app.get("/courses/:courseAbbrev/exams", cache(300), async (req, res) => {
 
         prisma.course.findUnique({
             where: {
-                abbreviation_number: {
+                abbreviation_number_published: {
                     abbreviation: abbreviation.toUpperCase(),
-                    number: Number(number)
-                },
+                    number: Number(number),
+                    published: true
+                }
             },
             select: {
                 exams: {
+                    where: {
+                        published: true
+                    },
                     include: {
                         semester: true
                     }
@@ -239,14 +255,18 @@ app.get("/courses/:courseAbbrev/exams/questions", cache(300), async (req, res) =
 
         prisma.course.findUnique({
             where: {
-                abbreviation_number: {
+                abbreviation_number_published: {
                     abbreviation: abbreviation.toUpperCase(),
-                    number: Number(number)
-                },
+                    number: Number(number),
+                    published: true
+                }
             },
             select: {
                 exams: {
-                     include: {
+                    where: {
+                        published: true
+                    },
+                    include: {
                         questions: {
                             orderBy: {
                                 number: 'asc'
@@ -275,17 +295,22 @@ app.get("/courses/:courseAbbrev/exams/questions", cache(300), async (req, res) =
 
 // Full question information for specific topic
 app.get("/courses/:courseAbbrev/topics/:topicName/questions", async (req, res) => {
-    const {courseAbbrev, topicName } = req.params;
+    const { courseAbbrev, topicName } = req.params;
     prisma.topic.findUnique({
         where: {
             name: topicName
         },
         include: {
             questions: {
+                where: {
+                    exam: {
+                        published: true
+                    }
+                },
                 include: {
                     topics: true,
                     exam: {
-                        select:{
+                        select: {
                             number: true,
                             semester: true,
                         }
@@ -294,15 +319,15 @@ app.get("/courses/:courseAbbrev/topics/:topicName/questions", async (req, res) =
             }
         }
     })
-      .then((topics) => {
-        if (topics) {
-          res.status(200).send(topics);
-        } else {
-          res.status(404).send("Topics not found");
-        }
-      })
-      .catch((err) => res.status(400).send(err));
-  });
+        .then((topics) => {
+            if (topics) {
+                res.status(200).send(topics);
+            } else {
+                res.status(404).send("Topics not found");
+            }
+        })
+        .catch((err) => res.status(400).send(err));
+});
 
 // All questions with id, number, and topics for an exam
 app.get("/courses/:courseAbbrev/exams/:season-:year-:examNumber", cache(300), async (req, res) => {
@@ -319,10 +344,11 @@ app.get("/courses/:courseAbbrev/exams/:season-:year-:examNumber", cache(300), as
 
         prisma.course.findUnique({
             where: {
-                abbreviation_number: {
+                abbreviation_number_published: {
                     abbreviation: abbreviation.toUpperCase(),
-                    number: Number(number)
-                },
+                    number: Number(number),
+                    published: true
+                }
             },
             include: {
                 semesters: {
@@ -336,12 +362,12 @@ app.get("/courses/:courseAbbrev/exams/:season-:year-:examNumber", cache(300), as
             if (course) {
                 prisma.exam.findUnique({
                     where: {
-                        number_courseId_semesterId: {
+                        number_courseId_semesterId_published: {
                             number: Number(examNumber),
                             courseId: course.id,
-                            semesterId: course.semesters[0].id
-                        },
-
+                            semesterId: course.semesters[0].id,
+                            published: true
+                        }
                     },
                     include: {
                         questions: {
@@ -358,6 +384,9 @@ app.get("/courses/:courseAbbrev/exams/:season-:year-:examNumber", cache(300), as
                 }).then((exam) => {
                     if (exam) {
                         return res.status(200).send(exam)
+                    }
+                    else {
+                        return res.status(404).send("No exam found")
                     }
                 })
 
@@ -394,35 +423,43 @@ app.get("/courses/:courseAbbrev/exams/:season-:year-:examNumber/questions", cach
         if (!semester) {
             return res.status(400).send("Invalid semester")
         }
-        prisma.course.findUnique({
+
+        const course = await prisma.course.findUnique({
             where: {
-                abbreviation_number: {
+                abbreviation_number_published: {
                     abbreviation: abbreviation.toUpperCase(),
-                    number: Number(number)
+                    number: Number(number),
+                    published: true
+                }
+            }
+        })
+        if (!course) {
+            return res.status(404).send("Course not found")
+        }
+
+        prisma.exam.findUnique({
+            where: {
+                number_courseId_semesterId_published: {
+                    number: Number(examNumber),
+                    courseId: course.id,
+                    semesterId: semester.id,
+                    published: true
                 }
             },
-            select: {
-                exams: {
-                    where: {
-                        number: Number(examNumber),
-                        semesterId: semester.id
+            include: {
+                questions: {
+                    orderBy: {
+                        number: 'asc'
                     },
                     include: {
-                        questions: {
-                            orderBy: {
-                                number: 'asc'
-                            },
-                            include: {
-                                topics: true
-                            }
-                        }
+                        topics: true
                     }
                 }
             }
         })
-            .then((resp) => {
-                if (resp.exams.length) {
-                    res.status(200).send(resp.exams[0])
+            .then((exam) => {
+                if (exam) {
+                    res.status(200).send(exam)
                 }
                 else {
                     res.status(404).send("Exam not found")

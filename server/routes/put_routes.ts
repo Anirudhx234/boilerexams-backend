@@ -106,6 +106,9 @@ app.put("/courses/:courseId/exams/:examId/questions/:questionId", async (req, re
                 answerChoices: answerChoices,
                 correctChoiceIndex: Number(correctChoiceIndex),
                 solutionVideoLink: solutionVideoLink
+            },
+            include: {
+                topics: true
             }
         })
             .then((resp) => res.status(200).send(resp))
