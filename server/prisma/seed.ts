@@ -28,11 +28,6 @@ async function main() {
             courseId: course.id,
             semesterId: semester.id,
             number: 1,
-            semesters: {
-                connect: {
-                    id: semester.id
-                }
-            },
             questions: {
                 create: [{
                     courseId: course.id,
@@ -73,4 +68,4 @@ async function main() {
 }
 
 main()
-export {}
+export { }
