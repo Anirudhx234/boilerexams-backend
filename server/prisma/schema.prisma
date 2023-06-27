@@ -79,3 +79,10 @@ enum Season {
   SUMMER
   FALL
 }
+
+model CourseRequest {
+  id       String @id
+  subject  String
+  course   String
+  requests Int    @default(1)
+}
