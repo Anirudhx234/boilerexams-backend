@@ -173,10 +173,14 @@ app.post("/courses/requests", async (req, res) => {
         });
 
         const courseRequests = await prisma.courseRequest.findMany({
-            orderBy: {
-                subject: 'asc',
-                course: 'asc'
-            }
+            orderBy: [
+                {
+                    subject: 'asc',
+                },
+                {
+                    course: 'asc',
+                }
+            ]
         });
 
         const fields = courseRequests.map(element => {
@@ -195,7 +199,7 @@ app.post("/courses/requests", async (req, res) => {
             "https://discord.com/api/webhooks/1122297199972335626/j770OhX7mwVN081BXzo5y8ZLRZtoq0QiDl803F8lIsrm2URo1gmh-XmDwHU0zi1wSWFE/messages/1122298402944843807",
             params
         )
-            .then((resp) => res.status(200).send(resp))
+            .then(() => res.status(200).send())
             .catch((err) => res.status(400).send(err))
 
     } catch (e) {
@@ -203,17 +207,17 @@ app.post("/courses/requests", async (req, res) => {
     }
 });
 
-app.post("/reports", async (req, res) => {
+app.post("/bug-reports", async (req, res) => {
     try {
         const { title, description, userAgent, pingableId, pingableType } = req.body;
 
         let content: string | null;
 
-        if (pingableType === 0) {
+        if (pingableType == 0) {
             content = null;
-        } else if (pingableType === 1) {
+        } else if (pingableType == 1) {
             content = `<@${pingableId}>`;
-        } else if (pingableType === 2) {
+        } else if (pingableType == 2) {
             content = `<@&${pingableId}>`;
         } else {
             content = null;
@@ -229,10 +233,10 @@ app.post("/reports", async (req, res) => {
 
         const params = { embeds: [embed], content: content };
         await axios.post(
-            "https://discord.com/api/webhooks/1122297199972335626/j770OhX7mwVN081BXzo5y8ZLRZtoq0QiDl803F8lIsrm2URo1gmh-XmDwHU0zi1wSWFE",
+            "https://discord.com/api/webhooks/1122297351344758896/H7cA4si1ZoWPBtPsLPWYZalAuYbCCcMVkf7NbRj6HbQf27_i5pp6lr-T5K0din004raE",
             params
         )
-            .then((resp) => res.status(200).send(resp))
+            .then(() => res.status(200).send())
             .catch((err) => res.status(400).send(err))
 
     } catch (e) {
@@ -240,7 +244,7 @@ app.post("/reports", async (req, res) => {
     }
 });
 
-app.post("/requests", async (req, res) => {
+app.post("/feature-requests", async (req, res) => {
     try {
         const { title, description } = req.body;
 
@@ -256,7 +260,7 @@ app.post("/requests", async (req, res) => {
             "https://discord.com/api/webhooks/1122664339103547423/Va97wFs0iiFGWeq3TsjFrrsLBAi-mllyrETYyotkE6o9geHLn0xLylfN-VrS-EX7aja5",
             params
         )
-            .then((resp) => res.status(200).send(resp))
+            .then(() => res.status(200).send())
             .catch((err) => res.status(400).send(err))
 
     } catch (e) {
