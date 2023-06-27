@@ -81,8 +81,8 @@ enum Season {
 }
 
 model CourseRequest {
-  id        String @id
-  subject   String
-  course    String
-  requests  Int    @default(1)
+  id       String @id
+  subject  String
+  course   String
+  requests Int    @default(1)
 }
