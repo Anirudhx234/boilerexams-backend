@@ -240,59 +240,68 @@ app.post("/convert-test", async (req, res) => {
 
 
 //2023_06_28_75fdd6edc01be3a36ec9g
+//2023_06_28_5d29a85a83a19b1dd0a7g
 app.post("/convert-file", upload.single("file"), async (req, res) => {
-    if (!req.file) {
-        throw Error
-    }
-    const data = new FormData();
-    console.log(req.file)
-    data.append("file", req.file.buffer, {
-        filename: req.file.originalname,
-        contentType: req.file.mimetype
-    });
-    const options_json = {
-        math_inline_delimiters: ["\$", "\$"],
-        conversion_formats: {
-            "tex.zip": true,
-        },
-        numbers_default_to_math: true,
-    };
-    data.append('options_json', JSON.stringify(options_json))
-    let config = {
-        method: "post",
-        maxBodyLength: Infinity,
-        url: "https://api.mathpix.com/v3/pdf",
-        headers: {
-        'app_key': "9d23dece308b5305a40efa607a7869ad46c10cf18730632581905b537026a8d4",
-        'Content-Type': 'multipart/form-data',
-        ...data.getHeaders()
-    },
-        data: data
-    }
-    axios.request(config)
-    .then(async (id) => {
-        const headers = {
-            'app_id': "boilerexams_gmail_com_a7d9fe_0dc934",
-            'app_key': "9d23dece308b5305a40efa607a7869ad46c10cf18730632581905b537026a8d4",
-            'Content-Type': 'application/json'
+    try {
+        if (!req.file) {
+            throw Error
         }
-        const url = "https://api.mathpix.com/v3/pdf/".concat(id.data.pdf_id)
-        let respond = await axios.get(url, {
-            headers: headers
-        })
-        while (respond.data.status != "completed") {
-            await new Promise(f => setTimeout(f, 10000));
-            respond = await axios.get(url, {
+        const data = new FormData();
+        console.log(req.file)
+        data.append("file", req.file.buffer, {
+            filename: req.file.originalname,
+            contentType: req.file.mimetype
+        });
+        const options_json = {
+            math_inline_delimiters: ["\$", "\$"],
+            conversion_formats: {
+                "tex.zip": true,
+            },
+            numbers_default_to_math: true,
+        };
+        data.append('options_json', JSON.stringify(options_json))
+        let config = {
+            method: "post",
+            maxBodyLength: Infinity,
+            url: "https://api.mathpix.com/v3/pdf",
+            headers: {
+            'app_key': "9d23dece308b5305a40efa607a7869ad46c10cf18730632581905b537026a8d4",
+            'Content-Type': 'multipart/form-data',
+            ...data.getHeaders()
+        },
+            data: data
+        }
+        axios.request(config)
+        .then(async (id) => {
+            const headers = {
+                'app_id': "boilerexams_gmail_com_a7d9fe_0dc934",
+                'app_key': "9d23dece308b5305a40efa607a7869ad46c10cf18730632581905b537026a8d4",
+                'Content-Type': 'application/json'
+            }
+            const url = "https://api.mathpix.com/v3/pdf/".concat(id.data.pdf_id)
+            console.log(id.data.pdf_id)
+            let respond = await axios.get(url, {
                 headers: headers
             })
-        }
-        axios.get(url.concat(".tex"), {
-            headers: headers
-        }).then(async (content) => {
-            const questions = await parseQuestions(content, id.data.pdf_id, req.body.choices)
-            res.status(200).send(questions)
+            while (respond.data.status != "completed") {
+                await new Promise(f => setTimeout(f, 10000));
+                respond = await axios.get(url, {
+                    headers: headers
+                })
+            }
+            axios.get(url.concat(".tex"), {
+                headers: headers
+            }).then(async (content) => {
+                console.log(req.choices)
+                console.log(content)
+                const questions = await parseQuestions(content, id.data.pdf_id, req.choices)
+                res.status(200).send(questions)
+            })
         })
-    })
+    } catch (err) {
+        console.log(err)
+        res.status(400).send(err);
+    }
 })
 
 module.exports = app;

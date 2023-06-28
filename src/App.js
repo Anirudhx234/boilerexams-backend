@@ -263,9 +263,11 @@ function App() {
   }
 
   const uploadViaFile = async () => {
-    const data = new FormData();
-    data.append('pdf', selectedFile)
-    axios.post('http://localhost:8080/convert-file', {data, choices})
+    const file = new FormData();
+    file.append('file', selectedFile)
+    console.log("posting")
+    console.log(selectedFile)
+    axios.post('http://localhost:8080/convert-file', file, choices)
     .then((questions) => {
       console.log(questions)
     }).catch ((err) => {
