@@ -16,6 +16,7 @@ const storage = multer.memoryStorage({
 const upload = multer({ storage: storage });
 const FormData = require('form-data')
 
+
 app.post("/convert", upload.single("file"), async (req, res) => {
     try {
         if (!req.file) {
@@ -40,8 +41,8 @@ app.post("/convert", upload.single("file"), async (req, res) => {
             }
         }, {
             headers: {
-                'app_id': "boilerexams_gmail_com_a7d9fe_0dc934",
-                'app_key': "9d23dece308b5305a40efa607a7869ad46c10cf18730632581905b537026a8d4",
+                'app_id': process.env.MATHPIX_ID,
+                'app_key': process.env.MATHPIX_KEY,
                 'Content-Type': 'application/json'
             }
         });
@@ -65,8 +66,8 @@ interface QuestionPart {
 app.post("/convert-link", async (req, res) => {
     try {
         const headers = {
-            'app_id': "boilerexams_gmail_com_a7d9fe_0dc934",
-            'app_key': "9d23dece308b5305a40efa607a7869ad46c10cf18730632581905b537026a8d4",
+            'app_id': process.env.MATHPIX_ID,
+            'app_key': process.env.MATHPIX_KEY,
             'Content-Type': 'application/json'
         }
         const id = await axios.post("https://api.mathpix.com/v3/pdf", {
@@ -201,9 +202,10 @@ const checkImage = (arr, images, pdf_id) => {
 app.post("/convert-test", async (req, res) => {
     console.log("test")
     try {
+        console.log(process.env.MATHPIX_ID)
         const headers = {
-            'app_id': "boilerexams_gmail_com_a7d9fe_0dc934",
-            'app_key': "9d23dece308b5305a40efa607a7869ad46c10cf18730632581905b537026a8d4",
+            'app_id': process.env.MATHPIX_ID,
+            'app_key': process.env.MATHPIX_KEY,
             'Content-Type': 'application/json'
         }
         //'2023_06_20_6f00c60af0637a2a7afbg'
