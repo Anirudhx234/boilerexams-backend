@@ -110,11 +110,9 @@ app.post("/convert-link", async (req, res) => {
     
     
 const parseQuestions = async (content, pdf_id, choices) => {
-    console.log(content)
     const regex1 = /\\[a-z]+\{enumerate\}/g
     const regex2 = /\\setcounter\{enumi\}\{[0-9]*\}/g
-    const questions = content.data.substring(content.data.search('\\item') + 4, content.data.search('\\end\{document\}')).replaceAll(regex1, '').replaceAll(regex2, '').split('\\item')
-    //const images = content.data.substring(content.data.search('\\end\{document\}')).match(/https:\/\/cdn.mathpix.com\/.+PK/g)
+    const questions = content.data.substring(content.data.search('\\begin\{document\}') + 16, content.data.search('\\end\{document\}')).replaceAll(regex1, '').replaceAll(regex2, '').split(/\\item|\\section/)
     const images = content.data.substring(content.data.search('\\end\{document\}')).match(/(.+)(https:\/\/cdn.mathpix.com\/.+)PK/g)
 
     let arr
@@ -151,6 +149,7 @@ const parseQuestions = async (content, pdf_id, choices) => {
         }
         count = 0
     });
+    console.log(modifiedQuestion)
     return modifiedQuestion
 }
 //NEED TO TEST -> Doesn't really work
@@ -184,15 +183,14 @@ const checkImage = (arr, images, pdf_id) => {
             console.log(element)
             part.hasImage = true
             const imageid = `${element.substring(element.search(pdf_id)).match(/[^\}\{}]+/g)[0]}`.replaceAll(/\(/g, '\\\(').replaceAll(/\)/g, '\\\)')
-            console.log(imageid)
+            //console.log(imageid)
             const image = images.find(image => image.replaceAll(/\(/g, '\\\(').replaceAll(/\)/g, '\\\)').includes(imageid))
             const imageUrl = image.substring(image.search("https\:"), image.length - 2)
-            console.log(imageUrl)
+            //console.log(imageUrl)
             part.imageLink = imageUrl
         }
         question.push(part)
     });
-    //console.log(question)
     return question
 }
 
@@ -217,7 +215,6 @@ app.post("/convert-test", async (req, res) => {
         //'2023_06_28_75fdd6edc01be3a36ec9g' -> CS
         //2023_06_25_d25c2986903bb495d7edg
         const pdf_id = req.body.pdf_id
-        console.log(pdf_id)
         const url = "https://api.mathpix.com/v3/pdf/".concat(pdf_id)
         let respond = await axios.get(url, {
             headers: headers
@@ -232,7 +229,7 @@ app.post("/convert-test", async (req, res) => {
             headers: headers
         }).then(async (content) => {
             const questions = await parseQuestions(content, pdf_id, req.body.choices)
-            console.log(questions)
+            //console.log(questions)
             res.status(200).send(questions)
         })
     } catch (err) {
@@ -279,9 +276,7 @@ app.post("/convert-file", upload.single("file"), async (req, res) => {
             'app_key': "9d23dece308b5305a40efa607a7869ad46c10cf18730632581905b537026a8d4",
             'Content-Type': 'application/json'
         }
-        console.log(id.pdf_id)
-        const url = "https://api.mathpix.com/v3/pdf/".concat(id.pdf_id)
-        console.log(url)
+        const url = "https://api.mathpix.com/v3/pdf/".concat(id.data.pdf_id)
         let respond = await axios.get(url, {
             headers: headers
         })
@@ -294,7 +289,7 @@ app.post("/convert-file", upload.single("file"), async (req, res) => {
         axios.get(url.concat(".tex"), {
             headers: headers
         }).then(async (content) => {
-            const questions = await parseQuestions(content, id.pdf_id, req.body.choices)
+            const questions = await parseQuestions(content, id.data.pdf_id, req.body.choices)
             res.status(200).send(questions)
         })
     })
