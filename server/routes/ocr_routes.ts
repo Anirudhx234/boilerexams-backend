@@ -113,7 +113,7 @@ app.post("/convert-link", async (req, res) => {
 const parseQuestions = async (content, pdf_id, choices) => {
     const regex1 = /\\[a-z]+\{enumerate\}/g
     const regex2 = /\\setcounter\{enumi\}\{[0-9]*\}/g
-    const questions = content.data.substring(content.data.search('\\begin\{document\}') + 16, content.data.search('\\end\{document\}')).replaceAll(regex1, '').replaceAll(regex2, '').split(/\\item|\\section/)
+    const questions = content.data.substring(content.data.search('begin\{document\}') + 15, content.data.search('\\end\{document\}')).replaceAll(regex1, '').replaceAll(regex2, '').split(/\\item|\\section/)
     const images = content.data.substring(content.data.search('\\end\{document\}')).match(/(.+)(https:\/\/cdn.mathpix.com\/.+)PK/g)
 
     let arr
