@@ -153,24 +153,41 @@ const parseQuestions = async (content, pdf_id, choices) => {
     console.log(modifiedQuestion)
     return modifiedQuestion
 }
-//NEED TO TEST -> Doesn't really work
-// while ((arr = multiQReg.exec(question)) !== null) {
-// count += arr[0].length
-// let singleQ = singleQReg.exec(question.substring(count))
-// if (singleQ) {
-// modifiedQuestion.push(checkImage(singleQ, images, pdf_id))
+// let multiQ
+// let singleQ
+// let q = question
+
+
+// let mQR, sQR
+
+
+// switch(choices) {
+// case "4":
+// mQR = /(.+)\n(\(*[Aa][\.\)].+)\n(\(*[Bb][\.\)].+)\n(\(*[Cc][\.\)].+)\n(\(*[Dd][\.\)].+)[0-9]+\./s
+// sQR = /(.+)\n(\(*[Aa][\.\)].+)\n(\(*[Bb][\.\)].+)\n(\(*[Cc][\.\)].+)\n(\(*[Dd][\.\)].+)/s
+// break;
+// case "5":
+// mQR = /(.+)\n(\(*[Aa][\.\)].+)\n(\(*[Bb][\.\)].+)\n(\(*[Cc][\.\)].+)\n(\(*[Dd][\.\)].+)\n(\(*[Ee][\.\)].+)[0-9]+\./s
+// sQR = /(.+)(\(*[Aa][\.\)].+)\n(\(*[Bb][\.\)].+)\n(\(*[Cc][\.\)].+)\n(\(*[Dd][\.\)].+)\n(\(*[Ee][\.\)].+)/s
+// break;
+// case "6":
+// mQR = /(.+)\n(\(*[Aa][\.\)].+)\n(\(*[Bb][\.\)].+)\n(\(*[Cc][\.\)].+)\n(\(*[Dd][\.\)].+)\n(\(*[Ee][\.\)].+)\n(\(*[Ff][\.\)].+)[0-9]+\./s
+// sQR = /(.+)\n(\(*[Aa][\.\)].+)\n(\(*[Bb][\.\)].+)\n(\(*[Cc][\.\)].+)\n(\(*[Dd][\.\)].+)\n(\(*[Ee][\.\)].+)\n(\(*[Ff][\.\)].+)/s
+// break;
 // }
-// question = question.substring(0, count - 2)
-// count = 0;
+// console.log("-------------NEW QUESTION------------")
+// console.log(`question=${q}`)
+// while (multiQ = q.match(mQR)) {
+// console.log(`Found multiQ ${multiQ[0]}`)
+// q = q.substring(multiQ[0].length)
+// console.log(`current q=${q}`)
+// modifiedQuestion.push(multiQ)
 // }
-// let singleQ = singleQReg.exec(question)
-// if (singleQ) {
-// modifiedQuestion.push(checkImage(singleQ, images, pdf_id))
+// if (singleQ = q.match(sQR)) {
+// console.log(`Found singleQ=${singleQ[0]}`)
+// modifiedQuestion.push(singleQ)
 // }
-// count = 0;
-//npm run reset
-//ts-node-esm prisma/seed.ts
-//npx prisma studio 
+
 
 const checkImage = (arr, images, pdf_id) => {
     let question = new Array<QuestionPart>()
@@ -184,10 +201,8 @@ const checkImage = (arr, images, pdf_id) => {
             console.log(element)
             part.hasImage = true
             const imageid = `${element.substring(element.search(pdf_id)).match(/[^\}\{}]+/g)[0]}`.replaceAll(/\(/g, '\\\(').replaceAll(/\)/g, '\\\)')
-            //console.log(imageid)
             const image = images.find(image => image.replaceAll(/\(/g, '\\\(').replaceAll(/\)/g, '\\\)').includes(imageid))
             const imageUrl = image.substring(image.search("https\:"), image.length - 2)
-            //console.log(imageUrl)
             part.imageLink = imageUrl
         }
         question.push(part)
