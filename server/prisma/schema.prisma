@@ -64,12 +64,6 @@ model Question {
   // @@unique([examId, number])
 }
 
-model Resource {
-  id        String   @id @default(uuid())
-  imageURLs String[]
-  code      String[]
-}
-
 model Semester {
   id      String   @id @default(uuid())
   season  Season
