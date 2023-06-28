@@ -41,6 +41,10 @@ function App() {
   const [upperChecked, setUpperChecked] = useState(false);
   const prodChoices = ['', 'A.', 'B.', 'C.', 'D.', 'E.', 'F.', 'G.']
 
+  const [link, setLink] = useState("")
+  const [choices, setChoices] = useState("4")
+  const [pdf_id, setPDF_ID] = useState("")
+
   useEffect(() => {
     if (selectedCourse) {
 
@@ -247,6 +251,37 @@ function App() {
     setParts(updatedPartStates);
   };
 
+  const uploadViaLink = async () => {
+    if (link == "") throw Error
+    axios.post('https://localhost:8080/convert-link', {link, choices})
+    .then((questions) => {
+      console.log(questions)
+    }).catch ((err) => {
+      console.alert(err)
+    })
+  }
+
+  const uploadViaFile = async () => {
+    const data = new FormData();
+    data.append('pdf', selectedFile)
+    axios.post('http://localhost:8080/convert-file', {data, choices})
+    .then((questions) => {
+      console.log(questions)
+    }).catch ((err) => {
+      console.alert(err)
+    })
+  }
+
+  const test = async () => {
+    console.log("test")
+    axios.post('http://localhost:8080/convert-test', {pdf_id, choices})
+    .then((questions) => {
+      console.log(questions)
+    }).catch ((err) => {
+      alert(err)
+    })
+  }
+
   return (
     <div className="body">
       <div className="column1">
@@ -432,6 +467,41 @@ function App() {
         </div>}
 
       </div>
+      <div className="column4">
+        <div>
+          <h3> Add an Exam</h3>
+            <h4>Upload Via Link</h4>
+            <div>
+              <label for="pdf_link">Enter a PDF Link: </label>
+              <input
+                type="text"
+                id="pdf-link" 
+                onChange={(e) => setLink(e.target.value)}/>
+            </div>
+            <button onClick={uploadViaLink}>Upload Link</button>
+            <h4>Upload Via File</h4>
+            <input name="selectedFile" type="file" onChange={(e) => setSelectedFile(e.target.files[0])} />
+            <div>
+              <label for="choices-dropdown">Select choices: </label>
+              <select onChange={(e) => setChoices(e.target.value)}>
+                <option value={"4"}>4</option>
+                <option value={"5"}>5</option>
+                <option value={"6"}>6</option>
+              </select>
+            </div>
+            <button onClick={uploadViaFile}>Upload File</button>
+            <h4>Test</h4>
+            <div>
+              <label for="pdf_id">Enter a PDF ID: </label>
+              <input
+                type="text"
+                id="pdf-id" 
+                onChange={(e) => setPDF_ID(e.target.value)}/>
+            </div>
+            <button onClick={test}>Test</button>
+        </div>
+      </div>
+        
     </div>
   );
 }

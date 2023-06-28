@@ -40,8 +40,8 @@ app.post("/convert", upload.single("file"), async (req, res) => {
             }
         }, {
             headers: {
-                'app_id': process.env.MATHPIX_ID,
-                'app_key': process.env.MATHPIX_KEY,
+                'app_id': "boilerexams_gmail_com_a7d9fe_0dc934",
+                'app_key': "9d23dece308b5305a40efa607a7869ad46c10cf18730632581905b537026a8d4",
                 'Content-Type': 'application/json'
             }
         });
@@ -57,109 +57,102 @@ interface QuestionPart {
     content: string,
     hasImage: boolean,
     imageLink?: string
-    }
+}
     
     
     
     
-    app.post("/convert-link", async (req, res) => {
+app.post("/convert-link", async (req, res) => {
     try {
-    const headers = {
-    'app_id': "boilerexams_gmail_com_a7d9fe_0dc934",
-    'app_key': "9d23dece308b5305a40efa607a7869ad46c10cf18730632581905b537026a8d4",
-    'Content-Type': 'application/json'
-    }
-    //req.body.choices -> number of choices
-    let pdf_id
-    console.log(req.body.pdf_id)
-    if (req.body.pdf_id != undefined) {
-    pdf_id = req.body.pdf_id
-    }
-    else {
-    const id = await axios.post("https://api.mathpix.com/v3/pdf", {
-    url: req.body.pdf,
-    conversion_formats: {
-        "tex.zip": true,
-        },
-        enable_spell_check: false,
-        enable_tables_fallback: false,
-        auto_number_sections: false,
-        numbers_default_to_math: true,
-        math_inline_delimiters: ["\$", "\$"],
-        }, {
-        headers: headers
-        })
-        pdf_id = id.data.pdf_id
+        const headers = {
+            'app_id': "boilerexams_gmail_com_a7d9fe_0dc934",
+            'app_key': "9d23dece308b5305a40efa607a7869ad46c10cf18730632581905b537026a8d4",
+            'Content-Type': 'application/json'
         }
+        const id = await axios.post("https://api.mathpix.com/v3/pdf", {
+            url: req.body.pdf,
+            conversion_formats: {
+                "tex.zip": true,
+            },
+            enable_spell_check: false,
+            enable_tables_fallback: false,
+            auto_number_sections: false,
+            numbers_default_to_math: true,
+            math_inline_delimiters: ["\$", "\$"],
+        }, {
+            headers: headers
+        })
+        const pdf_id = id.data.pdf_id
         const url = "https://api.mathpix.com/v3/pdf/".concat(pdf_id)
         console.log(url)
         let respond = await axios.get(url, {
             headers: headers
         })
         while (respond.data.status != "completed") {
-        await new Promise(f => setTimeout(f, 10000));
-        respond = await axios.get(url, {
-        headers: headers
-        })
+            await new Promise(f => setTimeout(f, 10000));
+            respond = await axios.get(url, {
+                headers: headers
+            })
         }
         axios.get(url.concat(".tex"), {
         headers: headers
         }).then(async (content) => {
-        const questions = await parseQuestions(content, pdf_id, req.body.choices)
-        res.status(200).send(questions)
+            const questions = await parseQuestions(content, pdf_id, req.body.choices)
+            res.status(200).send(questions)
         })
     } catch (err) {
         console.log(err)
         res.status(400).send(err);
-        }
-    })
+    }
+})
         
         
-        
-        
-        const parseQuestions = async (content, pdf_id, choices) => {
-        console.log(content)
-        const regex1 = /\\[a-z]+\{enumerate\}/g
-        const regex2 = /\\setcounter\{enumi\}\{[0-9]*\}/g
-        const questions = content.data.substring(content.data.search('\\item') + 4, content.data.search('\\end\{document\}')).replaceAll(regex1, '').replaceAll(regex2, '').split('\\item')
-        //const images = content.data.substring(content.data.search('\\end\{document\}')).match(/https:\/\/cdn.mathpix.com\/.+PK/g)
-        const images = content.data.substring(content.data.search('\\end\{document\}')).match(/(.+)(https:\/\/cdn.mathpix.com\/.+)PK/g)
-        console.log(images)
-        console.log(choices)
-        
-        
-        let arr
-        let count = 0
-        let modifiedQuestion = new Array()
-        
-        
-        questions.forEach(question => {
+    
+    
+const parseQuestions = async (content, pdf_id, choices) => {
+    console.log(content)
+    const regex1 = /\\[a-z]+\{enumerate\}/g
+    const regex2 = /\\setcounter\{enumi\}\{[0-9]*\}/g
+    const questions = content.data.substring(content.data.search('\\item') + 4, content.data.search('\\end\{document\}')).replaceAll(regex1, '').replaceAll(regex2, '').split('\\item')
+    //const images = content.data.substring(content.data.search('\\end\{document\}')).match(/https:\/\/cdn.mathpix.com\/.+PK/g)
+    const images = content.data.substring(content.data.search('\\end\{document\}')).match(/(.+)(https:\/\/cdn.mathpix.com\/.+)PK/g)
+
+    let arr
+    let count = 0
+    let modifiedQuestion = new Array()
+
+
+    questions.forEach(question => {
         //switch statement for choices here
         let multiQReg;
         let singleQReg;
+        
         switch(choices) {
-        case "4":
-        multiQReg = /(.+)\n(\(*[Aa][\.\)].+)\n(\(*[Bb][\.\)].+)\n(\(*[Cc][\.\)].+)\n(\(*[Dd][\.\)].+)[0-9]+\./gs
-        singleQReg = /(.+)\n(\(*[Aa][\.\)].+)\n(\(*[Bb][\.\)].+)\n(\(*[Cc][\.\)].+)\n(\(*[Dd][\.\)].+)/gs
-        break;
-        case "5":
-        multiQReg = /(.+)\n(\(*[Aa][\.\)].+)\n(\(*[Bb][\.\)].+)\n(\(*[Cc][\.\)].+)\n(\(*[Dd][\.\)].+)\n(\(*[Ee][\.\)].+)[0-9]+\./gs
-        singleQReg = /(.+)\n(\(*[Aa][\.\)].+)\n(\(*[Bb][\.\)].+)\n(\(*[Cc][\.\)].+)\n(\(*[Dd][\.\)].+)\n(\(*[Ee][\.\)].+)/gs
-break;
-case "6":
-multiQReg = /(.+)\n(\(*[Aa][\.\)].+)\n(\(*[Bb][\.\)].+)\n(\(*[Cc][\.\)].+)\n(\(*[Dd][\.\)].+)\n(\(*[Ee][\.\)].+)\n(\(*[Ff][\.\)].+)[0-9]+\./gs
-singleQReg = /(.+)\n(\(*[Aa][\.\)].+)\n(\(*[Bb][\.\)].+)\n(\(*[Cc][\.\)].+)\n(\(*[Dd][\.\)].+)\n(\(*[Ee][\.\)].+)\n(\(*[Ff][\.\)].+)/gs
-break;
+            case "4":
+                multiQReg = /(.+)\n(\(*[Aa][\.\)].+)\n(\(*[Bb][\.\)].+)\n(\(*[Cc][\.\)].+)\n(\(*[Dd][\.\)].+)[0-9]+\./gs
+                singleQReg = /(.+)\n(\(*[Aa][\.\)].+)\n(\(*[Bb][\.\)].+)\n(\(*[Cc][\.\)].+)\n(\(*[Dd][\.\)].+)/gs
+                break;
+            case "5":
+                multiQReg = /(.+)\n(\(*[Aa][\.\)].+)\n(\(*[Bb][\.\)].+)\n(\(*[Cc][\.\)].+)\n(\(*[Dd][\.\)].+)\n(\(*[Ee][\.\)].+)[0-9]+\./gs
+                singleQReg = /(.+)\n(\(*[Aa][\.\)].+)\n(\(*[Bb][\.\)].+)\n(\(*[Cc][\.\)].+)\n(\(*[Dd][\.\)].+)\n(\(*[Ee][\.\)].+)/gs
+                break;
+            case "6":
+                multiQReg = /(.+)\n(\(*[Aa][\.\)].+)\n(\(*[Bb][\.\)].+)\n(\(*[Cc][\.\)].+)\n(\(*[Dd][\.\)].+)\n(\(*[Ee][\.\)].+)\n(\(*[Ff][\.\)].+)[0-9]+\./gs
+                singleQReg = /(.+)\n(\(*[Aa][\.\)].+)\n(\(*[Bb][\.\)].+)\n(\(*[Cc][\.\)].+)\n(\(*[Dd][\.\)].+)\n(\(*[Ee][\.\)].+)\n(\(*[Ff][\.\)].+)/gs
+                break;
+        }
+        while ((arr = multiQReg.exec(question)) !== null) {
+            count += arr[0].length
+            modifiedQuestion.push(checkImage(arr, images, pdf_id))
+        }
+        arr = singleQReg.exec(question.substring(count))
+        if (arr) {
+            modifiedQuestion.push(checkImage(arr, images, pdf_id))
+        }
+        count = 0
+    });
+    return modifiedQuestion
 }
-while ((arr = multiQReg.exec(question)) !== null) {
-count += arr[0].length
-modifiedQuestion.push(checkImage(arr, images, pdf_id))
-}
-arr = singleQReg.exec(question.substring(count))
-if (arr) {
-modifiedQuestion.push(checkImage(arr, images, pdf_id))
-}
-count = 0
 //NEED TO TEST -> Doesn't really work
 // while ((arr = multiQReg.exec(question)) !== null) {
 // count += arr[0].length
@@ -175,9 +168,6 @@ count = 0
 // modifiedQuestion.push(checkImage(singleQ, images, pdf_id))
 // }
 // count = 0;
-});
-return modifiedQuestion
-}
 //npm run reset
 //ts-node-esm prisma/seed.ts
 //npx prisma studio 
@@ -211,6 +201,7 @@ const checkImage = (arr, images, pdf_id) => {
 //'2023_06_20_6f00c60af0637a2a7afbg'
 //2023_06_26_c43f04fde2b3f43e8da8g -> this one is weird
 app.post("/convert-test", async (req, res) => {
+    console.log("test")
     try {
         const headers = {
             'app_id': "boilerexams_gmail_com_a7d9fe_0dc934",
@@ -225,7 +216,9 @@ app.post("/convert-test", async (req, res) => {
         ////'2023_06_19_d67ee4497ecd37894300g' -> cs, the one that worked with pdf
         //'2023_06_28_75fdd6edc01be3a36ec9g' -> CS
         //2023_06_25_d25c2986903bb495d7edg
-        const url = "https://api.mathpix.com/v3/pdf/".concat('2023_06_28_75fdd6edc01be3a36ec9g')
+        const pdf_id = req.body.pdf_id
+        console.log(pdf_id)
+        const url = "https://api.mathpix.com/v3/pdf/".concat(pdf_id)
         let respond = await axios.get(url, {
             headers: headers
         })
@@ -238,7 +231,7 @@ app.post("/convert-test", async (req, res) => {
         axios.get(url.concat(".tex"), {
             headers: headers
         }).then(async (content) => {
-            const questions = await parseQuestions(content, '2023_06_28_75fdd6edc01be3a36ec9g', req.body.choices)
+            const questions = await parseQuestions(content, pdf_id, req.body.choices)
             console.log(questions)
             res.status(200).send(questions)
         })
@@ -250,9 +243,9 @@ app.post("/convert-test", async (req, res) => {
 
 
 //2023_06_28_75fdd6edc01be3a36ec9g
-app.post("/convert-pdf", upload.single("file"), async (req, res) => {
+app.post("/convert-file", upload.single("file"), async (req, res) => {
     if (!req.file) {
-    throw Error
+        throw Error
     }
     const data = new FormData();
     console.log(req.file)
@@ -279,32 +272,32 @@ app.post("/convert-pdf", upload.single("file"), async (req, res) => {
     },
         data: data
     }
-axios.request(config)
-.then(async (id) => {
-    const headers = {
-    'app_id': "boilerexams_gmail_com_a7d9fe_0dc934",
-    'app_key': "9d23dece308b5305a40efa607a7869ad46c10cf18730632581905b537026a8d4",
-    'Content-Type': 'application/json'
-    }
-    console.log(id.pdf_id)
-    const url = "https://api.mathpix.com/v3/pdf/".concat(id.pdf_id)
-    console.log(url)
-    let respond = await axios.get(url, {
-        headers: headers
+    axios.request(config)
+    .then(async (id) => {
+        const headers = {
+            'app_id': "boilerexams_gmail_com_a7d9fe_0dc934",
+            'app_key': "9d23dece308b5305a40efa607a7869ad46c10cf18730632581905b537026a8d4",
+            'Content-Type': 'application/json'
+        }
+        console.log(id.pdf_id)
+        const url = "https://api.mathpix.com/v3/pdf/".concat(id.pdf_id)
+        console.log(url)
+        let respond = await axios.get(url, {
+            headers: headers
+        })
+        while (respond.data.status != "completed") {
+            await new Promise(f => setTimeout(f, 10000));
+            respond = await axios.get(url, {
+                headers: headers
+            })
+        }
+        axios.get(url.concat(".tex"), {
+            headers: headers
+        }).then(async (content) => {
+            const questions = await parseQuestions(content, id.pdf_id, req.body.choices)
+            res.status(200).send(questions)
+        })
     })
-while (respond.data.status != "completed") {
-    await new Promise(f => setTimeout(f, 10000));
-    respond = await axios.get(url, {
-        headers: headers
-    })
-}
-axios.get(url.concat(".tex"), {
-    headers: headers
-}).then(async (content) => {
-    const questions = await parseQuestions(content, id.pdf_id, req.body.choices)
-    res.status(200).send(questions)
-})
-})
 })
 
 module.exports = app;
