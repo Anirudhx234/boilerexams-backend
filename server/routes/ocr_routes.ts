@@ -214,10 +214,9 @@ const checkImage = (arr, images, pdf_id) => {
 //'2023_06_21_55f826e7aef9550a4dccg'
 //'2023_06_20_6f00c60af0637a2a7afbg'
 //2023_06_26_c43f04fde2b3f43e8da8g -> this one is weird
-app.post("/convert-test", async (req, res) => {
-    console.log("test")
+app.post("/convert-id", async (req, res) => {
+    console.log("converting by id")
     try {
-        console.log(process.env.MATHPIX_ID)
         const headers = {
             'app_id': process.env.MATHPIX_ID,
             'app_key': process.env.MATHPIX_KEY,

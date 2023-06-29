@@ -271,7 +271,7 @@ function App() {
     console.log(resp)
     setPDF_ID(resp.data.pdf_id)
     console.log(pdf_id)
-    axios.post('http://localhost:8080/convert-test', {pdf_id, choices})
+    axios.post('http://localhost:8080/convert-id', {pdf_id, choices})
     .then((res) => {
       console.log(res)
       setExam(res.data)
@@ -282,7 +282,7 @@ function App() {
 
   const test = async () => {
     console.log("test")
-    axios.post('http://localhost:8080/convert-test', {pdf_id, choices})
+    axios.post('http://localhost:8080/convert-id', {pdf_id, choices})
     .then((res) => {
       console.log(res)
       setExam(res.data)
