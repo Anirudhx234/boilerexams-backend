@@ -267,9 +267,14 @@ function App() {
     file.append('file', selectedFile)
     console.log("posting")
     console.log(selectedFile)
-    axios.post('http://localhost:8080/convert-file', file, choices)
-    .then((questions) => {
-      console.log(questions)
+    const resp = await axios.post('http://localhost:8080/convert-file', file)
+    console.log(resp)
+    setPDF_ID(resp.data.pdf_id)
+    console.log(pdf_id)
+    axios.post('http://localhost:8080/convert-test', {pdf_id, choices})
+    .then((res) => {
+      console.log(res)
+      setExam(res.data)
     }).catch ((err) => {
       console.alert(err)
     })
@@ -508,9 +513,7 @@ function App() {
             <div className='left'>
               {exam.map((question, qIndex) => (
                 <p key={qIndex}>
-                {question.map((part, index) => {
-                  <textarea rows="4" cols="100" type="text" value={part.content}/>
-                })}
+                  <textarea rows="4" cols="100" type="text" value={question[0].content}/>
                   <br />
                 </p>
               ))}
