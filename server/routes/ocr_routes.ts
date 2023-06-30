@@ -60,9 +60,6 @@ interface QuestionPart {
     imageLink?: string
 }
     
-    
-    
-    
 app.post("/convert-link", async (req, res) => {
     try {
         const headers = {
@@ -114,48 +111,100 @@ app.post("/convert-link", async (req, res) => {
     
     
 const parseQuestions = async (content, pdf_id, choices) => {
+    //console.log(content.data)
     const regex1 = /\\[a-z]+\{enumerate\}/g
     const regex2 = /\\setcounter\{enumi\}\{[0-9]*\}/g
     const questions = content.data.substring(content.data.search('begin\{document\}') + 15, content.data.search('\\end\{document\}')).replaceAll(regex1, '').replaceAll(regex2, '').split(/\\item|\\section/)
     const images = content.data.substring(content.data.search('\\end\{document\}')).match(/(.+)(https:\/\/cdn.mathpix.com\/.+)PK/g)
 
-    let arr
-    let count = 0
-    let modifiedQuestion = new Array()
+    // let arr
+    // let count = 0
+    let modifiedQuestion = new Array<QuestionPart[]>()
+    let qs = 0
 
 
     questions.forEach(question => {
         //switch statement for choices here
-        let multiQReg;
-        let singleQReg;
+        // let multiQReg;
+        // let singleQReg;
         
+        // switch(choices) {
+        //     case "4":
+        //         multiQReg = /(.+)\n(\(*[Aa][\.\)].+)\n(\(*[Bb][\.\)].+)\n(\(*[Cc][\.\)].+)\n(\(*[Dd][\.\)].+)[0-9]+\./gs
+        //         singleQReg = /(.+)\n(\(*[Aa][\.\)].+)\n(\(*[Bb][\.\)].+)\n(\(*[Cc][\.\)].+)\n(\(*[Dd][\.\)].+)/gs
+        //         break;
+        //     case "5":
+        //         multiQReg = /(.+)\n(\(*[Aa][\.\)].+)\n(\(*[Bb][\.\)].+)\n(\(*[Cc][\.\)].+)\n(\(*[Dd][\.\)].+)\n(\(*[Ee][\.\)].+)[0-9]+\./gs
+        //         singleQReg = /(.+)\n(\(*[Aa][\.\)].+)\n(\(*[Bb][\.\)].+)\n(\(*[Cc][\.\)].+)\n(\(*[Dd][\.\)].+)\n(\(*[Ee][\.\)].+)/gs
+        //         break;
+        //     case "6":
+        //         multiQReg = /(.+)\n(\(*[Aa][\.\)].+)\n(\(*[Bb][\.\)].+)\n(\(*[Cc][\.\)].+)\n(\(*[Dd][\.\)].+)\n(\(*[Ee][\.\)].+)\n(\(*[Ff][\.\)].+)[0-9]+\./gs
+        //         singleQReg = /(.+)\n(\(*[Aa][\.\)].+)\n(\(*[Bb][\.\)].+)\n(\(*[Cc][\.\)].+)\n(\(*[Dd][\.\)].+)\n(\(*[Ee][\.\)].+)\n(\(*[Ff][\.\)].+)/gs
+        //         break;
+        // }
+        // while ((arr = multiQReg.exec(question)) !== null) {
+        //     count += arr[0].length
+        //     modifiedQuestion.push(checkImage(arr, images, pdf_id))
+        // }
+        // arr = singleQReg.exec(question.substring(count))
+        // if (arr) {
+        //     modifiedQuestion.push(checkImage(arr, images, pdf_id))
+        // }
+        // count = 0
+
+
+
+        let multiQ
+        let singleQ
+        let q = question
+
+
+        let mQR, sQR
+
+
         switch(choices) {
             case "4":
-                multiQReg = /(.+)\n(\(*[Aa][\.\)].+)\n(\(*[Bb][\.\)].+)\n(\(*[Cc][\.\)].+)\n(\(*[Dd][\.\)].+)[0-9]+\./gs
-                singleQReg = /(.+)\n(\(*[Aa][\.\)].+)\n(\(*[Bb][\.\)].+)\n(\(*[Cc][\.\)].+)\n(\(*[Dd][\.\)].+)/gs
+                mQR = /(.+)(\(*[Aa][\.\)].+)(\(*[Bb][\.\)].+)(\(*[Cc][\.\)].+)(\(*[Dd][\.\)].+)[0-9]+\./s
+                sQR = /(.+)(\(*[Aa][\.\)].+)(\(*[Bb][\.\)].+)(\(*[Cc][\.\)].+)(\(*[Dd][\.\)].+)/s
                 break;
             case "5":
-                multiQReg = /(.+)\n(\(*[Aa][\.\)].+)\n(\(*[Bb][\.\)].+)\n(\(*[Cc][\.\)].+)\n(\(*[Dd][\.\)].+)\n(\(*[Ee][\.\)].+)[0-9]+\./gs
-                singleQReg = /(.+)\n(\(*[Aa][\.\)].+)\n(\(*[Bb][\.\)].+)\n(\(*[Cc][\.\)].+)\n(\(*[Dd][\.\)].+)\n(\(*[Ee][\.\)].+)/gs
+                mQR = /(.+)(\(*[Aa][\.\)].+)(\(*[Bb][\.\)].+)(\(*[Cc][\.\)].+)(\(*[Dd][\.\)].+)(\(*[Ee][\.\)].+)[0-9]+\./s
+                sQR = /(.+)(\(*[Aa][\.\)].+)(\(*[Bb][\.\)].+)(\(*[Cc][\.\)].+)(\(*[Dd][\.\)].+)(\(*[Ee][\.\)].+)/s
                 break;
             case "6":
-                multiQReg = /(.+)\n(\(*[Aa][\.\)].+)\n(\(*[Bb][\.\)].+)\n(\(*[Cc][\.\)].+)\n(\(*[Dd][\.\)].+)\n(\(*[Ee][\.\)].+)\n(\(*[Ff][\.\)].+)[0-9]+\./gs
-                singleQReg = /(.+)\n(\(*[Aa][\.\)].+)\n(\(*[Bb][\.\)].+)\n(\(*[Cc][\.\)].+)\n(\(*[Dd][\.\)].+)\n(\(*[Ee][\.\)].+)\n(\(*[Ff][\.\)].+)/gs
+                mQR = /(.+)(\(*[Aa][\.\)].+)(\(*[Bb][\.\)].+)(\(*[Cc][\.\)].+)(\(*[Dd][\.\)].+)(\(*[Ee][\.\)].+)(\(*[Ff][\.\)].+)[0-9]+\./s
+                sQR = /(.+)(\(*[Aa][\.\)].+)(\(*[Bb][\.\)].+)(\(*[Cc][\.\)].+)(\(*[Dd][\.\)].+)(\(*[Ee][\.\)].+)(\(*[Ff][\.\)].+)/s
                 break;
         }
-        while ((arr = multiQReg.exec(question)) !== null) {
-            count += arr[0].length
-            modifiedQuestion.push(checkImage(arr, images, pdf_id))
+
+        let section = new Array<QuestionPart[]>()
+        console.log("-------------NEW QUESTION------------")
+        console.log(`question=${q}`)
+        while (multiQ = q.match(mQR)) {
+            console.log(`Found multiQ ${multiQ}`)
+            if (singleQ = q.substring(multiQ[0].length).match(sQR)) {
+                console.log(`Parsed singleQ=${singleQ}`)
+                section.push(checkImage(singleQ, images, pdf_id))
+                qs += 1
+            }
+            q = q.substring(0, multiQ[0].length - 2)
+            console.log(`current q=${q}`)
         }
-        arr = singleQReg.exec(question.substring(count))
-        if (arr) {
-            modifiedQuestion.push(checkImage(arr, images, pdf_id))
+        if (singleQ = q.match(sQR)) {
+            console.log(`Parsed singleQ=${singleQ}`)
+            section.push(checkImage(singleQ, images, pdf_id))
+            qs += 1
         }
-        count = 0
+        console.log(`SECTION:${section}`)
+        modifiedQuestion = modifiedQuestion.concat(section.reverse())
     });
+    console.log(qs)
     console.log(modifiedQuestion)
     return modifiedQuestion
 }
+
+
+
 // let multiQ
 // let singleQ
 // let q = question
@@ -249,6 +298,7 @@ app.post("/convert-id", async (req, res) => {
         }).then(async (content) => {
             const questions = await parseQuestions(content, pdf_id, req.body.choices)
             //console.log(questions)
+            console.log(content.data.substring(content.data.search('begin\{document\}') + 15, content.data.search('\\end\{document\}')))
             res.status(200).send(questions)
         })
     } catch (err) {
