@@ -1,8 +1,5 @@
 const { PrismaClient, Season } = require('@prisma/client')
-const express_seed = require('express');
-
 const prisma = new PrismaClient();
-const app = express_seed();
 
 async function main() {
     const semester = await prisma.semester.create({
@@ -23,7 +20,7 @@ async function main() {
             }
         }
     })
-    const exam = await prisma.exam.create({
+    await prisma.exam.create({
         data: {
             courseId: course.id,
             semesterId: semester.id,

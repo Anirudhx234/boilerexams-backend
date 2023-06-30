@@ -54,7 +54,7 @@ app.post("/topics", async (req, res) => {
 app.post("/courses/:courseId/exams", async (req, res) => {
     try {
         const { courseId } = req.params
-        const { semester: {season, year}, number } = req.body
+        const { semester: { season, year }, number } = req.body
         const semester = await prisma.semester.upsert({
             where: {
                 season_year: {

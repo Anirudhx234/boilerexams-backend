@@ -295,7 +295,7 @@ app.get("/courses/:courseAbbrev/exams/questions", cache(300), async (req, res) =
 
 // Full question information for specific topic
 app.get("/courses/:courseAbbrev/topics/:topicName/questions", async (req, res) => {
-    const { courseAbbrev, topicName } = req.params;
+    const { topicName } = req.params;
     prisma.topic.findUnique({
         where: {
             name: topicName
@@ -334,7 +334,7 @@ app.get("/courses/:courseAbbrev/exams/:season-:year-:examNumber", cache(300), as
     try {
         const { courseAbbrev, season, year, examNumber } = req.params;
         const { abbreviation, number } = courseRegex(courseAbbrev);
-        let season_type = Season[season.toUpperCase() as keyof typeof Season]
+        const season_type = Season[season.toUpperCase() as keyof typeof Season]
         if (!season_type) {
             return res.status(400).send("Invalid season");
         }
@@ -405,7 +405,7 @@ app.get("/courses/:courseAbbrev/exams/:season-:year-:examNumber/questions", cach
     try {
         const { courseAbbrev, season, year, examNumber } = req.params
         const { abbreviation, number } = courseRegex(courseAbbrev);
-        let season_type = Season[season.toUpperCase() as keyof typeof Season]
+        const season_type = Season[season.toUpperCase() as keyof typeof Season]
         if (!season_type) {
             return res.status(400).send("Invalid season");
         }
@@ -470,6 +470,7 @@ app.get("/courses/:courseAbbrev/exams/:season-:year-:examNumber/questions", cach
         res.status(400).send(e)
     }
 });
+
 app.get("/stats", cache(300), async(req, res) => {
     try {
         const questionsTotal = await prisma.question.count()

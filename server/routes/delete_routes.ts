@@ -1,4 +1,4 @@
-const { PrismaClient, Season } = require('@prisma/client')
+const { PrismaClient} = require('@prisma/client')
 const express = require('express');
 
 const prisma = new PrismaClient();
@@ -41,7 +41,7 @@ app.delete("/courses/hardDelete/:courseId", async (req, res) => {
 
 app.delete("/courses/:courseId/exams/softDelete/:examId", async (req, res) => {
     try {
-        const { courseId, examId } = req.params
+        const { examId } = req.params
         prisma.exam.update({
             where: {
                 id: examId
@@ -59,7 +59,7 @@ app.delete("/courses/:courseId/exams/softDelete/:examId", async (req, res) => {
 
 app.delete("/courses/:courseId/exams/hardDelete/:examId", async (req, res) => {
     try {
-        const { courseId, examId } = req.params
+        const { examId } = req.params
         prisma.exam.delete({
             where: {
                 id: examId
@@ -75,7 +75,7 @@ app.delete("/courses/:courseId/exams/hardDelete/:examId", async (req, res) => {
 // hard delete, since there are no linked relations that require questions
 app.delete("/courses/:courseId/exams/:examId/questions/:questionId", async (req, res) => {
     try {
-        const { courseId, examId, questionId } = req.params
+        const { questionId } = req.params
         prisma.question.delete({
             where: {
                 id: questionId
