@@ -254,9 +254,14 @@ function App() {
 
   const uploadViaLink = async () => {
     if (link == "") throw Error
-    axios.post('https://localhost:8080/convert-link', {link, choices})
-    .then((questions) => {
-      console.log(questions)
+    const resp = await axios.post('https://localhost:8080/convert-link', {link})
+    console.log(resp)
+    setPDF_ID(resp.data.pdf_id)
+    console.log(pdf_id)
+    axios.post('http://localhost:8080/convert-id', {pdf_id, choices})
+    .then((res) => {
+      console.log(res)
+      setExam(res.data)
     }).catch ((err) => {
       console.alert(err)
     })
@@ -281,7 +286,6 @@ function App() {
   }
 
   const test = async () => {
-    console.log("test")
     axios.post('http://localhost:8080/convert-id', {pdf_id, choices})
     .then((res) => {
       console.log(res)

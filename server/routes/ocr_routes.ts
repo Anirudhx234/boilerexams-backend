@@ -70,7 +70,7 @@ app.post("/convert-link", async (req, res) => {
             'app_key': process.env.MATHPIX_KEY,
             'Content-Type': 'application/json'
         }
-        const id = await axios.post("https://api.mathpix.com/v3/pdf", {
+        axios.post("https://api.mathpix.com/v3/pdf", {
             url: req.body.pdf,
             conversion_formats: {
                 "tex.zip": true,
@@ -82,25 +82,28 @@ app.post("/convert-link", async (req, res) => {
             math_inline_delimiters: ["\$", "\$"],
         }, {
             headers: headers
+        }).then((id) => {
+            console.log(id.data.pdf_id)
+            res.status(200).send(id.data.pdf_id)
         })
-        const pdf_id = id.data.pdf_id
-        const url = "https://api.mathpix.com/v3/pdf/".concat(pdf_id)
-        console.log(url)
-        let respond = await axios.get(url, {
-            headers: headers
-        })
-        while (respond.data.status != "completed") {
-            await new Promise(f => setTimeout(f, 10000));
-            respond = await axios.get(url, {
-                headers: headers
-            })
-        }
-        axios.get(url.concat(".tex"), {
-        headers: headers
-        }).then(async (content) => {
-            const questions = await parseQuestions(content, pdf_id, req.body.choices)
-            res.status(200).send(questions)
-        })
+        // const pdf_id = id.data.pdf_id
+        // const url = "https://api.mathpix.com/v3/pdf/".concat(pdf_id)
+        // console.log(url)
+        // let respond = await axios.get(url, {
+        //     headers: headers
+        // })
+        // while (respond.data.status != "completed") {
+        //     await new Promise(f => setTimeout(f, 10000));
+        //     respond = await axios.get(url, {
+        //         headers: headers
+        //     })
+        // }
+        // axios.get(url.concat(".tex"), {
+        // headers: headers
+        // }).then(async (content) => {
+        //     const questions = await parseQuestions(content, pdf_id, req.body.choices)
+        //     res.status(200).send(questions)
+        // })
     } catch (err) {
         console.log(err)
         res.status(400).send(err);
@@ -252,13 +255,6 @@ app.post("/convert-id", async (req, res) => {
         console.log(err)
         res.status(400).send(err);
     }
-})
-
-app.post("/convert-f", upload.single("file"), async(req, res) => {
-    console.log(req.body)
-    console.log(req.file)
-    console.log(req.body.file)
-    console.log(`choice=${req.body.choices}`)
 })
 
 
