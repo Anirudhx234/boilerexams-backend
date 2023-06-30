@@ -254,6 +254,63 @@ app.post("/bug-reports", async (req, res) => {
     }
 });
 
+app.post("/bug-reports/questions/:questionId", async (req, res) => {
+    try {
+        const { questionId } = req.params;
+        const { description, footer } = req.bod;
+
+        // ToDo Get pingableId from exam
+
+        const question = await prisma.question.findUnique({
+            where: {
+                id: questionId
+            },
+            include: {
+                course: true,
+                exam: {
+                    select: {
+                        //creator: true
+                        number: true,
+                        semester: true
+                    }
+                }
+            }
+        });
+
+        if (!question) {
+            res.status(404).send("Unknown Question");
+            return;
+        }
+
+        const course = question.course;
+        const exam = question.exam;
+        const semester = exam.semester;
+        // const creator = exam.creator;
+
+        const title = `${course.abbreviation}${course.number}|${semester.season} ${semester.year}|Exam ${exam.number}|Question ${question.number}`;
+        //const content = `<@${creator}>`;
+
+        const embed = {
+            title: title,
+            description: description + `\n\nIf this has pinged the wrong person or role please <@&1078747995979403326> or <@&1078748911298170891> appropriately.`,
+            timestamp: new Date().toISOString(),
+            color: 15548997,
+            footer: { text: footer }
+        };
+
+        const params = { embeds: [embed], content: null };
+        await axios.post(
+            process.env.BUG_REPORT_WEBHOOK_URl,
+            params
+        )
+            .then(() => res.status(200).send())
+            .catch((err) => res.status(400).send(err))
+
+    } catch (e) {
+        res.status(400).send(e);
+    }
+});
+
 app.post("/feature-requests", async (req, res) => {
     try {
         const { title, description } = req.body;
