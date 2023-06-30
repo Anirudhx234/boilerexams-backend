@@ -212,7 +212,7 @@ app.post("/courses/requests", async (req, res) => {
 
         const params = { embeds: [embed] };
         await axios.patch(
-            "https://discord.com/api/webhooks/1124126024783904868/MPh2dKS2R52m0aG1XiD9bsKwTdIb3g4hBMTsPlUUln2JVyDBQGODjXoHJtUUn3mXFO8R/messages/1124126242208235570",
+            process.env.COURSE_REQUEST_WEBHOOK_URL,
             params
         )
             .then(() => res.status(200).send())
@@ -243,7 +243,7 @@ app.post("/bug-reports", async (req, res) => {
 
         const params = { embeds: [embed], content: content };
         await axios.post(
-            "https://discord.com/api/webhooks/1122297351344758896/H7cA4si1ZoWPBtPsLPWYZalAuYbCCcMVkf7NbRj6HbQf27_i5pp6lr-T5K0din004raE",
+            process.env.BUG_REPORT_WEBHOOK_URl,
             params
         )
             .then(() => res.status(200).send())
@@ -267,7 +267,7 @@ app.post("/feature-requests", async (req, res) => {
 
         const params = { embeds: [embed] };
         await axios.post(
-            "https://discord.com/api/webhooks/1122664339103547423/Va97wFs0iiFGWeq3TsjFrrsLBAi-mllyrETYyotkE6o9geHLn0xLylfN-VrS-EX7aja5",
+            process.env.FEATURE_REQUEST_WEBHOOK_URL,
             params
         )
             .then(() => res.status(200).send())
