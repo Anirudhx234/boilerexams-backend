@@ -158,6 +158,20 @@ app.post("/courses/requests", async (req, res) => {
             return;
         }
 
+        const existingCourse = await prisma.course.findFirst({
+            where: {
+                AND: [
+                    { abbreviation: subjectAbbreviation },
+                    { number: Number(courseNumber) }
+                ]
+            }
+        })
+
+        if (existingCourse) {
+            res.status(202).send("Existing Course Requested");
+            return;
+        }
+
         const newCourseRequest = { id: purdueCourse.Id, subject: subjectAbbreviation, course: courseNumber, requests: 1 };
 
         await prisma.courseRequest.upsert({
@@ -184,7 +198,9 @@ app.post("/courses/requests", async (req, res) => {
         });
 
         const fields = courseRequests.map(element => {
-            return { inline: true, name: `${element.subject} ${element.course}`, value: `${element.requests}` };
+            return {
+                inline: true, name: `${element.subject} ${element.course}`, value: `${element.requests}`
+            };
         });
 
         const embed = {
@@ -196,7 +212,7 @@ app.post("/courses/requests", async (req, res) => {
 
         const params = { embeds: [embed] };
         await axios.patch(
-            "https://discord.com/api/webhooks/1122297199972335626/j770OhX7mwVN081BXzo5y8ZLRZtoq0QiDl803F8lIsrm2URo1gmh-XmDwHU0zi1wSWFE/messages/1122298402944843807",
+            "https://discord.com/api/webhooks/1124126024783904868/MPh2dKS2R52m0aG1XiD9bsKwTdIb3g4hBMTsPlUUln2JVyDBQGODjXoHJtUUn3mXFO8R/messages/1124126242208235570",
             params
         )
             .then(() => res.status(200).send())
@@ -209,23 +225,17 @@ app.post("/courses/requests", async (req, res) => {
 
 app.post("/bug-reports", async (req, res) => {
     try {
-        const { title, description, userAgent, pingableId, pingableType } = req.body;
+        const { title, description, userAgent, pingableIds, pingableType } = req.bod
 
-        let content: string | null;
-
-        if (pingableType == 0) {
-            content = null;
-        } else if (pingableType == 1) {
-            content = `<@${pingableId}>`;
-        } else if (pingableType == 2) {
-            content = `<@&${pingableId}>`;
-        } else {
-            content = null;
-        }
+        const content = pingableIds ? pingableIds.map(element => {
+            if (pingableType == 1) return `<@${element}>`;
+            if (pingableType == 2) return `<@&${element}>`;
+            return null;
+        }).join("") : null;
 
         const embed = {
             title: title,
-            description: description,
+            description: description + `\n\nIf this has pinged the wrong person or role please <@&1078747995979403326> or <@&1078748911298170891> appropriately.`,
             timestamp: new Date().toISOString(),
             color: 15548997,
             footer: { text: userAgent }
