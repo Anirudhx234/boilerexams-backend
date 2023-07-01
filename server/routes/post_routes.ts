@@ -231,7 +231,7 @@ app.post("/bug-reports", async (req, res) => {
 
         const content = pingableIds ? pingableIds.map(element => {
             if (roleIds.includes(element)) return `<@&${element}>`;
-            return `<@&${element}>`;
+            return `<@${element}>`;
         }).join("") : null;
 
         const embed = {
