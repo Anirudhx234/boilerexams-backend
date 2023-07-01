@@ -110,7 +110,7 @@ app.post("/convert-link", async (req, res) => {
         
     
     
-const parseQuestions = async (content, pdf_id, choices) => {
+const parseQuestions = async (content, choices) => {
     //console.log(content.data)
     const regex1 = /\\[a-z]+\{enumerate\}/g
     const regex2 = /\\setcounter\{enumi\}\{[0-9]*\}/g
@@ -317,7 +317,7 @@ app.post("/convert-id", async (req, res) => {
         axios.get(url.concat(".tex"), {
             headers: headers
         }).then(async (content) => {
-            const questions = await parseQuestions(content, pdf_id, req.body.choices)
+            const questions = await parseQuestions(content, req.body.choices)
             //console.log(questions)
             //console.log(content.data.substring(content.data.search('begin\{document\}') + 15, content.data.search('\\end\{document\}')))
             res.status(200).send(questions)
