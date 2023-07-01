@@ -244,7 +244,7 @@ app.post("/bug-reports", async (req, res) => {
 
         const params = { embeds: [embed], content: content };
         await axios.post(
-            process.env.BUG_REPORT_WEBHOOK_URl,
+            process.env.BUG_REPORT_WEBHOOK_URL,
             params
         )
             .then(() => res.status(200).send())
@@ -279,16 +279,16 @@ app.post("/bug-reports/questions/:questionId", async (req, res) => {
         });
 
         if (!question) {
-            res.status(404).send("Unknown Question");
-            return;
+            //res.status(404).send("Unknown Question");
+            //return;
         }
 
-        const course = question.course;
-        const exam = question.exam;
-        const semester = exam.semester;
+        const course = question?.course;
+        const exam = question?.exam;
+        const semester = exam?.semester;
         // const creator = exam.creator;
 
-        const title = `${course.abbreviation}${course.number}|${semester.season} ${semester.year}|Exam ${exam.number}|Question ${question.number}`;
+        const title = `${course?.abbreviation}${course?.number} | ${semester?.season} ${semester?.year} | Exam ${exam?.number} | Question ${question?.number}`;
         //const content = `<@${creator}>`;
 
         const embed = {
@@ -301,7 +301,7 @@ app.post("/bug-reports/questions/:questionId", async (req, res) => {
 
         const params = { embeds: [embed], content: null };
         await axios.post(
-            process.env.BUG_REPORT_WEBHOOK_URl,
+            process.env.BUG_REPORT_WEBHOOK_URL,
             params
         )
             .then(() => res.status(200).send())
