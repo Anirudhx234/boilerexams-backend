@@ -225,7 +225,7 @@ app.post("/courses/requests", async (req, res) => {
 
 app.post("/bug-reports", async (req, res) => {
     try {
-        const { title, description, footer, pingableIds, pingableType } = req.bod
+        const { title, description, footer, pingableIds, pingableType } = req.body
 
         const content = pingableIds ? pingableIds.map(element => {
             if (pingableType == 1) return `<@${element}>`;
