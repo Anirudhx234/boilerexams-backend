@@ -257,7 +257,7 @@ app.post("/bug-reports", async (req, res) => {
 app.post("/bug-reports/questions/:questionId", async (req, res) => {
     try {
         const { questionId } = req.params;
-        const { description, footer } = req.bod;
+        const { description, footer } = req.body;
 
         // ToDo Get pingableId from exam
 
