@@ -151,7 +151,7 @@ const checkImage = (arr, images) => {
     arr.shift()
     arr.forEach(element => {
         let part: QuestionPart = {
-            content: element,
+            content: element.trim(),
             hasImage: false,
         }
         const imageReg = /includegraphics.+\{([^\{\}]+)\}/g
