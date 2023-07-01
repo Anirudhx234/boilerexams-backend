@@ -57,7 +57,7 @@ app.post("/convert", upload.single("file"), async (req, res) => {
 interface QuestionPart {
     content: string,
     hasImage: boolean,
-    imageLink?: string
+    imageLinks?: string[]
 }
     
 app.post("/convert-link", async (req, res) => {
@@ -178,24 +178,24 @@ const parseQuestions = async (content, pdf_id, choices) => {
         }
 
         let section = new Array<QuestionPart[]>()
-        console.log("-------------NEW QUESTION------------")
-        console.log(`question=${q}`)
+        //console.log("-------------NEW QUESTION------------")
+        //console.log(`question=${q}`)
         while (multiQ = q.match(mQR)) {
-            console.log(`Found multiQ ${multiQ}`)
+            //console.log(`Found multiQ ${multiQ}`)
             if (singleQ = q.substring(multiQ[0].length).match(sQR)) {
-                console.log(`Parsed singleQ=${singleQ}`)
-                section.push(checkImage(singleQ, images, pdf_id))
+                //console.log(`Parsed singleQ=${singleQ}`)
+                section.push(checkImage(singleQ, images))
                 qs += 1
             }
             q = q.substring(0, multiQ[0].length - 2)
-            console.log(`current q=${q}`)
+            //console.log(`current q=${q}`)
         }
         if (singleQ = q.match(sQR)) {
-            console.log(`Parsed singleQ=${singleQ}`)
-            section.push(checkImage(singleQ, images, pdf_id))
+            //console.log(`Parsed singleQ=${singleQ}`)
+            section.push(checkImage(singleQ, images))
             qs += 1
         }
-        console.log(`SECTION:${section}`)
+        //console.log(`SECTION:${section}`)
         modifiedQuestion = modifiedQuestion.concat(section.reverse())
     });
     console.log(qs)
@@ -241,7 +241,7 @@ const parseQuestions = async (content, pdf_id, choices) => {
 // }
 
 
-const checkImage = (arr, images, pdf_id) => {
+const checkImage = (arr, images) => {
     let question = new Array<QuestionPart>()
     arr.shift()
     arr.forEach(element => {
@@ -249,14 +249,35 @@ const checkImage = (arr, images, pdf_id) => {
             content: element,
             hasImage: false,
         }
-        if (element.includes('includegraphics')) {
-            console.log(element)
-            part.hasImage = true
-            const imageid = `${element.substring(element.search(pdf_id)).match(/[^\}\{}]+/g)[0]}`.replaceAll(/\(/g, '\\\(').replaceAll(/\)/g, '\\\)')
-            const image = images.find(image => image.replaceAll(/\(/g, '\\\(').replaceAll(/\)/g, '\\\)').includes(imageid))
-            const imageUrl = image.substring(image.search("https\:"), image.length - 2)
-            part.imageLink = imageUrl
+        const imageReg = /includegraphics.+\{([^\{\}]+)\}/g
+        let image
+        let imagelinks = new Array<string>()
+        while (image = imageReg.exec(element)) {
+            console.log(`image=${image}`)
+            const imageid = image[1].substring(0, image[1].length).replaceAll(/\(/g, '\\\(').replaceAll(/\)/g, '\\\)')
+            console.log(`imageid=${imageid}`)
+            const i = images.find(i => i.replaceAll(/\(/g, '\\\(').replaceAll(/\)/g, '\\\)').includes(imageid))
+            if (i) {
+                const imageURL = i.substring(i.search("https\:"), i.length - 2)
+                imagelinks.push(imageURL)
+            }
         }
+        if (imagelinks.length != 0) {
+            part.hasImage = true
+            part.imageLinks = imagelinks
+            console.log(part.imageLinks)
+        }
+        // if (element.includes('includegraphics')) {
+        //     console.log(element)
+        //     const statement = `${element.match(/includegraphics.+\{([^\}\{]+)\}/gs)}`
+        //     console.log(`statement=${statement}`)
+        //     part.hasImage = true
+        //     const imageid = `${element.substring(element.search(pdf_id)).match(/[^\}\{\\]+/g)[0]}`.replaceAll(/\(/g, '\\\(').replaceAll(/\)/g, '\\\)')
+        //     console.log(imageid)
+        //     const image = images.find(image => image.replaceAll(/\(/g, '\\\(').replaceAll(/\)/g, '\\\)').includes(imageid))
+        //     const imageUrl = image.substring(image.search("https\:"), image.length - 2)
+        //     part.imageLink = imageUrl
+        // }
         question.push(part)
     });
     return question
@@ -298,7 +319,7 @@ app.post("/convert-id", async (req, res) => {
         }).then(async (content) => {
             const questions = await parseQuestions(content, pdf_id, req.body.choices)
             //console.log(questions)
-            console.log(content.data.substring(content.data.search('begin\{document\}') + 15, content.data.search('\\end\{document\}')))
+            //console.log(content.data.substring(content.data.search('begin\{document\}') + 15, content.data.search('\\end\{document\}')))
             res.status(200).send(questions)
         })
     } catch (err) {
