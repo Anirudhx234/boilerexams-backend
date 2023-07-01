@@ -225,7 +225,7 @@ app.post("/courses/requests", async (req, res) => {
 
 app.post("/bug-reports", async (req, res) => {
     try {
-        const { title, description, userAgent, pingableIds, pingableType } = req.bod
+        const { title, description, footer, pingableIds, pingableType } = req.bod
 
         const content = pingableIds ? pingableIds.map(element => {
             if (pingableType == 1) return `<@${element}>`;
@@ -238,7 +238,7 @@ app.post("/bug-reports", async (req, res) => {
             description: description + `\n\nIf this has pinged the wrong person or role please <@&1078747995979403326> or <@&1078748911298170891> appropriately.`,
             timestamp: new Date().toISOString(),
             color: 15548997,
-            footer: { text: userAgent }
+            footer: { text: footer }
         };
 
         const params = { embeds: [embed], content: content };
