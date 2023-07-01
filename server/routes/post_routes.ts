@@ -301,7 +301,7 @@ app.post("/bug-reports/questions/:questionId", async (req, res) => {
 
         const params = { embeds: [embed], content: null };
         await axios.post(
-            process.env.BUG_REPORT_WEBHOOK_URl,
+            process.env.BUG_REPORT_WEBHOOK_URL,
             params
         )
             .then(() => res.status(200).send())
