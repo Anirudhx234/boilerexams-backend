@@ -225,12 +225,13 @@ app.post("/courses/requests", async (req, res) => {
 
 app.post("/bug-reports", async (req, res) => {
     try {
-        const { title, description, footer, pingableIds, pingableType } = req.body
+        const { title, description, footer, pingableIds } = req.body
+
+        const roleIds = [ "1074060567339352145", "1078747995979403326", "1078748911298170891", "1074061247647068160" ];
 
         const content = pingableIds ? pingableIds.map(element => {
-            if (pingableType == 1) return `<@${element}>`;
-            if (pingableType == 2) return `<@&${element}>`;
-            return null;
+            if (roleIds.includes(element)) return `<@&${element}>`;
+            return `<@${element}>`;
         }).join("") : null;
 
         const embed = {
