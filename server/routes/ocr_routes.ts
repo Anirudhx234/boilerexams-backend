@@ -83,24 +83,6 @@ app.post("/convert-link", async (req, res) => {
             console.log(id.data.pdf_id)
             res.status(200).send(id.data.pdf_id)
         })
-        // const pdf_id = id.data.pdf_id
-        // const url = "https://api.mathpix.com/v3/pdf/".concat(pdf_id)
-        // console.log(url)
-        // let respond = await axios.get(url, {
-        //     headers: headers
-        // })
-        // while (respond.data.status != "completed") {
-        //     await new Promise(f => setTimeout(f, 10000));
-        //     respond = await axios.get(url, {
-        //         headers: headers
-        //     })
-        // }
-        // axios.get(url.concat(".tex"), {
-        // headers: headers
-        // }).then(async (content) => {
-        //     const questions = await parseQuestions(content, pdf_id, req.body.choices)
-        //     res.status(200).send(questions)
-        // })
     } catch (err) {
         console.log(err)
         res.status(400).send(err);
@@ -111,49 +93,16 @@ app.post("/convert-link", async (req, res) => {
     
     
 const parseQuestions = async (content, choices) => {
-    //console.log(content.data)
     const regex1 = /\\[a-z]+\{enumerate\}/g
     const regex2 = /\\setcounter\{enumi\}\{[0-9]*\}/g
     const questions = content.data.substring(content.data.search('begin\{document\}') + 15, content.data.search('\\end\{document\}')).replaceAll(regex1, '').replaceAll(regex2, '').split(/\\item|\\section/)
     const images = content.data.substring(content.data.search('\\end\{document\}')).match(/(.+)(https:\/\/cdn.mathpix.com\/.+)PK/g)
 
-    // let arr
-    // let count = 0
     let modifiedQuestion = new Array<QuestionPart[]>()
     let qs = 0
 
 
     questions.forEach(question => {
-        //switch statement for choices here
-        // let multiQReg;
-        // let singleQReg;
-        
-        // switch(choices) {
-        //     case "4":
-        //         multiQReg = /(.+)\n(\(*[Aa][\.\)].+)\n(\(*[Bb][\.\)].+)\n(\(*[Cc][\.\)].+)\n(\(*[Dd][\.\)].+)[0-9]+\./gs
-        //         singleQReg = /(.+)\n(\(*[Aa][\.\)].+)\n(\(*[Bb][\.\)].+)\n(\(*[Cc][\.\)].+)\n(\(*[Dd][\.\)].+)/gs
-        //         break;
-        //     case "5":
-        //         multiQReg = /(.+)\n(\(*[Aa][\.\)].+)\n(\(*[Bb][\.\)].+)\n(\(*[Cc][\.\)].+)\n(\(*[Dd][\.\)].+)\n(\(*[Ee][\.\)].+)[0-9]+\./gs
-        //         singleQReg = /(.+)\n(\(*[Aa][\.\)].+)\n(\(*[Bb][\.\)].+)\n(\(*[Cc][\.\)].+)\n(\(*[Dd][\.\)].+)\n(\(*[Ee][\.\)].+)/gs
-        //         break;
-        //     case "6":
-        //         multiQReg = /(.+)\n(\(*[Aa][\.\)].+)\n(\(*[Bb][\.\)].+)\n(\(*[Cc][\.\)].+)\n(\(*[Dd][\.\)].+)\n(\(*[Ee][\.\)].+)\n(\(*[Ff][\.\)].+)[0-9]+\./gs
-        //         singleQReg = /(.+)\n(\(*[Aa][\.\)].+)\n(\(*[Bb][\.\)].+)\n(\(*[Cc][\.\)].+)\n(\(*[Dd][\.\)].+)\n(\(*[Ee][\.\)].+)\n(\(*[Ff][\.\)].+)/gs
-        //         break;
-        // }
-        // while ((arr = multiQReg.exec(question)) !== null) {
-        //     count += arr[0].length
-        //     modifiedQuestion.push(checkImage(arr, images, pdf_id))
-        // }
-        // arr = singleQReg.exec(question.substring(count))
-        // if (arr) {
-        //     modifiedQuestion.push(checkImage(arr, images, pdf_id))
-        // }
-        // count = 0
-
-
-
         let multiQ
         let singleQ
         let q = question
@@ -178,67 +127,23 @@ const parseQuestions = async (content, choices) => {
         }
 
         let section = new Array<QuestionPart[]>()
-        //console.log("-------------NEW QUESTION------------")
-        //console.log(`question=${q}`)
         while (multiQ = q.match(mQR)) {
-            //console.log(`Found multiQ ${multiQ}`)
             if (singleQ = q.substring(multiQ[0].length).match(sQR)) {
-                //console.log(`Parsed singleQ=${singleQ}`)
                 section.push(checkImage(singleQ, images))
                 qs += 1
             }
             q = q.substring(0, multiQ[0].length - 2)
-            //console.log(`current q=${q}`)
         }
         if (singleQ = q.match(sQR)) {
-            //console.log(`Parsed singleQ=${singleQ}`)
             section.push(checkImage(singleQ, images))
             qs += 1
         }
-        //console.log(`SECTION:${section}`)
         modifiedQuestion = modifiedQuestion.concat(section.reverse())
     });
     console.log(qs)
     console.log(modifiedQuestion)
     return modifiedQuestion
 }
-
-
-
-// let multiQ
-// let singleQ
-// let q = question
-
-
-// let mQR, sQR
-
-
-// switch(choices) {
-// case "4":
-// mQR = /(.+)\n(\(*[Aa][\.\)].+)\n(\(*[Bb][\.\)].+)\n(\(*[Cc][\.\)].+)\n(\(*[Dd][\.\)].+)[0-9]+\./s
-// sQR = /(.+)\n(\(*[Aa][\.\)].+)\n(\(*[Bb][\.\)].+)\n(\(*[Cc][\.\)].+)\n(\(*[Dd][\.\)].+)/s
-// break;
-// case "5":
-// mQR = /(.+)\n(\(*[Aa][\.\)].+)\n(\(*[Bb][\.\)].+)\n(\(*[Cc][\.\)].+)\n(\(*[Dd][\.\)].+)\n(\(*[Ee][\.\)].+)[0-9]+\./s
-// sQR = /(.+)(\(*[Aa][\.\)].+)\n(\(*[Bb][\.\)].+)\n(\(*[Cc][\.\)].+)\n(\(*[Dd][\.\)].+)\n(\(*[Ee][\.\)].+)/s
-// break;
-// case "6":
-// mQR = /(.+)\n(\(*[Aa][\.\)].+)\n(\(*[Bb][\.\)].+)\n(\(*[Cc][\.\)].+)\n(\(*[Dd][\.\)].+)\n(\(*[Ee][\.\)].+)\n(\(*[Ff][\.\)].+)[0-9]+\./s
-// sQR = /(.+)\n(\(*[Aa][\.\)].+)\n(\(*[Bb][\.\)].+)\n(\(*[Cc][\.\)].+)\n(\(*[Dd][\.\)].+)\n(\(*[Ee][\.\)].+)\n(\(*[Ff][\.\)].+)/s
-// break;
-// }
-// console.log("-------------NEW QUESTION------------")
-// console.log(`question=${q}`)
-// while (multiQ = q.match(mQR)) {
-// console.log(`Found multiQ ${multiQ[0]}`)
-// q = q.substring(multiQ[0].length)
-// console.log(`current q=${q}`)
-// modifiedQuestion.push(multiQ)
-// }
-// if (singleQ = q.match(sQR)) {
-// console.log(`Found singleQ=${singleQ[0]}`)
-// modifiedQuestion.push(singleQ)
-// }
 
 
 const checkImage = (arr, images) => {
@@ -267,17 +172,6 @@ const checkImage = (arr, images) => {
             part.imageLinks = imagelinks
             console.log(part.imageLinks)
         }
-        // if (element.includes('includegraphics')) {
-        //     console.log(element)
-        //     const statement = `${element.match(/includegraphics.+\{([^\}\{]+)\}/gs)}`
-        //     console.log(`statement=${statement}`)
-        //     part.hasImage = true
-        //     const imageid = `${element.substring(element.search(pdf_id)).match(/[^\}\{\\]+/g)[0]}`.replaceAll(/\(/g, '\\\(').replaceAll(/\)/g, '\\\)')
-        //     console.log(imageid)
-        //     const image = images.find(image => image.replaceAll(/\(/g, '\\\(').replaceAll(/\)/g, '\\\)').includes(imageid))
-        //     const imageUrl = image.substring(image.search("https\:"), image.length - 2)
-        //     part.imageLink = imageUrl
-        // }
         question.push(part)
     });
     return question
@@ -318,8 +212,6 @@ app.post("/convert-id", async (req, res) => {
             headers: headers
         }).then(async (content) => {
             const questions = await parseQuestions(content, req.body.choices)
-            //console.log(questions)
-            //console.log(content.data.substring(content.data.search('begin\{document\}') + 15, content.data.search('\\end\{document\}')))
             res.status(200).send(questions)
         })
     } catch (err) {
