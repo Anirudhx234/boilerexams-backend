@@ -158,6 +158,20 @@ app.post("/courses/requests", async (req, res) => {
             return;
         }
 
+        const existingCourse = await prisma.course.findFirst({
+            where: {
+                AND: [
+                    { abbreviation: subjectAbbreviation },
+                    { number: Number(courseNumber) }
+                ]
+            }
+        })
+
+        if (existingCourse) {
+            res.status(202).send("Existing Course Requested");
+            return;
+        }
+
         const newCourseRequest = { id: purdueCourse.Id, subject: subjectAbbreviation, course: courseNumber, requests: 1 };
 
         await prisma.courseRequest.upsert({
@@ -184,7 +198,9 @@ app.post("/courses/requests", async (req, res) => {
         });
 
         const fields = courseRequests.map(element => {
-            return { inline: true, name: `${element.subject} ${element.course}`, value: `${element.requests}` };
+            return {
+                inline: true, name: `${element.subject} ${element.course}`, value: `${element.requests}`
+            };
         });
 
         const embed = {
@@ -196,7 +212,7 @@ app.post("/courses/requests", async (req, res) => {
 
         const params = { embeds: [embed] };
         await axios.patch(
-            "https://discord.com/api/webhooks/1122297199972335626/j770OhX7mwVN081BXzo5y8ZLRZtoq0QiDl803F8lIsrm2URo1gmh-XmDwHU0zi1wSWFE/messages/1122298402944843807",
+            process.env.COURSE_REQUEST_WEBHOOK_URL,
             params
         )
             .then(() => res.status(200).send())
@@ -209,31 +225,82 @@ app.post("/courses/requests", async (req, res) => {
 
 app.post("/bug-reports", async (req, res) => {
     try {
-        const { title, description, userAgent, pingableId, pingableType } = req.body;
+        const { title, description, footer, pingableIds, pingableType } = req.body
 
-        let content: string | null;
-
-        if (pingableType == 0) {
-            content = null;
-        } else if (pingableType == 1) {
-            content = `<@${pingableId}>`;
-        } else if (pingableType == 2) {
-            content = `<@&${pingableId}>`;
-        } else {
-            content = null;
-        }
+        const content = pingableIds ? pingableIds.map(element => {
+            if (pingableType == 1) return `<@${element}>`;
+            if (pingableType == 2) return `<@&${element}>`;
+            return null;
+        }).join("") : null;
 
         const embed = {
             title: title,
-            description: description,
+            description: description + `\n\nIf this has pinged the wrong person or role please <@&1078747995979403326> or <@&1078748911298170891> appropriately.`,
             timestamp: new Date().toISOString(),
             color: 15548997,
-            footer: { text: userAgent }
+            footer: { text: footer }
         };
 
         const params = { embeds: [embed], content: content };
         await axios.post(
-            "https://discord.com/api/webhooks/1122297351344758896/H7cA4si1ZoWPBtPsLPWYZalAuYbCCcMVkf7NbRj6HbQf27_i5pp6lr-T5K0din004raE",
+            process.env.BUG_REPORT_WEBHOOK_URl,
+            params
+        )
+            .then(() => res.status(200).send())
+            .catch((err) => res.status(400).send(err))
+
+    } catch (e) {
+        res.status(400).send(e);
+    }
+});
+
+app.post("/bug-reports/questions/:questionId", async (req, res) => {
+    try {
+        const { questionId } = req.params;
+        const { description, footer } = req.body;
+
+        // ToDo Get pingableId from exam
+
+        const question = await prisma.question.findUnique({
+            where: {
+                id: questionId
+            },
+            include: {
+                course: true,
+                exam: {
+                    select: {
+                        //creator: true
+                        number: true,
+                        semester: true
+                    }
+                }
+            }
+        });
+
+        if (!question) {
+            res.status(404).send("Unknown Question");
+            return;
+        }
+
+        const course = question.course;
+        const exam = question.exam;
+        const semester = exam.semester;
+        // const creator = exam.creator;
+
+        const title = `${course.abbreviation}${course.number}|${semester.season} ${semester.year}|Exam ${exam.number}|Question ${question.number}`;
+        //const content = `<@${creator}>`;
+
+        const embed = {
+            title: title,
+            description: description + `\n\nIf this has pinged the wrong person or role please <@&1078747995979403326> or <@&1078748911298170891> appropriately.`,
+            timestamp: new Date().toISOString(),
+            color: 15548997,
+            footer: { text: footer }
+        };
+
+        const params = { embeds: [embed], content: null };
+        await axios.post(
+            process.env.BUG_REPORT_WEBHOOK_URl,
             params
         )
             .then(() => res.status(200).send())
@@ -257,7 +324,7 @@ app.post("/feature-requests", async (req, res) => {
 
         const params = { embeds: [embed] };
         await axios.post(
-            "https://discord.com/api/webhooks/1122664339103547423/Va97wFs0iiFGWeq3TsjFrrsLBAi-mllyrETYyotkE6o9geHLn0xLylfN-VrS-EX7aja5",
+            process.env.FEATURE_REQUEST_WEBHOOK_URL,
             params
         )
             .then(() => res.status(200).send())
