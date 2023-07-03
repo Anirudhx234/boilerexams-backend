@@ -253,36 +253,52 @@ function App() {
   };
 
   const uploadViaLink = async () => {
-    if (link == "") throw Error
-    const resp = await axios.post('https://localhost:8080/convert-link', {link})
-    console.log(resp)
-    setPDF_ID(resp.data.pdf_id)
-    console.log(pdf_id)
-    axios.post('http://localhost:8080/convert-id', {pdf_id, choices})
+    console.log(link)
+    axios.post('http://localhost:8080/convert-link', {link, choices})
     .then((res) => {
       console.log(res)
       setExam(res.data)
     }).catch ((err) => {
       console.alert(err)
     })
+
+    //PREVIOUS CODE BELOW
+    // console.log(resp)
+    // setPDF_ID(resp.data.pdf_id)
+    // console.log(pdf_id)
+    // axios.post('http://localhost:8080/convert-id', {pdf_id, choices})
+    // .then((res) => {
+    //   console.log(res)
+    //   setExam(res.data)
+    // }).catch ((err) => {
+    //   console.alert(err)
+    // })
   }
 
   const uploadViaFile = async () => {
     const file = new FormData();
     file.append('file', selectedFile)
-    console.log("posting")
     console.log(selectedFile)
-    const resp = await axios.post('http://localhost:8080/convert-file', file)
-    console.log(resp)
-    setPDF_ID(resp.data.pdf_id)
-    console.log(pdf_id)
-    axios.post('http://localhost:8080/convert-id', {pdf_id, choices})
+    file.append('choices', choices)
+    axios.post('http://localhost:8080/convert-file', file)
     .then((res) => {
       console.log(res)
       setExam(res.data)
     }).catch ((err) => {
       console.alert(err)
     })
+
+    //PREVIOUS CODE BELOW
+    // console.log(resp)
+    // setPDF_ID(resp.data.pdf_id)
+    // console.log(pdf_id)
+    // axios.post('http://localhost:8080/convert-id', {pdf_id, choices})
+    // .then((res) => {
+    //   console.log(res)
+    //   setExam(res.data)
+    // }).catch ((err) => {
+    //   console.alert(err)
+    // })
   }
 
   const test = async () => {
@@ -513,12 +529,14 @@ function App() {
             </div>
             <button onClick={test}>Test</button>
         </div>
+
         {exam.length !== 0 && <div className="editor">
             <div className='left'>
               {exam.map((question, qIndex) => (
                 <p key={qIndex}>
-                  <textarea rows="4" cols="100" type="text" value={question[0].content}/>
-                  <br />
+                  <div>
+                    <textarea rows="4" cols="100" type="text" value={question[0].content}/>
+                  </div>
                 </p>
               ))}
             </div>
