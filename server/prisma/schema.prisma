@@ -48,20 +48,40 @@ model Topic {
 }
 
 model Question {
-  id                 String   @id @default(uuid())
-  examId             String
+  id                 String         @id @default(uuid())
   number             Int
   body               String
-  answerChoices      String[]
   correctChoiceIndex Int
-  submissions        Int[]    @default([])
-  solutionVideoLink  String   @default("")
+  submissions        Int[]          @default([])
+  solutionVideoLink  String         @default("")
+  resourceId         String?        @unique
   courseId           String
-  course             Course   @relation(fields: [courseId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  exam               Exam     @relation(fields: [examId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  topics             Topic[]  @relation("QuestionToTopic")
+  examId             String
+  resource           Resource?      @relation(fields: [resourceId], references: [id])
+  course             Course         @relation(fields: [courseId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  exam               Exam           @relation(fields: [examId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  topics             Topic[]        @relation("QuestionToTopic")
+  answerChoices      AnswerChoice[]
 
   // @@unique([examId, number])
+}
+
+model AnswerChoice {
+  id          String    @id @default(uuid())
+  choiceIndex Int
+  body        String
+  resourceId  String?   @unique
+  questionId  String
+  resource    Resource? @relation(fields: [resourceId], references: [id])
+  Question    Question  @relation(fields: [questionId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+}
+
+model Resource {
+  id           String        @id @default(uuid())
+  imageData    Json[]
+  code         String
+  question     Question?
+  answerChoice AnswerChoice?
 }
 
 model Semester {

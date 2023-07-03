@@ -1,8 +1,8 @@
 const { PrismaClient, Season } = require('@prisma/client')
-const express_routes = require('express');
+const express = require('express');
 
 const prisma = new PrismaClient();
-const app = express_routes();
+const app = express();
 
 app.put("/courses/:courseId", async (req, res) => {
     try {
@@ -23,7 +23,7 @@ app.put("/courses/:courseId", async (req, res) => {
 app.put("/courses/:courseId/exams/:examId", async (req, res) => {
     try {
         const { courseId, examId } = req.params
-        const { semester: { season, year }, number } = req.body
+        const { semester: { season, year }, number, published } = req.body
         let semesterId;
         if (season && year) {
             const semester = await prisma.semester.upsert({
@@ -60,7 +60,8 @@ app.put("/courses/:courseId/exams/:examId", async (req, res) => {
             },
             data: {
                 semesterId: semesterId,
-                number: number
+                number: number,
+                published: published
             },
             include: {
                 semester: true

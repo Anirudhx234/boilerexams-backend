@@ -55,11 +55,7 @@ app.get("/courses/all", async (req, res) => {
     try {
         prisma.course.findMany({
             include: {
-                topics: {
-                    include: {
-                        questions: true
-                    }
-                },
+                topics: true,
                 semesters: true,
                 exams: {
                     include: {

@@ -5,6 +5,17 @@ const axios = require('axios');
 const prisma = new PrismaClient();
 const app = express_routes();
 
+const multer = require('multer');
+const Aws = require('aws-sdk');
+
+const storage = multer.memoryStorage({
+    destination: function (req, file, cb) {
+        cb(null, '')
+    }
+})
+const upload = multer({ storage: storage });
+const {uploadImage} = require("./s3.ts")
+
 app.post("/courses", async (req, res) => {
     try {
         const { name, subject, abbreviation, number, backgroundColor, graphicLink, published } = req.body
@@ -12,7 +23,7 @@ app.post("/courses", async (req, res) => {
             data: {
                 name: name,
                 subject: subject,
-                abbreviation: abbreviation,
+                abbreviation: abbreviation.toUpperCase(),
                 number: Number(number),
                 backgroundColor: backgroundColor,
                 graphicLink: graphicLink,
