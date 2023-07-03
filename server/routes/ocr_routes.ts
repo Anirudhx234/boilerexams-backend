@@ -81,8 +81,9 @@ app.post("/convert-link", async (req, res) => {
             headers: headers
         }).then(async (id) => {
             console.log(id.data.pdf_id)
-            const question = await getPDFResult(id.data.pdf_id, req.body.choices)
-            res.status(200).send(question)
+            const content = await getPDFResult(id.data.pdf_id)
+            const questions = parseQuestions(content, req.body.choices);
+            res.status(200).send(questions)
         })
     } catch (err) {
         console.log(err)
@@ -127,7 +128,7 @@ const parseQuestions = (content, choices) => {
                 break;
         }
 
-        let section = new Array<QuestionPart[]>()
+        const section = new Array<QuestionPart[]>()
         while (multiQ = q.match(mQR)) {
             if (singleQ = q.substring(multiQ[0].length).match(sQR)) {
                 section.push(checkImage(singleQ, images))
@@ -176,33 +177,26 @@ const checkImage = (arr, images) => {
 }
 
 
-const getPDFResult = async (pdf_id, choices) => {
+const getPDFResult = async (pdf_id) => {
     const headers = {
         'app_id': process.env.MATHPIX_ID,
         'app_key': process.env.MATHPIX_KEY,
         'Content-Type': 'application/json'
     }
     const url = "https://api.mathpix.com/v3/pdf/".concat(pdf_id)
-    let respond = await axios.get(url, {
+    const response = await axios.get(url, {
         headers: headers
     })
-    if (respond.data.status == "error" ) {
-        throw Error
+    if (response.data.error) {
+        throw new Error("Invalid pdf id")
     }
-    while (respond.data.status != "completed") {
-        await new Promise(f => setTimeout(f, 10000));
-        respond = await axios.get(url, {
-            headers: headers
-        })
+    if (response.data.status != "completed") {
+        await new Promise(f => setTimeout(f, 1000));
     }
-    let questions
-    axios.get(url.concat(".tex"), {
+
+    return axios.get(url.concat(".tex"), {
         headers: headers
-    }).then((content) => {
-        questions = parseQuestions(content, choices)
-        
     })
-    return questions
 }
 
 
@@ -219,8 +213,11 @@ const getPDFResult = async (pdf_id, choices) => {
 //2023_06_25_d25c2986903bb495d7edg
 app.post("/convert-id", async (req, res) => {
     try {
-        const questions = await getPDFResult(req.body.pdf_id, req.body.choices)
-        console.log(questions)
+        const content = await getPDFResult(req.body.pdf_id)
+        if (!content) {
+            res.status(503).send("Invalid file id, or file not processed yet. Please try again soon.")
+        }
+        const questions = parseQuestions(content, req.body.choices);
         res.status(200).send(questions)
 
         // PREVIOUS CODE BELOW
@@ -257,7 +254,7 @@ app.post("/convert-file", upload.single("file"), async (req, res) => {
         console.log(req.file)
         console.log(req.body.choices)
         if (!req.file) {
-            throw Error
+            throw new Error("No file uploaded")
         }
         const data = new FormData();
         data.append("file", req.file.buffer, {
@@ -286,8 +283,9 @@ app.post("/convert-file", upload.single("file"), async (req, res) => {
         axios.request(config)
         .then(async (id) => {
             console.log(id.data.pdf_id)
-            const question = await getPDFResult(id.data.pdf_id, req.body.choices)
-            res.status(200).send(question)
+            const content = await getPDFResult(id.data.pdf_id)
+            const questions = parseQuestions(content, req.body.choices);
+            res.status(200).send(questions)
         })
     } catch (err) {
         console.log(err)
