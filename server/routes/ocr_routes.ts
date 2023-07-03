@@ -14,86 +14,14 @@ const storage = multer.memoryStorage({
 })
 
 const upload = multer({ storage: storage });
-const FormData = require('form-data')
-
-
-app.post("/convert", upload.single("file"), async (req, res) => {
-    try {
-        if (!req.file) {
-            throw Error
-        }
-        const fileData = req.file.buffer.toString('base64');
-        const response = await axios.post('https://api.mathpix.com/v3/text', {
-            src: `data:${req.file.mimetype};base64,${fileData}`,
-            formats: [
-                "text",
-                "data",
-                "latex_simplified",
-                "latex_styled",
-                "mathml",
-                "asciimath",
-                "latex_list"],
-            //math_inline_delimiters: ["$", "$"],
-            //math_display_delimiters: ["$", "$"],
-            data_options: {
-                include_asciimath: true,
-                include_latex: true
-            }
-        }, {
-            headers: {
-                'app_id': process.env.MATHPIX_ID,
-                'app_key': process.env.MATHPIX_KEY,
-                'Content-Type': 'application/json'
-            }
-        });
-        console.log(response.data)
-        res.status(200).send(response.data)
-    } catch (err) {
-        res.status(400).send(err);
-    }
-})
-
+const FormData = require('form-data');
 
 interface QuestionPart {
     content: string,
     hasImage: boolean,
     imageLinks?: string[]
 }
-    
-app.post("/convert-link", async (req, res) => {
-    try {
-        const headers = {
-            'app_id': process.env.MATHPIX_ID,
-            'app_key': process.env.MATHPIX_KEY,
-            'Content-Type': 'application/json'
-        }
-        axios.post("https://api.mathpix.com/v3/pdf", {
-            url: req.body.pdf,
-            conversion_formats: {
-                "tex.zip": true,
-            },
-            enable_spell_check: false,
-            enable_tables_fallback: false,
-            auto_number_sections: false,
-            numbers_default_to_math: true,
-            math_inline_delimiters: ["\$", "\$"],
-        }, {
-            headers: headers
-        }).then(async (id) => {
-            console.log(id.data.pdf_id)
-            const content = await getPDFResult(id.data.pdf_id)
-            const questions = parseQuestions(content, req.body.choices);
-            res.status(200).send(questions)
-        })
-    } catch (err) {
-        console.log(err)
-        res.status(400).send(err);
-    }
-})
-        
-        
-    
-    
+
 const parseQuestions = (content, choices) => {
     const regex1 = /\\[a-z]+\{enumerate\}/g
     const regex2 = /\\setcounter\{enumi\}\{[0-9]*\}/g
@@ -113,7 +41,7 @@ const parseQuestions = (content, choices) => {
         let mQR, sQR
 
 
-        switch(choices) {
+        switch (choices) {
             case "4":
                 mQR = /(.+)\(*[Aa][\.\)](.+)\(*[Bb][\.\)](.+)\(*[Cc][\.\)](.+)\(*[Dd][\.\)](.+)[0-9]+[\.\)]/s
                 sQR = /(.+)\(*[Aa][\.\)](.+)\(*[Bb][\.\)](.+)\(*[Cc][\.\)](.+)\(*[Dd][\.\)](.+)/s
@@ -144,7 +72,6 @@ const parseQuestions = (content, choices) => {
     });
     return modifiedQuestion
 }
-
 
 const checkImage = (arr, images) => {
     let question = new Array<QuestionPart>()
@@ -191,7 +118,7 @@ const getPDFResult = async (pdf_id) => {
         throw new Error("Invalid pdf id")
     }
     if (response.data.status != "completed") {
-        await new Promise(f => setTimeout(f, 1000));
+        await new Promise(f => setTimeout(f, 15000));
     }
 
     return axios.get(url.concat(".tex"), {
@@ -199,56 +126,42 @@ const getPDFResult = async (pdf_id) => {
     })
 }
 
-
-//'2023_06_21_55f826e7aef9550a4dccg'
-//'2023_06_20_6f00c60af0637a2a7afbg'
-//2023_06_26_c43f04fde2b3f43e8da8g -> this one is weird
-//'2023_06_20_6f00c60af0637a2a7afbg'
-//2023_06_25_d25c2986903bb495d7edg
-//2023_06_21_55f826e7aef9550a4dccg
-//2023_06_25_71ec7181e0d7aba87642g
-//2023_06_19_d67ee4497ecd37894300g -> CS
-////'2023_06_19_d67ee4497ecd37894300g' -> cs, the one that worked with pdf
-//'2023_06_28_75fdd6edc01be3a36ec9g' -> CS
-//2023_06_25_d25c2986903bb495d7edg
-app.post("/convert-id", async (req, res) => {
+app.post("/convert-link", async (req, res) => {
     try {
-        const content = await getPDFResult(req.body.pdf_id)
-        if (!content) {
-            res.status(503).send("Invalid file id, or file not processed yet. Please try again soon.")
+        if (!req.body.link) {
+            throw new Error("No link provided");
         }
-        const questions = parseQuestions(content, req.body.choices);
-        res.status(200).send(questions)
+        const headers = {
+            'app_id': process.env.MATHPIX_ID,
+            'app_key': process.env.MATHPIX_KEY,
+            'Content-Type': 'application/json'
+        }
+        const id = await axios.post("https://api.mathpix.com/v3/pdf", {
+            url: req.body.link,
+            conversion_formats: {
+                "tex.zip": true,
+            },
+            enable_spell_check: false,
+            enable_tables_fallback: false,
+            auto_number_sections: false,
+            numbers_default_to_math: true,
+            math_inline_delimiters: ["\$", "\$"],
+        }, {
+            headers: headers
+        })
 
-        // PREVIOUS CODE BELOW
-        // const headers = {
-        //     'app_id': process.env.MATHPIX_ID,
-        //     'app_key': process.env.MATHPIX_KEY,
-        //     'Content-Type': 'application/json'
-        // }
-        // const pdf_id = req.body.pdf_id
-        // const url = "https://api.mathpix.com/v3/pdf/".concat(pdf_id)
-        // let respond = await axios.get(url, {
-        //     headers: headers
-        // })
-        // if (respond.data.status == "error" ) {
-        //     throw Error
-        // }
-        // axios.get(url.concat(".tex"), {
-        //     headers: headers
-        // }).then(async (content) => {
-        //     const questions = parseQuestions(content, req.body.choices)
-        //     res.status(200).send(questions)
-        // })
+        try {
+            const content = await getPDFResult(id.data.pdf_id)
+            const questions = parseQuestions(content, req.body.choices);
+            return res.status(200).send({ id: id.data.pdf_id, questions: questions })
+        } catch (err) {
+            res.status(503).send("PDF not processed yet, please try again later using id")
+        }
     } catch (err) {
-        console.log(err)
         res.status(400).send(err);
     }
 })
 
-
-//2023_06_28_75fdd6edc01be3a36ec9g
-//2023_06_28_5d29a85a83a19b1dd0a7g
 app.post("/convert-file", upload.single("file"), async (req, res) => {
     try {
         console.log(req.file)
@@ -274,24 +187,87 @@ app.post("/convert-file", upload.single("file"), async (req, res) => {
             maxBodyLength: Infinity,
             url: "https://api.mathpix.com/v3/pdf",
             headers: {
-            'app_key': process.env.MATHPIX_KEY,
-            'Content-Type': 'multipart/form-data',
-            ...data.getHeaders()
-        },
+                'app_key': process.env.MATHPIX_KEY,
+                'Content-Type': 'multipart/form-data',
+                ...data.getHeaders()
+            },
             data: data
         }
-        axios.request(config)
-        .then(async (id) => {
-            console.log(id.data.pdf_id)
+        const id = await axios.request(config)
+
+        try {
             const content = await getPDFResult(id.data.pdf_id)
             const questions = parseQuestions(content, req.body.choices);
-            res.status(200).send(questions)
-        })
+            return res.status(200).send({ id: id.data.pdf_id, questions: questions })
+        } catch (err) {
+            res.status(503).send("PDF not processed yet, please try again later using id")
+        }
     } catch (err) {
-        console.log(err)
         res.status(400).send(err);
     }
 })
+
+// SAMPLE IDS TO USE FOR TESTING (ALREADY PROCESSED)
+//2023_06_28_75fdd6edc01be3a36ec9g
+//2023_06_28_5d29a85a83a19b1dd0a7g
+//2023_06_21_55f826e7aef9550a4dccg
+//2023_06_20_6f00c60af0637a2a7afbg
+//2023_06_26_c43f04fde2b3f43e8da8g -> this one is weird
+//2023_06_20_6f00c60af0637a2a7afbg
+//2023_06_25_d25c2986903bb495d7edg
+//2023_06_21_55f826e7aef9550a4dccg
+//2023_06_25_71ec7181e0d7aba87642g
+//2023_06_19_d67ee4497ecd37894300g -> CS
+//2023_06_19_d67ee4497ecd37894300g -> CS, the one that worked with pdf
+//2023_06_28_75fdd6edc01be3a36ec9g -> CS
+//2023_06_25_d25c2986903bb495d7edg
+app.post("/convert-id", async (req, res) => {
+    try {
+        const content = await getPDFResult(req.body.pdf_id)
+        const questions = parseQuestions(content, req.body.choices);
+        res.status(200).send(questions)
+    } catch (err) {
+        res.status(400).send(err);
+    }
+})
+
+
+/* Image convert route, might use later
+app.post("/convert", upload.single("file"), async (req, res) => {
+    try {
+        if (!req.file) {
+            throw Error
+        }
+        const fileData = req.file.buffer.toString('base64');
+        const response = await axios.post('https://api.mathpix.com/v3/text', {
+            src: `data:${req.file.mimetype};base64,${fileData}`,
+            formats: [
+                "text",
+                "data",
+                "latex_simplified",
+                "latex_styled",
+                "mathml",
+                "asciimath",
+                "latex_list"],
+            //math_inline_delimiters: ["$", "$"],
+            //math_display_delimiters: ["$", "$"],
+            data_options: {
+                include_asciimath: true,
+                include_latex: true
+            }
+        }, {
+            headers: {
+                'app_id': process.env.MATHPIX_ID,
+                'app_key': process.env.MATHPIX_KEY,
+                'Content-Type': 'application/json'
+            }
+        });
+        console.log(response.data)
+        res.status(200).send(response.data)
+    } catch (err) {
+        res.status(400).send(err);
+    }
+}) */
 
 module.exports = app;
 export { }

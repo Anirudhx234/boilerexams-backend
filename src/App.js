@@ -257,7 +257,8 @@ function App() {
     axios.post('http://localhost:8080/convert-link', {link, choices})
     .then((res) => {
       console.log(res)
-      setExam(res.data)
+      alert(res.data.id)
+      setExam(res.data.questions)
     }).catch ((err) => {
       console.alert(err)
     })
@@ -283,7 +284,8 @@ function App() {
     axios.post('http://localhost:8080/convert-file', file)
     .then((res) => {
       console.log(res)
-      setExam(res.data)
+      alert(res.data.id)
+      setExam(res.data.questions)
     }).catch ((err) => {
       console.alert(err)
     })
