@@ -4,8 +4,6 @@ const express = require('express');
 const prisma = new PrismaClient();
 const app = express();
 
-const { deleteResource } = require("./s3.ts")
-
 // soft deletes -- just changes the published fields to false
 // TODO: hard deletes - cascading deletes for courses and exams
 app.delete("/courses/softDelete/:courseId", async (req, res) => {
@@ -78,40 +76,9 @@ app.delete("/courses/:courseId/exams/hardDelete/:examId", async (req, res) => {
 app.delete("/courses/:courseId/exams/:examId/questions/:questionId", async (req, res) => {
     try {
         const { questionId } = req.params
-        const question = await prisma.question.delete({
+        prisma.question.delete({
             where: {
                 id: questionId
-            },
-            include: {
-                resource: true,
-            }
-        })
-        if (!question) {
-            return res.status(404).send("Question not found")
-        }
-
-        const resourceIds = [question.resourceId];
-        console.log(resourceIds)
-        prisma.resource.deleteMany({
-            where: {
-                id: {
-                    in: resourceIds
-                }
-            }
-        })
-            .then((resp) => res.status(200).send(resp))
-            .catch((err) => res.status(400).send(err))
-    } catch (e) {
-        res.status(400).send(e)
-    }
-})
-
-app.delete("/resources/:resourceId", async (res, req) => {
-    try {
-        const { resourceId } = req.params;
-        prisma.resource.delete({
-            where: {
-                id: resourceId
             }
         })
         .then((resp) => res.status(200).send(resp))
@@ -119,20 +86,6 @@ app.delete("/resources/:resourceId", async (res, req) => {
     } catch (e) {
         res.status(400).send(e)
     }
-})
-
-prisma.$use(async (params, next) => {
-    if (params.model == 'Resource') {
-        if (params.action == 'deleteMany') {
-            params.args['where'].id.in.forEach((resourceId) => {
-                deleteResource(resourceId)
-            })
-        }
-        if (params.action == 'delete') {
-            deleteResource(params.args['where'].id)
-        }
-    }
-    return next(params)
 })
 
 app.delete("/topics/:topicId", async (req, res) => {

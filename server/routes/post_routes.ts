@@ -5,17 +5,6 @@ const axios = require('axios');
 const prisma = new PrismaClient();
 const app = express_routes();
 
-const multer = require('multer');
-const Aws = require('aws-sdk');
-
-const storage = multer.memoryStorage({
-    destination: function (req, file, cb) {
-        cb(null, '')
-    }
-})
-const upload = multer({ storage: storage });
-const {uploadImage} = require("./s3.ts")
-
 app.post("/courses", async (req, res) => {
     try {
         const { name, subject, abbreviation, number, backgroundColor, graphicLink, published } = req.body
@@ -114,7 +103,7 @@ app.post("/courses/:courseId/exams", async (req, res) => {
 app.post("/courses/:courseId/exams/:examId/questions", async (req, res) => {
     try {
         const { courseId, examId } = req.params
-        const { topics, number, body, answerChoices, correctChoiceIndex, solutionVideoLink } = req.body
+        const { topics, number, body, answerChoices, correctChoiceIndex, solutionVideoLink, resourceId } = req.body
 
         await prisma.course.update({
             where: {
@@ -140,7 +129,8 @@ app.post("/courses/:courseId/exams/:examId/questions", async (req, res) => {
                 body: body,
                 answerChoices: answerChoices,
                 correctChoiceIndex: Number(correctChoiceIndex),
-                solutionVideoLink: solutionVideoLink
+                solutionVideoLink: solutionVideoLink,
+                resourceId: resourceId
             },
             include: {
                 topics: true
