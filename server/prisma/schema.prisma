@@ -48,20 +48,69 @@ model Topic {
 }
 
 model Question {
-  id                 String   @id @default(uuid())
-  examId             String
+  id                 String         @id @default(uuid())
   number             Int
   body               String
-  answerChoices      String[]
   correctChoiceIndex Int
-  submissions        Int[]    @default([])
-  solutionVideoLink  String   @default("")
+  submissions        Int[]          @default([])
+  solutionVideoLink  String         @default("")
   courseId           String
-  course             Course   @relation(fields: [courseId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  exam               Exam     @relation(fields: [examId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  topics             Topic[]  @relation("QuestionToTopic")
+  examId             String
+  course             Course         @relation(fields: [courseId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  exam               Exam           @relation(fields: [examId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  topics             Topic[]        @relation("QuestionToTopic")
+  answerChoices      AnswerChoice[]
+  resources          Resource[]
 
   // @@unique([examId, number])
+}
+
+model AnswerChoice {
+  id          String     @id @default(uuid())
+  choiceIndex Int
+  body        String
+  questionId  String
+  question    Question   @relation(fields: [questionId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  resources   Resource[]
+
+  @@unique([questionId, choiceIndex])
+}
+
+model Resource {
+  id             String        @id @default(uuid())
+  type           ResourceType
+  image          Image?
+  code           Code?
+  questionId     String?
+  answerChoiceId String?
+  question       Question?     @relation(fields: [questionId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  answerChoice   AnswerChoice? @relation(fields: [answerChoiceId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+}
+
+enum ResourceType {
+  IMAGE
+  CODE
+}
+
+model Image {
+  id         String   @id @default(uuid())
+  key        String
+  url        String
+  resourceId String   @unique
+  resource   Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+}
+
+model Code {
+  id         String   @id @default(uuid())
+  language   Language
+  code       String
+  resourceId String   @unique
+  resource   Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+}
+
+enum Language {
+  C
+  JAVA
 }
 
 model Semester {

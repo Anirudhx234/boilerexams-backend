@@ -55,17 +55,32 @@ app.get("/courses/all", async (req, res) => {
     try {
         prisma.course.findMany({
             include: {
-                topics: {
-                    include: {
-                        questions: true
-                    }
-                },
+                topics: true,
                 semesters: true,
                 exams: {
                     include: {
                         questions: {
                             include: {
-                                topics: true
+                                topics: true,
+                                answerChoices: {
+                                    orderBy: {
+                                        choiceIndex: 'asc'
+                                    },
+                                    include: {
+                                        resources: {
+                                            include: {
+                                                image: true,
+                                                code: true
+                                            }
+                                        }
+                                    }
+                                },
+                                resources: {
+                                    include: {
+                                        image: true,
+                                        code: true
+                                    }
+                                }
                             }
                         },
                         semester: true,
@@ -309,10 +324,23 @@ app.get("/courses/:courseAbbrev/topics/:topicName/questions", async (req, res) =
                 },
                 include: {
                     topics: true,
-                    exam: {
-                        select: {
-                            number: true,
-                            semester: true,
+                    answerChoices: {
+                        orderBy: {
+                            choiceIndex: 'asc'
+                        },
+                        include: {
+                            resources: {
+                                include: {
+                                    image: true,
+                                    code: true
+                                }
+                            }
+                        }
+                    },
+                    resources: {
+                        include: {
+                            image: true,
+                            code: true
                         }
                     }
                 }
@@ -452,7 +480,26 @@ app.get("/courses/:courseAbbrev/exams/:season-:year-:examNumber/questions", cach
                         number: 'asc'
                     },
                     include: {
-                        topics: true
+                        topics: true,
+                        answerChoices: {
+                            orderBy: {
+                                choiceIndex: 'asc'
+                            },
+                            include: {
+                                resources: {
+                                    include: {
+                                        image: true,
+                                        code: true
+                                    }
+                                }
+                            }
+                        },
+                        resources: {
+                            include: {
+                                image: true,
+                                code: true
+                            }
+                        }
                     }
                 }
             }
@@ -465,23 +512,22 @@ app.get("/courses/:courseAbbrev/exams/:season-:year-:examNumber/questions", cach
                     res.status(404).send("Exam not found")
                 }
             })
-            .catch((err) => res.status(400).send(err))
     } catch (e) {
         res.status(400).send(e)
     }
 });
 
-app.get("/stats", cache(300), async(req, res) => {
+app.get("/stats", cache(300), async (req, res) => {
     try {
         const questionsTotal = await prisma.question.count()
 
         const questions = await prisma.question.findMany({})
         let questionsAnswered = 0
         await questions.forEach((question) => {
-            questionsAnswered += question.submissions.reduce((a,b) => a+b, 0)
+            questionsAnswered += question.submissions.reduce((a, b) => a + b, 0)
         })
-        res.status(200).send({questionsTotal, questionsAnswered})
-    } catch(e) {
+        res.status(200).send({ questionsTotal, questionsAnswered })
+    } catch (e) {
         res.status(400).send(e)
     }
 

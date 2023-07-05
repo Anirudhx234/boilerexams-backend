@@ -12,7 +12,8 @@ const post_routes = require("./routes/post_routes");
 const ocr_routes = require("./routes/ocr_routes");
 const put_routes = require("./routes/put_routes");
 const delete_routes = require("./routes/delete_routes")
-app.use(id_routes, name_routes, post_routes, ocr_routes, put_routes, delete_routes);
+const resources_routes = require("./routes/resources.ts")
+app.use(id_routes, name_routes, post_routes, ocr_routes, put_routes, delete_routes, resources_routes);
 
 app.get("/", (req, res) => {
   res.send("Working")

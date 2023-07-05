@@ -1,4 +1,4 @@
-const { PrismaClient} = require('@prisma/client')
+const { PrismaClient } = require('@prisma/client')
 const express = require('express');
 
 const prisma = new PrismaClient();
@@ -79,25 +79,25 @@ app.delete("/courses/:courseId/exams/:examId/questions/:questionId", async (req,
         prisma.question.delete({
             where: {
                 id: questionId
-            },
+            }
         })
-            .then((response) => res.status(200).send(response))
-            .catch((err) => res.status(404).send(err))
+        .then((resp) => res.status(200).send(resp))
+        .catch((err) => res.status(400).send(err))
     } catch (e) {
         res.status(400).send(e)
     }
 })
 
-app.delete("/topics/:topicId", async(req, res) => {
+app.delete("/topics/:topicId", async (req, res) => {
     try {
-        const {topicId} = req.params;
+        const { topicId } = req.params;
         prisma.topic.delete({
             where: {
                 id: topicId
             }
         }).then((response) => res.status(200).send(response))
-        .catch((err) => res.status(404).send(err))
-    } catch(err) {
+            .catch((err) => res.status(404).send(err))
+    } catch (err) {
         res.status(400).send(err)
     }
 })
