@@ -8,12 +8,21 @@ const app = express_routes();
 app.post("/courses", async (req, res) => {
     try {
         const { name, subject, abbreviation, number, backgroundColor, graphicLink, published } = req.body
+        const stringifiedNumber = String(number);
+        const courseNumber = stringifiedNumber + "0".repeat(5 - stringifiedNumber.length);
+        const purdueIOCourse = await getPurdueCourse(abbreviation.toUpperCase(), courseNumber);
+
+        if (!purdueIOCourse) {
+            res.status(406).send(`Invalid Course ${abbreviation} ${courseNumber}`);
+            return;
+        }
+
         prisma.course.create({
             data: {
                 name: name,
                 subject: subject,
-                abbreviation: abbreviation,
-                number: Number(number),
+                abbreviation: abbreviation.toUpperCase(),
+                number: Number(courseNumber),
                 backgroundColor: backgroundColor,
                 graphicLink: graphicLink,
                 published: published
@@ -149,11 +158,9 @@ app.post("/courses/requests", async (req, res) => {
         // Parse purdueIo for a valid course (MA265, CS180, AEE200, ...)
         const courseNumber = course + "0".repeat(5 - course.length);
         const subjectAbbreviation = subject.toUpperCase();
-        const purdueIoCourseRequest = await axios.get(`https://api.purdue.io/odata/Courses?$filter=Subject/Abbreviation eq '${subjectAbbreviation}'`);
-        const courses = await purdueIoCourseRequest.data.value;
-        const purdueCourse = courses.find(element => element.Number === courseNumber);
+        const purdueIOCourse = await getPurdueCourse(subjectAbbreviation, courseNumber);
 
-        if (!purdueCourse) {
+        if (!purdueIOCourse) {
             res.status(406).send(`Invalid Course ${subjectAbbreviation} ${courseNumber}`);
             return;
         }
@@ -172,7 +179,7 @@ app.post("/courses/requests", async (req, res) => {
             return;
         }
 
-        const newCourseRequest = { id: purdueCourse.Id, subject: subjectAbbreviation, course: courseNumber, requests: 1 };
+        const newCourseRequest = { id: purdueIOCourse.Id, subject: subjectAbbreviation, course: courseNumber, requests: 1 };
 
         await prisma.courseRequest.upsert({
             where: {
@@ -260,7 +267,7 @@ app.post("/bug-reports/questions/:questionId", async (req, res) => {
         const { questionId } = req.params;
         const { description, footer } = req.body;
 
-        // ToDo Get pingableId from exam
+        // ToDo Get pingableIds from exam
 
         const question = await prisma.question.findUnique({
             where: {
@@ -298,7 +305,7 @@ app.post("/bug-reports/questions/:questionId", async (req, res) => {
             color: 15548997,
             footer: { text: footer }
         };
-
+        
         const params = { embeds: [embed], content: null };
         await axios.post(
             process.env.BUG_REPORT_WEBHOOK_URL,
@@ -335,6 +342,18 @@ app.post("/feature-requests", async (req, res) => {
         res.status(400).send(e);
     }
 });
+
+type PurdueIOCourse = { Id: string,  Number: string, SubjectId: string, Title: string, CreditHours: number, description: string };
+
+async function getPurdueCourse(subjectAbbreviation: string, courseNumber: string) {
+    try {
+        const query = `https://api.purdue.io/odata/Courses?$filter=Subject/Abbreviation eq '${subjectAbbreviation}' and Number eq '${courseNumber}'`;
+        const request = await axios.get(query);
+        return request.data.value[0] as PurdueIOCourse;
+    } catch {
+        return null;
+    }
+}
 
 module.exports = app;
 export { }
