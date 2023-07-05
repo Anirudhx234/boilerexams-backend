@@ -166,7 +166,7 @@ app.post("/courses/:courseId/exams/:examId/questions", async (req, res) => {
             }
         })
             .then((resp) => res.status(200).send(resp))
-        //.catch((err) => res.status(400).send(err))
+            .catch((err) => res.status(400).send(err))
     } catch (e) {
         console.log(e)
         res.status(400).send(e)
