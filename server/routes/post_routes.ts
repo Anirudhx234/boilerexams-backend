@@ -103,7 +103,7 @@ app.post("/courses/:courseId/exams", async (req, res) => {
 app.post("/courses/:courseId/exams/:examId/questions", async (req, res) => {
     try {
         const { courseId, examId } = req.params
-        const { topics, number, body, answerChoices, correctChoiceIndex, solutionVideoLink, resources } = req.body
+        const { topics, number, body, answerChoices, correctChoiceIndex, solutionVideoLink, resourceIds } = req.body
 
         await prisma.course.update({
             where: {
@@ -132,14 +132,14 @@ app.post("/courses/:courseId/exams/:examId/questions", async (req, res) => {
                         choiceIndex: Number(answerChoice.choiceIndex),
                         body: answerChoice.body,
                         resources: {
-                            connect: answerChoice.resources.map((resourceId) => ({ id: resourceId }))
+                            connect: answerChoice.resourceIds.map((resourceId) => ({ id: resourceId }))
                         }
                     }))
                 },
                 correctChoiceIndex: Number(correctChoiceIndex),
                 solutionVideoLink: solutionVideoLink,
                 resources: {
-                    connect: resources.map((resourceId) => ({ id: resourceId }))
+                    connect: resourceIds.map((resourceId) => ({ id: resourceId }))
                 }
             },
             include: {

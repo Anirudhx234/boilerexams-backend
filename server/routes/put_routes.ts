@@ -77,7 +77,7 @@ app.put("/courses/:courseId/exams/:examId", async (req, res) => {
 app.put("/courses/:courseId/exams/:examId/questions/:questionId", async (req, res) => {
     try {
         const { courseId, examId, questionId } = req.params
-        const { topics, number, body, answerChoices, correctChoiceIndex, solutionVideoLink, resources } = req.body
+        const { topics, number, body, answerChoices, correctChoiceIndex, solutionVideoLink, resourceIds } = req.body
 
         await prisma.course.update({
             where: {
@@ -120,17 +120,17 @@ app.put("/courses/:courseId/exams/:examId/questions/:questionId", async (req, re
                             resources: {
                                 deleteMany: {
                                     id: {
-                                        notIn: answerChoice.resources
+                                        notIn: answerChoice.resourceIds
                                     }
                                 },
-                                connect: answerChoice.resources.map((resourceId) => ({ id: resourceId }))
+                                connect: answerChoice.resourceIds.map((resourceId) => ({ id: resourceId }))
                             }
                         },
                         create: {
                             choiceIndex: Number(answerChoice.choiceIndex),
                             body: answerChoice.body,
                             resources: {
-                                connect: answerChoice.resources.map((resourceId) => ({ id: resourceId }))
+                                connect: answerChoice.resourceIds.map((resourceId) => ({ id: resourceId }))
                             }
                         }
                     }))
@@ -140,10 +140,10 @@ app.put("/courses/:courseId/exams/:examId/questions/:questionId", async (req, re
                 resources: {
                     deleteMany: {
                         id: {
-                            notIn: resources
+                            notIn: resourceIds
                         }
                     },
-                    connect: resources.map((resourceId) => ({ id: resourceId }))
+                    connect: resourceIds.map((resourceId) => ({ id: resourceId }))
                 }
             },
             include: {
