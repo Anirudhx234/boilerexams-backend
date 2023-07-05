@@ -123,7 +123,26 @@ app.get("/id/questions/:questionId", cache(300), async (req, res) => {
             id: questionId
         },
         include: {
-            topics: true
+            topics: true,
+            answerChoices: {
+                orderBy: {
+                    choiceIndex: 'asc'
+                },
+                include: {
+                    resources: {
+                        include: {
+                            image: true,
+                            code: true
+                        }
+                    }
+                }
+            },
+            resources: {
+                include: {
+                    image: true,
+                    code: true
+                }
+            }
         }
     })
         .then((resp) => {

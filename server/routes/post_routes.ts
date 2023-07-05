@@ -112,7 +112,7 @@ app.post("/courses/:courseId/exams", async (req, res) => {
 app.post("/courses/:courseId/exams/:examId/questions", async (req, res) => {
     try {
         const { courseId, examId } = req.params
-        const { topics, number, body, answerChoices, correctChoiceIndex, solutionVideoLink } = req.body
+        const { topics, number, body, answerChoices, correctChoiceIndex, solutionVideoLink, resourceIds } = req.body
 
         await prisma.course.update({
             where: {
@@ -136,17 +136,48 @@ app.post("/courses/:courseId/exams/:examId/questions", async (req, res) => {
                 },
                 number: Number(number),
                 body: body,
-                answerChoices: answerChoices,
+                answerChoices: {
+                    create: answerChoices.map((answerChoice) => ({
+                        choiceIndex: Number(answerChoice.choiceIndex),
+                        body: answerChoice.body,
+                        resources: {
+                            connect: answerChoice.resourceIds.map((resourceId) => ({ id: resourceId }))
+                        }
+                    }))
+                },
                 correctChoiceIndex: Number(correctChoiceIndex),
-                solutionVideoLink: solutionVideoLink
+                solutionVideoLink: solutionVideoLink,
+                resources: {
+                    connect: resourceIds.map((resourceId) => ({ id: resourceId }))
+                }
             },
             include: {
-                topics: true
+                topics: true,
+                answerChoices: {
+                    orderBy: {
+                        choiceIndex: 'asc'
+                    },
+                    include: {
+                        resources: {
+                            include: {
+                                image: true,
+                                code: true
+                            }
+                        }
+                    }
+                },
+                resources: {
+                    include: {
+                        image: true,
+                        code: true
+                    }
+                }
             }
         })
             .then((resp) => res.status(200).send(resp))
             .catch((err) => res.status(400).send(err))
     } catch (e) {
+        console.log(e)
         res.status(400).send(e)
     }
 });
@@ -234,7 +265,7 @@ app.post("/bug-reports", async (req, res) => {
     try {
         const { title, description, footer, pingableIds } = req.body
 
-        const roleIds = [ "1074060567339352145", "1078747995979403326", "1078748911298170891", "1074061247647068160" ];
+        const roleIds = ["1074060567339352145", "1078747995979403326", "1078748911298170891", "1074061247647068160"];
 
         const content = pingableIds ? pingableIds.map(element => {
             if (roleIds.includes(element)) return `<@&${element}>`;
