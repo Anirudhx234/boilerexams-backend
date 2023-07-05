@@ -21,7 +21,7 @@ const s3 = new Aws.S3({
 
 app.get("/resources/:resourceId", async (req, res) => {
     try {
-        const {resourceId} = req.params
+        const { resourceId } = req.params
         prisma.resource.findUnique({
             where: {
                 id: resourceId
@@ -31,8 +31,8 @@ app.get("/resources/:resourceId", async (req, res) => {
                 code: true
             }
         })
-        .then((resp) => res.status(200).send(resp))
-        .catch((err) => res.status(400).send(err))
+            .then((resp) => res.status(200).send(resp))
+            .catch((err) => res.status(400).send(err))
     } catch (e) {
         res.status(400).send(e)
     }
@@ -77,6 +77,7 @@ app.post("/resources/images", upload.single('file'), async (req, res) => {
             .catch((err) => res.status(400).send(err))
     } catch (e) {
         console.log(e);
+        res.status(400).send(e)
     }
 })
 
@@ -107,12 +108,11 @@ app.put("/resources/:resourceId/code", async (req, res) => {
         const { language, code } = req.body
         prisma.resource.update({
             where: {
-                id: resourceId,
-                type: ResourceType.CODE,
+                id: resourceId
             },
             data: {
                 code: {
-                    create: {
+                    update: {
                         language: Language[language.toUpperCase() as keyof typeof Language],
                         code: code
                     }
@@ -122,11 +122,12 @@ app.put("/resources/:resourceId/code", async (req, res) => {
             .then((resp) => res.status(200).send(resp))
             .catch((err) => res.status(400).send(err))
     } catch (e) {
+        console.log(e)
         res.status(400).send(e)
     }
 })
 
-app.delete("/resources/:resourceId", async (res, req) => {
+app.delete("/resources/:resourceId", async (req, res) => {
     try {
         const { resourceId } = req.params;
         prisma.resource.delete({
@@ -134,8 +135,8 @@ app.delete("/resources/:resourceId", async (res, req) => {
                 id: resourceId
             }
         })
-        .then((resp) => res.status(200).send(resp))
-        .catch((err) => res.status(400).send(err))
+            .then((resp) => res.status(200).send(resp))
+            .catch((err) => res.status(400).send(err))
     } catch (e) {
         res.status(400).send(e)
     }

@@ -72,6 +72,8 @@ model AnswerChoice {
   questionId  String
   question    Question   @relation(fields: [questionId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   resources   Resource[]
+
+  @@unique([questionId, choiceIndex])
 }
 
 model Resource {

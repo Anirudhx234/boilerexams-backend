@@ -77,7 +77,7 @@ app.put("/courses/:courseId/exams/:examId", async (req, res) => {
 app.put("/courses/:courseId/exams/:examId/questions/:questionId", async (req, res) => {
     try {
         const { courseId, examId, questionId } = req.params
-        const { topics, number, body, answerChoices, correctChoiceIndex, solutionVideoLink } = req.body
+        const { topics, number, body, answerChoices, correctChoiceIndex, solutionVideoLink, resources } = req.body
 
         await prisma.course.update({
             where: {
@@ -104,12 +104,69 @@ app.put("/courses/:courseId/exams/:examId/questions/:questionId", async (req, re
                 },
                 number: Number(number),
                 body: body,
-                answerChoices: answerChoices,
+                answerChoices: {
+                    deleteMany: {
+                        id: {
+                            notIn: answerChoices.map((answerChoice) => answerChoice.id)
+                        }
+                    },
+                    upsert: answerChoices.map((answerChoice) => ({
+                        where: {
+                            id: answerChoice.id
+                        },
+                        update: {
+                            choiceIndex: Number(answerChoice.choiceIndex),
+                            body: answerChoice.body,
+                            resources: {
+                                deleteMany: {
+                                    id: {
+                                        notIn: answerChoice.resources
+                                    }
+                                },
+                                connect: answerChoice.resources.map((resourceId) => ({ id: resourceId }))
+                            }
+                        },
+                        create: {
+                            choiceIndex: Number(answerChoice.choiceIndex),
+                            body: answerChoice.body,
+                            resources: {
+                                connect: answerChoice.resources.map((resourceId) => ({ id: resourceId }))
+                            }
+                        }
+                    }))
+                },
                 correctChoiceIndex: Number(correctChoiceIndex),
-                solutionVideoLink: solutionVideoLink
+                solutionVideoLink: solutionVideoLink,
+                resources: {
+                    deleteMany: {
+                        id: {
+                            notIn: resources
+                        }
+                    },
+                    connect: resources.map((resourceId) => ({ id: resourceId }))
+                }
             },
             include: {
-                topics: true
+                topics: true,
+                answerChoices: {
+                    orderBy: {
+                        choiceIndex: 'asc'
+                    },
+                    include: {
+                        resources: {
+                            include: {
+                                image: true,
+                                code: true
+                            }
+                        }
+                    }
+                },
+                resources: {
+                    include: {
+                        image: true,
+                        code: true
+                    }
+                }
             }
         })
             .then((resp) => res.status(200).send(resp))
@@ -134,11 +191,11 @@ app.put("/topics/:topicId", async (req, res) => {
         res.status(400).send(e)
     }
 })
-app.put("/questions/:questionId/submit/answerChoiceIndex=:index", async(req, res) => {
+app.put("/questions/:questionId/submit/answerChoiceIndex=:index", async (req, res) => {
     try {
-        const {questionId, index} = req.params
+        const { questionId, index } = req.params
         const answerChoiceIndex = Number(index)
-        let {submissions} = await prisma.question.findUnique({
+        let { submissions } = await prisma.question.findUnique({
             where: {
                 id: questionId
             },
@@ -158,9 +215,9 @@ app.put("/questions/:questionId/submit/answerChoiceIndex=:index", async(req, res
                 submissions: submissions
             }
         })
-        .then((resp) => res.status(200).send(resp))
-        .catch((err) => res.status(404).send(err))
-    } catch(e) {
+            .then((resp) => res.status(200).send(resp))
+            .catch((err) => res.status(404).send(err))
+    } catch (e) {
         res.status(400).send(e)
     }
 })
