@@ -23,54 +23,60 @@ interface QuestionPart {
 }
 
 const parseQuestions = (content, choices) => {
-    const regex1 = /\\[a-z]+\{enumerate\}/g
-    const regex2 = /\\setcounter\{enumi\}\{[0-9]*\}/g
-    const questions = content.data.substring(content.data.search('begin\{document\}') + 15, content.data.search('\\end\{document\}')).replaceAll(regex1, '').replaceAll(regex2, '').split(/\\item|\\section/)
-    const images = content.data.substring(content.data.search('\\end\{document\}')).match(/(.+)(https:\/\/cdn.mathpix.com\/.+)PK/g)
+    try {
+        const regex1 = /\\[a-z]+\{enumerate\}/g
+        const regex2 = /\\setcounter\{enumi\}\{[0-9]*\}/g
+        const questions = content.data.substring(content.data.search('begin\{document\}') + 15, content.data.search('\\end\{document\}')).replaceAll(regex1, '').replaceAll(regex2, '').split(/\\item|\\section/)
+        const images = content.data.substring(content.data.search('\\end\{document\}')).match(/(.+)(https:\/\/cdn.mathpix.com\/.+)PK/g)
 
-    let modifiedQuestion = new Array<QuestionPart[]>()
-    let qs = 0
-
-
-    questions.forEach(question => {
-        let multiQ
-        let singleQ
-        let q = question
+        let modifiedQuestion = new Array<QuestionPart[]>()
+        let qs = 0
 
 
-        let mQR, sQR
+        questions.forEach(question => {
+            let multiQ
+            let singleQ
+            let q = question
 
 
-        switch (choices) {
-            case "4":
-                mQR = /(.+)\(*[Aa][\.\)](.+)\(*[Bb][\.\)](.+)\(*[Cc][\.\)](.+)\(*[Dd][\.\)](.+)[0-9]+[\.\)]/s
-                sQR = /(.+)\(*[Aa][\.\)](.+)\(*[Bb][\.\)](.+)\(*[Cc][\.\)](.+)\(*[Dd][\.\)](.+)/s
-                break;
-            case "5":
-                mQR = /(.+)\(*[Aa][\.\)](.+)\(*[Bb][\.\)](.+)\(*[Cc][\.\)](.+)\(*[Dd][\.\)](.+)\(*[Ee][\.\)](.+)[0-9]+[\.\)]/s
-                sQR = /(.+)\(*[Aa][\.\)](.+)\(*[Bb][\.\)](.+)\(*[Cc][\.\)](.+)\(*[Dd][\.\)](.+)\(*[Ee][\.\)](.+)/s
-                break;
-            case "6":
-                mQR = /(.+)\(*[Aa][\.\)](.+)\(*[Bb][\.\)](.+)\(*[Cc][\.\)](.+)\(*[Dd][\.\)](.+)\(*[Ee][\.\)](.+)\(*[Ff][\.\)](.+)[0-9]+[\.\)]/s
-                sQR = /(.+)\(*[Aa][\.\)](.+)\(*[Bb][\.\)](.+)\(*[Cc][\.\)](.+)\(*[Dd][\.\)](.+)\(*[Ee][\.\)](.+)\(*[Ff][\.\)](.+)/s
-                break;
-        }
+            let mQR, sQR
 
-        const section = new Array<QuestionPart[]>()
-        while (multiQ = q.match(mQR)) {
-            if (singleQ = q.substring(multiQ[0].length).match(sQR)) {
+
+            switch (Number(choices)) {
+                case 4:
+                    mQR = /(.+)\(*[Aa][\.\)](.+)\(*[Bb][\.\)](.+)\(*[Cc][\.\)](.+)\(*[Dd][\.\)](.+)[0-9]+[\.\)]/s
+                    sQR = /(.+)\(*[Aa][\.\)](.+)\(*[Bb][\.\)](.+)\(*[Cc][\.\)](.+)\(*[Dd][\.\)](.+)/s
+                    break;
+                case 5:
+                    mQR = /(.+)\(*[Aa][\.\)](.+)\(*[Bb][\.\)](.+)\(*[Cc][\.\)](.+)\(*[Dd][\.\)](.+)\(*[Ee][\.\)](.+)[0-9]+[\.\)]/s
+                    sQR = /(.+)\(*[Aa][\.\)](.+)\(*[Bb][\.\)](.+)\(*[Cc][\.\)](.+)\(*[Dd][\.\)](.+)\(*[Ee][\.\)](.+)/s
+                    break;
+                case 6:
+                    mQR = /(.+)\(*[Aa][\.\)](.+)\(*[Bb][\.\)](.+)\(*[Cc][\.\)](.+)\(*[Dd][\.\)](.+)\(*[Ee][\.\)](.+)\(*[Ff][\.\)](.+)[0-9]+[\.\)]/s
+                    sQR = /(.+)\(*[Aa][\.\)](.+)\(*[Bb][\.\)](.+)\(*[Cc][\.\)](.+)\(*[Dd][\.\)](.+)\(*[Ee][\.\)](.+)\(*[Ff][\.\)](.+)/s
+                    break;
+                default:
+                    throw new Error("Enter a valid amount of answer choices")
+            }
+
+            const section = new Array<QuestionPart[]>()
+            while (multiQ = q.match(mQR)) {
+                if (singleQ = q.substring(multiQ[0].length).match(sQR)) {
+                    section.push(checkImage(singleQ, images))
+                    qs += 1
+                }
+                q = q.substring(0, multiQ[0].length - 2)
+            }
+            if (singleQ = q.match(sQR)) {
                 section.push(checkImage(singleQ, images))
                 qs += 1
             }
-            q = q.substring(0, multiQ[0].length - 2)
-        }
-        if (singleQ = q.match(sQR)) {
-            section.push(checkImage(singleQ, images))
-            qs += 1
-        }
-        modifiedQuestion = modifiedQuestion.concat(section.reverse())
-    });
-    return modifiedQuestion
+            modifiedQuestion = modifiedQuestion.concat(section.reverse())
+        });
+        return modifiedQuestion
+    } catch (e) {
+        throw new Error("Error")
+    }
 }
 
 const checkImage = (arr, images) => {
@@ -85,9 +91,9 @@ const checkImage = (arr, images) => {
         let image
         let imagelinks = new Array<string>()
         while (image = imageReg.exec(element)) {
-            console.log(`image=${image}`)
+            // console.log(`image=${image}`)
             const imageid = image[1].substring(0, image[1].length).replaceAll(/\(/g, '\\\(').replaceAll(/\)/g, '\\\)')
-            console.log(`imageid=${imageid}`)
+            // console.log(`imageid=${imageid}`)
             const i = images.find(i => i.replaceAll(/\(/g, '\\\(').replaceAll(/\)/g, '\\\)').includes(imageid))
             if (i) {
                 const imageURL = i.substring(i.search("https\:"), i.length - 2)
@@ -155,7 +161,7 @@ app.post("/convert-link", async (req, res) => {
             const questions = parseQuestions(content, req.body.choices);
             return res.status(200).send({ id: id.data.pdf_id, questions: questions })
         } catch (err) {
-            res.status(503).send("PDF not processed yet, please try again later using id")
+            res.status(503).json({id: id.data.pdf_id, message: "PDF not processed yet, please try again later using id"})
         }
     } catch (err) {
         res.status(400).send(err);
@@ -164,8 +170,6 @@ app.post("/convert-link", async (req, res) => {
 
 app.post("/convert-file", upload.single("file"), async (req, res) => {
     try {
-        console.log(req.file)
-        console.log(req.body.choices)
         if (!req.file) {
             throw new Error("No file uploaded")
         }
@@ -200,7 +204,7 @@ app.post("/convert-file", upload.single("file"), async (req, res) => {
             const questions = parseQuestions(content, req.body.choices);
             return res.status(200).send({ id: id.data.pdf_id, questions: questions })
         } catch (err) {
-            res.status(503).send("PDF not processed yet, please try again later using id")
+            res.status(503).json({id: id.data.pdf_id, message: "PDF not processed yet, please try again later using id"})
         }
     } catch (err) {
         res.status(400).send(err);
@@ -225,7 +229,7 @@ app.post("/convert-id", async (req, res) => {
     try {
         const content = await getPDFResult(req.body.pdf_id)
         const questions = parseQuestions(content, req.body.choices);
-        res.status(200).send(questions)
+        res.status(200).json({id: req.body.pdf_id, questions: questions})
     } catch (err) {
         res.status(400).send(err);
     }

@@ -310,51 +310,55 @@ app.get("/courses/:courseAbbrev/exams/questions", cache(300), async (req, res) =
 
 // Full question information for specific topic
 app.get("/courses/:courseAbbrev/topics/:topicName/questions", async (req, res) => {
-    const { topicName } = req.params;
-    prisma.topic.findUnique({
-        where: {
-            name: topicName
-        },
-        include: {
-            questions: {
-                where: {
-                    exam: {
-                        published: true
-                    }
-                },
-                include: {
-                    topics: true,
-                    answerChoices: {
-                        orderBy: {
-                            choiceIndex: 'asc'
-                        },
-                        include: {
-                            resources: {
-                                include: {
-                                    image: true,
-                                    code: true
-                                }
-                            }
+    try {
+        const { topicName } = req.params;
+        prisma.topic.findUnique({
+            where: {
+                name: topicName
+            },
+            include: {
+                questions: {
+                    where: {
+                        exam: {
+                            published: true
                         }
                     },
-                    resources: {
-                        include: {
-                            image: true,
-                            code: true
+                    include: {
+                        topics: true,
+                        answerChoices: {
+                            orderBy: {
+                                choiceIndex: 'asc'
+                            },
+                            include: {
+                                resources: {
+                                    include: {
+                                        image: true,
+                                        code: true
+                                    }
+                                }
+                            }
+                        },
+                        resources: {
+                            include: {
+                                image: true,
+                                code: true
+                            }
                         }
                     }
                 }
             }
-        }
-    })
-        .then((topics) => {
-            if (topics) {
-                res.status(200).send(topics);
-            } else {
-                res.status(404).send("Topics not found");
-            }
         })
-        .catch((err) => res.status(400).send(err));
+            .then((topics) => {
+                if (topics) {
+                    res.status(200).send(topics);
+                } else {
+                    res.status(404).send("Topics not found");
+                }
+            })
+            .catch((err) => res.status(400).send(err));
+    } catch (e) {
+        res.status(400).send(e)
+    }
 });
 
 // All questions with id, number, and topics for an exam
@@ -530,8 +534,6 @@ app.get("/stats", cache(300), async (req, res) => {
     } catch (e) {
         res.status(400).send(e)
     }
-
-
 })
 
 module.exports = app

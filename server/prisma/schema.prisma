@@ -48,19 +48,19 @@ model Topic {
 }
 
 model Question {
-  id                 String         @id @default(uuid())
-  number             Int
-  body               String
-  correctChoiceIndex Int
-  submissions        Int[]          @default([])
-  solutionVideoLink  String         @default("")
-  courseId           String
-  examId             String
-  course             Course         @relation(fields: [courseId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  exam               Exam           @relation(fields: [examId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  topics             Topic[]        @relation("QuestionToTopic")
-  answerChoices      AnswerChoice[]
-  resources          Resource[]
+  id                   String         @id @default(uuid())
+  number               Int
+  body                 String
+  correctChoiceIndices Int[]
+  submissions          Int[]          @default([])
+  solutionVideoLink    String         @default("")
+  courseId             String
+  examId               String
+  course               Course         @relation(fields: [courseId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  exam                 Exam           @relation(fields: [examId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  topics               Topic[]        @relation("QuestionToTopic")
+  answerChoices        AnswerChoice[]
+  resources            Resource[]
 
   // @@unique([examId, number])
 }
@@ -96,6 +96,7 @@ model Image {
   id         String   @id @default(uuid())
   key        String
   url        String
+  altText    String   @default("")
   resourceId String   @unique
   resource   Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 }
