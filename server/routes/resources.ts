@@ -68,7 +68,8 @@ app.post("/resources/images", upload.single('file'), async (req, res) => {
                 image: {
                     create: {
                         key: data.Key,
-                        url: data.Location
+                        url: data.Location,
+                        altText: req.body.altText
                     }
                 }
             }
@@ -76,7 +77,6 @@ app.post("/resources/images", upload.single('file'), async (req, res) => {
             .then((resp) => res.status(200).send(resp))
             .catch((err) => res.status(400).send(err))
     } catch (e) {
-        console.log(e);
         res.status(400).send(e)
     }
 })
@@ -122,7 +122,6 @@ app.put("/resources/:resourceId/code", async (req, res) => {
             .then((resp) => res.status(200).send(resp))
             .catch((err) => res.status(400).send(err))
     } catch (e) {
-        console.log(e)
         res.status(400).send(e)
     }
 })

@@ -117,42 +117,46 @@ app.get("/id/courses/:courseId/:topicId/questions", cache(300), async (req, res)
 })
 
 app.get("/id/questions/:questionId", cache(300), async (req, res) => {
-    const { questionId } = req.params
-    prisma.question.findUnique({
-        where: {
-            id: questionId
-        },
-        include: {
-            topics: true,
-            answerChoices: {
-                orderBy: {
-                    choiceIndex: 'asc'
-                },
-                include: {
-                    resources: {
-                        include: {
-                            image: true,
-                            code: true
+    try {
+        const { questionId } = req.params
+        prisma.question.findUnique({
+            where: {
+                id: questionId
+            },
+            include: {
+                topics: true,
+                answerChoices: {
+                    orderBy: {
+                        choiceIndex: 'asc'
+                    },
+                    include: {
+                        resources: {
+                            include: {
+                                image: true,
+                                code: true
+                            }
                         }
                     }
+                },
+                resources: {
+                    include: {
+                        image: true,
+                        code: true
+                    }
                 }
-            },
-            resources: {
-                include: {
-                    image: true,
-                    code: true
-                }
-            }
-        }
-    })
-        .then((resp) => {
-            if (resp) {
-                res.status(200).send(resp)
-            } else {
-                res.status(404).send("Question not found")
             }
         })
-        .catch((err) => res.status(400).send(err.message))
+            .then((resp) => {
+                if (resp) {
+                    res.status(200).send(resp)
+                } else {
+                    res.status(404).send("Question not found")
+                }
+            })
+            .catch((err) => res.status(400).send(err.message))
+    } catch (e) {
+        res.status(400).send(e)
+    }
 })
 
 module.exports = app;

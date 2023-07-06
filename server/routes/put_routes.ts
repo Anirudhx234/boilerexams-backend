@@ -77,7 +77,7 @@ app.put("/courses/:courseId/exams/:examId", async (req, res) => {
 app.put("/courses/:courseId/exams/:examId/questions/:questionId", async (req, res) => {
     try {
         const { courseId, examId, questionId } = req.params
-        const { topics, number, body, answerChoices, correctChoiceIndex, solutionVideoLink, resourceIds } = req.body
+        const { topics, number, body, answerChoices, correctChoiceIndices, solutionVideoLink, resourceIds } = req.body
 
         await prisma.course.update({
             where: {
@@ -90,6 +90,10 @@ app.put("/courses/:courseId/exams/:examId/questions/:questionId", async (req, re
                     }))
                 }
             }
+        })
+
+        const existingAnswerChoices = answerChoices.filter((answerChoice) => {
+            return answerChoice.id !== undefined;
         })
 
         prisma.question.update({
@@ -107,12 +111,12 @@ app.put("/courses/:courseId/exams/:examId/questions/:questionId", async (req, re
                 answerChoices: {
                     deleteMany: {
                         id: {
-                            notIn: answerChoices.map((answerChoice) => answerChoice.id)
+                            notIn: existingAnswerChoices.map((answerChoice) => answerChoice.id)
                         }
                     },
                     upsert: answerChoices.map((answerChoice) => ({
                         where: {
-                            id: answerChoice.id
+                            id: answerChoice.id || ""
                         },
                         update: {
                             choiceIndex: Number(answerChoice.choiceIndex),
@@ -135,7 +139,7 @@ app.put("/courses/:courseId/exams/:examId/questions/:questionId", async (req, re
                         }
                     }))
                 },
-                correctChoiceIndex: Number(correctChoiceIndex),
+                correctChoiceIndices: correctChoiceIndices,
                 solutionVideoLink: solutionVideoLink,
                 resources: {
                     deleteMany: {
@@ -191,6 +195,7 @@ app.put("/topics/:topicId", async (req, res) => {
         res.status(400).send(e)
     }
 })
+
 app.put("/questions/:questionId/submit/answerChoiceIndex=:index", async (req, res) => {
     try {
         const { questionId, index } = req.params
