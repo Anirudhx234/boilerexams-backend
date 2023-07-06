@@ -521,19 +521,60 @@ app.get("/courses/:courseAbbrev/exams/:season-:year-:examNumber/questions", cach
     }
 });
 
-app.get("/stats", cache(300), async (req, res) => {
+app.get("/stats/questions", cache(300), async(req, res) => {
     try {
         const questionsTotal = await prisma.question.count()
 
         const questions = await prisma.question.findMany({})
         let questionsAnswered = 0
         await questions.forEach((question) => {
-            questionsAnswered += question.submissions.reduce((a, b) => a + b, 0)
+            questionsAnswered += question.submissions.reduce((a,b) => a+b, 0)
         })
-        res.status(200).send({ questionsTotal, questionsAnswered })
+        res.status(200).send({questionsTotal, questionsAnswered})
+    } catch(e) {
+        res.status(400).send(e)
+    }
+})
+
+app.get("/stats/submissions", cache(300), async(req, res) => {
+    try {
+        const validTime = 300
+        const submissionTotal = await prisma.submission.count({
+            where: {
+                timeSpent : {
+                    gte: validTime
+                }
+            }
+        })
+        const times = await prisma.submission.aggregate({
+            _sum: {
+                timeSpent: true
+            },
+            _avg: {
+                timeSpent: true
+            },
+            where: {
+                timeSpent : {
+                    gte: validTime
+                }
+            },
+        })
+        const timeSpent = times._sum.timeSpent
+        const avgTime = times._avg.timeSpent
+        const totalCorrect = await prisma.submission.count({
+            where: {
+                correct: true, 
+                timeSpent: {
+                    gte: validTime
+                }
+            }
+        })
+        const percentCorrect = 100.0 * (totalCorrect / submissionTotal) 
+        res.status(200).send({submissionTotal, timeSpent, avgTime, percentCorrect})
     } catch (e) {
         res.status(400).send(e)
     }
 })
+
 
 module.exports = app

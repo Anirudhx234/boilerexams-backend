@@ -196,33 +196,62 @@ app.put("/topics/:topicId", async (req, res) => {
     }
 })
 
-app.put("/questions/:questionId/submit/answerChoiceIndex=:index", async (req, res) => {
+app.put("/questions/:questionId/submit/answerChoiceIndex=:index", async(req, res) => {
     try {
-        const { questionId, index } = req.params
+        const {questionId, index} = req.params
+        const {videoWatched, time, videoStarted, videoEnded} = req.body
+        const startTime = new Date(time)
+        const videoStartTime = new Date(videoStarted)
+        const videoEndTime = new Date(videoEnded)
         const answerChoiceIndex = Number(index)
-        let { submissions } = await prisma.question.findUnique({
+
+        const data = await prisma.question.findUnique({
             where: {
                 id: questionId
             },
             select: {
-                submissions: true
+                submissions: true,
+                correctChoiceIndices: true
             }
         })
-        if (!submissions) {
-            submissions = [0, 0, 0, 0, 0]
+
+        const correctChoiceIndices = data.correctChoiceIndices
+        const submissionsTemp = data.submissions
+
+        let correct = false;
+        if (answerChoiceIndex in correctChoiceIndices) {
+            correct = true
         }
-        submissions[answerChoiceIndex] = submissions[answerChoiceIndex] + 1
+
+        const endDate = new Date()
+        const timeSpent = (endDate.valueOf() - startTime.valueOf()) / 1000.0
+        const timeSpentVideo = (videoEndTime.valueOf() - videoStartTime.valueOf()) / 1000.0
+        submissionsTemp[answerChoiceIndex] = submissionsTemp[answerChoiceIndex] + 1
+        
         prisma.question.update({
             where: {
                 id: questionId
             },
             data: {
-                submissions: submissions
+                submissions: submissionsTemp,
             }
         })
-            .then((resp) => res.status(200).send(resp))
-            .catch((err) => res.status(404).send(err))
-    } catch (e) {
+        await prisma.submission.create({
+            data: {
+                questionId: questionId,
+                correct: correct,
+                timeStarted: startTime,
+                timeEnded: endDate,
+                videoWatched: Boolean(videoWatched),
+                timeSpent: Math.floor(timeSpent),
+                videoStartTime: videoStartTime,
+                videoEndTime: videoEndTime,
+                timeSpentVideo: timeSpentVideo
+            }
+        })
+        .then((resp) => res.status(200).send(resp.id))
+        .catch((err) => res.status(404).send(err))
+    } catch(e) {
         res.status(400).send(e)
     }
 })
