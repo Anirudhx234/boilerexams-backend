@@ -196,18 +196,18 @@ app.put("/topics/:topicId", async (req, res) => {
     }
 })
 
-app.put("/questions/:questionId/submit/answerChoiceIndex=:index", async(req, res) => {
+app.put("/questions/:questionId/submit", async (req, res) => {
     try {
-        const {questionId, index} = req.params
-        const {videoWatched, correct, timeStarted, timeEnded, videoStartTime, videoEndTime} = req.body
+        const { questionId } = req.params
+        const { selectedChoiceIndex, videoWatched, correct, timeStarted, timeEnded, videoStartTime, videoEndTime } = req.body
 
         const msToDate = (milliseconds) => new Date(0, 0, 0, 0, 0, 0, milliseconds)
         const startTime = msToDate(timeStarted)
         const endTime = msToDate(timeEnded)
         const videoStart = msToDate(videoStartTime)
         const videoEnd = msToDate(videoEndTime)
-        
-        const answerChoiceIndex = Number(index)
+
+        const answerChoiceIndex = Number(selectedChoiceIndex)
 
         const data = await prisma.question.findUnique({
             where: {
@@ -223,7 +223,7 @@ app.put("/questions/:questionId/submit/answerChoiceIndex=:index", async(req, res
         const timeSpent = (endTime.valueOf() - startTime.valueOf()) / 1000.0
         const timeSpentVideo = (videoEnd.valueOf() - videoStart.valueOf()) / 1000.0
         submissionsTemp[answerChoiceIndex] = submissionsTemp[answerChoiceIndex] + 1
-        
+
         prisma.question.update({
             where: {
                 id: questionId
@@ -245,9 +245,9 @@ app.put("/questions/:questionId/submit/answerChoiceIndex=:index", async(req, res
                 timeSpentVideo: Math.floor(timeSpentVideo)
             }
         })
-        .then((resp) => res.status(200).send(resp.id))
-        .catch((err) => res.status(404).send(err))
-    } catch(e) {
+            .then((resp) => res.status(200).send(resp.id))
+            .catch((err) => res.status(404).send(err))
+    } catch (e) {
         res.status(400).send(e)
     }
 })

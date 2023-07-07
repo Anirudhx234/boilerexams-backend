@@ -521,9 +521,9 @@ app.get("/courses/:courseAbbrev/exams/:season-:year-:examNumber/questions", cach
     }
 });
 
-app.get("/stats/questions/:questionId", cache(300), async(req, res) => {
+app.get("/stats/questions/:questionId", cache(300), async (req, res) => {
     try {
-        const {questionId} = req.params
+        const { questionId } = req.params
         const submissions = await prisma.submission.aggregate({
             where: {
                 questionId: questionId
@@ -544,15 +544,13 @@ app.get("/stats/questions/:questionId", cache(300), async(req, res) => {
                 correct: true
             }
         })
-        res.status(200).send({timeSpent, timeSpentVideo, submissionTotal, submissionCorrect})
-
-
-    } catch(e) {
+        res.status(200).send({ timeSpent, timeSpentVideo, submissionTotal, submissionCorrect })
+    } catch (e) {
         res.status(400).send(e)
     }
 })
 
-app.get("/stats/submissions", cache(300), async(req, res) => {
+app.get("/stats/submissions", cache(300), async (req, res) => {
     try {
         const validTime = 300
         const times = await prisma.submission.aggregate({
@@ -564,7 +562,7 @@ app.get("/stats/submissions", cache(300), async(req, res) => {
             },
             _count: true,
             where: {
-                timeSpent : {
+                timeSpent: {
                     gte: validTime
                 }
             },
@@ -574,19 +572,18 @@ app.get("/stats/submissions", cache(300), async(req, res) => {
         const submissionTotal = times._count
         const totalCorrect = await prisma.submission.count({
             where: {
-                correct: true, 
+                correct: true,
                 timeSpent: {
                     gte: validTime
                 }
             }
         })
 
-        const percentCorrect = 100.0 * (totalCorrect / submissionTotal) 
-        res.status(200).send({submissionTotal, timeSpent, avgTime, percentCorrect})
+        const percentCorrect = 100.0 * (totalCorrect / submissionTotal)
+        res.status(200).send({ submissionTotal, timeSpent, avgTime, percentCorrect })
     } catch (e) {
         res.status(400).send(e)
     }
 })
-
 
 module.exports = app

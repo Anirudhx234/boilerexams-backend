@@ -52,7 +52,6 @@ model Question {
   number               Int
   body                 String
   correctChoiceIndices Int[]
-  submissions          Int[]          @default([])
   solutionVideoLink    String         @default("")
   courseId             String
   examId               String
@@ -61,7 +60,7 @@ model Question {
   topics               Topic[]        @relation("QuestionToTopic")
   answerChoices        AnswerChoice[]
   resources            Resource[]
-  submission           Submission[]
+  submissions          Submission[]
 
   // @@unique([examId, number])
 }
@@ -115,6 +114,20 @@ enum Language {
   JAVA
 }
 
+model Submission {
+  id             String   @id @default(uuid())
+  correct        Boolean
+  timeStarted    DateTime
+  timeEnded      DateTime
+  videoWatched   Boolean
+  timeSpent      Int
+  videoStartTime DateTime
+  videoEndTime   DateTime
+  timeSpentVideo Int
+  questionId     String
+  question       Question @relation(fields: [questionId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+}
+
 model Semester {
   id      String   @id @default(uuid())
   season  Season
@@ -136,18 +149,4 @@ model CourseRequest {
   subject  String
   course   String
   requests Int    @default(1)
-}
-
-model Submission {
-  id             String   @id @default(uuid())
-  questionId     String
-  correct        Boolean
-  timeStarted    DateTime
-  timeEnded      DateTime
-  videoWatched   Boolean
-  timeSpent      Int
-  videoStartTime DateTime
-  videoEndTime   DateTime
-  timeSpentVideo Int
-  question       Question @relation(fields: [questionId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 }
