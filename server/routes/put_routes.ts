@@ -195,14 +195,13 @@ app.put("/topics/:topicId", async (req, res) => {
         res.status(400).send(e)
     }
 })
-function msToDate(milliseconds) {
-    return new Date(0, 0, 0, 0, 0, 0, milliseconds)
-}
+
 app.put("/questions/:questionId/submit/answerChoiceIndex=:index", async(req, res) => {
     try {
         const {questionId, index} = req.params
         const {videoWatched, correct, timeStarted, timeEnded, videoStartTime, videoEndTime} = req.body
 
+        const msToDate = (milliseconds) => new Date(0, 0, 0, 0, 0, 0, milliseconds)
         const startTime = msToDate(timeStarted)
         const endTime = msToDate(timeEnded)
         const videoStart = msToDate(videoStartTime)

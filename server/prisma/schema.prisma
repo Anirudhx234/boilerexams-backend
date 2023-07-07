@@ -61,7 +61,7 @@ model Question {
   topics               Topic[]        @relation("QuestionToTopic")
   answerChoices        AnswerChoice[]
   resources            Resource[]
-  Submission           Submission[]
+  submission           Submission[]
 
   // @@unique([examId, number])
 }
@@ -149,5 +149,5 @@ model Submission {
   videoStartTime DateTime
   videoEndTime   DateTime
   timeSpentVideo Int
-  Question       Question @relation(fields: [questionId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  question       Question @relation(fields: [questionId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 }

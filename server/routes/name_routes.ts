@@ -521,7 +521,7 @@ app.get("/courses/:courseAbbrev/exams/:season-:year-:examNumber/questions", cach
     }
 });
 
-app.get("/stats/question/:questionId", cache(300), async(req, res) => {
+app.get("/stats/questions/:questionId", cache(300), async(req, res) => {
     try {
         const {questionId} = req.params
         const submissions = await prisma.submission.aggregate({
