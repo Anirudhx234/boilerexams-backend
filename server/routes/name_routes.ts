@@ -521,16 +521,32 @@ app.get("/courses/:courseAbbrev/exams/:season-:year-:examNumber/questions", cach
     }
 });
 
-app.get("/stats/questions", cache(300), async(req, res) => {
+app.get("/stats/question/:questionId", cache(300), async(req, res) => {
     try {
-        const questionsTotal = await prisma.question.count()
-
-        const questions = await prisma.question.findMany({})
-        let questionsAnswered = 0
-        await questions.forEach((question) => {
-            questionsAnswered += question.submissions.reduce((a,b) => a+b, 0)
+        const {questionId} = req.params
+        const submissions = await prisma.submission.aggregate({
+            where: {
+                questionId: questionId
+            },
+            _sum: {
+                timeSpent: true,
+                timeSpentVideo: true,
+            },
+            _count: true,
         })
-        res.status(200).send({questionsTotal, questionsAnswered})
+        const timeSpent = submissions._sum.timeSpent
+        const timeSpentVideo = submissions._sum.timeSpentVideo
+        const submissionTotal = submissions._count
+
+        const submissionCorrect = await prisma.submission.count({
+            where: {
+                questionId: questionId,
+                correct: true
+            }
+        })
+        res.status(200).send({timeSpent, timeSpentVideo, submissionTotal, submissionCorrect})
+
+
     } catch(e) {
         res.status(400).send(e)
     }
@@ -539,13 +555,6 @@ app.get("/stats/questions", cache(300), async(req, res) => {
 app.get("/stats/submissions", cache(300), async(req, res) => {
     try {
         const validTime = 300
-        const submissionTotal = await prisma.submission.count({
-            where: {
-                timeSpent : {
-                    gte: validTime
-                }
-            }
-        })
         const times = await prisma.submission.aggregate({
             _sum: {
                 timeSpent: true
@@ -553,6 +562,7 @@ app.get("/stats/submissions", cache(300), async(req, res) => {
             _avg: {
                 timeSpent: true
             },
+            _count: true,
             where: {
                 timeSpent : {
                     gte: validTime
@@ -561,6 +571,7 @@ app.get("/stats/submissions", cache(300), async(req, res) => {
         })
         const timeSpent = times._sum.timeSpent
         const avgTime = times._avg.timeSpent
+        const submissionTotal = times._count
         const totalCorrect = await prisma.submission.count({
             where: {
                 correct: true, 
@@ -569,6 +580,7 @@ app.get("/stats/submissions", cache(300), async(req, res) => {
                 }
             }
         })
+
         const percentCorrect = 100.0 * (totalCorrect / submissionTotal) 
         res.status(200).send({submissionTotal, timeSpent, avgTime, percentCorrect})
     } catch (e) {

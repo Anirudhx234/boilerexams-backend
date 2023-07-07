@@ -195,14 +195,19 @@ app.put("/topics/:topicId", async (req, res) => {
         res.status(400).send(e)
     }
 })
-
+function msToDate(milliseconds) {
+    return new Date(0, 0, 0, 0, 0, 0, milliseconds)
+}
 app.put("/questions/:questionId/submit/answerChoiceIndex=:index", async(req, res) => {
     try {
         const {questionId, index} = req.params
-        const {videoWatched, time, videoStarted, videoEnded} = req.body
-        const startTime = new Date(time)
-        const videoStartTime = new Date(videoStarted)
-        const videoEndTime = new Date(videoEnded)
+        const {videoWatched, correct, timeStarted, timeEnded, videoStartTime, videoEndTime} = req.body
+
+        const startTime = msToDate(timeStarted)
+        const endTime = msToDate(timeEnded)
+        const videoStart = msToDate(videoStartTime)
+        const videoEnd = msToDate(videoEndTime)
+        
         const answerChoiceIndex = Number(index)
 
         const data = await prisma.question.findUnique({
@@ -211,21 +216,13 @@ app.put("/questions/:questionId/submit/answerChoiceIndex=:index", async(req, res
             },
             select: {
                 submissions: true,
-                correctChoiceIndices: true
             }
         })
 
-        const correctChoiceIndices = data.correctChoiceIndices
         const submissionsTemp = data.submissions
 
-        let correct = false;
-        if (answerChoiceIndex in correctChoiceIndices) {
-            correct = true
-        }
-
-        const endDate = new Date()
-        const timeSpent = (endDate.valueOf() - startTime.valueOf()) / 1000.0
-        const timeSpentVideo = (videoEndTime.valueOf() - videoStartTime.valueOf()) / 1000.0
+        const timeSpent = (endTime.valueOf() - startTime.valueOf()) / 1000.0
+        const timeSpentVideo = (videoEnd.valueOf() - videoStart.valueOf()) / 1000.0
         submissionsTemp[answerChoiceIndex] = submissionsTemp[answerChoiceIndex] + 1
         
         prisma.question.update({
@@ -239,14 +236,14 @@ app.put("/questions/:questionId/submit/answerChoiceIndex=:index", async(req, res
         await prisma.submission.create({
             data: {
                 questionId: questionId,
-                correct: correct,
+                correct: Boolean(correct),
                 timeStarted: startTime,
-                timeEnded: endDate,
+                timeEnded: endTime,
                 videoWatched: Boolean(videoWatched),
                 timeSpent: Math.floor(timeSpent),
-                videoStartTime: videoStartTime,
-                videoEndTime: videoEndTime,
-                timeSpentVideo: timeSpentVideo
+                videoStartTime: videoStart,
+                videoEndTime: videoEnd,
+                timeSpentVideo: Math.floor(timeSpentVideo)
             }
         })
         .then((resp) => res.status(200).send(resp.id))
