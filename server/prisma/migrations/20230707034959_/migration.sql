@@ -1,7 +1,15 @@
+/*
+  Warnings:
+
+  - You are about to drop the column `submissions` on the `Question` table. All the data in the column will be lost.
+
+*/
+-- AlterTable
+ALTER TABLE "Question" DROP COLUMN "submissions";
+
 -- CreateTable
 CREATE TABLE "Submission" (
     "id" TEXT NOT NULL,
-    "questionId" TEXT NOT NULL,
     "correct" BOOLEAN NOT NULL,
     "timeStarted" TIMESTAMP(3) NOT NULL,
     "timeEnded" TIMESTAMP(3) NOT NULL,
@@ -10,6 +18,7 @@ CREATE TABLE "Submission" (
     "videoStartTime" TIMESTAMP(3) NOT NULL,
     "videoEndTime" TIMESTAMP(3) NOT NULL,
     "timeSpentVideo" INTEGER NOT NULL,
+    "questionId" TEXT NOT NULL,
 
     CONSTRAINT "Submission_pkey" PRIMARY KEY ("id")
 );
