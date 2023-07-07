@@ -72,6 +72,9 @@ app.post("/resources/images", upload.single('file'), async (req, res) => {
                         altText: req.body.altText
                     }
                 }
+            },
+            include: {
+                image: true
             }
         })
             .then((resp) => res.status(200).send(resp))
@@ -93,6 +96,9 @@ app.post("/resources/codes", async (req, res) => {
                         code: code
                     }
                 }
+            },
+            include: {
+                code: true
             }
         })
             .then((resp) => res.status(200).send(resp))
@@ -117,6 +123,9 @@ app.put("/resources/:resourceId/code", async (req, res) => {
                         code: code
                     }
                 }
+            },
+            include: {
+                code: true
             }
         })
             .then((resp) => res.status(200).send(resp))
