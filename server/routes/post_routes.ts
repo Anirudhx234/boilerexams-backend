@@ -1,9 +1,10 @@
 const { PrismaClient, Season } = require('@prisma/client')
-const express_routes = require('express');
-const axios = require('axios');
-
 const prisma = new PrismaClient();
-const app = express_routes();
+
+const express = require('express');
+const app = express();
+
+const axios = require('axios');
 
 app.post("/courses", async (req, res) => {
     try {

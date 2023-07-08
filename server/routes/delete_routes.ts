@@ -1,7 +1,7 @@
 const { PrismaClient } = require('@prisma/client')
-const express = require('express');
-
 const prisma = new PrismaClient();
+
+const express = require('express');
 const app = express();
 
 // soft deletes -- just changes the published fields to false
