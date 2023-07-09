@@ -7,13 +7,31 @@ const axios = require('axios');
 const dotenv = require("dotenv");
 dotenv.config();
 
-const storage = multer.memoryStorage({
-    destination: function (req, file, cb) {
-        cb(null, true)
-    }
-})
+const storage = multer.memoryStorage()
 
-const upload = multer({ storage: storage });
+const fileFilter = (req, file, cb) => {
+    if (file.mimetype === 'application/pdf') {
+        cb(null, true)
+    } else {
+        req.fileValidationError = true;
+        return cb(null, false, req.fileValidationError)
+    }
+}
+
+const fileSizeLimitErrorHandler = (err, req, res, next) => {
+    if (err) {
+      return res.status(413).send("File must be under 5 MB")
+    }
+  }
+
+const upload = multer({
+    storage: storage,
+    fileFilter: fileFilter,
+    limits: {
+        fileSize: 5 * 1024 * 1024
+    }
+});
+
 const FormData = require('form-data');
 
 interface QuestionPart {
@@ -168,11 +186,15 @@ app.post("/convert-link", async (req, res) => {
     }
 })
 
-app.post("/convert-file", upload.single("file"), async (req, res) => {
+app.post("/convert-file", upload.single("file"), fileSizeLimitErrorHandler, async (req, res) => {
     try {
-        if (!req.file) {
-            throw new Error("No file uploaded")
+        if (req.fileValidationError) {
+            return res.status(415).send("File type must be PDF")
         }
+        if (!req.file) {
+            return res.status(400).send("No file attached")
+        }
+
         const data = new FormData();
         data.append("file", req.file.buffer, {
             filename: req.file.originalname,

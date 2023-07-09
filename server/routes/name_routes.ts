@@ -1,7 +1,7 @@
 const { PrismaClient, Season } = require('@prisma/client')
-const express = require('express');
-
 const prisma = new PrismaClient();
+
+const express = require('express');
 const app = express();
 
 const cache = require('./caching');
@@ -85,7 +85,8 @@ app.get("/courses/all", async (req, res) => {
                         },
                         semester: true,
                     }
-                }
+                },
+                users: true
             }
         })
             .then((courses) => {
