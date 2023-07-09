@@ -7,12 +7,30 @@ const Aws = require('aws-sdk');
 const express = require('express');
 const app = express();
 
-const storage = multer.memoryStorage({
-    destination: function (req, file, cb) {
-        cb(null, '')
+const storage = multer.memoryStorage()
+
+const fileFilter = (req, file, cb) => {
+    if (file.mimetype === 'image/jpeg' || file.mimetype === 'image/png') {
+        cb(null, true)
+    } else {
+        req.fileValidationError = true;
+        return cb(null, false, req.fileValidationError)
     }
-})
-const upload = multer({ storage: storage });
+}
+
+const fileSizeLimitErrorHandler = (err, req, res, next) => {
+    if (err) {
+      return res.status(413).send("File must be under 500 KB")
+    }
+  }
+
+const upload = multer({
+    storage: storage,
+    fileFilter: fileFilter,
+    limits: {
+        fileSize: 500 * 1024
+    }
+});
 
 const s3 = new Aws.S3({
     accessKeyId: process.env.AWS_ACCESS_KEY_ID,
@@ -38,10 +56,13 @@ app.get("/resources/:resourceId", async (req, res) => {
     }
 })
 
-app.post("/resources/images", upload.single('file'), async (req, res) => {
+app.post("/resources/images", upload.single('file'), fileSizeLimitErrorHandler, async (req, res) => {
     try {
+        if (req.fileValidationError) {
+            return res.status(415).send("File type must be JPEG or PNG")
+        }
         if (!req.file) {
-            throw new Error("No file attached")
+            return res.status(400).send("No file attached")
         }
 
         const params = {

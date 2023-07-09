@@ -85,7 +85,8 @@ app.get("/courses/all", async (req, res) => {
                         },
                         semester: true,
                     }
-                }
+                },
+                users: true
             }
         })
             .then((courses) => {
