@@ -102,5 +102,20 @@ app.delete("/topics/:topicId", async (req, res) => {
     }
 })
 
+app.delete("/webhooks/:webhookId", async (req, res) => {
+    try {
+        const { webhookId } = req.params;
+        prisma.webhook.delete({
+            where: {
+                id: webhookId
+            }
+        })
+            .then((response) => res.status(200).send(response))
+            .catch((err) => res.status(404).send(err))
+    } catch (err) {
+        res.status(400).send(err)
+    }
+})
+
 module.exports = app;
 export { }

@@ -1,17 +1,19 @@
+import {PurdueIoAPI} from "../purdue.io";
+import {DiscordAPI} from "../discord";
+
 const { PrismaClient, Season } = require('@prisma/client')
 const prisma = new PrismaClient();
 
 const express = require('express');
 const app = express();
 
-const axios = require('axios');
 
 app.post("/courses", async (req, res) => {
     try {
         const { name, subject, abbreviation, number, backgroundColor, graphicLink, published } = req.body
         const stringifiedNumber = String(number);
         const courseNumber = stringifiedNumber + "0".repeat(5 - stringifiedNumber.length);
-        const purdueIOCourse = await getPurdueCourse(abbreviation.toUpperCase(), courseNumber);
+        const purdueIOCourse = await PurdueIoAPI.getCourse(abbreviation.toUpperCase(), courseNumber);
 
         if (!purdueIOCourse) {
             res.status(406).send(`Invalid Course ${abbreviation} ${courseNumber}`);
@@ -190,7 +192,7 @@ app.post("/courses/requests", async (req, res) => {
         // Parse purdueIo for a valid course (MA265, CS180, AEE200, ...)
         const courseNumber = course + "0".repeat(5 - course.length);
         const subjectAbbreviation = subject.toUpperCase();
-        const purdueIOCourse = await getPurdueCourse(subjectAbbreviation, courseNumber);
+        const purdueIOCourse = await PurdueIoAPI.getCourse(subjectAbbreviation, courseNumber);
 
         if (!purdueIOCourse) {
             res.status(406).send(`Invalid Course ${subjectAbbreviation} ${courseNumber}`);
@@ -249,13 +251,9 @@ app.post("/courses/requests", async (req, res) => {
             fields: fields
         };
 
-        const params = { embeds: [embed] };
-        await axios.patch(
-            process.env.COURSE_REQUEST_WEBHOOK_URL,
-            params
-        )
-            .then(() => res.status(200).send())
-            .catch((err) => res.status(400).send(err))
+        const data = { embeds: [embed] };
+        await DiscordAPI.editWebhookMessage("Course Requests", "1127497040822284308", data)
+            .then(() => res.status(200).send("Success"));
 
     } catch (e) {
         res.status(400).send(e);
@@ -281,13 +279,9 @@ app.post("/bug-reports", async (req, res) => {
             footer: { text: footer }
         };
 
-        const params = { embeds: [embed], content: content };
-        await axios.post(
-            process.env.BUG_REPORT_WEBHOOK_URL,
-            params
-        )
-            .then(() => res.status(200).send())
-            .catch((err) => res.status(400).send(err))
+        const data = { embeds: [embed], content: content };
+        await DiscordAPI.sendWebhookMessage("Bug Reports", data)
+            .then(() => res.status(200).send("Success"));
 
     } catch (e) {
         res.status(400).send(e);
@@ -325,10 +319,9 @@ app.post("/bug-reports/questions/:questionId", async (req, res) => {
         const course = question?.course;
         const exam = question?.exam;
         const semester = exam?.semester;
-        // const creator = exam.creator;
 
         const title = `${course?.abbreviation}${course?.number} | ${semester?.season} ${semester?.year} | Exam ${exam?.number} | Question ${question?.number}`;
-        //const content = `<@${creator}>`;
+        const content = `<@${exam?.creator}>`;
 
         const embed = {
             title: title,
@@ -337,14 +330,10 @@ app.post("/bug-reports/questions/:questionId", async (req, res) => {
             color: 15548997,
             footer: { text: footer }
         };
-        
-        const params = { embeds: [embed], content: null };
-        await axios.post(
-            process.env.BUG_REPORT_WEBHOOK_URL,
-            params
-        )
-            .then(() => res.status(200).send())
-            .catch((err) => res.status(400).send(err))
+
+        const data = { embeds: [embed], content: content };
+        await DiscordAPI.sendWebhookMessage("Content Reports", data)
+            .then(() => res.status(200).send("Success"));
 
     } catch (e) {
         res.status(400).send(e);
@@ -362,30 +351,35 @@ app.post("/feature-requests", async (req, res) => {
             color: 10181046,
         };
 
-        const params = { embeds: [embed] };
-        await axios.post(
-            process.env.FEATURE_REQUEST_WEBHOOK_URL,
-            params
-        )
-            .then(() => res.status(200).send())
-            .catch((err) => res.status(400).send(err))
+        const data = { embeds: [embed] };
+        await DiscordAPI.sendWebhookMessage("Feature Requests", data)
+            .then(() => res.status(200).send("Success"));
 
     } catch (e) {
         res.status(400).send(e);
     }
 });
 
-type PurdueIOCourse = { Id: string,  Number: string, SubjectId: string, Title: string, CreditHours: number, description: string };
-
-async function getPurdueCourse(subjectAbbreviation: string, courseNumber: string) {
+app.post("/webhooks", async (req, res) => {
     try {
-        const query = `https://api.purdue.io/odata/Courses?$filter=Subject/Abbreviation eq '${subjectAbbreviation}' and Number eq '${courseNumber}'`;
-        const request = await axios.get(query);
-        return request.data.value[0] as PurdueIOCourse;
-    } catch {
-        return null;
+        const { id, token, name, avatar, channelId } = req.body;
+
+        prisma.webhook.create({
+            data: {
+                id: id,
+                token: token,
+                name: name,
+                avatar: avatar,
+                channelId: channelId
+            }
+        })
+            .then((resp) => res.status(200).send(resp))
+            .catch((err) => res.status(400).send(err))
+
+    } catch (e) {
+        res.status(400).send(e);
     }
-}
+})
 
 module.exports = app;
 export { }

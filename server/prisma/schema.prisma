@@ -145,6 +145,14 @@ enum Season {
   FALL
 }
 
+model Webhook {
+  id        String @id
+  token     String @unique
+  name      String @unique
+  avatar    String
+  channelId String
+}
+
 model CourseRequest {
   id       String @id
   subject  String
