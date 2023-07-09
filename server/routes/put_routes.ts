@@ -252,5 +252,25 @@ app.put("/questions/:questionId/submit", async (req, res) => {
     }
 })
 
+app.put("/webhooks/:webhookId", async (req, res) => {
+    try {
+        const { webhookId } = req.params
+        const { avatar } = req.body
+        
+        prisma.webhook.update({
+            where: {
+                id: webhookId
+            },
+            data: {
+                avatar: avatar,
+            }
+        })
+            .then((resp) => res.status(200).send(resp.id))
+            .catch((err) => res.status(404).send(err))
+    } catch (e) {
+        res.status(400).send(e)
+    }
+});
+
 module.exports = app
 export { }
