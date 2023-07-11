@@ -1,30 +1,38 @@
 import { PurdueIoAPI } from "../services/purdue.io";
 import { DiscordAPI } from "../services/discordAPI";
 import { InvalidCourseError } from "../middleware/errors/index";
+import {Prisma} from "@prisma/client";
 
 const { PrismaClient, Season } = require('@prisma/client')
 const prisma = new PrismaClient();
-
 const express = require('express');
 const app = express();
 
 const asyncWrapper = require('../middleware/wrappers/asyncWrapper')
 
+
 app.post("/courses", asyncWrapper(async (req, res) => {
-    const { name, subject, abbreviation, number, backgroundColor, graphicLink, published } = req.body
+    const { abbreviation, number, backgroundColor, graphicLink, published } = req.body
+
+    const purdueIoSubject = await PurdueIoAPI.getSubject(abbreviation.toUpperCase());
+
+    if (!purdueIoSubject) {
+        throw new InvalidCourseError(`Invalid Subject ${abbreviation}`);
+    }
+
     const stringifiedNumber = String(number);
     const courseNumber = stringifiedNumber + "0".repeat(5 - stringifiedNumber.length);
-    const purdueIOCourse = await PurdueIoAPI.getCourse(abbreviation.toUpperCase(), courseNumber);
+    const purdueIoCourse = await PurdueIoAPI.getCourse(abbreviation.toUpperCase(), courseNumber);
 
-    if (!purdueIOCourse) {
-        throw new InvalidCourseError(`Invalid Course ${abbreviation} ${courseNumber}`)
+    if (!purdueIoCourse) {
+        throw new InvalidCourseError(`Invalid Course ${abbreviation} ${courseNumber}`);
     }
 
     const course = await prisma.course.create({
         data: {
-            name: name,
-            subject: subject,
-            abbreviation: abbreviation.toUpperCase(),
+            name: purdueIoCourse.Title,
+            subject: purdueIoSubject.Name,
+            abbreviation: purdueIoSubject.Abbreviation,
             number: Number(courseNumber),
             backgroundColor: backgroundColor,
             graphicLink: graphicLink,
@@ -37,9 +45,9 @@ app.post("/courses", asyncWrapper(async (req, res) => {
             questions: true
         }
     })
-
     res.status(200).send(course)
 }));
+
 
 app.post("/topics", asyncWrapper(async (req, res, next) => {
     const { name } = req.body
@@ -169,7 +177,6 @@ app.post("/courses/:courseId/exams/:examId/questions", async (req, res) => {
             .then((resp) => res.status(200).send(resp))
             .catch((err) => res.status(400).send(err))
     } catch (e) {
-        console.log(e)
         res.status(400).send(e)
     }
 });
@@ -181,14 +188,14 @@ app.post("/courses/requests", async (req, res) => {
         // Parse purdueIo for a valid course (MA265, CS180, AEE200, ...)
         const courseNumber = course + "0".repeat(5 - course.length);
         const subjectAbbreviation = subject.toUpperCase();
-        const purdueIOCourse = await PurdueIoAPI.getCourse(subjectAbbreviation, courseNumber);
+        const purdueIoCourse = await PurdueIoAPI.getCourse(subjectAbbreviation, courseNumber);
 
-        if (!purdueIOCourse) {
+        if (!purdueIoCourse) {
             res.status(406).send(`Invalid Course ${subjectAbbreviation} ${courseNumber}`);
             return;
         }
 
-        const existingCourse = await prisma.course.findFirst({
+        const existingCourse: Prisma.CourseGetPayload<Prisma.CourseArgs> = await prisma.course.findFirst({
             where: {
                 AND: [
                     { abbreviation: subjectAbbreviation },
@@ -202,7 +209,7 @@ app.post("/courses/requests", async (req, res) => {
             return;
         }
 
-        const newCourseRequest = { id: purdueIOCourse.Id, subject: subjectAbbreviation, course: courseNumber, requests: 1 };
+        const newCourseRequest = { id: purdueIoCourse.Id, subject: subjectAbbreviation, course: courseNumber, requests: 1 };
 
         await prisma.courseRequest.upsert({
             where: {
@@ -262,7 +269,7 @@ app.post("/bug-reports", async (req, res) => {
 
         const embed = {
             title: title,
-            description: description + `\n\nIf this has pinged the wrong person or role please <@&1078747995979403326> or <@&1078748911298170891> appropriately.`,
+            description: description,
             timestamp: new Date().toISOString(),
             color: 15548997,
             footer: { text: footer }
@@ -282,17 +289,24 @@ app.post("/bug-reports/questions/:questionId", async (req, res) => {
         const { questionId } = req.params;
         const { description, footer } = req.body;
 
-        // ToDo Get pingableIds from exam
-
         const question = await prisma.question.findUnique({
             where: {
                 id: questionId
             },
             include: {
-                course: true,
+                course: {
+                    select: {
+                        abbreviation: true,
+                        number: true,
+                        users: {
+                            include: {
+                                accounts: true
+                            }
+                        },
+                    }
+                },
                 exam: {
                     select: {
-                        //creator: true
                         number: true,
                         semester: true
                     }
@@ -301,20 +315,26 @@ app.post("/bug-reports/questions/:questionId", async (req, res) => {
         });
 
         if (!question) {
-            //res.status(404).send("Unknown Question");
-            //return;
+            res.status(404).send("Question does not exist");
+            return;
         }
 
-        const course = question?.course;
-        const exam = question?.exam;
-        const semester = exam?.semester;
-
-        const title = `${course?.abbreviation}${course?.number} | ${semester?.season} ${semester?.year} | Exam ${exam?.number} | Question ${question?.number}`;
-        const content = `<@${exam?.creator}>`;
+        const course = question.course;
+        const exam = question.exam;
+        const abbreviation = course.abbreviation;
+        const courseNumber = course.number;
+        const users = course.users;
+        const examNumber = exam.number;
+        const semester = exam.semester;
+        const title = `${abbreviation}${courseNumber} | ${semester.season} ${semester.year} | Exam ${examNumber} | Question ${question.number}`;
+        const accounts = users.map(user => user.accounts.filter(account => account.provider == "discord")).flat();
+        const content = accounts.map(account => `<@${account.providerAccountId}>`).join("");
+        const url = `https://boilerexams-frontend.vercel.app/courses/${abbreviation}${courseNumber}/${semester.season}-${semester.year}-${examNumber}?q=${questionId}`;
 
         const embed = {
+            url: url,
             title: title,
-            description: description + `\n\nIf this has pinged the wrong person or role please <@&1078747995979403326> or <@&1078748911298170891> appropriately.`,
+            description: description,
             timestamp: new Date().toISOString(),
             color: 15548997,
             footer: { text: footer }

@@ -1,3 +1,5 @@
+import {PurdueIoAPI} from "../purdue.io";
+
 const { PrismaClient, Season } = require('@prisma/client')
 const express = require('express');
 
@@ -7,11 +9,37 @@ const app = express();
 app.put("/courses/:courseId", async (req, res) => {
     try {
         const { courseId } = req.params
+        const { abbreviation, number, backgroundColor, graphicLink, published } = req.body;
+
+        const purdueIoSubject = await PurdueIoAPI.getSubject(abbreviation.toUpperCase());
+
+        if (!purdueIoSubject) {
+            res.status(406).send(`Invalid Subject ${abbreviation}`);
+            return;
+        }
+
+        const stringifiedNumber = String(number);
+        const courseNumber = stringifiedNumber + "0".repeat(5 - stringifiedNumber.length);
+        const purdueIoCourse = await PurdueIoAPI.getCourse(abbreviation, courseNumber);
+
+        if (!purdueIoCourse) {
+            res.status(406).send(`Invalid Course ${abbreviation} ${courseNumber}`);
+            return;
+        }
+
         prisma.course.update({
             where: {
                 id: courseId
             },
-            data: req.body
+            data: {
+                name: purdueIoCourse.Title,
+                subject: purdueIoSubject.Name,
+                abbreviation: purdueIoSubject.Abbreviation,
+                number: Number(courseNumber),
+                backgroundColor: backgroundColor,
+                graphicLink: graphicLink,
+                published: published
+            }
         })
             .then((resp) => res.status(200).send(resp))
             .catch((err) => res.status(400).send(err))
