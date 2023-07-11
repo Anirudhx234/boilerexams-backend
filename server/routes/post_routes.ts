@@ -333,7 +333,7 @@ app.post("/bug-reports/questions/:questionId", async (req, res) => {
         const title = `${abbreviation}${courseNumber} | ${semester.season} ${semester.year} | Exam ${examNumber} | Question ${question.number}`;
         const accounts = users.map(user => user.accounts.filter(account => account.provider == "discord")).flat();
         const content = accounts.map(account => `<@${account.providerAccountId}>`).join("");
-        const url = `https://boilerexams-frontend.vercel.app/${abbreviation}${courseNumber}/${semester.season}-${semester.year}-${examNumber}?q=${questionId}`;
+        const url = `https://boilerexams-frontend.vercel.app/courses/${abbreviation}${courseNumber}/${semester.season}-${semester.year}-${examNumber}?q=${questionId}`;
 
         const embed = {
             url: url,
