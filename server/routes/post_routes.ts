@@ -1,6 +1,6 @@
 import { PurdueIoAPI } from "../services/purdue.io";
-import { DiscordAPI } from "../discord";
-import InvalidCourseError from "../middleware/errors/InvalidCourseError";
+import { DiscordAPI } from "../services/discordAPI";
+import { InvalidCourseError } from "../middleware/errors/index";
 
 const { PrismaClient, Season } = require('@prisma/client')
 const prisma = new PrismaClient();
@@ -37,7 +37,7 @@ app.post("/courses", async (req, res, next) => {
                 questions: true
             }
         })
-        
+
         res.status(200).send(course)
     } catch (error) {
         next(error)
@@ -56,7 +56,7 @@ app.post("/topics", async (req, res, next) => {
                 questions: true
             }
         })
-        
+
         res.status(200).send(topic)
     } catch (error) {
         next(error)

@@ -8,4 +8,3 @@ const validCourseRegex = (courseAbbrev) => {
 }
 
 module.exports = validCourseRegex
-export {}

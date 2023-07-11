@@ -3,7 +3,6 @@ export default class InvalidSeasonError extends Error {
 
     constructor(message) {
         super(message)
-        this.message = "Invalid season"
         this.errorCode = 400
     }
 }
