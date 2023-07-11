@@ -1,4 +1,4 @@
-import axios from "axios";
+const axios = require("axios");
 
 type PurdueIOCourse = { Id: string,  Number: string, SubjectId: string, Title: string, CreditHours: number, description: string };
 

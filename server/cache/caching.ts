@@ -12,7 +12,10 @@ module.exports = duration => (req, res, next) => {
     const key = req.originalUrl;
     const cachedBody = serverCache.get(key);
     if (cachedBody) {
-        res.json(JSON.parse(cachedBody));
+        try {
+            res.json(JSON.parse(cachedBody));
+        }
+        catch {}
     } else {
         res.sendResponse = res.send;
         res.send = body => {

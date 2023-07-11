@@ -1,5 +1,6 @@
-import {PurdueIoAPI} from "../purdue.io";
-import {DiscordAPI} from "../discord";
+import { PurdueIoAPI } from "../services/purdue.io";
+import { DiscordAPI } from "../discord";
+import InvalidCourseError from "../middleware/errors/InvalidCourseError";
 
 const { PrismaClient, Season } = require('@prisma/client')
 const prisma = new PrismaClient();
@@ -8,7 +9,7 @@ const express = require('express');
 const app = express();
 
 
-app.post("/courses", async (req, res) => {
+app.post("/courses", async (req, res, next) => {
     try {
         const { name, subject, abbreviation, number, backgroundColor, graphicLink, published } = req.body
         const stringifiedNumber = String(number);
@@ -16,11 +17,10 @@ app.post("/courses", async (req, res) => {
         const purdueIOCourse = await PurdueIoAPI.getCourse(abbreviation.toUpperCase(), courseNumber);
 
         if (!purdueIOCourse) {
-            res.status(406).send(`Invalid Course ${abbreviation} ${courseNumber}`);
-            return;
+            throw new InvalidCourseError(`Invalid Course ${abbreviation} ${courseNumber}`)
         }
 
-        prisma.course.create({
+        const course = await prisma.course.create({
             data: {
                 name: name,
                 subject: subject,
@@ -37,17 +37,17 @@ app.post("/courses", async (req, res) => {
                 questions: true
             }
         })
-            .then((resp) => res.status(200).send(resp))
-            .catch((err) => res.status(400).send(err))
-    } catch (e) {
-        res.status(400).send(e)
+        
+        res.status(200).send(course)
+    } catch (error) {
+        next(error)
     }
 });
 
-app.post("/topics", async (req, res) => {
+app.post("/topics", async (req, res, next) => {
     try {
         const { name } = req.body
-        prisma.topic.create({
+        const topic = await prisma.topic.create({
             data: {
                 name: name
             },
@@ -56,10 +56,10 @@ app.post("/topics", async (req, res) => {
                 questions: true
             }
         })
-            .then((resp) => res.status(200).send(resp))
-            .catch((err) => res.status(400).send(err));
-    } catch (e) {
-        res.status(400).send(e)
+        
+        res.status(200).send(topic)
+    } catch (error) {
+        next(error)
     }
 });
 

@@ -1,3 +1,5 @@
+import NotFoundError from "../middleware/errors/NotFoundError";
+
 const { PrismaClient } = require('@prisma/client')
 const prisma = new PrismaClient();
 
@@ -6,10 +8,10 @@ const app = express();
 
 // soft deletes -- just changes the published fields to false
 // TODO: hard deletes - cascading deletes for courses and exams
-app.delete("/courses/softDelete/:courseId", async (req, res) => {
+app.delete("/courses/softDelete/:courseId", async (req, res, next) => {
     try {
         const { courseId } = req.params;
-        prisma.course.update({
+        const course = await prisma.course.update({
             where: {
                 id: courseId
             },
@@ -17,32 +19,38 @@ app.delete("/courses/softDelete/:courseId", async (req, res) => {
                 published: false
             }
         })
-            .then((response) => res.status(200).send(response))
-            .catch((err) => res.status(404).send(err))
-    } catch (e) {
-        res.status(400).send(e)
+
+        if (!course) {
+            throw new Error("Course not found")
+        }
+        res.status(200).send(course)
+    } catch (error) {
+        next(error)
     }
 })
 
-app.delete("/courses/hardDelete/:courseId", async (req, res) => {
+app.delete("/courses/hardDelete/:courseId", async (req, res, next) => {
     try {
         const { courseId } = req.params;
-        prisma.course.delete({
+        const course = await prisma.course.delete({
             where: {
                 id: courseId
             }
         })
-            .then((response) => res.status(200).send(response))
-            .catch((err) => res.status(404).send(err))
-    } catch (e) {
-        res.status(400).send(e)
+        
+        if (!course) {
+            throw new Error("Course not found")
+        }
+        res.status(200).send(course)
+    } catch (error) {
+        next(error)
     }
 })
 
-app.delete("/courses/:courseId/exams/softDelete/:examId", async (req, res) => {
+app.delete("/courses/:courseId/exams/softDelete/:examId", async (req, res, next) => {
     try {
         const { examId } = req.params
-        prisma.exam.update({
+        const exam = await prisma.exam.update({
             where: {
                 id: examId
             },
@@ -50,70 +58,86 @@ app.delete("/courses/:courseId/exams/softDelete/:examId", async (req, res) => {
                 published: false
             }
         })
-            .then((response) => res.status(200).send(response))
-            .catch((err) => res.status(404).send(err))
-    } catch (e) {
-        res.status(400).send(e)
+        
+        if (!exam) {
+            throw new NotFoundError("Exam not found")
+        }
+        res.status(200).send(exam)
+    } catch (error) {
+        next(error)
     }
 })
 
-app.delete("/courses/:courseId/exams/hardDelete/:examId", async (req, res) => {
+app.delete("/courses/:courseId/exams/hardDelete/:examId", async (req, res, next) => {
     try {
         const { examId } = req.params
-        prisma.exam.delete({
+        const exam = await prisma.exam.delete({
             where: {
                 id: examId
             }
         })
-            .then((response) => res.status(200).send(response))
-            .catch((err) => res.status(404).send(err))
-    } catch (e) {
-        res.status(400).send(e)
+        
+        if (!exam) {
+            throw new NotFoundError("Exam not found")
+        }
+        res.status(200).send(exam)
+    } catch (error) {
+        next(error)
     }
 })
 
 // hard delete, since there are no linked relations that require questions
-app.delete("/courses/:courseId/exams/:examId/questions/:questionId", async (req, res) => {
+app.delete("/courses/:courseId/exams/:examId/questions/:questionId", async (req, res, next) => {
     try {
         const { questionId } = req.params
-        prisma.question.delete({
+        const question = await prisma.question.delete({
             where: {
                 id: questionId
             }
         })
-        .then((resp) => res.status(200).send(resp))
-        .catch((err) => res.status(400).send(err))
-    } catch (e) {
-        res.status(400).send(e)
+
+        if (!question) {
+            throw new NotFoundError("Question not found")
+        }
+        res.status(200).send(question)
+    } catch (error) {
+        next(error)
     }
 })
 
-app.delete("/topics/:topicId", async (req, res) => {
+app.delete("/topics/:topicId", async (req, res, next) => {
     try {
         const { topicId } = req.params;
-        prisma.topic.delete({
+        const topic = await prisma.topic.delete({
             where: {
                 id: topicId
             }
-        }).then((response) => res.status(200).send(response))
-            .catch((err) => res.status(404).send(err))
-    } catch (err) {
-        res.status(400).send(err)
+        })
+
+        if (!topic) {
+            throw new NotFoundError("Topic not found")
+        }
+        res.status(200).send(topic)
+    } catch (error) {
+        next(error)
     }
 })
 
-app.delete("/webhooks/:webhookId", async (req, res) => {
+app.delete("/webhooks/:webhookId", async (req, res, next) => {
     try {
         const { webhookId } = req.params;
-        prisma.webhook.delete({
+        const webhook = await prisma.webhook.delete({
             where: {
                 id: webhookId
             }
         })
-            .then((response) => res.status(200).send(response))
-            .catch((err) => res.status(404).send(err))
-    } catch (err) {
-        res.status(400).send(err)
+
+        if (!webhook) {
+            throw new NotFoundError("Webhook not found")
+        }
+        res.status(200).send(webhook)
+    } catch (error) {
+        next(error)
     }
 })
 
