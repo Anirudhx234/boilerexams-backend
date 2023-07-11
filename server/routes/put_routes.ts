@@ -1,3 +1,5 @@
+import {PurdueIoAPI} from "../purdue.io";
+
 const { PrismaClient, Season } = require('@prisma/client')
 const express = require('express');
 
@@ -7,11 +9,31 @@ const app = express();
 app.put("/courses/:courseId", async (req, res) => {
     try {
         const { courseId } = req.params
+        const { name, subject, abbreviation } = req.body;
+
+        const course = await prisma.course.findUnique({
+            where: {
+                id: courseId
+            }
+        });
+
+        const stringifiedNumber = String(course.number);
+        const courseNumber = stringifiedNumber + "0".repeat(5 - stringifiedNumber.length);
+        const purdueIoCourse = await PurdueIoAPI.getCourse(abbreviation, courseNumber);
+
+        if (!purdueIoCourse) {
+            res.status(406).send(`Invalid Course ${abbreviation} ${courseNumber}`);
+        }
+
         prisma.course.update({
             where: {
                 id: courseId
             },
-            data: req.body
+            data: {
+                name: name,
+                subject: subject,
+                number: Number(courseNumber)
+            }
         })
             .then((resp) => res.status(200).send(resp))
             .catch((err) => res.status(400).send(err))

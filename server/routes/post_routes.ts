@@ -14,9 +14,9 @@ app.post("/courses", async (req, res) => {
         const { name, subject, abbreviation, number, backgroundColor, graphicLink, published } = req.body
         const stringifiedNumber = String(number);
         const courseNumber = stringifiedNumber + "0".repeat(5 - stringifiedNumber.length);
-        const purdueIOCourse = await PurdueIoAPI.getCourse(abbreviation.toUpperCase(), courseNumber);
+        const purdueIoCourse = await PurdueIoAPI.getCourse(abbreviation.toUpperCase(), courseNumber);
 
-        if (!purdueIOCourse) {
+        if (!purdueIoCourse) {
             res.status(406).send(`Invalid Course ${abbreviation} ${courseNumber}`);
             return;
         }
@@ -192,9 +192,9 @@ app.post("/courses/requests", async (req, res) => {
         // Parse purdueIo for a valid course (MA265, CS180, AEE200, ...)
         const courseNumber = course + "0".repeat(5 - course.length);
         const subjectAbbreviation = subject.toUpperCase();
-        const purdueIOCourse = await PurdueIoAPI.getCourse(subjectAbbreviation, courseNumber);
+        const purdueIoCourse = await PurdueIoAPI.getCourse(subjectAbbreviation, courseNumber);
 
-        if (!purdueIOCourse) {
+        if (!purdueIoCourse) {
             res.status(406).send(`Invalid Course ${subjectAbbreviation} ${courseNumber}`);
             return;
         }
@@ -213,7 +213,7 @@ app.post("/courses/requests", async (req, res) => {
             return;
         }
 
-        const newCourseRequest = { id: purdueIOCourse.Id, subject: subjectAbbreviation, course: courseNumber, requests: 1 };
+        const newCourseRequest = { id: purdueIoCourse.Id, subject: subjectAbbreviation, course: courseNumber, requests: 1 };
 
         await prisma.courseRequest.upsert({
             where: {
