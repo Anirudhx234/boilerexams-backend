@@ -1,59 +1,65 @@
+import { InvalidSeasonError, NotFoundError } from "../middleware/errors/index";
+
 const { PrismaClient, Season } = require('@prisma/client')
 const prisma = new PrismaClient();
 
 const express = require('express');
 const app = express();
 
-const cache = require('./caching');
+const cache = require('../cache/caching');
 const _ = require('lodash')
 
-const courseRegex = (courseAbbrev) => {
-    const regex = /([a-zA-Z]+)(\d+)/;
-    const matches = courseAbbrev.match(regex);
-    if (matches) {
-        return { abbreviation: matches[1], number: matches[2] }
-    }
-    return {}
-}
+const validCourseRegex = require('../utils/validCourseRegex')
 
 // All courses metadata, no relations
-app.get("/courses", cache(300), async (req, res) => {
-    prisma.course.findMany({
-        where: {
-            published: true
-        },
-        orderBy: [
-            {
-                subject: 'asc'
+app.get("/courses", cache(300), async (req, res, next) => {
+    try {
+        let courses = await prisma.course.findMany({
+            where: {
+                published: true
             },
-            {
-                number: 'asc'
-            }
-        ]
-    })
-        .then((courses) => {
-            courses = _.groupBy(courses, 'subject')
-            let result: { subject: string, courses: Array<string> }[] = [];
-            _.forEach(courses, function (value, key) {
-                result.push({ subject: key, courses: value })
-            });
-            result = _.orderBy(result, 'courses', 'desc')
-            res.status(200).send(result)
+            orderBy: [
+                {
+                    subject: 'asc'
+                },
+                {
+                    number: 'asc'
+                }
+            ]
         })
-        .catch((err) => res.status(400).send(err.message))
+
+        if (!courses.length) {
+            throw new NotFoundError("No courses found")
+        }
+        courses = _.groupBy(courses, 'subject')
+        let result: { subject: string, courses: Array<string> }[] = [];
+        _.forEach(courses, function (value, key) {
+            result.push({ subject: key, courses: value })
+        });
+        result = _.orderBy(result, 'courses', 'desc')
+        res.status(200).send(result)
+    } catch (error) {
+        next(error)
+    }
 });
 
 // All topics metadata, no relations
-app.get("/topics", cache(300), async (req, res) => {
-    prisma.topic.findMany()
-        .then(topics => res.status(200).send(topics))
-        .catch((err) => res.status(400).send(err.message))
+app.get("/topics", cache(300), async (req, res, next) => {
+    try {
+        const topics = await prisma.topic.findMany()
+        if (!topics.length) {
+            throw new NotFoundError("No topics found")
+        }
+        res.status(200).send(topics)
+    } catch (error) {
+        next(error)
+    }
 });
 
 // All courses with relations
-app.get("/courses/all", async (req, res) => {
+app.get("/courses/all", async (req, res, next) => {
     try {
-        prisma.course.findMany({
+        const courses = await prisma.course.findMany({
             include: {
                 topics: true,
                 semesters: true,
@@ -89,61 +95,46 @@ app.get("/courses/all", async (req, res) => {
                 users: true
             }
         })
-            .then((courses) => {
-                if (courses) {
-                    res.status(200).send(courses);
-                } else {
-                    res.status(404).send("Courses not found");
-                }
-            })
-            .catch((err) => res.status(400).send(err));
-    } catch (e) {
-        res.status(400).send(e)
+        if (!courses) {
+            throw new Error("Courses not found")
+        }
+        res.status(200).send(courses);
+    } catch (error) {
+        next(error)
     }
 });
 
 // Metadata for specific course, no relations
-app.get("/courses/:courseAbbrev", cache(300), async (req, res) => {
+app.get("/courses/:courseAbbrev", cache(300), async (req, res, next) => {
     try {
         const { courseAbbrev } = req.params
-        const { abbreviation, number } = courseRegex(courseAbbrev);
-        if (!abbreviation || !number) {
-            res.status(400).send("Invalid parameters")
-            return
-        }
-        prisma.course.findUnique({
+        const { abbreviation, number } = validCourseRegex(courseAbbrev);
+
+        const course = await prisma.course.findUnique({
             where: {
                 abbreviation_number_published: {
                     abbreviation: abbreviation.toUpperCase(),
                     number: Number(number),
                     published: true
-                },
+                }
             }
         })
-            .then((course) => {
-                if (course) {
-                    res.status(200).send(course)
-                } else {
-                    res.status(404).send("Course not found")
-                }
-            })
-            .catch((err) => res.status(400).send(err))
-    } catch (e) {
-        res.status(400).send(e)
+        if (!course) {
+            throw new NotFoundError("No course found")
+        }
+        res.status(200).send(course)
+    } catch (error) {
+        next(error)
     }
 })
 
 // All topics for a specific course, no other relations
-app.get("/courses/:courseAbbrev/topics", cache(300), async (req, res) => {
+app.get("/courses/:courseAbbrev/topics", cache(300), async (req, res, next) => {
     try {
         const { courseAbbrev } = req.params;
+        const { abbreviation, number } = validCourseRegex(courseAbbrev);
 
-        const { abbreviation, number } = courseRegex(courseAbbrev);
-        if (!abbreviation || !number) {
-            return res.status(400).send("Invalid parameters")
-        }
-
-        prisma.course.findUnique({
+        const course = await prisma.course.findUnique({
             where: {
                 abbreviation_number_published: {
                     abbreviation: abbreviation.toUpperCase(),
@@ -154,38 +145,31 @@ app.get("/courses/:courseAbbrev/topics", cache(300), async (req, res) => {
             select: {
                 topics: true
             },
-        }).then((course) => {
-            if (course) {
-                return res.status(200).send(course.topics)
-            }
-            else {
-                return res.status(404).send("Topics not found")
-            }
-        }).catch((err) => res.status(400).send(err.message))
-    } catch (e) {
-        res.status(400).send(e)
+        })
+
+        if (!course) {
+            throw new NotFoundError("Course not found")
+        }
+        res.status(200).send(course.topics)
+    } catch (error) {
+        next(error)
     }
 });
 
 // All questions with topics included for a specific topic in a course.
 // Includes questions from other courses.
-app.get("/courses/:courseAbbrev/topics/questions", cache(300), async (req, res) => {
+app.get("/courses/:courseAbbrev/topics/questions", cache(300), async (req, res, next) => {
     try {
         const { courseAbbrev } = req.params;
+        const { abbreviation, number } = validCourseRegex(courseAbbrev);
 
-        const { abbreviation, number } = courseRegex(courseAbbrev);
-        if (!abbreviation || !number) {
-            return res.status(400).send("Invalid parameters")
-        }
-
-        prisma.course.findUnique({
+        const course = await prisma.course.findUnique({
             where: {
                 abbreviation_number_published: {
                     abbreviation: abbreviation.toUpperCase(),
                     number: Number(number),
                     published: true
                 }
-
             },
             select: {
                 topics: {
@@ -205,30 +189,23 @@ app.get("/courses/:courseAbbrev/topics/questions", cache(300), async (req, res) 
                 },
             },
         })
-            .then((course) => {
-                if (course && course.topics) {
-                    res.status(200).send(course.topics);
-                } else {
-                    res.status(404).send("Topics and questions not found");
-                }
-            })
-            .catch((err) => res.status(400).send(err.message));
-    } catch (e) {
-        res.status(400).send(e)
+
+        if (!course) {
+            throw new NotFoundError("Course not found")
+        }
+        res.status(200).send(course.topics);
+    } catch (error) {
+        next(error)
     }
 });
 
 // All exams with semester (no questions)
-app.get("/courses/:courseAbbrev/exams", cache(300), async (req, res) => {
+app.get("/courses/:courseAbbrev/exams", cache(300), async (req, res, next) => {
     try {
         const { courseAbbrev } = req.params;
-        //courseAbbrev is the course abbreviation and code (ex: MA166)
-        const { abbreviation, number } = courseRegex(courseAbbrev);
-        if (!abbreviation || !number) {
-            return res.status(400).send("Invalid parameters")
-        }
+        const { abbreviation, number } = validCourseRegex(courseAbbrev);
 
-        prisma.course.findUnique({
+        const course = await prisma.course.findUnique({
             where: {
                 abbreviation_number_published: {
                     abbreviation: abbreviation.toUpperCase(),
@@ -246,30 +223,24 @@ app.get("/courses/:courseAbbrev/exams", cache(300), async (req, res) => {
                     }
                 }
             }
-        }).then((course) => {
-            if (course) {
-                return res.status(200).send(course.exams)
-            }
-            else {
-                return res.status(404).send("Exams and questions not found")
-            }
-        }).catch((err) => res.status(400).send(err.message))
-    } catch (e) {
-        res.status(400).send(e)
+        })
+
+        if (!course) {
+            throw new NotFoundError("Course not found")
+        }
+        res.status(200).send(course.topics);
+    } catch (error) {
+        next(error)
     }
 })
 
 // All exams with question ids and numbers
-app.get("/courses/:courseAbbrev/exams/questions", cache(300), async (req, res) => {
+app.get("/courses/:courseAbbrev/exams/questions", cache(300), async (req, res, next) => {
     try {
         const { courseAbbrev } = req.params;
-        //courseAbbrev is the course abbreviation and code (ex: MA166)
-        const { abbreviation, number } = courseRegex(courseAbbrev);
-        if (!abbreviation || !number) {
-            return res.status(400).send("Invalid parameters")
-        }
+        const { abbreviation, number } = validCourseRegex(courseAbbrev);
 
-        prisma.course.findUnique({
+        const course = await prisma.course.findUnique({
             where: {
                 abbreviation_number_published: {
                     abbreviation: abbreviation.toUpperCase(),
@@ -296,16 +267,14 @@ app.get("/courses/:courseAbbrev/exams/questions", cache(300), async (req, res) =
                     },
                 },
             },
-        }).then((course) => {
-            if (course) {
-                return res.status(200).send(course.exams)
-            }
-            else {
-                return res.status(404).send("Exams not found")
-            }
-        }).catch((err) => res.status(400).send(err.message))
-    } catch (e) {
-        res.status(400).send(e)
+        })
+
+        if (!course) {
+            throw new NotFoundError("Course not found")
+        }
+        res.status(200).send(course.exams);
+    } catch (error) {
+        next(error)
     }
 })
 
@@ -313,7 +282,7 @@ app.get("/courses/:courseAbbrev/exams/questions", cache(300), async (req, res) =
 app.get("/courses/:courseAbbrev/topics/:topicName/questions", async (req, res) => {
     try {
         const { topicName } = req.params;
-        prisma.topic.findUnique({
+        const topic = await prisma.topic.findUnique({
             where: {
                 name: topicName
             },
@@ -349,14 +318,11 @@ app.get("/courses/:courseAbbrev/topics/:topicName/questions", async (req, res) =
                 }
             }
         })
-            .then((topics) => {
-                if (topics) {
-                    res.status(200).send(topics);
-                } else {
-                    res.status(404).send("Topics not found");
-                }
-            })
-            .catch((err) => res.status(400).send(err));
+        
+        if (!topic) {
+            throw new NotFoundError("Topic not found")
+        }
+        res.status(200).send(topic);
     } catch (e) {
         res.status(400).send(e)
     }
@@ -366,13 +332,11 @@ app.get("/courses/:courseAbbrev/topics/:topicName/questions", async (req, res) =
 app.get("/courses/:courseAbbrev/exams/:season-:year-:examNumber", cache(300), async (req, res) => {
     try {
         const { courseAbbrev, season, year, examNumber } = req.params;
-        const { abbreviation, number } = courseRegex(courseAbbrev);
+        const { abbreviation, number } = validCourseRegex(courseAbbrev);
         const season_type = Season[season.toUpperCase() as keyof typeof Season]
+
         if (!season_type) {
-            return res.status(400).send("Invalid season");
-        }
-        if (!abbreviation || !number) {
-            return res.status(400).send("Invalid parameters")
+            throw new InvalidSeasonError("Invalid season");
         }
 
         prisma.course.findUnique({
@@ -434,17 +398,16 @@ app.get("/courses/:courseAbbrev/exams/:season-:year-:examNumber", cache(300), as
 })
 
 // All questions for a specific exam, includes topics within questions.
-app.get("/courses/:courseAbbrev/exams/:season-:year-:examNumber/questions", cache(300), async (req, res) => {
+app.get("/courses/:courseAbbrev/exams/:season-:year-:examNumber/questions", cache(300), async (req, res, next) => {
     try {
         const { courseAbbrev, season, year, examNumber } = req.params
-        const { abbreviation, number } = courseRegex(courseAbbrev);
+        const { abbreviation, number } = validCourseRegex(courseAbbrev);
         const season_type = Season[season.toUpperCase() as keyof typeof Season]
+
         if (!season_type) {
-            return res.status(400).send("Invalid season");
+            throw new InvalidSeasonError("Invalid season");
         }
-        if (!abbreviation || !number) {
-            return res.status(400).send("Invalid parameters")
-        }
+
         const semester = await prisma.semester.findUnique({
             where: {
                 season_year: {
@@ -454,7 +417,7 @@ app.get("/courses/:courseAbbrev/exams/:season-:year-:examNumber/questions", cach
             }
         })
         if (!semester) {
-            return res.status(400).send("Invalid semester")
+            throw new NotFoundError("Semester not found");
         }
 
         const course = await prisma.course.findUnique({
@@ -467,10 +430,10 @@ app.get("/courses/:courseAbbrev/exams/:season-:year-:examNumber/questions", cach
             }
         })
         if (!course) {
-            return res.status(404).send("Course not found")
+            throw new NotFoundError("Course not found");
         }
 
-        prisma.exam.findUnique({
+        const exam = await prisma.exam.findUnique({
             where: {
                 number_courseId_semesterId_published: {
                     number: Number(examNumber),
@@ -509,16 +472,13 @@ app.get("/courses/:courseAbbrev/exams/:season-:year-:examNumber/questions", cach
                 }
             }
         })
-            .then((exam) => {
-                if (exam) {
-                    res.status(200).send(exam)
-                }
-                else {
-                    res.status(404).send("Exam not found")
-                }
-            })
-    } catch (e) {
-        res.status(400).send(e)
+        
+        if (!exam) {
+            throw new NotFoundError("Exam not found")
+        }
+        res.status(200).send(exam)
+    } catch (error) {
+        next(error)
     }
 });
 
@@ -589,7 +549,7 @@ app.get("/stats/submissions", cache(300), async (req, res) => {
 
 app.get("/webhooks", async (req, res) => {
     try {
-        prisma.webhook.findMany({ })
+        prisma.webhook.findMany({})
             .then((response) => res.status(200).send(response))
             .catch((err) => res.status(404).send(err))
     } catch (err) {

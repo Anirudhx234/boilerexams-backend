@@ -56,7 +56,7 @@ app.get("/resources/:resourceId", async (req, res) => {
     }
 })
 
-app.post("/resources/images", upload.single('file'), fileSizeLimitErrorHandler, async (req, res) => {
+app.post("/resources/images", upload.single('file'), fileSizeLimitErrorHandler, async (req, res, next) => {
     try {
         if (req.fileValidationError) {
             return res.status(415).send("File type must be JPEG or PNG")
@@ -100,8 +100,8 @@ app.post("/resources/images", upload.single('file'), fileSizeLimitErrorHandler, 
         })
             .then((resp) => res.status(200).send(resp))
             .catch((err) => res.status(400).send(err))
-    } catch (e) {
-        res.status(400).send(e)
+    } catch (error) {
+        next(error)
     }
 })
 
