@@ -1,4 +1,4 @@
-import {PurdueIoAPI} from "../purdue.io";
+import {PurdueIoAPI} from "../services/purdue.io";
 
 const { PrismaClient, Season } = require('@prisma/client')
 const express = require('express');
