@@ -1,4 +1,4 @@
-import NotFoundError from "../middleware/errors/NotFoundError";
+import {NotFoundError} from "../middleware/errors/index";
 
 const { PrismaClient } = require('@prisma/client')
 const prisma = new PrismaClient();
@@ -21,7 +21,7 @@ app.delete("/courses/softDelete/:courseId", async (req, res, next) => {
         })
 
         if (!course) {
-            throw new Error("Course not found")
+            throw new NotFoundError("Course not found")
         }
         res.status(200).send(course)
     } catch (error) {
@@ -39,7 +39,7 @@ app.delete("/courses/hardDelete/:courseId", async (req, res, next) => {
         })
         
         if (!course) {
-            throw new Error("Course not found")
+            throw new NotFoundError("Course not found")
         }
         res.status(200).send(course)
     } catch (error) {
