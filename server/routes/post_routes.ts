@@ -1,5 +1,6 @@
 import {PurdueIoAPI} from "../purdue.io";
 import {DiscordAPI} from "../discord";
+import {Prisma} from "@prisma/client";
 
 const { PrismaClient, Season } = require('@prisma/client')
 const prisma = new PrismaClient();
@@ -180,7 +181,6 @@ app.post("/courses/:courseId/exams/:examId/questions", async (req, res) => {
             .then((resp) => res.status(200).send(resp))
             .catch((err) => res.status(400).send(err))
     } catch (e) {
-        console.log(e)
         res.status(400).send(e)
     }
 });
@@ -199,7 +199,7 @@ app.post("/courses/requests", async (req, res) => {
             return;
         }
 
-        const existingCourse = await prisma.course.findFirst({
+        const existingCourse: Prisma.CourseGetPayload<Prisma.CourseArgs> = await prisma.course.findFirst({
             where: {
                 AND: [
                     { abbreviation: subjectAbbreviation },
@@ -273,7 +273,7 @@ app.post("/bug-reports", async (req, res) => {
 
         const embed = {
             title: title,
-            description: description + `\n\nIf this has pinged the wrong person or role please <@&1078747995979403326> or <@&1078748911298170891> appropriately.`,
+            description: description,
             timestamp: new Date().toISOString(),
             color: 15548997,
             footer: { text: footer }
@@ -293,17 +293,24 @@ app.post("/bug-reports/questions/:questionId", async (req, res) => {
         const { questionId } = req.params;
         const { description, footer } = req.body;
 
-        // ToDo Get pingableIds from exam
-
         const question = await prisma.question.findUnique({
             where: {
                 id: questionId
             },
             include: {
-                course: true,
+                course: {
+                    select: {
+                        abbreviation: true,
+                        number: true,
+                        users: {
+                            include: {
+                                accounts: true
+                            }
+                        },
+                    }
+                },
                 exam: {
                     select: {
-                        //creator: true
                         number: true,
                         semester: true
                     }
@@ -312,20 +319,26 @@ app.post("/bug-reports/questions/:questionId", async (req, res) => {
         });
 
         if (!question) {
-            //res.status(404).send("Unknown Question");
-            //return;
+            res.status(404).send("Question does not exist");
+            return;
         }
 
-        const course = question?.course;
-        const exam = question?.exam;
-        const semester = exam?.semester;
-
-        const title = `${course?.abbreviation}${course?.number} | ${semester?.season} ${semester?.year} | Exam ${exam?.number} | Question ${question?.number}`;
-        const content = `<@${exam?.creator}>`;
+        const course = question.course;
+        const exam = question.exam;
+        const abbreviation = course.abbreviation;
+        const courseNumber = course.number;
+        const users = course.users;
+        const examNumber = exam.number;
+        const semester = exam.semester;
+        const title = `${abbreviation}${courseNumber} | ${semester.season} ${semester.year} | Exam ${examNumber} | Question ${question.number}`;
+        const accounts = users.map(user => user.accounts.filter(account => account.provider == "discord")).flat();
+        const content = accounts.map(account => `<@${account.providerAccountId}>`).join("");
+        const url = `https://boilerexams-frontend.vercel.app/${abbreviation}${courseNumber}/${semester.season}-${semester.year}-${examNumber}?q=${questionId}`;
 
         const embed = {
+            url: url,
             title: title,
-            description: description + `\n\nIf this has pinged the wrong person or role please <@&1078747995979403326> or <@&1078748911298170891> appropriately.`,
+            description: description,
             timestamp: new Date().toISOString(),
             color: 15548997,
             footer: { text: footer }
