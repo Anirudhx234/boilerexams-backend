@@ -8,109 +8,98 @@ const prisma = new PrismaClient();
 const express = require('express');
 const app = express();
 
+const asyncWrapper = require('../middleware/wrappers/asyncWrapper')
 
-app.post("/courses", async (req, res, next) => {
-    try {
-        const { name, subject, abbreviation, number, backgroundColor, graphicLink, published } = req.body
-        const stringifiedNumber = String(number);
-        const courseNumber = stringifiedNumber + "0".repeat(5 - stringifiedNumber.length);
-        const purdueIOCourse = await PurdueIoAPI.getCourse(abbreviation.toUpperCase(), courseNumber);
+app.post("/courses", asyncWrapper(async (req, res) => {
+    const { name, subject, abbreviation, number, backgroundColor, graphicLink, published } = req.body
+    const stringifiedNumber = String(number);
+    const courseNumber = stringifiedNumber + "0".repeat(5 - stringifiedNumber.length);
+    const purdueIOCourse = await PurdueIoAPI.getCourse(abbreviation.toUpperCase(), courseNumber);
 
-        if (!purdueIOCourse) {
-            throw new InvalidCourseError(`Invalid Course ${abbreviation} ${courseNumber}`)
+    if (!purdueIOCourse) {
+        throw new InvalidCourseError(`Invalid Course ${abbreviation} ${courseNumber}`)
+    }
+
+    const course = await prisma.course.create({
+        data: {
+            name: name,
+            subject: subject,
+            abbreviation: abbreviation.toUpperCase(),
+            number: Number(courseNumber),
+            backgroundColor: backgroundColor,
+            graphicLink: graphicLink,
+            published: published
+        },
+        include: {
+            exams: true,
+            semesters: true,
+            topics: true,
+            questions: true
         }
+    })
 
-        const course = await prisma.course.create({
-            data: {
-                name: name,
-                subject: subject,
-                abbreviation: abbreviation.toUpperCase(),
-                number: Number(courseNumber),
-                backgroundColor: backgroundColor,
-                graphicLink: graphicLink,
-                published: published
-            },
-            include: {
-                exams: true,
-                semesters: true,
-                topics: true,
-                questions: true
-            }
-        })
+    res.status(200).send(course)
+}));
 
-        res.status(200).send(course)
-    } catch (error) {
-        next(error)
-    }
-});
+app.post("/topics", asyncWrapper(async (req, res, next) => {
+    const { name } = req.body
+    const topic = await prisma.topic.create({
+        data: {
+            name: name
+        },
+        include: {
+            courses: true,
+            questions: true
+        }
+    })
 
-app.post("/topics", async (req, res, next) => {
-    try {
-        const { name } = req.body
-        const topic = await prisma.topic.create({
-            data: {
-                name: name
-            },
-            include: {
-                courses: true,
-                questions: true
-            }
-        })
+    res.status(200).send(topic)
+}));
 
-        res.status(200).send(topic)
-    } catch (error) {
-        next(error)
-    }
-});
-
-app.post("/courses/:courseId/exams", async (req, res) => {
-    try {
-        const { courseId } = req.params
-        const { semester: { season, year }, number } = req.body
-        const semester = await prisma.semester.upsert({
-            where: {
-                season_year: {
-                    season: Season[season.toUpperCase() as keyof typeof Season],
-                    year: Number(year)
-                }
-            },
-            update: {},
-            create: {
+app.post("/courses/:courseId/exams", asyncWrapper(async (req, res) => {
+    const { courseId } = req.params
+    const { semester: { season, year }, number } = req.body
+    const semester = await prisma.semester.upsert({
+        where: {
+            season_year: {
                 season: Season[season.toUpperCase() as keyof typeof Season],
                 year: Number(year)
             }
-        })
+        },
+        update: {},
+        create: {
+            season: Season[season.toUpperCase() as keyof typeof Season],
+            year: Number(year)
+        }
+    })
 
-        await prisma.course.update({
-            where: {
-                id: courseId
-            },
-            data: {
-                semesters: {
-                    connect: {
-                        id: semester.id
-                    }
+    await prisma.course.update({
+        where: {
+            id: courseId
+        },
+        data: {
+            semesters: {
+                connect: {
+                    id: semester.id
                 }
             }
-        })
+        }
+    })
 
-        prisma.exam.create({
-            data: {
-                courseId: courseId,
-                number: Number(number),
-                semesterId: semester.id
-            },
-            include: {
-                semester: true,
-                questions: true
-            }
-        })
-            .then(exam => res.status(200).send(exam))
-            .catch((err) => res.status(400).send(err))
-    } catch (e) {
-        res.status(400).send(e)
-    }
-});
+    prisma.exam.create({
+        data: {
+            courseId: courseId,
+            number: Number(number),
+            semesterId: semester.id
+        },
+        include: {
+            semester: true,
+            questions: true
+        }
+    })
+        .then(exam => res.status(200).send(exam))
+        .catch((err) => res.status(400).send(err))
+}));
 
 app.post("/courses/:courseId/exams/:examId/questions", async (req, res) => {
     try {
