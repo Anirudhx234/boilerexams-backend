@@ -23,6 +23,7 @@ app.put("/courses/:courseId", async (req, res) => {
 
         if (!purdueIoCourse) {
             res.status(406).send(`Invalid Course ${abbreviation} ${courseNumber}`);
+            return;
         }
 
         prisma.course.update({
