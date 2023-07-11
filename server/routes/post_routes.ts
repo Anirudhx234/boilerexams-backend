@@ -1,125 +1,113 @@
-import {PurdueIoAPI} from "../purdue.io";
-import {DiscordAPI} from "../discord";
+import { PurdueIoAPI } from "../services/purdue.io";
+import { DiscordAPI } from "../services/discordAPI";
+import { InvalidCourseError } from "../middleware/errors/index";
 import {Prisma} from "@prisma/client";
 
 const { PrismaClient, Season } = require('@prisma/client')
 const prisma = new PrismaClient();
-
 const express = require('express');
 const app = express();
 
+const asyncWrapper = require('../middleware/wrappers/asyncWrapper')
 
-app.post("/courses", async (req, res) => {
-    try {
-        const { abbreviation, number, backgroundColor, graphicLink, published } = req.body
 
-        const purdueIoSubject = await PurdueIoAPI.getSubject(abbreviation.toUpperCase());
+app.post("/courses", asyncWrapper(async (req, res) => {
+    const { abbreviation, number, backgroundColor, graphicLink, published } = req.body
 
-        if (!purdueIoSubject) {
-            res.status(406).send(`Invalid Subject ${abbreviation}`);
-            return;
-        }
+    const purdueIoSubject = await PurdueIoAPI.getSubject(abbreviation.toUpperCase());
 
-        const stringifiedNumber = String(number);
-        const courseNumber = stringifiedNumber + "0".repeat(5 - stringifiedNumber.length);
-        const purdueIoCourse = await PurdueIoAPI.getCourse(abbreviation, courseNumber);
-
-        if (!purdueIoCourse) {
-            res.status(406).send(`Invalid Course ${abbreviation} ${courseNumber}`);
-            return;
-        }
-
-        prisma.course.create({
-            data: {
-                name: purdueIoCourse.Title,
-                subject: purdueIoSubject.Name,
-                abbreviation: purdueIoSubject.Abbreviation,
-                number: Number(courseNumber),
-                backgroundColor: backgroundColor,
-                graphicLink: graphicLink,
-                published: published
-            },
-            include: {
-                exams: true,
-                semesters: true,
-                topics: true,
-                questions: true
-            }
-        })
-            .then((resp) => res.status(200).send(resp))
-            .catch((err) => res.status(400).send(err))
-    } catch (e) {
-        res.status(400).send(e)
+    if (!purdueIoSubject) {
+        throw new InvalidCourseError(`Invalid Subject ${abbreviation}`);
     }
-});
 
-app.post("/topics", async (req, res) => {
-    try {
-        const { name } = req.body
-        prisma.topic.create({
-            data: {
-                name: name
-            },
-            include: {
-                courses: true,
-                questions: true
-            }
-        })
-            .then((resp) => res.status(200).send(resp))
-            .catch((err) => res.status(400).send(err));
-    } catch (e) {
-        res.status(400).send(e)
+    const stringifiedNumber = String(number);
+    const courseNumber = stringifiedNumber + "0".repeat(5 - stringifiedNumber.length);
+    const purdueIoCourse = await PurdueIoAPI.getCourse(abbreviation.toUpperCase(), courseNumber);
+
+    if (!purdueIoCourse) {
+        throw new InvalidCourseError(`Invalid Course ${abbreviation} ${courseNumber}`);
     }
-});
 
-app.post("/courses/:courseId/exams", async (req, res) => {
-    try {
-        const { courseId } = req.params
-        const { semester: { season, year }, number } = req.body
-        const semester = await prisma.semester.upsert({
-            where: {
-                season_year: {
-                    season: Season[season.toUpperCase() as keyof typeof Season],
-                    year: Number(year)
-                }
-            },
-            update: {},
-            create: {
+    const course = await prisma.course.create({
+        data: {
+            name: purdueIoCourse.Title,
+            subject: purdueIoSubject.Name,
+            abbreviation: purdueIoSubject.Abbreviation,
+            number: Number(courseNumber),
+            backgroundColor: backgroundColor,
+            graphicLink: graphicLink,
+            published: published
+        },
+        include: {
+            exams: true,
+            semesters: true,
+            topics: true,
+            questions: true
+        }
+    })
+    res.status(200).send(course)
+}));
+
+
+app.post("/topics", asyncWrapper(async (req, res, next) => {
+    const { name } = req.body
+    const topic = await prisma.topic.create({
+        data: {
+            name: name
+        },
+        include: {
+            courses: true,
+            questions: true
+        }
+    })
+
+    res.status(200).send(topic)
+}));
+
+app.post("/courses/:courseId/exams", asyncWrapper(async (req, res) => {
+    const { courseId } = req.params
+    const { semester: { season, year }, number } = req.body
+    const semester = await prisma.semester.upsert({
+        where: {
+            season_year: {
                 season: Season[season.toUpperCase() as keyof typeof Season],
                 year: Number(year)
             }
-        })
+        },
+        update: {},
+        create: {
+            season: Season[season.toUpperCase() as keyof typeof Season],
+            year: Number(year)
+        }
+    })
 
-        await prisma.course.update({
-            where: {
-                id: courseId
-            },
-            data: {
-                semesters: {
-                    connect: {
-                        id: semester.id
-                    }
+    await prisma.course.update({
+        where: {
+            id: courseId
+        },
+        data: {
+            semesters: {
+                connect: {
+                    id: semester.id
                 }
             }
-        })
+        }
+    })
 
-        prisma.exam.create({
-            data: {
-                courseId: courseId,
-                number: Number(number),
-                semesterId: semester.id
-            },
-            include: {
-                semester: true,
-                questions: true
-            }
-        })
-            .then(exam => res.status(200).send(exam))
-            .catch((err) => res.status(400).send(err))
-    } catch (e) {
-        res.status(400).send(e)
-    }
-});
+    prisma.exam.create({
+        data: {
+            courseId: courseId,
+            number: Number(number),
+            semesterId: semester.id
+        },
+        include: {
+            semester: true,
+            questions: true
+        }
+    })
+        .then(exam => res.status(200).send(exam))
+        .catch((err) => res.status(400).send(err))
+}));
 
 app.post("/courses/:courseId/exams/:examId/questions", async (req, res) => {
     try {

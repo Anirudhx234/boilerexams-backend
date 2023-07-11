@@ -4,7 +4,7 @@ const prisma = new PrismaClient();
 const express = require('express');
 const app = express();
 
-const cache = require('./caching');
+const cache = require('../cache/caching');
 
 app.get("/id/courses/:courseId/topics", cache(300), async (req, res) => {
     const { courseId } = req.params

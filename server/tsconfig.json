@@ -5,6 +5,8 @@
     "strict": true,
     "lib": ["esnext"],
     "esModuleInterop": true,
-    "noImplicitAny": false
+    "noImplicitAny": false,
+    "target": "es6",
+    "moduleResolution":"node"
   }
 }

@@ -1,24 +1,20 @@
+import { InvalidSeasonError, NotFoundError } from "../middleware/errors/index";
+
 const { PrismaClient, Season } = require('@prisma/client')
 const prisma = new PrismaClient();
 
 const express = require('express');
 const app = express();
 
-const cache = require('./caching');
+const cache = require('../cache/caching');
 const _ = require('lodash')
+const asyncWrapper = require('../middleware/wrappers/asyncWrapper')
 
-const courseRegex = (courseAbbrev) => {
-    const regex = /([a-zA-Z]+)(\d+)/;
-    const matches = courseAbbrev.match(regex);
-    if (matches) {
-        return { abbreviation: matches[1], number: matches[2] }
-    }
-    return {}
-}
+const validCourseRegex = require('../utils/validCourseRegex')
 
 // All courses metadata, no relations
-app.get("/courses", cache(300), async (req, res) => {
-    prisma.course.findMany({
+app.get("/courses", cache(300), asyncWrapper(async (req, res) => {
+    let courses = await prisma.course.findMany({
         where: {
             published: true
         },
@@ -31,348 +27,281 @@ app.get("/courses", cache(300), async (req, res) => {
             }
         ]
     })
-        .then((courses) => {
-            courses = _.groupBy(courses, 'subject')
-            let result: { subject: string, courses: Array<string> }[] = [];
-            _.forEach(courses, function (value, key) {
-                result.push({ subject: key, courses: value })
-            });
-            result = _.orderBy(result, 'courses', 'desc')
-            res.status(200).send(result)
-        })
-        .catch((err) => res.status(400).send(err.message))
-});
+
+    if (!courses.length) {
+        throw new NotFoundError("No courses found")
+    }
+    courses = _.groupBy(courses, 'subject')
+    let result: { subject: string, courses: Array<string> }[] = [];
+    _.forEach(courses, function (value, key) {
+        result.push({ subject: key, courses: value })
+    });
+    result = _.orderBy(result, 'courses', 'desc')
+    res.status(200).send(result)
+}));
 
 // All topics metadata, no relations
-app.get("/topics", cache(300), async (req, res) => {
-    prisma.topic.findMany()
-        .then(topics => res.status(200).send(topics))
-        .catch((err) => res.status(400).send(err.message))
-});
+app.get("/topics", cache(300), asyncWrapper(async (req, res) => {
+    const topics = await prisma.topic.findMany()
+    if (!topics.length) {
+        throw new NotFoundError("No topics found")
+    }
+    res.status(200).send(topics)
+}));
 
 // All courses with relations
-app.get("/courses/all", async (req, res) => {
-    try {
-        prisma.course.findMany({
-            include: {
-                topics: true,
-                semesters: true,
-                exams: {
-                    include: {
-                        questions: {
-                            include: {
-                                topics: true,
-                                answerChoices: {
-                                    orderBy: {
-                                        choiceIndex: 'asc'
-                                    },
-                                    include: {
-                                        resources: {
-                                            include: {
-                                                image: true,
-                                                code: true
-                                            }
+app.get("/courses/all", asyncWrapper(async (req, res) => {
+    const courses = await prisma.course.findMany({
+        include: {
+            topics: true,
+            semesters: true,
+            exams: {
+                include: {
+                    questions: {
+                        include: {
+                            topics: true,
+                            answerChoices: {
+                                orderBy: {
+                                    choiceIndex: 'asc'
+                                },
+                                include: {
+                                    resources: {
+                                        include: {
+                                            image: true,
+                                            code: true
                                         }
                                     }
-                                },
-                                resources: {
-                                    include: {
-                                        image: true,
-                                        code: true
-                                    }
+                                }
+                            },
+                            resources: {
+                                include: {
+                                    image: true,
+                                    code: true
                                 }
                             }
-                        },
-                        semester: true,
-                    }
-                },
-                users: true
-            }
-        })
-            .then((courses) => {
-                if (courses) {
-                    res.status(200).send(courses);
-                } else {
-                    res.status(404).send("Courses not found");
+                        }
+                    },
+                    semester: true,
                 }
-            })
-            .catch((err) => res.status(400).send(err));
-    } catch (e) {
-        res.status(400).send(e)
+            },
+            users: true
+        }
+    })
+    if (!courses) {
+        throw new Error("Courses not found")
     }
-});
+    res.status(200).send(courses);
+}));
 
 // Metadata for specific course, no relations
-app.get("/courses/:courseAbbrev", cache(300), async (req, res) => {
-    try {
-        const { courseAbbrev } = req.params
-        const { abbreviation, number } = courseRegex(courseAbbrev);
-        if (!abbreviation || !number) {
-            res.status(400).send("Invalid parameters")
-            return
-        }
-        prisma.course.findUnique({
-            where: {
-                abbreviation_number_published: {
-                    abbreviation: abbreviation.toUpperCase(),
-                    number: Number(number),
-                    published: true
-                },
+app.get("/courses/:courseAbbrev", cache(300), asyncWrapper(async (req, res) => {
+    const { courseAbbrev } = req.params
+    const { abbreviation, number } = validCourseRegex(courseAbbrev);
+
+    const course = await prisma.course.findUnique({
+        where: {
+            abbreviation_number_published: {
+                abbreviation: abbreviation.toUpperCase(),
+                number: Number(number),
+                published: true
             }
-        })
-            .then((course) => {
-                if (course) {
-                    res.status(200).send(course)
-                } else {
-                    res.status(404).send("Course not found")
-                }
-            })
-            .catch((err) => res.status(400).send(err))
-    } catch (e) {
-        res.status(400).send(e)
+        }
+    })
+    if (!course) {
+        throw new NotFoundError("No course found")
     }
-})
+    res.status(200).send(course)
+}));
 
 // All topics for a specific course, no other relations
-app.get("/courses/:courseAbbrev/topics", cache(300), async (req, res) => {
-    try {
-        const { courseAbbrev } = req.params;
+app.get("/courses/:courseAbbrev/topics", cache(300), asyncWrapper(async (req, res) => {
+    const { courseAbbrev } = req.params;
+    const { abbreviation, number } = validCourseRegex(courseAbbrev);
 
-        const { abbreviation, number } = courseRegex(courseAbbrev);
-        if (!abbreviation || !number) {
-            return res.status(400).send("Invalid parameters")
-        }
+    const course = await prisma.course.findUnique({
+        where: {
+            abbreviation_number_published: {
+                abbreviation: abbreviation.toUpperCase(),
+                number: Number(number),
+                published: true
+            }
+        },
+        select: {
+            topics: true
+        },
+    })
 
-        prisma.course.findUnique({
-            where: {
-                abbreviation_number_published: {
-                    abbreviation: abbreviation.toUpperCase(),
-                    number: Number(number),
-                    published: true
-                }
-            },
-            select: {
-                topics: true
-            },
-        }).then((course) => {
-            if (course) {
-                return res.status(200).send(course.topics)
-            }
-            else {
-                return res.status(404).send("Topics not found")
-            }
-        }).catch((err) => res.status(400).send(err.message))
-    } catch (e) {
-        res.status(400).send(e)
+    if (!course) {
+        throw new NotFoundError("Course not found")
     }
-});
+    res.status(200).send(course.topics)
+}));
 
 // All questions with topics included for a specific topic in a course.
 // Includes questions from other courses.
-app.get("/courses/:courseAbbrev/topics/questions", cache(300), async (req, res) => {
-    try {
-        const { courseAbbrev } = req.params;
+app.get("/courses/:courseAbbrev/topics/questions", cache(300), asyncWrapper(async (req, res) => {
+    const { courseAbbrev } = req.params;
+    const { abbreviation, number } = validCourseRegex(courseAbbrev);
 
-        const { abbreviation, number } = courseRegex(courseAbbrev);
-        if (!abbreviation || !number) {
-            return res.status(400).send("Invalid parameters")
-        }
-
-        prisma.course.findUnique({
-            where: {
-                abbreviation_number_published: {
-                    abbreviation: abbreviation.toUpperCase(),
-                    number: Number(number),
-                    published: true
-                }
-
-            },
-            select: {
-                topics: {
-                    include: {
-                        questions: {
-                            where: {
-                                exam: {
-                                    published: true
-                                }
-                            },
-                            select: {
-                                id: true,
-                                number: true
+    const course = await prisma.course.findUnique({
+        where: {
+            abbreviation_number_published: {
+                abbreviation: abbreviation.toUpperCase(),
+                number: Number(number),
+                published: true
+            }
+        },
+        select: {
+            topics: {
+                include: {
+                    questions: {
+                        where: {
+                            exam: {
+                                published: true
                             }
+                        },
+                        select: {
+                            id: true,
+                            number: true
                         }
-                    },
+                    }
                 },
             },
-        })
-            .then((course) => {
-                if (course && course.topics) {
-                    res.status(200).send(course.topics);
-                } else {
-                    res.status(404).send("Topics and questions not found");
-                }
-            })
-            .catch((err) => res.status(400).send(err.message));
-    } catch (e) {
-        res.status(400).send(e)
+        },
+    })
+
+    if (!course) {
+        throw new NotFoundError("Course not found")
     }
-});
+    res.status(200).send(course.topics);
+}));
 
 // All exams with semester (no questions)
-app.get("/courses/:courseAbbrev/exams", cache(300), async (req, res) => {
-    try {
-        const { courseAbbrev } = req.params;
-        //courseAbbrev is the course abbreviation and code (ex: MA166)
-        const { abbreviation, number } = courseRegex(courseAbbrev);
-        if (!abbreviation || !number) {
-            return res.status(400).send("Invalid parameters")
-        }
+app.get("/courses/:courseAbbrev/exams", cache(300), asyncWrapper(async (req, res) => {
+    const { courseAbbrev } = req.params;
+    const { abbreviation, number } = validCourseRegex(courseAbbrev);
 
-        prisma.course.findUnique({
-            where: {
-                abbreviation_number_published: {
-                    abbreviation: abbreviation.toUpperCase(),
-                    number: Number(number),
+    const course = await prisma.course.findUnique({
+        where: {
+            abbreviation_number_published: {
+                abbreviation: abbreviation.toUpperCase(),
+                number: Number(number),
+                published: true
+            }
+        },
+        select: {
+            exams: {
+                where: {
                     published: true
-                }
-            },
-            select: {
-                exams: {
-                    where: {
-                        published: true
-                    },
-                    include: {
-                        semester: true
-                    }
+                },
+                include: {
+                    semester: true
                 }
             }
-        }).then((course) => {
-            if (course) {
-                return res.status(200).send(course.exams)
-            }
-            else {
-                return res.status(404).send("Exams and questions not found")
-            }
-        }).catch((err) => res.status(400).send(err.message))
-    } catch (e) {
-        res.status(400).send(e)
+        }
+    })
+
+    if (!course) {
+        throw new NotFoundError("Course not found")
     }
-})
+    res.status(200).send(course.topics);
+}));
 
 // All exams with question ids and numbers
-app.get("/courses/:courseAbbrev/exams/questions", cache(300), async (req, res) => {
-    try {
-        const { courseAbbrev } = req.params;
-        //courseAbbrev is the course abbreviation and code (ex: MA166)
-        const { abbreviation, number } = courseRegex(courseAbbrev);
-        if (!abbreviation || !number) {
-            return res.status(400).send("Invalid parameters")
-        }
+app.get("/courses/:courseAbbrev/exams/questions", cache(300), asyncWrapper(async (req, res) => {
+    const { courseAbbrev } = req.params;
+    const { abbreviation, number } = validCourseRegex(courseAbbrev);
 
-        prisma.course.findUnique({
-            where: {
-                abbreviation_number_published: {
-                    abbreviation: abbreviation.toUpperCase(),
-                    number: Number(number),
+    const course = await prisma.course.findUnique({
+        where: {
+            abbreviation_number_published: {
+                abbreviation: abbreviation.toUpperCase(),
+                number: Number(number),
+                published: true
+            }
+        },
+        select: {
+            exams: {
+                where: {
                     published: true
-                }
-            },
-            select: {
-                exams: {
-                    where: {
-                        published: true
-                    },
-                    include: {
-                        questions: {
-                            orderBy: {
-                                number: 'asc'
-                            },
-                            select: {
-                                id: true,
-                                number: true
-                            },
+                },
+                include: {
+                    questions: {
+                        orderBy: {
+                            number: 'asc'
                         },
-                        semester: true
+                        select: {
+                            id: true,
+                            number: true
+                        },
                     },
+                    semester: true
                 },
             },
-        }).then((course) => {
-            if (course) {
-                return res.status(200).send(course.exams)
-            }
-            else {
-                return res.status(404).send("Exams not found")
-            }
-        }).catch((err) => res.status(400).send(err.message))
-    } catch (e) {
-        res.status(400).send(e)
+        },
+    })
+
+    if (!course) {
+        throw new NotFoundError("Course not found")
     }
-})
+    res.status(200).send(course.exams);
+}))
 
 // Full question information for specific topic
-app.get("/courses/:courseAbbrev/topics/:topicName/questions", async (req, res) => {
-    try {
-        const { topicName } = req.params;
-        prisma.topic.findUnique({
-            where: {
-                name: topicName
-            },
-            include: {
-                questions: {
-                    where: {
-                        exam: {
-                            published: true
-                        }
-                    },
-                    include: {
-                        topics: true,
-                        answerChoices: {
-                            orderBy: {
-                                choiceIndex: 'asc'
-                            },
-                            include: {
-                                resources: {
-                                    include: {
-                                        image: true,
-                                        code: true
-                                    }
+app.get("/courses/:courseAbbrev/topics/:topicName/questions", asyncWrapper(async (req, res) => {
+    const { topicName } = req.params;
+    const topic = await prisma.topic.findUnique({
+        where: {
+            name: topicName
+        },
+        include: {
+            questions: {
+                where: {
+                    exam: {
+                        published: true
+                    }
+                },
+                include: {
+                    topics: true,
+                    answerChoices: {
+                        orderBy: {
+                            choiceIndex: 'asc'
+                        },
+                        include: {
+                            resources: {
+                                include: {
+                                    image: true,
+                                    code: true
                                 }
                             }
-                        },
-                        resources: {
-                            include: {
-                                image: true,
-                                code: true
-                            }
+                        }
+                    },
+                    resources: {
+                        include: {
+                            image: true,
+                            code: true
                         }
                     }
                 }
             }
-        })
-            .then((topics) => {
-                if (topics) {
-                    res.status(200).send(topics);
-                } else {
-                    res.status(404).send("Topics not found");
-                }
-            })
-            .catch((err) => res.status(400).send(err));
-    } catch (e) {
-        res.status(400).send(e)
+        }
+    })
+
+    if (!topic) {
+        throw new NotFoundError("Topic not found")
     }
-});
+    res.status(200).send(topic);
+}));
 
 // All questions with id, number, and topics for an exam
 app.get("/courses/:courseAbbrev/exams/:season-:year-:examNumber", cache(300), async (req, res) => {
     try {
         const { courseAbbrev, season, year, examNumber } = req.params;
-        const { abbreviation, number } = courseRegex(courseAbbrev);
+        const { abbreviation, number } = validCourseRegex(courseAbbrev);
         const season_type = Season[season.toUpperCase() as keyof typeof Season]
+
         if (!season_type) {
-            return res.status(400).send("Invalid season");
-        }
-        if (!abbreviation || !number) {
-            return res.status(400).send("Invalid parameters")
+            throw new InvalidSeasonError("Invalid season");
         }
 
         prisma.course.findUnique({
@@ -434,93 +363,85 @@ app.get("/courses/:courseAbbrev/exams/:season-:year-:examNumber", cache(300), as
 })
 
 // All questions for a specific exam, includes topics within questions.
-app.get("/courses/:courseAbbrev/exams/:season-:year-:examNumber/questions", cache(300), async (req, res) => {
-    try {
-        const { courseAbbrev, season, year, examNumber } = req.params
-        const { abbreviation, number } = courseRegex(courseAbbrev);
-        const season_type = Season[season.toUpperCase() as keyof typeof Season]
-        if (!season_type) {
-            return res.status(400).send("Invalid season");
-        }
-        if (!abbreviation || !number) {
-            return res.status(400).send("Invalid parameters")
-        }
-        const semester = await prisma.semester.findUnique({
-            where: {
-                season_year: {
-                    season: season_type,
-                    year: Number(year)
-                }
-            }
-        })
-        if (!semester) {
-            return res.status(400).send("Invalid semester")
-        }
+app.get("/courses/:courseAbbrev/exams/:season-:year-:examNumber/questions", cache(300), asyncWrapper(async (req, res) => {
+    const { courseAbbrev, season, year, examNumber } = req.params
+    const { abbreviation, number } = validCourseRegex(courseAbbrev);
+    const season_type = Season[season.toUpperCase() as keyof typeof Season]
 
-        const course = await prisma.course.findUnique({
-            where: {
-                abbreviation_number_published: {
-                    abbreviation: abbreviation.toUpperCase(),
-                    number: Number(number),
-                    published: true
-                }
-            }
-        })
-        if (!course) {
-            return res.status(404).send("Course not found")
-        }
+    if (!season_type) {
+        throw new InvalidSeasonError("Invalid season");
+    }
 
-        prisma.exam.findUnique({
-            where: {
-                number_courseId_semesterId_published: {
-                    number: Number(examNumber),
-                    courseId: course.id,
-                    semesterId: semester.id,
-                    published: true
-                }
-            },
-            include: {
-                questions: {
-                    orderBy: {
-                        number: 'asc'
-                    },
-                    include: {
-                        topics: true,
-                        answerChoices: {
-                            orderBy: {
-                                choiceIndex: 'asc'
-                            },
-                            include: {
-                                resources: {
-                                    include: {
-                                        image: true,
-                                        code: true
-                                    }
+    const semester = await prisma.semester.findUnique({
+        where: {
+            season_year: {
+                season: season_type,
+                year: Number(year)
+            }
+        }
+    })
+    if (!semester) {
+        throw new NotFoundError("Semester not found");
+    }
+
+    const course = await prisma.course.findUnique({
+        where: {
+            abbreviation_number_published: {
+                abbreviation: abbreviation.toUpperCase(),
+                number: Number(number),
+                published: true
+            }
+        }
+    })
+    if (!course) {
+        throw new NotFoundError("Course not found");
+    }
+
+    const exam = await prisma.exam.findUnique({
+        where: {
+            number_courseId_semesterId_published: {
+                number: Number(examNumber),
+                courseId: course.id,
+                semesterId: semester.id,
+                published: true
+            }
+        },
+        include: {
+            questions: {
+                orderBy: {
+                    number: 'asc'
+                },
+                include: {
+                    topics: true,
+                    answerChoices: {
+                        orderBy: {
+                            choiceIndex: 'asc'
+                        },
+                        include: {
+                            resources: {
+                                include: {
+                                    image: true,
+                                    code: true
                                 }
                             }
-                        },
-                        resources: {
-                            include: {
-                                image: true,
-                                code: true
-                            }
+                        }
+                    },
+                    resources: {
+                        include: {
+                            image: true,
+                            code: true
                         }
                     }
                 }
             }
-        })
-            .then((exam) => {
-                if (exam) {
-                    res.status(200).send(exam)
-                }
-                else {
-                    res.status(404).send("Exam not found")
-                }
-            })
-    } catch (e) {
-        res.status(400).send(e)
+        }
+    })
+
+    if (!exam) {
+        throw new NotFoundError("Exam not found")
     }
-});
+    res.status(200).send(exam)
+}));
 
 app.get("/stats/questions/:questionId", cache(300), async (req, res) => {
     try {
@@ -589,7 +510,7 @@ app.get("/stats/submissions", cache(300), async (req, res) => {
 
 app.get("/webhooks", async (req, res) => {
     try {
-        prisma.webhook.findMany({ })
+        prisma.webhook.findMany({})
             .then((response) => res.status(200).send(response))
             .catch((err) => res.status(404).send(err))
     } catch (err) {

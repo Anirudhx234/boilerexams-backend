@@ -3,6 +3,8 @@ const express = require("express");
 const app = express();
 const cors = require('cors');
 
+const errorHandler = require('./middleware/errorHandler')
+
 app.use(cors());
 app.use(express.json());
 
@@ -15,6 +17,7 @@ const delete_routes = require("./routes/delete_routes");
 const resources_routes = require("./routes/resources.ts");
 const users_routes = require("./routes/users.ts");
 app.use(id_routes, name_routes, post_routes, ocr_routes, put_routes, delete_routes, resources_routes, users_routes);
+app.use(errorHandler)
 
 app.get("/", (req, res) => {
   res.send("Working")
