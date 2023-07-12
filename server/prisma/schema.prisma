@@ -10,16 +10,16 @@ datasource db {
 model Course {
   id              String     @id @default(uuid())
   name            String     @unique
-  subject         String     @default("")
-  abbreviation    String     @default("")
-  number          Int        @default(0)
+  subject         String
+  abbreviation    String
+  number          Int
   backgroundColor String     @default("")
   graphicLink     String     @default("")
   published       Boolean    @default(false)
   exams           Exam[]
   questions       Question[]
-  semesters       Semester[] @relation("CourseToSemester")
-  topics          Topic[]    @relation("CourseToTopic")
+  semesters       Semester[]
+  topics          Topic[]
   users           User[]
 
   @@unique([subject, number])
@@ -44,8 +44,8 @@ model Exam {
 model Topic {
   id        String     @id @default(uuid())
   name      String     @unique
-  courses   Course[]   @relation("CourseToTopic")
-  questions Question[] @relation("QuestionToTopic")
+  courses   Course[]
+  questions Question[]
 }
 
 model Question {
@@ -58,7 +58,7 @@ model Question {
   examId               String
   course               Course         @relation(fields: [courseId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   exam                 Exam           @relation(fields: [examId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  topics               Topic[]        @relation("QuestionToTopic")
+  topics               Topic[]
   answerChoices        AnswerChoice[]
   resources            Resource[]
   submissions          Submission[]
@@ -134,7 +134,7 @@ model Semester {
   season  Season
   year    Int
   exams   Exam[]
-  courses Course[] @relation("CourseToSemester")
+  courses Course[]
 
   @@unique([season, year])
 }

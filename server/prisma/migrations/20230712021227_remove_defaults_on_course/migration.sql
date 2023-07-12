@@ -1,0 +1,4 @@
+-- AlterTable
+ALTER TABLE "Course" ALTER COLUMN "number" DROP DEFAULT,
+ALTER COLUMN "subject" DROP DEFAULT,
+ALTER COLUMN "abbreviation" DROP DEFAULT;
