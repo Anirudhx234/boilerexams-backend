@@ -443,10 +443,8 @@ app.get("/courses/:courseAbbrev/exams/:season-:year-:examNumber/questions", cach
     res.status(200).send(exam)
 }));
 
-app.get("/stats/questions/:questionId", cache(300), async (req, res) => {
-    try {
-        const { questionId } = req.params
-        const submissions = await prisma.submission.aggregate({
+const questionStats = async (questionId) => {
+    const submissions = await prisma.submission.aggregate({
             where: {
                 questionId: questionId
             },
@@ -456,22 +454,98 @@ app.get("/stats/questions/:questionId", cache(300), async (req, res) => {
             },
             _count: true,
         })
-        const timeSpent = submissions._sum.timeSpent
-        const timeSpentVideo = submissions._sum.timeSpentVideo
-        const submissionTotal = submissions._count
+    const timeSpent = submissions._sum.timeSpent
+    const timeSpentVideo = submissions._sum.timeSpentVideo
+    const submissionTotal = submissions._count
 
-        const submissionCorrect = await prisma.submission.count({
+    const submissionCorrect = await prisma.submission.count({
+        where: {
+            questionId: questionId,
+            correct: true
+        }
+    })
+    return {timeSpent, timeSpentVideo, submissionTotal, submissionCorrect}
+}
+
+const examStats = async(examId) => {
+    const questions = await prisma.exam.findUnique({
             where: {
-                questionId: questionId,
-                correct: true
+                id: examId
+            },
+            select: {
+                questions: {
+                    select: {
+                        id: true
+                    }
+                }
             }
         })
-        res.status(200).send({ timeSpent, timeSpentVideo, submissionTotal, submissionCorrect })
+        const ids = questions.questions.map(q => q.id)
+
+        const obj = {timeSpent: 0, timeSpentVideo: 0, submissionTotal: 0, submissionCorrect: 0};
+        const keys = Object.keys(obj)
+        for (let x = 0; x < ids.length; x ++ ){   
+            const tempStats = Object.values(await questionStats(ids[x]))
+            for (let i = 0; i < tempStats.length; i++) {
+                obj[keys[i]] += tempStats[i]
+            }
+        }
+        return obj
+}
+app.get("/stats/questions/:questionId", cache(300), async (req, res) => {
+    try {
+        const { questionId } = req.params
+        const ret = await questionStats(questionId)
+        res.status(200).send(ret)
     } catch (e) {
         res.status(400).send(e)
     }
 })
+app.get("/stats/exams/:examId", async(req, res) => {
+    try {
+        const {examId} = req.params
+        const obj = await examStats(examId)
+        res.status(200).send(obj)
 
+    } catch(e) {
+        res.status(400).send(e)
+    }
+
+})
+
+app.get("/stats/courses/:courseId", async(req, res) => {
+
+    try {
+        const {courseId} = req.params
+        const exams = await prisma.course.findUnique({
+            where: {
+                id: courseId
+            },
+            select:{
+                exams: {
+                    select: {
+                        id: true
+                    }
+                }
+            }
+        })
+        const ids = exams.exams.map(q => q.id)
+
+        const obj = {timeSpent: 0, timeSpentVideo: 0, submissionTotal: 0, submissionCorrect: 0};
+        const keys = Object.keys(obj)
+        for (let x = 0; x < ids.length; x ++ ){   
+            const tempStats = Object.values(await examStats(ids[x]))
+            for (let i = 0; i < tempStats.length; i++) {
+                obj[keys[i]] += tempStats[i]
+            }
+        }
+        res.status(200).send(obj)
+
+
+    } catch (e) {
+        res.status(400).send(e)
+    }
+})
 app.get("/stats/submissions", cache(300), async (req, res) => {
     try {
         const validTime = 300
