@@ -23,14 +23,14 @@ const getResource = async (req, res) => {
 }
 
 const createImageResource = async (req, res, next) => {
-    if (!req.image) {
+    if (!req.file) {
         throw new Error("No file attached")
     }
 
     const params = {
         Bucket: process.env.AWS_BUCKET_NAME,
-        Key: req.image.originalname,
-        Body: req.image.buffer,
+        Key: req.file.originalname,
+        Body: req.file.buffer,
         ACL: "public-read-write",
     };
 
@@ -45,7 +45,7 @@ const createImageResource = async (req, res, next) => {
         return res.status(400).send("Image(s) upload failed")
     }
 
-    prisma.resource.create({
+    const resource = await prisma.resource.create({
         data: {
             type: ResourceType.IMAGE,
             image: {
@@ -60,6 +60,7 @@ const createImageResource = async (req, res, next) => {
             image: true
         }
     })
+    res.status(200).send(resource)
 }
 
 const createCodeResource = async (req, res) => {

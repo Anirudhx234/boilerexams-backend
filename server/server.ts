@@ -7,7 +7,7 @@ const routes = require('./routes/index')
 const errorHandler = require('./middleware/errorHandler');
 
 const regexp = new RegExp('https:\/\/boilerexams-frontend-[^ ]*-boilerexams.vercel.app');
-const allowList = ["https://boilerexams-frontend.vercel.app", "http://localhost:3000"];
+const allowList = ["https://boilerexams-frontend.vercel.app", "http://localhost:3000", "http://127.0.0.1:3000"];
 
 const corsOptions = {
   origin: (origin: any, cb: any) => {
