@@ -1,112 +1,23 @@
-const { PrismaClient, Role } = require('@prisma/client')
-const prisma = new PrismaClient();
-
 const express = require('express');
 const app = express();
+const {
+    getAllUsers,
+    getUser,
+    updateUserRole,
+    assignUserCourses,
+    deleteUser
+} = require("../controllers/userController")
+const asyncWrapper = require("../middleware/wrappers/asyncWrapper")
 
-app.get("/users/all", async (req, res) => {
-    prisma.user.findMany({
-        include: {
-            courses: true
-        }
-    })
-        .then((resp) => res.status(200).send(resp))
-        .catch((err) => res.status(400).send(err))
-})
+app.get("/users/all", asyncWrapper(getAllUsers))
 
-app.get("/users/:userId", async (req, res) => {
-    try {
-        const { userId } = req.params
-        prisma.user.findUnique({
-            where: {
-                id: userId
-            },
-            include: {
-                courses: true
-            }
-        })
-            .then((resp) => res.status(200).send(resp))
-            .catch((err) => res.status(400).send(err))
-    } catch (e) {
-        res.status(400).send(e)
-    }
-})
+app.get("/users/:userId", asyncWrapper(getUser))
 
-app.put("/users/:userId/updateRole", async (req, res) => {
-    try {
-        const { userId } = req.params
-        const { role } = req.body
-        prisma.user.update({
-            where: {
-                id: userId
-            },
-            data: {
-                role: Role[role.toUpperCase() as keyof typeof Role]
-            },
-            include: {
-                courses: true
-            }
-        })
-            .then((resp) => res.status(200).send(resp))
-            .catch((err) => res.status(400).send(err))
-    } catch (e) {
-        res.status(400).send(e)
-    }
-})
+app.put("/users/:userId/updateRole", asyncWrapper(updateUserRole))
 
-app.put("/users/:userId/assignCourses", async (req, res) => {
-    try {
-        const { userId } = req.params
-        const { courseIds } = req.body
+app.put("/users/:userId/assignCourses", asyncWrapper(assignUserCourses))
 
-        const validRoles = [Role.CONTENT, Role.ADMIN]
-
-        const user = await prisma.user.findFirst({
-            where: {
-                id: userId,
-                role: {
-                    in: validRoles
-                }
-            }
-        })
-        if (!user) {
-            return res.status(401).send("User not authorized or not found")
-        }
-
-        prisma.user.update({
-            where: {
-                id: userId
-            },
-            data: {
-                courses: {
-                    set: courseIds.map((courseId) => ({ id: courseId }))
-                }
-            },
-            include: {
-                courses: true
-            }
-        })
-            .then((resp) => res.status(200).send(resp))
-            .catch((err) => res.status(400).send(err))
-    } catch (e) {
-        res.status(400).send(e)
-    }
-})
-
-app.delete("/users/:userId", async (req, res) => {
-    try {
-        const { userId } = req.params
-        prisma.user.delete({
-            where: {
-                id: userId
-            }
-        })
-            .then((resp) => res.status(200).send(resp))
-            .catch((err) => res.status(400).send(err))
-    } catch (e) {
-        res.status(400).send(e)
-    }
-})
+app.delete("/users/:userId", asyncWrapper(deleteUser))
 
 module.exports = app
 export { }
