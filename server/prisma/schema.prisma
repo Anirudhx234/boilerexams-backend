@@ -154,10 +154,12 @@ model Webhook {
 }
 
 model CourseRequest {
-  id       String @id
-  subject  String
-  course   String
-  requests Int    @default(1)
+  id           String @id @default(uuid())
+  name         String @unique
+  subject      String
+  abbreviation String
+  number       Int
+  requests     Int    @default(1)
 }
 
 model Account {

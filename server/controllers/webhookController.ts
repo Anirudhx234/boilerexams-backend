@@ -1,44 +1,43 @@
 import { PurdueIoAPI } from "../services/purdue.io";
 import { DiscordAPI } from "../services/discordAPI";
-import { InvalidCourseError, NotFoundError } from "../middleware/errors/index";
-import { Prisma } from "@prisma/client";
+import { CourseAlreadyExistsError, NotFoundError } from "../middleware/errors/index";
+import {Prisma} from "@prisma/client";
 
 const { PrismaClient } = require('@prisma/client')
 const prisma = new PrismaClient();
 
 const courseRequests = async (req, res) => {
-    const { subject, course } = req.body;
 
-    // Parse purdueIo for a valid course (MA265, CS180, AEE200, ...)
-    const courseNumber = course + "0".repeat(5 - course.length);
-    const subjectAbbreviation = subject.toUpperCase();
-    const purdueIoCourse = await PurdueIoAPI.getCourse(subjectAbbreviation, courseNumber);
+    const { abbreviation, number } = req.body;
 
-    if (!purdueIoCourse) {
-        throw new InvalidCourseError(`Invalid Course ${subjectAbbreviation} ${courseNumber}`);
-    }
+    const purdueIoSubject = await PurdueIoAPI.getSubject(abbreviation.toUpperCase());
+    const stringifiedNumber = String(number);
+    const courseNumber = stringifiedNumber + "0".repeat(5 - stringifiedNumber.length);
+    const purdueIoCourse = await PurdueIoAPI.getCourse(abbreviation.toUpperCase(), courseNumber);
 
     const existingCourse: Prisma.CourseGetPayload<Prisma.CourseArgs> = await prisma.course.findFirst({
         where: {
             AND: [
-                { abbreviation: subjectAbbreviation },
-                { number: Number(courseNumber) }
+                { abbreviation: purdueIoSubject.Abbreviation },
+                { number: Number(purdueIoCourse.Number) }
             ]
         }
     })
 
-    if (existingCourse) {
-        res.status(202).send("Existing Course Requested");
-        return;
-    }
+    if (existingCourse) throw new CourseAlreadyExistsError(`Existing Course Requested`);
 
-    const newCourseRequest = { id: purdueIoCourse.Id, subject: subjectAbbreviation, course: courseNumber, requests: 1 };
 
     await prisma.courseRequest.upsert({
         where: {
-            id: newCourseRequest.id
+            id: purdueIoCourse.Id
         },
-        create: newCourseRequest,
+        create: {
+            id: purdueIoCourse.Id,
+            name: purdueIoCourse.Title,
+            subject: purdueIoSubject.Name,
+            abbreviation: purdueIoSubject.Abbreviation,
+            number: Number(purdueIoCourse.Number),
+        },
         update: {
             requests: {
                 increment: 1    // Increment Request Count if CourseRequest exists
@@ -49,17 +48,18 @@ const courseRequests = async (req, res) => {
     const courseRequests = await prisma.courseRequest.findMany({
         orderBy: [
             {
-                subject: 'asc',
+                abbreviation: 'asc',
             },
             {
-                course: 'asc',
+                number: 'asc',
             }
         ]
     });
 
+
     const fields = courseRequests.map(element => {
         return {
-            inline: true, name: `${element.subject} ${element.course}`, value: `${element.requests}`
+            inline: true, name: `${element.abbreviation} ${element.number}`, value: `${element.requests}`
         };
     });
 
@@ -127,9 +127,7 @@ const questionBugReports = async (req, res) => {
         }
     });
 
-    if (!question) {
-        throw new NotFoundError("Question does not exist");
-    }
+    if (!question) throw new NotFoundError("Question does not exist");
 
     const course = question.course;
     const exam = question.exam;
