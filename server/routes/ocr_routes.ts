@@ -7,22 +7,17 @@ const axios = require('axios');
 const dotenv = require("dotenv");
 dotenv.config();
 
+const asyncWrapper = require("../middleware/wrappers/asyncWrapper")
+
 const storage = multer.memoryStorage()
 
 const fileFilter = (req, file, cb) => {
     if (file.mimetype === 'application/pdf') {
         cb(null, true)
     } else {
-        req.fileValidationError = true;
-        return cb(null, false, req.fileValidationError)
+        cb(new multer.MulterError('File type must be PDF'))
     }
 }
-
-const fileSizeLimitErrorHandler = (err, req, res, next) => {
-    if (err) {
-      return res.status(413).send("File must be under 5 MB")
-    }
-  }
 
 const upload = multer({
     storage: storage,
@@ -155,6 +150,7 @@ app.post("/convert-link", async (req, res) => {
         if (!req.body.link) {
             throw new Error("No link provided");
         }
+
         const headers = {
             'app_id': process.env.MATHPIX_ID,
             'app_key': process.env.MATHPIX_KEY,
@@ -179,59 +175,52 @@ app.post("/convert-link", async (req, res) => {
             const questions = parseQuestions(content, req.body.choices);
             return res.status(200).send({ id: id.data.pdf_id, questions: questions })
         } catch (err) {
-            res.status(503).json({id: id.data.pdf_id, message: "PDF not processed yet, please try again later using id"})
+            res.status(503).json({ id: id.data.pdf_id, message: "PDF not processed yet, please try again later using id" })
         }
     } catch (err) {
         res.status(400).send(err);
     }
 })
 
-app.post("/convert-file", upload.single("file"), fileSizeLimitErrorHandler, async (req, res) => {
+app.post("/convert-file", upload.single("pdf"), asyncWrapper(async (req, res) => {
+    if (!req.pdf) {
+        throw new Error("No file attached")
+    }
+
+    const data = new FormData();
+    data.append("file", req.pdf.buffer, {
+        filename: req.pdf.originalname,
+        contentType: req.pdf.mimetype
+    });
+    const options_json = {
+        math_inline_delimiters: ["\$", "\$"],
+        conversion_formats: {
+            "tex.zip": true,
+        },
+        numbers_default_to_math: true,
+    };
+    data.append('options_json', JSON.stringify(options_json))
+    let config = {
+        method: "post",
+        maxBodyLength: Infinity,
+        url: "https://api.mathpix.com/v3/pdf",
+        headers: {
+            'app_key': process.env.MATHPIX_KEY,
+            'Content-Type': 'multipart/form-data',
+            ...data.getHeaders()
+        },
+        data: data
+    }
+    const id = await axios.request(config)
+
     try {
-        if (req.fileValidationError) {
-            return res.status(415).send("File type must be PDF")
-        }
-        if (!req.file) {
-            return res.status(400).send("No file attached")
-        }
-
-        const data = new FormData();
-        data.append("file", req.file.buffer, {
-            filename: req.file.originalname,
-            contentType: req.file.mimetype
-        });
-        const options_json = {
-            math_inline_delimiters: ["\$", "\$"],
-            conversion_formats: {
-                "tex.zip": true,
-            },
-            numbers_default_to_math: true,
-        };
-        data.append('options_json', JSON.stringify(options_json))
-        let config = {
-            method: "post",
-            maxBodyLength: Infinity,
-            url: "https://api.mathpix.com/v3/pdf",
-            headers: {
-                'app_key': process.env.MATHPIX_KEY,
-                'Content-Type': 'multipart/form-data',
-                ...data.getHeaders()
-            },
-            data: data
-        }
-        const id = await axios.request(config)
-
-        try {
-            const content = await getPDFResult(id.data.pdf_id)
-            const questions = parseQuestions(content, req.body.choices);
-            return res.status(200).send({ id: id.data.pdf_id, questions: questions })
-        } catch (err) {
-            res.status(503).json({id: id.data.pdf_id, message: "PDF not processed yet, please try again later using id"})
-        }
+        const content = await getPDFResult(id.data.pdf_id)
+        const questions = parseQuestions(content, req.body.choices);
+        return res.status(200).send({ id: id.data.pdf_id, questions: questions })
     } catch (err) {
-        res.status(400).send(err);
+        res.status(503).json({ id: id.data.pdf_id, message: "PDF not processed yet, please try again later using id" })
     }
-})
+}))
 
 // SAMPLE IDS TO USE FOR TESTING (ALREADY PROCESSED)
 //2023_06_28_75fdd6edc01be3a36ec9g
@@ -251,49 +240,11 @@ app.post("/convert-id", async (req, res) => {
     try {
         const content = await getPDFResult(req.body.pdf_id)
         const questions = parseQuestions(content, req.body.choices);
-        res.status(200).json({id: req.body.pdf_id, questions: questions})
+        res.status(200).json({ id: req.body.pdf_id, questions: questions })
     } catch (err) {
         res.status(400).send(err);
     }
 })
-
-
-/* Image convert route, might use later
-app.post("/convert", upload.single("file"), async (req, res) => {
-    try {
-        if (!req.file) {
-            throw Error
-        }
-        const fileData = req.file.buffer.toString('base64');
-        const response = await axios.post('https://api.mathpix.com/v3/text', {
-            src: `data:${req.file.mimetype};base64,${fileData}`,
-            formats: [
-                "text",
-                "data",
-                "latex_simplified",
-                "latex_styled",
-                "mathml",
-                "asciimath",
-                "latex_list"],
-            //math_inline_delimiters: ["$", "$"],
-            //math_display_delimiters: ["$", "$"],
-            data_options: {
-                include_asciimath: true,
-                include_latex: true
-            }
-        }, {
-            headers: {
-                'app_id': process.env.MATHPIX_ID,
-                'app_key': process.env.MATHPIX_KEY,
-                'Content-Type': 'application/json'
-            }
-        });
-        console.log(response.data)
-        res.status(200).send(response.data)
-    } catch (err) {
-        res.status(400).send(err);
-    }
-}) */
 
 module.exports = app;
 export { }

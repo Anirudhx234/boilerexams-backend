@@ -89,8 +89,8 @@ function App() {
     }
 
     // Fetch all courses
-    axios.get('https://testing-387121.uc.r.appspot.com/courses')
-      .then(res => setCourses(res.data))
+    axios.get('http://localhost:8080/courses')
+      .then(res => console.log(res))
       .catch(err => console.error(err));
   }, [selectedCourse, selectedSemester, selectedTopic, selectedExam, questionChecked]);
 
