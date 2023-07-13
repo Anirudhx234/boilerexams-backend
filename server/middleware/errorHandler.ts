@@ -3,7 +3,6 @@ import {InvalidCourseError, InvalidSeasonError, NotFoundError} from "./errors/in
 const multer = require('multer');
 
 const errorHandler = (error, req, res, next) => {
-    console.log(error)
     if (error instanceof NotFoundError) {
         return res.status(error.errorCode).json({message: error.message})
     }
