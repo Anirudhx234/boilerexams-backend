@@ -187,6 +187,21 @@ const createWebhook = async (req, res) => {
     res.status(200).send(webhook)
 }
 
+const getAllWebhooks = async (req, res) => {
+    const webhook = await prisma.webhook.findMany()
+    res.status(200).send(webhook)
+}
+
+const getWebhook = async (req, res) => {
+    const { webhookId } = req.params;
+    const webhook = await prisma.webhook.findUnique({
+        where: {
+            id: webhookId
+        }
+    })
+    res.status(200).send(webhook)
+}
+
 const updateWebhook = async (req, res) => {
     const { webhookId } = req.params
     const { avatar } = req.body
@@ -208,5 +223,7 @@ module.exports = {
     questionBugReports,
     featureRequests,
     createWebhook,
+    getAllWebhooks,
+    getWebhook,
     updateWebhook
 }

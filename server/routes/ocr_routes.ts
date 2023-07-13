@@ -183,14 +183,14 @@ app.post("/convert-link", async (req, res) => {
 })
 
 app.post("/convert-file", upload.single("pdf"), asyncWrapper(async (req, res) => {
-    if (!req.pdf) {
+    if (!req.file) {
         throw new Error("No file attached")
     }
 
     const data = new FormData();
-    data.append("file", req.pdf.buffer, {
-        filename: req.pdf.originalname,
-        contentType: req.pdf.mimetype
+    data.append("file", req.file.buffer, {
+        filename: req.file.originalname,
+        contentType: req.file.mimetype
     });
     const options_json = {
         math_inline_delimiters: ["\$", "\$"],
