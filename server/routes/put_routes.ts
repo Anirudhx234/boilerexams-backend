@@ -12,20 +12,9 @@ app.put("/courses/:courseId", async (req, res) => {
         const { abbreviation, number, backgroundColor, graphicLink, published } = req.body;
 
         const purdueIoSubject = await PurdueIoAPI.getSubject(abbreviation.toUpperCase());
-
-        if (!purdueIoSubject) {
-            res.status(406).send(`Invalid Subject ${abbreviation}`);
-            return;
-        }
-
         const stringifiedNumber = String(number);
         const courseNumber = stringifiedNumber + "0".repeat(5 - stringifiedNumber.length);
         const purdueIoCourse = await PurdueIoAPI.getCourse(abbreviation, courseNumber);
-
-        if (!purdueIoCourse) {
-            res.status(406).send(`Invalid Course ${abbreviation} ${courseNumber}`);
-            return;
-        }
 
         prisma.course.update({
             where: {

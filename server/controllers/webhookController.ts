@@ -1,44 +1,44 @@
 import { PurdueIoAPI } from "../services/purdue.io";
-import { DiscordAPI } from "../services/discordAPI";
-import { InvalidCourseError, NotFoundError } from "../middleware/errors/index";
-import { Prisma } from "@prisma/client";
+import { DiscordAPI } from "../services/discord.api";
+import { CourseAlreadyExistsError, NotFoundError } from "../middleware/errors/index";
+import { Request, Response } from "express";
+import {Prisma} from "@prisma/client";
 
 const { PrismaClient } = require('@prisma/client')
 const prisma = new PrismaClient();
 
-const courseRequests = async (req, res) => {
-    const { subject, course } = req.body;
+const courseRequests = async (req: Request, res: Response) => {
 
-    // Parse purdueIo for a valid course (MA265, CS180, AEE200, ...)
-    const courseNumber = course + "0".repeat(5 - course.length);
-    const subjectAbbreviation = subject.toUpperCase();
-    const purdueIoCourse = await PurdueIoAPI.getCourse(subjectAbbreviation, courseNumber);
+    const { abbreviation, number } = req.body;
 
-    if (!purdueIoCourse) {
-        throw new InvalidCourseError(`Invalid Course ${subjectAbbreviation} ${courseNumber}`);
-    }
+    const purdueIoSubject = await PurdueIoAPI.getSubject(abbreviation.toUpperCase());
+    const stringifiedNumber = String(number);
+    const courseNumber = stringifiedNumber + "0".repeat(5 - stringifiedNumber.length);
+    const purdueIoCourse = await PurdueIoAPI.getCourse(abbreviation.toUpperCase(), courseNumber);
 
     const existingCourse: Prisma.CourseGetPayload<Prisma.CourseArgs> = await prisma.course.findFirst({
         where: {
             AND: [
-                { abbreviation: subjectAbbreviation },
-                { number: Number(courseNumber) }
+                { abbreviation: purdueIoSubject.Abbreviation },
+                { number: Number(purdueIoCourse.Number) }
             ]
         }
     })
 
-    if (existingCourse) {
-        res.status(202).send("Existing Course Requested");
-        return;
-    }
+    if (existingCourse) throw new CourseAlreadyExistsError(`Existing Course Requested`);
 
-    const newCourseRequest = { id: purdueIoCourse.Id, subject: subjectAbbreviation, course: courseNumber, requests: 1 };
 
     await prisma.courseRequest.upsert({
         where: {
-            id: newCourseRequest.id
+            id: purdueIoCourse.Id
         },
-        create: newCourseRequest,
+        create: {
+            id: purdueIoCourse.Id,
+            name: purdueIoCourse.Title,
+            subject: purdueIoSubject.Name,
+            abbreviation: purdueIoSubject.Abbreviation,
+            number: Number(purdueIoCourse.Number),
+        },
         update: {
             requests: {
                 increment: 1    // Increment Request Count if CourseRequest exists
@@ -49,17 +49,18 @@ const courseRequests = async (req, res) => {
     const courseRequests = await prisma.courseRequest.findMany({
         orderBy: [
             {
-                subject: 'asc',
+                abbreviation: 'asc',
             },
             {
-                course: 'asc',
+                number: 'asc',
             }
         ]
     });
 
+
     const fields = courseRequests.map(element => {
         return {
-            inline: true, name: `${element.subject} ${element.course}`, value: `${element.requests}`
+            inline: true, name: `${element.abbreviation} ${element.number}`, value: `${element.requests}`
         };
     });
 
@@ -75,7 +76,7 @@ const courseRequests = async (req, res) => {
     res.status(200).send("Success")
 };
 
-const bugReports = async (req, res) => {
+const bugReports = async (req: Request, res: Response) => {
     const { title, description, footer, pingableIds } = req.body
 
     const roleIds = ["1074060567339352145", "1078747995979403326", "1078748911298170891", "1074061247647068160"];
@@ -98,7 +99,7 @@ const bugReports = async (req, res) => {
     res.status(200).send("Success")
 }
 
-const questionBugReports = async (req, res) => {
+const questionBugReports = async (req: Request, res: Response) => {
     const { questionId } = req.params;
     const { description, footer } = req.body;
 
@@ -127,9 +128,7 @@ const questionBugReports = async (req, res) => {
         }
     });
 
-    if (!question) {
-        throw new NotFoundError("Question does not exist");
-    }
+    if (!question) throw new NotFoundError("Question does not exist");
 
     const course = question.course;
     const exam = question.exam;
@@ -157,7 +156,7 @@ const questionBugReports = async (req, res) => {
     res.status(200).send("Success")
 }
 
-const featureRequests = async (req, res) => {
+const featureRequests = async (req: Request, res: Response) => {
     const { title, description } = req.body;
 
     const embed = {
@@ -172,7 +171,7 @@ const featureRequests = async (req, res) => {
     res.status(200).send("Success")
 }
 
-const createWebhook = async (req, res) => {
+const createWebhook = async (req: Request, res: Response) => {
     const { id, token, name, avatar, channelId } = req.body;
 
     const webhook = await prisma.webhook.create({
@@ -188,8 +187,8 @@ const createWebhook = async (req, res) => {
 }
 
 const getAllWebhooks = async (req, res) => {
-    const webhook = await prisma.webhook.findMany()
-    res.status(200).send(webhook)
+    const webhooks = await prisma.webhook.findMany()
+    res.status(200).send(webhooks)
 }
 
 const getWebhook = async (req, res) => {
@@ -202,7 +201,7 @@ const getWebhook = async (req, res) => {
     res.status(200).send(webhook)
 }
 
-const updateWebhook = async (req, res) => {
+const updateWebhook = async (req: Request, res: Response) => {
     const { webhookId } = req.params
     const { avatar } = req.body
 

@@ -9,7 +9,8 @@ const {
     getAllWebhooks,
     getWebhook,
     updateWebhook
-} = require("../controllers/webhookController")
+} = require("../controllers/webhookController");
+
 const asyncWrapper = require("../middleware/wrappers/asyncWrapper")
 
 app.post("/courses/requests", asyncWrapper(courseRequests))
