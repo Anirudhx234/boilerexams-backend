@@ -2,7 +2,7 @@ import {InvalidCourseError} from "../middleware/errors";
 
 const axios = require("axios");
 
-type PurdueIoCourse = { Id: string,  Number: string, SubjectId: string, Title: string, CreditHours: number, Description: string };
+type PurdueIoCourse = { Id: string, Number: string, SubjectId: string, Title: string, CreditHours: number, Description: string };
 type PurdueIoSubject = { Id: string, Name: string, Abbreviation: string };
 
 export class PurdueIoAPI {
