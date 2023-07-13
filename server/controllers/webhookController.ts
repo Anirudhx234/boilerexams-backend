@@ -1,12 +1,13 @@
 import { PurdueIoAPI } from "../services/purdue.io";
 import { DiscordAPI } from "../services/discord.api";
 import { CourseAlreadyExistsError, NotFoundError } from "../middleware/errors/index";
+import { Request, Response } from "express";
 import {Prisma} from "@prisma/client";
 
 const { PrismaClient } = require('@prisma/client')
 const prisma = new PrismaClient();
 
-const courseRequests = async (req, res) => {
+const courseRequests = async (req: Request, res: Response) => {
 
     const { abbreviation, number } = req.body;
 
@@ -75,7 +76,7 @@ const courseRequests = async (req, res) => {
     res.status(200).send("Success")
 };
 
-const bugReports = async (req, res) => {
+const bugReports = async (req: Request, res: Response) => {
     const { title, description, footer, pingableIds } = req.body
 
     const roleIds = ["1074060567339352145", "1078747995979403326", "1078748911298170891", "1074061247647068160"];
@@ -98,7 +99,7 @@ const bugReports = async (req, res) => {
     res.status(200).send("Success")
 }
 
-const questionBugReports = async (req, res) => {
+const questionBugReports = async (req: Request, res: Response) => {
     const { questionId } = req.params;
     const { description, footer } = req.body;
 
@@ -155,7 +156,7 @@ const questionBugReports = async (req, res) => {
     res.status(200).send("Success")
 }
 
-const featureRequests = async (req, res) => {
+const featureRequests = async (req: Request, res: Response) => {
     const { title, description } = req.body;
 
     const embed = {
@@ -170,7 +171,7 @@ const featureRequests = async (req, res) => {
     res.status(200).send("Success")
 }
 
-const createWebhook = async (req, res) => {
+const createWebhook = async (req: Request, res: Response) => {
     const { id, token, name, avatar, channelId } = req.body;
 
     const webhook = await prisma.webhook.create({
@@ -185,7 +186,7 @@ const createWebhook = async (req, res) => {
     res.status(200).send(webhook)
 }
 
-const updateWebhook = async (req, res) => {
+const updateWebhook = async (req: Request, res: Response) => {
     const { webhookId } = req.params
     const { avatar } = req.body
 
