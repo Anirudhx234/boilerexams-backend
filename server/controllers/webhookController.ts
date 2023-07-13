@@ -1,5 +1,5 @@
 import { PurdueIoAPI } from "../services/purdue.io";
-import { DiscordAPI } from "../services/discordAPI";
+import { DiscordAPI } from "../services/discord.api";
 import { CourseAlreadyExistsError, NotFoundError } from "../middleware/errors/index";
 import {Prisma} from "@prisma/client";
 

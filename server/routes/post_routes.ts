@@ -1,5 +1,4 @@
 import { PurdueIoAPI } from "../services/purdue.io";
-import { DiscordAPI } from "../services/discordAPI";
 import { InvalidCourseError } from "../middleware/errors/index";
 import {Prisma} from "@prisma/client";
 
