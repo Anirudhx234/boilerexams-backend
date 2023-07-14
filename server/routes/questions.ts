@@ -4,7 +4,8 @@ import {
     createQuestion,
     updateQuestion,
     deleteQuestion,
-    createQuestionSubmission
+    createQuestionSubmission,
+    updateSubmission
 } from "../controllers/questionController"
 import asyncWrapper from "../middleware/wrappers/asyncWrapper"
 const cache = require('../cache/caching');
@@ -19,6 +20,8 @@ app.put("/courses/:courseId/exams/:examId/questions/:questionId", asyncWrapper(u
 
 app.delete("/courses/:courseId/exams/:examId/questions/:questionId", asyncWrapper(deleteQuestion))
 
-app.put("/questions/:questionId/submit", asyncWrapper(createQuestionSubmission))
+app.post("/questions/:questionId/submit", asyncWrapper(createQuestionSubmission))
+
+app.put("/submissions/:submissionId", asyncWrapper(updateSubmission))
 
 export default app;

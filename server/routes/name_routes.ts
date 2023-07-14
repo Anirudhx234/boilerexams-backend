@@ -474,8 +474,33 @@ const examStats = async (examId) => {
 app.get("/stats/questions/:questionId", async (req, res) => {
     try {
         const { questionId } = req.params
-        const ret = await questionStats(questionId)
-        res.status(200).send(ret)
+        const timeStats = await questionStats(questionId)
+        const choices = await prisma.question.findUnique({
+            where: {
+                id: questionId
+            },
+            select: {
+                answerChoices: true
+            }
+        })
+        const answerStats = [0];
+        let len = choices.answerChoices.length
+        if (len == 0 || len == null) {
+            len = 4
+        }
+        for (let i = 0; i < len; i++) {
+            const counted = await prisma.submission.count({
+                where: {
+                    questionId: questionId,
+                    indeces: {
+                        has: i
+                    }
+                }
+            })
+            answerStats.push(counted)
+        }
+        answerStats.shift()
+        res.status(200).send({timeStats, answerStats})
     } catch (e) {
         res.status(400).send(e)
     }
