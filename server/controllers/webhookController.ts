@@ -47,11 +47,12 @@ const createCourseRequest = async (req: Request, res: Response) => {
     });
 
     const courseRequests = await prisma.courseRequest.findMany({});
+    const purdueIoTerm = await PurdueIoAPI.getCurrentTerm();
 
     const fields = courseRequests
         .sort((a, b) => b.requests - a.requests)
         .map(request => {
-            const url = `https://purdue.io/202410/${request.abbreviation}/${request.id}`;
+            const url = `https://purdue.io/${purdueIoTerm.Code}/${request.abbreviation}/${request.id}`;
             return {
                 name: `${request.abbreviation}${request.number}`,
                 value: `**[${request.requests} Requests](${url})**`,
@@ -70,21 +71,6 @@ const createCourseRequest = async (req: Request, res: Response) => {
     await DiscordAPI.editWebhookMessage("Course Requests", "1127497040822284308", data)
     res.status(200).send("Success")
 };
-
-const getCourseRequest = async (req: Request, res: Response) => {
-    const { courseRequestId } = req.params;
-    const courseRequest = await prisma.courseRequest.findUnique({
-        where: {
-            id: courseRequestId
-        }
-    });
-    res.status(200).send(courseRequest);
-}
-
-const getCourseRequests = async (req: Request, res: Response) => {
-    const requests = await prisma.courseRequest.findMany({});
-    res.status(200).send(requests);
-}
 
 const createBugReport = async (req: Request, res: Response) => {
     const { title, description, footer, pingableIds } = req.body
@@ -197,6 +183,21 @@ const createWebhook = async (req: Request, res: Response) => {
     res.status(200).send(webhook);
 }
 
+const getCourseRequest = async (req: Request, res: Response) => {
+    const { courseRequestId } = req.params;
+    const courseRequest = await prisma.courseRequest.findUnique({
+        where: {
+            id: courseRequestId
+        }
+    });
+    res.status(200).send(courseRequest);
+}
+
+const getCourseRequests = async (req: Request, res: Response) => {
+    const requests = await prisma.courseRequest.findMany({});
+    res.status(200).send(requests);
+}
+
 const getWebhook = async (req: Request, res: Response) => {
     const { webhookId } = req.params;
 
@@ -238,8 +239,6 @@ const deleteWebhook = async (req: Request, res: Response) => {
             id: webhookId
         }
     });
-
-    if (!webhook) throw new NotFoundError("Webhook not found");
 
     res.status(200).send(webhook);
 }
