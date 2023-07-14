@@ -1,4 +1,4 @@
-const { PrismaClient, ResourceType, Language } = require('@prisma/client')
+import { PrismaClient, ResourceType, Language } from '@prisma/client'
 const prisma = new PrismaClient();
 
 const Aws = require('aws-sdk');
@@ -114,7 +114,7 @@ const deleteResource = async (req, res) => {
     res.status(200).send(resource)
 }
 
-module.exports = {
+export {
     getResource,
     createImageResource,
     createCodeResource,

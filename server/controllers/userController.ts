@@ -1,6 +1,6 @@
+import { PrismaClient, Role } from '@prisma/client';
 import { NotFoundError } from "../middleware/errors";
 
-const { PrismaClient, Role } = require('@prisma/client')
 const prisma = new PrismaClient();
 
 const getAllUsers = async (req, res) => {
@@ -99,7 +99,7 @@ const deleteUser = async (req, res) => {
     res.status(200).send(user)
 }
 
-module.exports = {
+export {
     getAllUsers,
     getUser,
     updateUserRole,

@@ -1,14 +1,11 @@
-const express = require('express');
+import express from 'express'
+import multer from 'multer'
+import axios from 'axios'
+import dotenv from 'dotenv'
+import asyncWrapper from "../middleware/wrappers/asyncWrapper"
+
 const app = express();
-
-const multer = require('multer');
-const axios = require('axios');
-
-const dotenv = require("dotenv");
 dotenv.config();
-
-const asyncWrapper = require("../middleware/wrappers/asyncWrapper")
-
 const storage = multer.memoryStorage()
 
 const fileFilter = (req, file, cb) => {
@@ -246,5 +243,4 @@ app.post("/convert-id", async (req, res) => {
     }
 })
 
-module.exports = app;
-export { }
+export default app

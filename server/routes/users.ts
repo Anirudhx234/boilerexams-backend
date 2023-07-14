@@ -1,13 +1,14 @@
-const express = require('express');
-const app = express();
-const {
+import express from 'express'
+import {
     getAllUsers,
     getUser,
     updateUserRole,
     assignUserCourses,
     deleteUser
-} = require("../controllers/userController")
-const asyncWrapper = require("../middleware/wrappers/asyncWrapper")
+} from "../controllers/userController"
+import asyncWrapper from "../middleware/wrappers/asyncWrapper"
+
+const app = express();
 
 app.get("/users/all", asyncWrapper(getAllUsers))
 
@@ -19,5 +20,4 @@ app.put("/users/:userId/assignCourses", asyncWrapper(assignUserCourses))
 
 app.delete("/users/:userId", asyncWrapper(deleteUser))
 
-module.exports = app
-export { }
+export default app

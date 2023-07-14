@@ -1,17 +1,16 @@
-const express = require('express');
+import express from 'express'
+import name_routes from "./name_routes"
+import ocr_routes from "./ocr_routes"
+import courses from "./courses"
+import exams from "./exams"
+import questions from "./questions"
+import resources from "./resources"
+import topics from "./topics"
+import users from "./users"
+import webhooks from "./webhooks"
+
 const app = express();
 
-const id_routes = require("./id_routes");
-const name_routes = require("./name_routes");
-const post_routes = require("./post_routes");
-const ocr_routes = require("./ocr_routes");
-const put_routes = require("./put_routes");
-const delete_routes = require("./delete_routes");
+app.use(name_routes, ocr_routes, courses, exams, questions, resources, topics, users, webhooks);
 
-const resources = require("./resources");
-const users = require("./users");
-const webhooks = require("./webhooks")
-
-app.use(id_routes, name_routes, post_routes, ocr_routes, put_routes, delete_routes, resources, users, webhooks);
-
-module.exports = app
+export default app
