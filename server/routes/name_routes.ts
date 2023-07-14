@@ -528,7 +528,7 @@ app.get("/stats/courses/:courseId", async (req, res) => {
 app.get("/stats/submissions",
     async (req, res) => {
         try {
-            const validTime = 300
+            const validTime = 0
             const times = await prisma.submission.aggregate({
                 _sum: {
                     timeSpent: true
