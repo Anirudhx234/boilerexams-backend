@@ -4,10 +4,10 @@ import { CourseAlreadyExistsError, NotFoundError } from "../middleware/errors/in
 import { Request, Response } from "express";
 import { Prisma} from "@prisma/client";
 
-const { PrismaClient } = require('@prisma/client')
+const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
-const courseRequests = async (req: Request, res: Response) => {
+const createCourseRequest = async (req: Request, res: Response) => {
 
     const { abbreviation, number } = req.body;
 
@@ -46,23 +46,18 @@ const courseRequests = async (req: Request, res: Response) => {
         }
     });
 
-    const courseRequests = await prisma.courseRequest.findMany({
-        orderBy: [
-            {
-                abbreviation: 'asc',
-            },
-            {
-                number: 'asc',
-            }
-        ]
-    });
+    const courseRequests = await prisma.courseRequest.findMany({});
 
-
-    const fields = courseRequests.map(element => {
-        return {
-            inline: true, name: `${element.abbreviation} ${element.number}`, value: `${element.requests}`
-        };
-    });
+    const fields = courseRequests
+        .sort((a, b) => b.requests - a.requests)
+        .map(request => {
+            const url = `https://purdue.io/202410/${request.abbreviation}/${request.id}`;
+            return {
+                name: `${request.abbreviation}${request.number}`,
+                value: `**[${request.requests} Requests](${url})**`,
+                inline: true
+            };
+        });
 
     const embed = {
         title: "Course Requests",
@@ -76,7 +71,22 @@ const courseRequests = async (req: Request, res: Response) => {
     res.status(200).send("Success")
 };
 
-const bugReports = async (req: Request, res: Response) => {
+const getCourseRequest = async (req: Request, res: Response) => {
+    const { courseRequestId } = req.params;
+    const courseRequest = await prisma.courseRequest.findUnique({
+        where: {
+            id: courseRequestId
+        }
+    });
+    res.status(200).send(courseRequest);
+}
+
+const getCourseRequests = async (req: Request, res: Response) => {
+    const requests = await prisma.courseRequest.findMany({});
+    res.status(200).send(requests);
+}
+
+const createBugReport = async (req: Request, res: Response) => {
     const { title, description, footer, pingableIds } = req.body
 
     const roleIds = ["1074060567339352145", "1078747995979403326", "1078748911298170891", "1074061247647068160"];
@@ -95,11 +105,11 @@ const bugReports = async (req: Request, res: Response) => {
     };
 
     const data = { embeds: [embed], content: content };
-    await DiscordAPI.sendWebhookMessage("Bug Reports", data)
-    res.status(200).send("Success")
+    await DiscordAPI.sendWebhookMessage("Bug Reports", data);
+    res.status(200).send("Success");
 }
 
-const questionBugReports = async (req: Request, res: Response) => {
+const createQuestionBugReport = async (req: Request, res: Response) => {
     const { questionId } = req.params;
     const { description, footer } = req.body;
 
@@ -152,11 +162,11 @@ const questionBugReports = async (req: Request, res: Response) => {
     };
 
     const data = { embeds: [embed], content: content };
-    await DiscordAPI.sendWebhookMessage("Content Reports", data)
-    res.status(200).send("Success")
+    await DiscordAPI.sendWebhookMessage("Content Reports", data);
+    res.status(200).send("Success");
 }
 
-const featureRequests = async (req: Request, res: Response) => {
+const createFeatureRequest = async (req: Request, res: Response) => {
     const { title, description } = req.body;
 
     const embed = {
@@ -167,8 +177,8 @@ const featureRequests = async (req: Request, res: Response) => {
     };
 
     const data = { embeds: [embed] };
-    await DiscordAPI.sendWebhookMessage("Feature Requests", data)
-    res.status(200).send("Success")
+    await DiscordAPI.sendWebhookMessage("Feature Requests", data);
+    res.status(200).send("Success");
 }
 
 const createWebhook = async (req: Request, res: Response) => {
@@ -182,62 +192,68 @@ const createWebhook = async (req: Request, res: Response) => {
             avatar: avatar,
             channelId: channelId
         }
-    })
-    res.status(200).send(webhook)
+    });
+
+    res.status(200).send(webhook);
 }
 
-const getAllWebhooks = async (req, res) => {
-    const webhooks = await prisma.webhook.findMany()
-    res.status(200).send(webhooks)
-}
-
-const getWebhook = async (req, res) => {
+const getWebhook = async (req: Request, res: Response) => {
     const { webhookId } = req.params;
+
     const webhook = await prisma.webhook.findUnique({
         where: {
             id: webhookId
         }
-    })
-    res.status(200).send(webhook)
+    });
+
+    res.status(200).send(webhook);
+}
+
+const getWebhooks = async (req: Request, res: Response) => {
+    const webhooks = await prisma.webhook.findMany({  });
+    res.status(200).send(webhooks);
 }
 
 const updateWebhook = async (req: Request, res: Response) => {
-    const { webhookId } = req.params
-    const { avatar } = req.body
+    const { webhookId } = req.params;
+    const { avatar } = req.body;
 
     const webhook = await prisma.webhook.update({
         where: {
             id: webhookId
         },
         data: {
-            avatar: avatar,
+            avatar: avatar
         }
-    })
-    res.status(200).send(webhook)
+    });
+
+    res.status(200).send(webhook);
 }
 
-const deleteWebhook = async (req, res) => {
+const deleteWebhook = async (req: Request, res: Response) => {
     const { webhookId } = req.params;
+
     const webhook = await prisma.webhook.delete({
         where: {
             id: webhookId
         }
-    })
+    });
 
-    if (!webhook) {
-        throw new NotFoundError("Webhook not found")
-    }
-    res.status(200).send(webhook)
+    if (!webhook) throw new NotFoundError("Webhook not found");
+
+    res.status(200).send(webhook);
 }
 
 export {
-    courseRequests,
-    bugReports,
-    questionBugReports,
-    featureRequests,
+    createCourseRequest,
+    createBugReport,
+    createQuestionBugReport,
+    createFeatureRequest,
     createWebhook,
-    getAllWebhooks,
+    getCourseRequest,
+    getCourseRequests,
     getWebhook,
+    getWebhooks,
     updateWebhook,
     deleteWebhook
-}
+};
