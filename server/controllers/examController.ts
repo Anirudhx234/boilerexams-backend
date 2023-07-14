@@ -1,0 +1,136 @@
+import { PrismaClient, Season } from "@prisma/client";
+import { NotFoundError } from "../middleware/errors";
+
+const prisma = new PrismaClient();
+
+const createExam = async (req, res) => {
+    const { courseId } = req.params
+    const { semester: { season, year }, number } = req.body
+
+    const semester = await prisma.semester.upsert({
+        where: {
+            season_year: {
+                season: Season[season.toUpperCase() as keyof typeof Season],
+                year: Number(year)
+            }
+        },
+        update: {},
+        create: {
+            season: Season[season.toUpperCase() as keyof typeof Season],
+            year: Number(year)
+        }
+    })
+
+    await prisma.course.update({
+        where: {
+            id: courseId
+        },
+        data: {
+            semesters: {
+                connect: {
+                    id: semester.id
+                }
+            }
+        }
+    })
+
+    const exam = await prisma.exam.create({
+        data: {
+            courseId: courseId,
+            number: Number(number),
+            semesterId: semester.id
+        },
+        include: {
+            semester: true,
+            questions: true
+        }
+    })
+    res.status(200).send(exam)
+}
+
+const updateExam = async (req, res) => {
+    const { courseId, examId } = req.params
+    const { semester: { season, year }, number, published } = req.body
+    let semesterId;
+    if (season && year) {
+        const semester = await prisma.semester.upsert({
+            where: {
+                season_year: {
+                    season: Season[season.toUpperCase() as keyof typeof Season],
+                    year: Number(year)
+                }
+            },
+            update: {},
+            create: {
+                season: Season[season.toUpperCase() as keyof typeof Season],
+                year: Number(year)
+            }
+        })
+        semesterId = semester.id
+        await prisma.course.update({
+            where: {
+                id: courseId
+            },
+            data: {
+                semesters: {
+                    connect: {
+                        id: semester.id
+                    }
+                }
+            }
+        })
+    }
+
+    const exam = await prisma.exam.update({
+        where: {
+            id: examId
+        },
+        data: {
+            semesterId: semesterId,
+            number: number,
+            published: published
+        },
+        include: {
+            semester: true
+        }
+    })
+    res.status(200).send(exam)
+}
+
+const unpublishExam = async (req, res) => {
+    const { examId } = req.params
+    const exam = await prisma.exam.update({
+        where: {
+            id: examId
+        },
+        data: {
+            published: false
+        }
+    })
+
+    if (!exam) {
+        throw new NotFoundError("Exam not found")
+    }
+    res.status(200).send(exam)
+}
+
+const deleteExam = async (req, res) => {
+    const { examId } = req.params
+    const exam = await prisma.exam.delete({
+        where: {
+            id: examId
+        }
+    })
+
+    if (!exam) {
+        throw new NotFoundError("Exam not found")
+    }
+    res.status(200).send(exam)
+}
+
+export {
+    createExam,
+    updateExam,
+    unpublishExam,
+    deleteExam
+}

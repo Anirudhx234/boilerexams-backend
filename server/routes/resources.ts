@@ -1,15 +1,15 @@
-const express = require('express');
-const app = express();
-const multer = require('multer')
-const {
+import express from 'express'
+import multer from 'multer'
+import {
     getResource,
     createImageResource,
     createCodeResource,
     updateCodeResource,
     deleteResource
-} = require("../controllers/resourceController")
-const asyncWrapper = require("../middleware/wrappers/asyncWrapper")
+} from "../controllers/resourceController"
+import asyncWrapper from "../middleware/wrappers/asyncWrapper"
 
+const app = express();
 const storage = multer.memoryStorage()
 
 const fileFilter = (req, file, cb) => {
@@ -38,5 +38,4 @@ app.put("/resources/:resourceId/code", asyncWrapper(updateCodeResource))
 
 app.delete("/resources/:resourceId", asyncWrapper(deleteResource))
 
-module.exports = app
-export { }
+export default app

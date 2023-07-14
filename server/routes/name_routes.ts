@@ -1,14 +1,14 @@
 import { InvalidSeasonError, NotFoundError } from "../middleware/errors/index";
 
-const { PrismaClient, Season } = require('@prisma/client')
+const { PrismaClient, Season } = require('@prisma/client');
 const prisma = new PrismaClient();
 
-const express = require('express');
+import express from 'express'
 const app = express();
 
 const cache = require('../cache/caching');
-const _ = require('lodash')
-const asyncWrapper = require('../middleware/wrappers/asyncWrapper')
+import _ from 'lodash'
+import asyncWrapper from '../middleware/wrappers/asyncWrapper'
 
 const validCourseRegex = require('../utils/validCourseRegex')
 
@@ -582,4 +582,4 @@ app.get("/stats/submissions", cache(300), async (req, res) => {
     }
 })
 
-module.exports = app
+export default app

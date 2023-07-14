@@ -39,4 +39,4 @@ const errorHandler = (error, req, res, next) => {
     return res.status(400).json({message: error.message})
 }
 
-module.exports = errorHandler
+export default errorHandler
