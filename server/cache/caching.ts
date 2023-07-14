@@ -2,7 +2,6 @@ const NodeCache = require('node-cache');
 const serverCache = new NodeCache();
 
 module.exports = duration => (req, res, next) => {
-    // Deletes cache at equivalent get route
     if (req.method !== 'GET') {
         if (serverCache.has(req.originalUrl)) {
             serverCache.del(req.originalUrl);

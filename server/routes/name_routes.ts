@@ -9,14 +9,16 @@ const app = express();
 const cache = require('../cache/caching');
 import _ from 'lodash'
 import asyncWrapper from '../middleware/wrappers/asyncWrapper'
+import sendPublished from "../middleware/sendPublished";
 
 const validCourseRegex = require('../utils/validCourseRegex')
 
+app.use(sendPublished)
 // All courses metadata, no relations
-app.get("/courses", cache(300), asyncWrapper(async (req, res) => {
+app.get("/courses", asyncWrapper(async (req, res) => {
     let courses = await prisma.course.findMany({
         where: {
-            published: true
+            OR: req.published
         },
         orderBy: [
             {
@@ -41,7 +43,7 @@ app.get("/courses", cache(300), asyncWrapper(async (req, res) => {
 }));
 
 // All topics metadata, no relations
-app.get("/topics", cache(300), asyncWrapper(async (req, res) => {
+app.get("/topics", asyncWrapper(async (req, res) => {
     const topics = await prisma.topic.findMany()
     if (!topics.length) {
         throw new NotFoundError("No topics found")
@@ -94,17 +96,15 @@ app.get("/courses/all", asyncWrapper(async (req, res) => {
 }));
 
 // Metadata for specific course, no relations
-app.get("/courses/:courseAbbrev", cache(300), asyncWrapper(async (req, res) => {
+app.get("/courses/:courseAbbrev", asyncWrapper(async (req, res) => {
     const { courseAbbrev } = req.params
     const { abbreviation, number } = validCourseRegex(courseAbbrev);
 
-    const course = await prisma.course.findUnique({
+    const course = await prisma.course.findFirst({
         where: {
-            abbreviation_number_published: {
-                abbreviation: abbreviation.toUpperCase(),
-                number: Number(number),
-                published: true
-            }
+            abbreviation: abbreviation.toUpperCase(),
+            number: Number(number),
+            OR: req.published
         }
     })
     if (!course) {
@@ -114,17 +114,15 @@ app.get("/courses/:courseAbbrev", cache(300), asyncWrapper(async (req, res) => {
 }));
 
 // All topics for a specific course, no other relations
-app.get("/courses/:courseAbbrev/topics", cache(300), asyncWrapper(async (req, res) => {
+app.get("/courses/:courseAbbrev/topics", asyncWrapper(async (req, res) => {
     const { courseAbbrev } = req.params;
     const { abbreviation, number } = validCourseRegex(courseAbbrev);
 
-    const course = await prisma.course.findUnique({
+    const course = await prisma.course.findFirst({
         where: {
-            abbreviation_number_published: {
-                abbreviation: abbreviation.toUpperCase(),
-                number: Number(number),
-                published: true
-            }
+            abbreviation: abbreviation.toUpperCase(),
+            number: Number(number),
+            OR: req.published
         },
         select: {
             topics: true
@@ -139,17 +137,15 @@ app.get("/courses/:courseAbbrev/topics", cache(300), asyncWrapper(async (req, re
 
 // All questions with topics included for a specific topic in a course.
 // Includes questions from other courses.
-app.get("/courses/:courseAbbrev/topics/questions", cache(300), asyncWrapper(async (req, res) => {
+app.get("/courses/:courseAbbrev/topics/questions", asyncWrapper(async (req, res) => {
     const { courseAbbrev } = req.params;
     const { abbreviation, number } = validCourseRegex(courseAbbrev);
 
-    const course = await prisma.course.findUnique({
+    const course = await prisma.course.findFirst({
         where: {
-            abbreviation_number_published: {
-                abbreviation: abbreviation.toUpperCase(),
-                number: Number(number),
-                published: true
-            }
+            abbreviation: abbreviation.toUpperCase(),
+            number: Number(number),
+            OR: req.published
         },
         select: {
             topics: {
@@ -157,7 +153,7 @@ app.get("/courses/:courseAbbrev/topics/questions", cache(300), asyncWrapper(asyn
                     questions: {
                         where: {
                             exam: {
-                                published: true
+                                OR: req.published
                             }
                         },
                         select: {
@@ -177,22 +173,20 @@ app.get("/courses/:courseAbbrev/topics/questions", cache(300), asyncWrapper(asyn
 }));
 
 // All exams with semester (no questions)
-app.get("/courses/:courseAbbrev/exams", cache(300), asyncWrapper(async (req, res) => {
+app.get("/courses/:courseAbbrev/exams", asyncWrapper(async (req, res) => {
     const { courseAbbrev } = req.params;
     const { abbreviation, number } = validCourseRegex(courseAbbrev);
 
-    const course = await prisma.course.findUnique({
+    const course = await prisma.course.findFirst({
         where: {
-            abbreviation_number_published: {
-                abbreviation: abbreviation.toUpperCase(),
-                number: Number(number),
-                published: true
-            }
+            abbreviation: abbreviation.toUpperCase(),
+            number: Number(number),
+            OR: req.published
         },
         select: {
             exams: {
                 where: {
-                    published: true
+                    OR: req.published
                 },
                 include: {
                     semester: true
@@ -204,26 +198,24 @@ app.get("/courses/:courseAbbrev/exams", cache(300), asyncWrapper(async (req, res
     if (!course) {
         throw new NotFoundError("Course not found")
     }
-    res.status(200).send(course.topics);
+    res.status(200).send(course.exams);
 }));
 
 // All exams with question ids and numbers
-app.get("/courses/:courseAbbrev/exams/questions", cache(300), asyncWrapper(async (req, res) => {
+app.get("/courses/:courseAbbrev/exams/questions", asyncWrapper(async (req, res) => {
     const { courseAbbrev } = req.params;
     const { abbreviation, number } = validCourseRegex(courseAbbrev);
 
-    const course = await prisma.course.findUnique({
+    const course = await prisma.course.findFirst({
         where: {
-            abbreviation_number_published: {
-                abbreviation: abbreviation.toUpperCase(),
-                number: Number(number),
-                published: true
-            }
+            abbreviation: abbreviation.toUpperCase(),
+            number: Number(number),
+            OR: req.published
         },
         select: {
             exams: {
                 where: {
-                    published: true
+                    OR: req.published
                 },
                 include: {
                     questions: {
@@ -258,7 +250,7 @@ app.get("/courses/:courseAbbrev/topics/:topicName/questions", asyncWrapper(async
             questions: {
                 where: {
                     exam: {
-                        published: true
+                        OR: req.published
                     }
                 },
                 include: {
@@ -294,76 +286,67 @@ app.get("/courses/:courseAbbrev/topics/:topicName/questions", asyncWrapper(async
 }));
 
 // All questions with id, number, and topics for an exam
-app.get("/courses/:courseAbbrev/exams/:season-:year-:examNumber", cache(300), async (req, res) => {
-    try {
-        const { courseAbbrev, season, year, examNumber } = req.params;
-        const { abbreviation, number } = validCourseRegex(courseAbbrev);
-        const season_type = Season[season.toUpperCase() as keyof typeof Season]
+app.get("/courses/:courseAbbrev/exams/:season-:year-:examNumber", asyncWrapper(async (req, res) => {
+    const { courseAbbrev, season, year, examNumber } = req.params;
+    const { abbreviation, number } = validCourseRegex(courseAbbrev);
+    const season_type = Season[season.toUpperCase() as keyof typeof Season]
 
-        if (!season_type) {
-            throw new InvalidSeasonError("Invalid season");
-        }
-
-        prisma.course.findUnique({
-            where: {
-                abbreviation_number_published: {
-                    abbreviation: abbreviation.toUpperCase(),
-                    number: Number(number),
-                    published: true
-                }
-            },
-            include: {
-                semesters: {
-                    where: {
-                        season: season_type,
-                        year: Number(year)
-                    },
-                }
-            }
-        }).then((course) => {
-            if (course) {
-                prisma.exam.findUnique({
-                    where: {
-                        number_courseId_semesterId_published: {
-                            number: Number(examNumber),
-                            courseId: course.id,
-                            semesterId: course.semesters[0].id,
-                            published: true
-                        }
-                    },
-                    include: {
-                        questions: {
-                            orderBy: {
-                                number: 'asc'
-                            },
-                            select: {
-                                id: true,
-                                number: true,
-                                topics: true
-                            }
-                        }
-                    }
-                }).then((exam) => {
-                    if (exam) {
-                        return res.status(200).send(exam)
-                    }
-                    else {
-                        return res.status(404).send("No exam found")
-                    }
-                })
-
-            } else {
-                return res.status(404).send("Exams and questions not found")
-            }
-        }).catch((err) => res.status(400).send(err.message))
-    } catch (e) {
-        res.status(400).send(e)
+    if (!season_type) {
+        throw new InvalidSeasonError("Invalid season");
     }
 
-})
+    const course = await prisma.course.findFirst({
+        where: {
+            abbreviation: abbreviation.toUpperCase(),
+            number: Number(number),
+            OR: req.published
+        },
+        include: {
+            semesters: {
+                where: {
+                    season: season_type,
+                    year: Number(year)
+                },
+            }
+        }
+    })
+
+    if (!course) {
+        throw new NotFoundError("Course not found")
+    }
+    if (!course.semesters.length) {
+        throw new NotFoundError("Semester not found")
+    }
+
+    const exam = await prisma.exam.findFirst({
+        where: {
+            number: Number(examNumber),
+            courseId: course.id,
+            semesterId: course.semesters[0].id,
+            OR: req.published
+        },
+        include: {
+            questions: {
+                orderBy: {
+                    number: 'asc'
+                },
+                select: {
+                    id: true,
+                    number: true,
+                    topics: true
+                }
+            }
+        }
+    })
+
+    if (!exam) {
+        throw new NotFoundError("Exam not found")
+    }
+    res.status(200).send(exam)
+}))
 
 // All questions for a specific exam, includes topics within questions.
-app.get("/courses/:courseAbbrev/exams/:season-:year-:examNumber/questions", cache(300), asyncWrapper(async (req, res) => {
+app.get("/courses/:courseAbbrev/exams/:season-:year-:examNumber/questions", asyncWrapper(async (req, res) => {
     const { courseAbbrev, season, year, examNumber } = req.params
     const { abbreviation, number } = validCourseRegex(courseAbbrev);
     const season_type = Season[season.toUpperCase() as keyof typeof Season]
@@ -384,27 +367,23 @@ app.get("/courses/:courseAbbrev/exams/:season-:year-:examNumber/questions", cach
         throw new NotFoundError("Semester not found");
     }
 
-    const course = await prisma.course.findUnique({
+    const course = await prisma.course.findFirst({
         where: {
-            abbreviation_number_published: {
-                abbreviation: abbreviation.toUpperCase(),
-                number: Number(number),
-                published: true
-            }
+            abbreviation: abbreviation.toUpperCase(),
+            number: Number(number),
+            OR: req.published
         }
     })
     if (!course) {
         throw new NotFoundError("Course not found");
     }
 
-    const exam = await prisma.exam.findUnique({
+    const exam = await prisma.exam.findFirst({
         where: {
-            number_courseId_semesterId_published: {
-                number: Number(examNumber),
-                courseId: course.id,
-                semesterId: semester.id,
-                published: true
-            }
+            number: Number(examNumber),
+            courseId: course.id,
+            semesterId: semester.id,
+            OR: req.published
         },
         include: {
             questions: {
@@ -445,15 +424,15 @@ app.get("/courses/:courseAbbrev/exams/:season-:year-:examNumber/questions", cach
 
 const questionStats = async (questionId) => {
     const submissions = await prisma.submission.aggregate({
-            where: {
-                questionId: questionId
-            },
-            _sum: {
-                timeSpent: true,
-                timeSpentVideo: true,
-            },
-            _count: true,
-        })
+        where: {
+            questionId: questionId
+        },
+        _sum: {
+            timeSpent: true,
+            timeSpentVideo: true,
+        },
+        _count: true,
+    })
     const timeSpent = submissions._sum.timeSpent
     const timeSpentVideo = submissions._sum.timeSpentVideo
     const submissionTotal = submissions._count
@@ -464,35 +443,35 @@ const questionStats = async (questionId) => {
             correct: true
         }
     })
-    return {timeSpent, timeSpentVideo, submissionTotal, submissionCorrect}
+    return { timeSpent, timeSpentVideo, submissionTotal, submissionCorrect }
 }
 
-const examStats = async(examId) => {
+const examStats = async (examId) => {
     const questions = await prisma.exam.findUnique({
-            where: {
-                id: examId
-            },
-            select: {
-                questions: {
-                    select: {
-                        id: true
-                    }
+        where: {
+            id: examId
+        },
+        select: {
+            questions: {
+                select: {
+                    id: true
                 }
             }
-        })
-        const ids = questions.questions.map(q => q.id)
-
-        const obj = {timeSpent: 0, timeSpentVideo: 0, submissionTotal: 0, submissionCorrect: 0};
-        const keys = Object.keys(obj)
-        for (let x = 0; x < ids.length; x ++ ){   
-            const tempStats = Object.values(await questionStats(ids[x]))
-            for (let i = 0; i < tempStats.length; i++) {
-                obj[keys[i]] += tempStats[i]
-            }
         }
-        return obj
+    })
+    const ids = questions.questions.map(q => q.id)
+
+    const obj = { timeSpent: 0, timeSpentVideo: 0, submissionTotal: 0, submissionCorrect: 0 };
+    const keys = Object.keys(obj)
+    for (let x = 0; x < ids.length; x++) {
+        const tempStats = Object.values(await questionStats(ids[x]))
+        for (let i = 0; i < tempStats.length; i++) {
+            obj[keys[i]] += tempStats[i]
+        }
+    }
+    return obj
 }
-app.get("/stats/questions/:questionId", cache(300), async (req, res) => {
+app.get("/stats/questions/:questionId", async (req, res) => {
     try {
         const { questionId } = req.params
         const ret = await questionStats(questionId)
@@ -501,27 +480,27 @@ app.get("/stats/questions/:questionId", cache(300), async (req, res) => {
         res.status(400).send(e)
     }
 })
-app.get("/stats/exams/:examId", async(req, res) => {
+app.get("/stats/exams/:examId", async (req, res) => {
     try {
-        const {examId} = req.params
+        const { examId } = req.params
         const obj = await examStats(examId)
         res.status(200).send(obj)
 
-    } catch(e) {
+    } catch (e) {
         res.status(400).send(e)
     }
 
 })
 
-app.get("/stats/courses/:courseId", async(req, res) => {
+app.get("/stats/courses/:courseId", async (req, res) => {
 
     try {
-        const {courseId} = req.params
+        const { courseId } = req.params
         const exams = await prisma.course.findUnique({
             where: {
                 id: courseId
             },
-            select:{
+            select: {
                 exams: {
                     select: {
                         id: true
@@ -531,9 +510,9 @@ app.get("/stats/courses/:courseId", async(req, res) => {
         })
         const ids = exams.exams.map(q => q.id)
 
-        const obj = {timeSpent: 0, timeSpentVideo: 0, submissionTotal: 0, submissionCorrect: 0};
+        const obj = { timeSpent: 0, timeSpentVideo: 0, submissionTotal: 0, submissionCorrect: 0 };
         const keys = Object.keys(obj)
-        for (let x = 0; x < ids.length; x ++ ){   
+        for (let x = 0; x < ids.length; x++) {
             const tempStats = Object.values(await examStats(ids[x]))
             for (let i = 0; i < tempStats.length; i++) {
                 obj[keys[i]] += tempStats[i]
@@ -546,40 +525,41 @@ app.get("/stats/courses/:courseId", async(req, res) => {
         res.status(400).send(e)
     }
 })
-app.get("/stats/submissions", cache(300), async (req, res) => {
-    try {
-        const validTime = 300
-        const times = await prisma.submission.aggregate({
-            _sum: {
-                timeSpent: true
-            },
-            _avg: {
-                timeSpent: true
-            },
-            _count: true,
-            where: {
-                timeSpent: {
-                    gte: validTime
+app.get("/stats/submissions",
+    async (req, res) => {
+        try {
+            const validTime = 300
+            const times = await prisma.submission.aggregate({
+                _sum: {
+                    timeSpent: true
+                },
+                _avg: {
+                    timeSpent: true
+                },
+                _count: true,
+                where: {
+                    timeSpent: {
+                        gte: validTime
+                    }
+                },
+            })
+            const timeSpent = times._sum.timeSpent
+            const avgTime = times._avg.timeSpent
+            const submissionTotal = times._count
+            const totalCorrect = await prisma.submission.count({
+                where: {
+                    correct: true,
+                    timeSpent: {
+                        gte: validTime
+                    }
                 }
-            },
-        })
-        const timeSpent = times._sum.timeSpent
-        const avgTime = times._avg.timeSpent
-        const submissionTotal = times._count
-        const totalCorrect = await prisma.submission.count({
-            where: {
-                correct: true,
-                timeSpent: {
-                    gte: validTime
-                }
-            }
-        })
+            })
 
-        const percentCorrect = 100.0 * (totalCorrect / submissionTotal)
-        res.status(200).send({ submissionTotal, timeSpent, avgTime, percentCorrect })
-    } catch (e) {
-        res.status(400).send(e)
-    }
-})
+            const percentCorrect = 100.0 * (totalCorrect / submissionTotal)
+            res.status(200).send({ submissionTotal, timeSpent, avgTime, percentCorrect })
+        } catch (e) {
+            res.status(400).send(e)
+        }
+    })
 
 export default app
