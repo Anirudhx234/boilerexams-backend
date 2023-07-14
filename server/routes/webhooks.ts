@@ -1,6 +1,5 @@
-const express = require('express');
-const app = express();
-const {
+import express from 'express'
+import {
     courseRequests,
     bugReports,
     questionBugReports,
@@ -8,10 +7,12 @@ const {
     createWebhook,
     getAllWebhooks,
     getWebhook,
-    updateWebhook
-} = require("../controllers/webhookController");
+    updateWebhook,
+    deleteWebhook
+} from "../controllers/webhookController";
+import asyncWrapper from "../middleware/wrappers/asyncWrapper"
 
-const asyncWrapper = require("../middleware/wrappers/asyncWrapper")
+const app = express();
 
 app.post("/courses/requests", asyncWrapper(courseRequests))
 
@@ -29,5 +30,6 @@ app.get("/webhooks/:webhookId", asyncWrapper(getWebhook))
 
 app.put("/webhooks/:webhookId", asyncWrapper(updateWebhook))
 
-module.exports = app
-export { }
+app.delete("/webhooks/:webhookId", asyncWrapper(deleteWebhook))
+
+export default app

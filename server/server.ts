@@ -1,10 +1,10 @@
-const express = require("express");
+import express from 'express';
+import cors from 'cors';
+import cookieParser from 'cookie-parser';
+import routes from './routes/index'
+import errorHandler from './middleware/errorHandler';
 
 const app = express();
-const cors = require('cors');
-const cookieParser = require('cookie-parser');
-const routes = require('./routes/index')
-const errorHandler = require('./middleware/errorHandler');
 
 const regexp = new RegExp('https:\/\/boilerexams-frontend-[^ ]*-boilerexams.vercel.app');
 const allowList = ["https://boilerexams-frontend.vercel.app", "http://localhost:3000", "http://127.0.0.1:3000"];
@@ -35,5 +35,4 @@ app.listen(PORT, () => {
   console.log(`Server is running at port ${PORT}`);
 });
 
-module.exports = app;
-export { }
+export default app

@@ -1,0 +1,97 @@
+import { PrismaClient } from "@prisma/client";
+import { NotFoundError } from "../middleware/errors";
+import { PurdueIoAPI } from "../services/purdue.io";
+
+const prisma = new PrismaClient();
+
+const createCourse = async (req, res) => {
+    const { abbreviation, number, backgroundColor, graphicLink, published } = req.body
+
+    const purdueIoSubject = await PurdueIoAPI.getSubject(abbreviation.toUpperCase());
+    const stringifiedNumber = String(number);
+    const courseNumber = stringifiedNumber + "0".repeat(5 - stringifiedNumber.length);
+    const purdueIoCourse = await PurdueIoAPI.getCourse(abbreviation.toUpperCase(), courseNumber);
+
+    const course = await prisma.course.create({
+        data: {
+            name: purdueIoCourse.Title,
+            subject: purdueIoSubject.Name,
+            abbreviation: purdueIoSubject.Abbreviation,
+            number: Number(courseNumber),
+            backgroundColor: backgroundColor,
+            graphicLink: graphicLink,
+            published: published
+        },
+        include: {
+            exams: true,
+            semesters: true,
+            topics: true,
+            questions: true
+        }
+    })
+    res.status(200).send(course)
+}
+
+const updateCourse = async (req, res) => {
+    const { courseId } = req.params
+    const { abbreviation, number, backgroundColor, graphicLink, published } = req.body;
+
+    const purdueIoSubject = await PurdueIoAPI.getSubject(abbreviation.toUpperCase());
+    const stringifiedNumber = String(number);
+    const courseNumber = stringifiedNumber + "0".repeat(5 - stringifiedNumber.length);
+    const purdueIoCourse = await PurdueIoAPI.getCourse(abbreviation, courseNumber);
+
+    const course = await prisma.course.update({
+        where: {
+            id: courseId
+        },
+        data: {
+            name: purdueIoCourse.Title,
+            subject: purdueIoSubject.Name,
+            abbreviation: purdueIoSubject.Abbreviation,
+            number: Number(courseNumber),
+            backgroundColor: backgroundColor,
+            graphicLink: graphicLink,
+            published: published
+        }
+    })
+    res.status(200).send(course)
+}
+
+const unpublishCourse = async (req, res) => {
+    const { courseId } = req.params;
+    const course = await prisma.course.update({
+        where: {
+            id: courseId
+        },
+        data: {
+            published: false
+        }
+    })
+
+    if (!course) {
+        throw new NotFoundError("Course not found")
+    }
+    res.status(200).send(course)
+}
+
+const deleteCourse = async (req, res) => {
+    const { courseId } = req.params;
+    const course = await prisma.course.delete({
+        where: {
+            id: courseId
+        }
+    })
+
+    if (!course) {
+        throw new NotFoundError("Course not found")
+    }
+    res.status(200).send(course)
+}
+
+export {
+    createCourse,
+    updateCourse,
+    unpublishCourse,
+    deleteCourse
+}

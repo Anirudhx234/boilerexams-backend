@@ -2,7 +2,7 @@ import { PurdueIoAPI } from "../services/purdue.io";
 import { DiscordAPI } from "../services/discord.api";
 import { CourseAlreadyExistsError, NotFoundError } from "../middleware/errors/index";
 import { Request, Response } from "express";
-import {Prisma} from "@prisma/client";
+import { Prisma} from "@prisma/client";
 
 const { PrismaClient } = require('@prisma/client')
 const prisma = new PrismaClient();
@@ -216,7 +216,21 @@ const updateWebhook = async (req: Request, res: Response) => {
     res.status(200).send(webhook)
 }
 
-module.exports = {
+const deleteWebhook = async (req, res) => {
+    const { webhookId } = req.params;
+    const webhook = await prisma.webhook.delete({
+        where: {
+            id: webhookId
+        }
+    })
+
+    if (!webhook) {
+        throw new NotFoundError("Webhook not found")
+    }
+    res.status(200).send(webhook)
+}
+
+export {
     courseRequests,
     bugReports,
     questionBugReports,
@@ -224,5 +238,6 @@ module.exports = {
     createWebhook,
     getAllWebhooks,
     getWebhook,
-    updateWebhook
+    updateWebhook,
+    deleteWebhook
 }
