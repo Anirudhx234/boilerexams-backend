@@ -483,11 +483,8 @@ app.get("/stats/questions/:questionId", async (req, res) => {
                 answerChoices: true
             }
         })
-        const answerStats = [0];
-        let len = choices.answerChoices.length
-        if (len == 0 || len == null) {
-            len = 4
-        }
+        const len = choices.answerChoices.length
+        const answerStats: number[] = []
         for (let i = 0; i < len; i++) {
             const counted = await prisma.submission.count({
                 where: {
@@ -499,7 +496,6 @@ app.get("/stats/questions/:questionId", async (req, res) => {
             })
             answerStats.push(counted)
         }
-        answerStats.shift()
         res.status(200).send({timeStats, answerStats})
     } catch (e) {
         res.status(400).send(e)
