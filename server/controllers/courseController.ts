@@ -34,7 +34,7 @@ const createCourse = async (req, res) => {
 
 const updateCourse = async (req, res) => {
     const { courseId } = req.params
-    const { abbreviation, number, backgroundColor, graphicLink, published } = req.body;
+    const { abbreviation, number, backgroundColor, graphicLink} = req.body;
 
     const purdueIoSubject = await PurdueIoAPI.getSubject(abbreviation.toUpperCase());
     const stringifiedNumber = String(number);
@@ -52,26 +52,50 @@ const updateCourse = async (req, res) => {
             number: Number(courseNumber),
             backgroundColor: backgroundColor,
             graphicLink: graphicLink,
-            published: published
         }
     })
     res.status(200).send(course)
 }
 
-const unpublishCourse = async (req, res) => {
+const toggleCoursePublished = async (req, res) => {
     const { courseId } = req.params;
+    const coursePublished = await prisma.course.findUnique({
+        where: {
+            id: courseId
+        },
+        select: {
+            published: true
+        }
+    })
+    if (!coursePublished) {
+        throw new NotFoundError("Course not found")
+    }
+    const published = ! coursePublished.published
     const course = await prisma.course.update({
         where: {
             id: courseId
         },
         data: {
-            published: false
+            published: published
+        }
+    })
+    await prisma.exam.updateMany({
+        where: {
+            courseId: courseId
+        },
+        data: {
+            published: published,
+        }
+    })
+    await prisma.question.updateMany({
+        where: {
+            courseId: courseId
+        }, 
+        data: {
+            published: published
         }
     })
 
-    if (!course) {
-        throw new NotFoundError("Course not found")
-    }
     res.status(200).send(course)
 }
 
@@ -92,6 +116,6 @@ const deleteCourse = async (req, res) => {
 export {
     createCourse,
     updateCourse,
-    unpublishCourse,
+    toggleCoursePublished,
     deleteCourse
 }

@@ -50,7 +50,7 @@ const createExam = async (req, res) => {
 
 const updateExam = async (req, res) => {
     const { courseId, examId } = req.params
-    const { semester: { season, year }, number, published } = req.body
+    const { semester: { season, year }, number } = req.body
     let semesterId;
     if (season && year) {
         const semester = await prisma.semester.upsert({
@@ -88,7 +88,6 @@ const updateExam = async (req, res) => {
         data: {
             semesterId: semesterId,
             number: number,
-            published: published
         },
         include: {
             semester: true
@@ -97,20 +96,37 @@ const updateExam = async (req, res) => {
     res.status(200).send(exam)
 }
 
-const unpublishExam = async (req, res) => {
+const toggleExamPublished = async (req, res) => {
     const { examId } = req.params
+    const examPublished = await prisma.exam.findFirst({
+        where: {
+            id: examId
+        },
+        select: {
+            published: true
+        }
+    })
+    if (!examPublished) {
+        throw new NotFoundError("Cxam not found")
+    }
+    const published = ! examPublished.published
     const exam = await prisma.exam.update({
         where: {
             id: examId
         },
         data: {
-            published: false
+            published: published
         }
     })
 
-    if (!exam) {
-        throw new NotFoundError("Exam not found")
-    }
+    await prisma.question.updateMany({
+        where: {
+            examId: examId
+        },
+        data: {
+            published: published
+        }
+    })
     res.status(200).send(exam)
 }
 
@@ -131,6 +147,6 @@ const deleteExam = async (req, res) => {
 export {
     createExam,
     updateExam,
-    unpublishExam,
+    toggleExamPublished,
     deleteExam
 }

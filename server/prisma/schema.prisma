@@ -56,6 +56,7 @@ model Question {
   solutionVideoLink    String         @default("")
   courseId             String
   examId               String
+  published            Boolean        @default(false)
   course               Course         @relation(fields: [courseId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   exam                 Exam           @relation(fields: [examId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   topics               Topic[]
