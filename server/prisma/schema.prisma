@@ -118,7 +118,7 @@ enum Language {
 model Submission {
   id                  String   @id @default(uuid())
   correct             Boolean
-  indeces             Int[]
+  selectedIndices     Int[]
   timeStarted         DateTime
   timeEnded           DateTime
   videoWatched        Boolean

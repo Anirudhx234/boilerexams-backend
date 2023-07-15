@@ -492,7 +492,7 @@ app.get("/stats/questions/:questionId", async (req, res) => {
             const counted = await prisma.submission.count({
                 where: {
                     questionId: questionId,
-                    indeces: {
+                    selectedIndices: {
                         has: i
                     }
                 }
