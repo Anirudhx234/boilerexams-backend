@@ -98,7 +98,7 @@ const updateExam = async (req, res) => {
 
 const toggleExamPublished = async (req, res) => {
     const { examId } = req.params
-    const examPublished = await prisma.exam.findFirst({
+    const exam = await prisma.exam.findUnique({
         where: {
             id: examId
         },
@@ -106,28 +106,30 @@ const toggleExamPublished = async (req, res) => {
             published: true
         }
     })
-    if (!examPublished) {
-        throw new NotFoundError("Cxam not found")
+    if (!exam) {
+        throw new NotFoundError("Exam not found")
     }
-    const published = ! examPublished.published
-    const exam = await prisma.exam.update({
+
+    const published = !exam.published
+    await prisma.exam.update({
         where: {
             id: examId
         },
         data: {
-            published: published
+            published: published,
+            questions: {
+                updateMany: {
+                    where: {
+                        published: !published
+                    },
+                    data: {
+                        published: published
+                    }
+                }
+            }
         }
     })
-
-    await prisma.question.updateMany({
-        where: {
-            examId: examId
-        },
-        data: {
-            published: published
-        }
-    })
-    res.status(200).send(exam)
+    res.status(200).send({ message: `Exam and questions are now ${published ? "published" : "unpublished"}` })
 }
 
 const deleteExam = async (req, res) => {

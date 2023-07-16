@@ -152,9 +152,7 @@ app.get("/courses/:courseAbbrev/topics/questions", asyncWrapper(async (req, res)
                 include: {
                     questions: {
                         where: {
-                            exam: {
-                                OR: req.published
-                            }
+                            OR: req.published
                         },
                         select: {
                             id: true,
@@ -219,6 +217,9 @@ app.get("/courses/:courseAbbrev/exams/questions", asyncWrapper(async (req, res) 
                 },
                 include: {
                     questions: {
+                        where: {
+                            OR: req.published
+                        },
                         orderBy: {
                             number: 'asc'
                         },
@@ -249,9 +250,10 @@ app.get("/courses/:courseAbbrev/topics/:topicName/questions", asyncWrapper(async
         include: {
             questions: {
                 where: {
-                    exam: {
+                    course: {
                         OR: req.published
-                    }
+                    },
+                    OR: req.published
                 },
                 include: {
                     topics: true,
@@ -327,6 +329,9 @@ app.get("/courses/:courseAbbrev/exams/:season-:year-:examNumber", asyncWrapper(a
         },
         include: {
             questions: {
+                where: {
+                    OR: req.published
+                },
                 orderBy: {
                     number: 'asc'
                 },
@@ -387,6 +392,9 @@ app.get("/courses/:courseAbbrev/exams/:season-:year-:examNumber/questions", asyn
         },
         include: {
             questions: {
+                where: {
+                    OR: req.published
+                },
                 orderBy: {
                     number: 'asc'
                 },

@@ -13,8 +13,8 @@ app.post("/courses", asyncWrapper(createCourse))
 
 app.put("/courses/:courseId", asyncWrapper(updateCourse))
 
-app.put("/courses/togglePublished/:courseId", asyncWrapper(toggleCoursePublished))
+app.put("/courses/:courseId/togglePublished", asyncWrapper(toggleCoursePublished))
 
-app.delete("/courses/hardDelete/:courseId", asyncWrapper(deleteCourse))
+app.delete("/courses/:courseId/hardDelete", asyncWrapper(deleteCourse))
 
 export default app
