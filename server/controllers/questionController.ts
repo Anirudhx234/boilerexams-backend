@@ -294,7 +294,7 @@ const updateSubmission = async (req, res) => {
     const { submissionId } = req.params
     const { timeStarted, timeEnded, timeSpent, videoStartTime,
         videoEndTime, videoTotalWatchTime, modalStartTime,
-        modalEndTime } = req.body
+        modalEndTime, modalTotalTime } = req.body
     
     const startTime = msToDate(timeStarted)
     const endTime = msToDate(timeEnded)
@@ -315,7 +315,8 @@ const updateSubmission = async (req, res) => {
             videoEndTime: videoEnd,
             timeSpentVideo: videoTotalWatchTime,
             modalStartTime: modalStart,
-            modalEndTime: modalEnd
+            modalEndTime: modalEnd, 
+            modalTotalTime: modalTotalTime
         }
     })
     res.status(200).send(submission)
