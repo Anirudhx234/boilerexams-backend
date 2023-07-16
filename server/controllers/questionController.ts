@@ -1,6 +1,6 @@
 const { PrismaClient } = require('@prisma/client');
 import { NotFoundError } from "../middleware/errors"
-
+const validDate = require("../utils/validDate")
 const prisma = new PrismaClient();
 
 const getQuestion = async (req, res) => {
@@ -296,10 +296,10 @@ const updateSubmission = async (req, res) => {
         videoEndTime, videoTotalWatchTime, modalStartTime,
         modalEndTime, modalTotalTime } = req.body
 
-    const videoStart = new Date(videoStartTime)
-    const videoEnd = new Date(videoEndTime)
-    const modalStart = new Date(modalStartTime)
-    const modalEnd = new Date(modalEndTime)
+    const videoStart = validDate(videoStartTime)
+    const videoEnd = validDate(videoEndTime)
+    const modalStart = validDate(modalStartTime)
+    const modalEnd = validDate(modalEndTime)
 
     const submission = await prisma.submission.update({
         where: {
