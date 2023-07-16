@@ -3,27 +3,27 @@ import asyncWrapper from './wrappers/asyncWrapper';
 const prisma = new PrismaClient();
 
 const sendPublished = asyncWrapper(async (req, res, next) => {
-    console.log(req.cookies)
-    if (req.cookies && req.cookies.sessionId) {
-        const session = await prisma.session.findUnique({
+    if (req.cookies && req.cookies.accessToken) {
+        const account = await prisma.account.findFirst({
             where: {
-                id: req.cookies.sessionId
+                access_token: req.cookies.accessToken
             },
             include: {
                 user: true
             }
         })
 
-        if (!session) {
-            throw new Error("Invalid session id")
+        if (!account) {
+            req.published = [{ published: true }]
+            return next()
         }
 
-        if (["ADMIN", "CONTENT"].includes(session.user.role)) {
-            req.published = [{published: true}, {published: false}]
+        if (["ADMIN", "CONTENT"].includes(account.user.role)) {
+            req.published = [{ published: true }, { published: false }]
             return next()
         }
     }
-    req.published = [{published: true}]
+    req.published = [{ published: true }]
     return next()
 })
 
