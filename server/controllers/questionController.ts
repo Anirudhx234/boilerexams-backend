@@ -255,13 +255,12 @@ const deleteQuestion = async (req, res) => {
     }
     res.status(200).send(question)
 }
-
+const msToDate = (milliseconds) => new Date(0, 0, 0, 0, 0, 0, milliseconds)
 const createQuestionSubmission = async (req, res) => {
     const { questionId } = req.params
     const { selectedChoiceIndeces, videoWatched, correct,
         timeStarted, timeEnded, videoStartTime, videoEndTime,
         videoTotalWatchTime, reflectionStartTime, reflectionEndTime } = req.body
-    const msToDate = (milliseconds) => new Date(0, 0, 0, 0, 0, 0, milliseconds)
     const startTime = msToDate(timeStarted)
     const endTime = msToDate(timeEnded)
     const videoStart = msToDate(videoStartTime)
@@ -295,20 +294,27 @@ const updateSubmission = async (req, res) => {
     const { timeStarted, timeEnded, timeSpent, videoStartTime,
         videoEndTime, videoTotalWatchTime, reflectionStartTime,
         reflectionEndTime } = req.body
-
+    
+    const startTime = msToDate(timeStarted)
+    const endTime = msToDate(timeEnded)
+    const videoStart = msToDate(videoStartTime)
+    const videoEnd = msToDate(videoEndTime)
+    const reflectionStart = msToDate(reflectionStartTime)
+    const reflectionEnd = msToDate(reflectionEndTime)
+    
     const submission = await prisma.submission.update({
         where: {
             id: submissionId
         },
         data: {
-            timeStarted: timeStarted,
-            timeEnded: timeEnded,
+            timeStarted: startTime,
+            timeEnded: endTime,
             timeSpent: timeSpent,
-            videoStartTime: videoStartTime,
-            videoEndTime: videoEndTime,
+            videoStartTime: videoStart,
+            videoEndTime: videoEnd,
             timeSpentVideo: videoTotalWatchTime,
-            reflectionStartTime: reflectionStartTime,
-            reflectionEndTime: reflectionEndTime
+            reflectionStartTime: reflectionStart,
+            reflectionEndTime: reflectionEnd
         }
     })
     res.status(200).send(submission)
