@@ -1,14 +1,14 @@
 const { PrismaClient } = require('@prisma/client');
-import { Neptune } from "aws-sdk";
 import { NotFoundError } from "../middleware/errors"
 
 const prisma = new PrismaClient();
 
 const getQuestion = async (req, res) => {
     const { questionId } = req.params
-    const question = await prisma.question.findUnique({
+    const question = await prisma.question.findFirst({
         where: {
-            id: questionId
+            id: questionId,
+            OR: req.published
         },
         include: {
             topics: true,
@@ -255,6 +255,7 @@ const deleteQuestion = async (req, res) => {
     }
     res.status(200).send(question)
 }
+
 const msToDate = (milliseconds) => new Date(0, 0, 0, 0, 0, 0, milliseconds)
 const createQuestionSubmission = async (req, res) => {
     const { questionId } = req.params

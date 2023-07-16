@@ -14,7 +14,7 @@ import sendPublished from "../middleware/sendPublished";
 const validCourseRegex = require('../utils/validCourseRegex')
 
 app.use(sendPublished)
-// All courses metadata, no relations
+// All courses metadata, with no relations
 app.get("/courses", asyncWrapper(async (req, res) => {
     let courses = await prisma.course.findMany({
         where: {
