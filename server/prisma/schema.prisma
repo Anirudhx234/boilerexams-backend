@@ -56,6 +56,7 @@ model Question {
   solutionVideoLink    String         @default("")
   courseId             String
   examId               String
+  published            Boolean        @default(false)
   course               Course         @relation(fields: [courseId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   exam                 Exam           @relation(fields: [examId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   topics               Topic[]
@@ -116,17 +117,20 @@ enum Language {
 }
 
 model Submission {
-  id             String   @id @default(uuid())
-  correct        Boolean
-  timeStarted    DateTime
-  timeEnded      DateTime
-  videoWatched   Boolean
-  timeSpent      Int
-  videoStartTime DateTime
-  videoEndTime   DateTime
-  timeSpentVideo Int
-  questionId     String
-  question       Question @relation(fields: [questionId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  id                  String   @id @default(uuid())
+  correct             Boolean
+  selectedIndices     Int[]
+  timeStarted         DateTime
+  timeEnded           DateTime
+  videoWatched        Boolean
+  timeSpent           Int
+  videoStartTime      DateTime
+  videoEndTime        DateTime
+  timeSpentVideo      Int
+  reflectionStartTime DateTime @default(now())
+  reflectionEndTime   DateTime @default(now())
+  questionId          String
+  question            Question @relation(fields: [questionId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 }
 
 model Semester {

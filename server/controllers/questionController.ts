@@ -1,4 +1,5 @@
 const { PrismaClient } = require('@prisma/client');
+import { Neptune } from "aws-sdk";
 import { NotFoundError } from "../middleware/errors"
 
 const prisma = new PrismaClient();
@@ -207,6 +208,40 @@ const updateQuestion = async (req, res) => {
     res.status(200).send(question)
 }
 
+const toggleQuestionPublished = async (req, res) => {
+    const { questionId } = req.params
+    const question = await prisma.question.findUnique({
+        where: {
+            id: questionId
+        },
+        select: {
+            exam: {
+                select: {
+                    published: true
+                }
+            },
+            published: true
+        }
+    })
+    if (!question) {
+        throw new NotFoundError("Question not found")
+    }
+    if (!question.exam.published) {
+        throw new Error("Exam must be published")
+    }
+
+    const published = !question.published
+    await prisma.question.update({
+        where: {
+            id: questionId
+        },
+        data: {
+            published: published
+        }
+    })
+    res.status(200).send({ message: `Question is now ${published ? "published" : "unpublished"}` })
+}
+
 const deleteQuestion = async (req, res) => {
     const { questionId } = req.params
     const question = await prisma.question.delete({
@@ -223,54 +258,57 @@ const deleteQuestion = async (req, res) => {
 
 const createQuestionSubmission = async (req, res) => {
     const { questionId } = req.params
-    const { selectedChoiceIndex, videoWatched, correct, timeStarted, timeEnded, videoStartTime, videoEndTime } = req.body
-
+    const { selectedChoiceIndeces, videoWatched, correct,
+        timeStarted, timeEnded, videoStartTime, videoEndTime,
+        videoTotalWatchTime, reflectionStartTime, reflectionEndTime } = req.body
     const msToDate = (milliseconds) => new Date(0, 0, 0, 0, 0, 0, milliseconds)
     const startTime = msToDate(timeStarted)
     const endTime = msToDate(timeEnded)
     const videoStart = msToDate(videoStartTime)
     const videoEnd = msToDate(videoEndTime)
+    const reflectionStart = msToDate(reflectionStartTime)
+    const reflectionEnd = msToDate(reflectionEndTime)
 
-    const answerChoiceIndex = Number(selectedChoiceIndex)
-
-    const data = await prisma.question.findUnique({
-        where: {
-            id: questionId
-        },
-        select: {
-            submissions: true,
-        }
-    })
-    if (!data) {
-        throw new NotFoundError("Question not found")
-    }
-
-    const submissionsTemp = data.submissions
 
     const timeSpent = (endTime.valueOf() - startTime.valueOf()) / 1000.0
-    const timeSpentVideo = (videoEnd.valueOf() - videoStart.valueOf()) / 1000.0
-    submissionsTemp[answerChoiceIndex] = submissionsTemp[answerChoiceIndex] + 1
-
-    await prisma.question.update({
-        where: {
-            id: questionId
-        },
-        data: {
-            submissions: submissionsTemp,
-        }
-    })
-
     const submission = await prisma.submission.create({
         data: {
             questionId: questionId,
             correct: Boolean(correct),
+            indeces: selectedChoiceIndeces,
             timeStarted: startTime,
             timeEnded: endTime,
             videoWatched: Boolean(videoWatched),
             timeSpent: Math.floor(timeSpent),
             videoStartTime: videoStart,
             videoEndTime: videoEnd,
-            timeSpentVideo: Math.floor(timeSpentVideo)
+            timeSpentVideo: Math.floor(videoTotalWatchTime),
+            reflectionStartTime: reflectionStart,
+            reflectionEndTime: reflectionEnd
+        }
+    })
+    res.status(200).send(submission)
+}
+
+const updateSubmission = async (req, res) => {
+    const { submissionId } = req.params
+    const { timeStarted, timeEnded, timeSpent, videoStartTime,
+        videoEndTime, videoTotalWatchTime, reflectionStartTime,
+        reflectionEndTime } = req.body
+
+    const submission = await prisma.submission.update({
+        where: {
+            id: submissionId
+        },
+        data: {
+            timeStarted: timeStarted,
+            timeEnded: timeEnded,
+            timeSpent: timeSpent,
+            videoStartTime: videoStartTime,
+            videoEndTime: videoEndTime,
+            timeSpentVideo: videoTotalWatchTime,
+            reflectionStartTime: reflectionStartTime,
+            reflectionEndTime: reflectionEndTime
         }
     })
     res.status(200).send(submission)
@@ -280,6 +318,8 @@ export {
     getQuestion,
     createQuestion,
     updateQuestion,
+    toggleQuestionPublished,
     deleteQuestion,
-    createQuestionSubmission
+    createQuestionSubmission,
+    updateSubmission
 }

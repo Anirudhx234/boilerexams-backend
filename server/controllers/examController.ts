@@ -50,7 +50,7 @@ const createExam = async (req, res) => {
 
 const updateExam = async (req, res) => {
     const { courseId, examId } = req.params
-    const { semester: { season, year }, number, published } = req.body
+    const { semester: { season, year }, number } = req.body
     let semesterId;
     if (season && year) {
         const semester = await prisma.semester.upsert({
@@ -88,7 +88,6 @@ const updateExam = async (req, res) => {
         data: {
             semesterId: semesterId,
             number: number,
-            published: published
         },
         include: {
             semester: true
@@ -97,21 +96,40 @@ const updateExam = async (req, res) => {
     res.status(200).send(exam)
 }
 
-const unpublishExam = async (req, res) => {
+const toggleExamPublished = async (req, res) => {
     const { examId } = req.params
-    const exam = await prisma.exam.update({
+    const exam = await prisma.exam.findUnique({
+        where: {
+            id: examId
+        },
+        select: {
+            published: true
+        }
+    })
+    if (!exam) {
+        throw new NotFoundError("Exam not found")
+    }
+
+    const published = !exam.published
+    await prisma.exam.update({
         where: {
             id: examId
         },
         data: {
-            published: false
+            published: published,
+            questions: {
+                updateMany: {
+                    where: {
+                        published: !published
+                    },
+                    data: {
+                        published: published
+                    }
+                }
+            }
         }
     })
-
-    if (!exam) {
-        throw new NotFoundError("Exam not found")
-    }
-    res.status(200).send(exam)
+    res.status(200).send({ message: `Exam and questions are now ${published ? "published" : "unpublished"}` })
 }
 
 const deleteExam = async (req, res) => {
@@ -131,6 +149,6 @@ const deleteExam = async (req, res) => {
 export {
     createExam,
     updateExam,
-    unpublishExam,
+    toggleExamPublished,
     deleteExam
 }

@@ -34,7 +34,7 @@ const createCourse = async (req, res) => {
 
 const updateCourse = async (req, res) => {
     const { courseId } = req.params
-    const { abbreviation, number, backgroundColor, graphicLink, published } = req.body;
+    const { abbreviation, number, backgroundColor, graphicLink } = req.body;
 
     const purdueIoSubject = await PurdueIoAPI.getSubject(abbreviation.toUpperCase());
     const stringifiedNumber = String(number);
@@ -52,27 +52,36 @@ const updateCourse = async (req, res) => {
             number: Number(courseNumber),
             backgroundColor: backgroundColor,
             graphicLink: graphicLink,
-            published: published
         }
     })
     res.status(200).send(course)
 }
 
-const unpublishCourse = async (req, res) => {
+const toggleCoursePublished = async (req, res) => {
     const { courseId } = req.params;
-    const course = await prisma.course.update({
+    const course = await prisma.course.findUnique({
+        where: {
+            id: courseId
+        },
+        select: {
+            name: true,
+            published: true
+        }
+    })
+    if (!course) {
+        throw new NotFoundError("Course not found")
+    }
+
+    const published = !course.published
+    await prisma.course.update({
         where: {
             id: courseId
         },
         data: {
-            published: false
+            published: published,
         }
     })
-
-    if (!course) {
-        throw new NotFoundError("Course not found")
-    }
-    res.status(200).send(course)
+    res.status(200).send({ message: `${course.name} is now ${published ? "published" : "unpublished"}` })
 }
 
 const deleteCourse = async (req, res) => {
@@ -92,6 +101,6 @@ const deleteCourse = async (req, res) => {
 export {
     createCourse,
     updateCourse,
-    unpublishCourse,
+    toggleCoursePublished,
     deleteCourse
 }
