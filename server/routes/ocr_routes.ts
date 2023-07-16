@@ -142,44 +142,50 @@ const getPDFResult = async (pdf_id) => {
     })
 }
 
-app.post("/convert-link", async (req, res) => {
-    try {
-        if (!req.body.link) {
-            throw new Error("No link provided");
-        }
-
-        const headers = {
-            'app_id': process.env.MATHPIX_ID,
-            'app_key': process.env.MATHPIX_KEY,
-            'Content-Type': 'application/json'
-        }
-        const id = await axios.post("https://api.mathpix.com/v3/pdf", {
-            url: req.body.link,
-            conversion_formats: {
-                "tex.zip": true,
-            },
-            enable_spell_check: false,
-            enable_tables_fallback: false,
-            auto_number_sections: false,
-            numbers_default_to_math: true,
-            math_inline_delimiters: ["\$", "\$"],
-        }, {
-            headers: headers
-        })
-
-        try {
-            const content = await getPDFResult(id.data.pdf_id)
-            const questions = parseQuestions(content, req.body.choices);
-            return res.status(200).send({ id: id.data.pdf_id, questions: questions })
-        } catch (err) {
-            res.status(503).json({ id: id.data.pdf_id, message: "PDF not processed yet, please try again later using id" })
-        }
-    } catch (err) {
-        res.status(400).send(err);
+app.post("/convert-link", asyncWrapper(async (req, res) => {
+    const { link, choices } = req.body
+    if (!link) {
+        throw new Error("No link provided");
     }
-})
+
+    const pdf = await axios.get(link, {
+        maxContentLength: 5 * 1024 * 1024,
+    })
+
+    if (pdf.headers["content-type"] !== "application/pdf") {
+        throw new Error("Link must be pdf")
+    }
+
+    const headers = {
+        'app_id': process.env.MATHPIX_ID,
+        'app_key': process.env.MATHPIX_KEY,
+        'Content-Type': 'application/json'
+    }
+    const id = await axios.post("https://api.mathpix.com/v3/pdf", {
+        url: link,
+        conversion_formats: {
+            "tex.zip": true,
+        },
+        enable_spell_check: false,
+        enable_tables_fallback: false,
+        auto_number_sections: false,
+        numbers_default_to_math: true,
+        math_inline_delimiters: ["\$", "\$"],
+    }, {
+        headers: headers
+    })
+
+    try {
+        const content = await getPDFResult(id.data.pdf_id)
+        const questions = parseQuestions(content, choices);
+        return res.status(200).send({ id: id.data.pdf_id, questions: questions })
+    } catch (err) {
+        res.status(503).json({ id: id.data.pdf_id, message: "PDF not processed yet, please try again later using id" })
+    }
+}))
 
 app.post("/convert-file", upload.single("pdf"), asyncWrapper(async (req, res) => {
+    const { choices } = req.body
     if (!req.file) {
         throw new Error("No file attached")
     }
@@ -212,10 +218,10 @@ app.post("/convert-file", upload.single("pdf"), asyncWrapper(async (req, res) =>
 
     try {
         const content = await getPDFResult(id.data.pdf_id)
-        const questions = parseQuestions(content, req.body.choices);
+        const questions = parseQuestions(content, choices);
         return res.status(200).send({ id: id.data.pdf_id, questions: questions })
     } catch (err) {
-        res.status(503).json({ id: id.data.pdf_id, message: "PDF not processed yet, please try again later using id" })
+        return res.status(503).json({ id: id.data.pdf_id, message: "PDF not processed yet, please try again later using id" })
     }
 }))
 
@@ -233,14 +239,11 @@ app.post("/convert-file", upload.single("pdf"), asyncWrapper(async (req, res) =>
 //2023_06_19_d67ee4497ecd37894300g -> CS, the one that worked with pdf
 //2023_06_28_75fdd6edc01be3a36ec9g -> CS
 //2023_06_25_d25c2986903bb495d7edg
-app.post("/convert-id", async (req, res) => {
-    try {
-        const content = await getPDFResult(req.body.pdf_id)
-        const questions = parseQuestions(content, req.body.choices);
-        res.status(200).json({ id: req.body.pdf_id, questions: questions })
-    } catch (err) {
-        res.status(400).send(err);
-    }
-})
+app.post("/convert-id", asyncWrapper(async (req, res) => {
+    const { pdf_id, choices } = req.body
+    const content = await getPDFResult(pdf_id)
+    const questions = parseQuestions(content, choices);
+    res.status(200).json({ id: pdf_id, questions: questions })
+}))
 
 export default app
