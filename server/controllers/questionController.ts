@@ -258,15 +258,15 @@ const deleteQuestion = async (req, res) => {
 const msToDate = (milliseconds) => new Date(0, 0, 0, 0, 0, 0, milliseconds)
 const createQuestionSubmission = async (req, res) => {
     const { questionId } = req.params
-    const { selectedChoiceIndices, videoWatched, correct,
+    const { selectedChoiceIndices, correct,
         timeStarted, timeEnded, videoStartTime, videoEndTime,
-        videoTotalWatchTime, reflectionStartTime, reflectionEndTime } = req.body
+        videoTotalWatchTime, modalStartTime, modalEndTime, modalTotalTime, osFamily } = req.body
     const startTime = msToDate(timeStarted)
     const endTime = msToDate(timeEnded)
     const videoStart = msToDate(videoStartTime)
     const videoEnd = msToDate(videoEndTime)
-    const reflectionStart = msToDate(reflectionStartTime)
-    const reflectionEnd = msToDate(reflectionEndTime)
+    const modalStart = msToDate(modalStartTime)
+    const modalEnd = msToDate(modalEndTime)
 
 
     const timeSpent = (endTime.valueOf() - startTime.valueOf()) / 1000.0
@@ -277,13 +277,14 @@ const createQuestionSubmission = async (req, res) => {
             indeces: selectedChoiceIndices,
             timeStarted: startTime,
             timeEnded: endTime,
-            videoWatched: Boolean(videoWatched),
             timeSpent: Math.floor(timeSpent),
             videoStartTime: videoStart,
             videoEndTime: videoEnd,
             timeSpentVideo: Math.floor(videoTotalWatchTime),
-            reflectionStartTime: reflectionStart,
-            reflectionEndTime: reflectionEnd
+            modalStartTime: modalStart,
+            modalEndTime: modalEnd,
+            modalTotalTime: modalTotalTime, 
+            osFamily: osFamily
         }
     })
     res.status(200).send(submission)
@@ -292,15 +293,15 @@ const createQuestionSubmission = async (req, res) => {
 const updateSubmission = async (req, res) => {
     const { submissionId } = req.params
     const { timeStarted, timeEnded, timeSpent, videoStartTime,
-        videoEndTime, videoTotalWatchTime, reflectionStartTime,
-        reflectionEndTime } = req.body
+        videoEndTime, videoTotalWatchTime, modalStartTime,
+        modalEndTime } = req.body
     
     const startTime = msToDate(timeStarted)
     const endTime = msToDate(timeEnded)
     const videoStart = msToDate(videoStartTime)
     const videoEnd = msToDate(videoEndTime)
-    const reflectionStart = msToDate(reflectionStartTime)
-    const reflectionEnd = msToDate(reflectionEndTime)
+    const modalStart = msToDate(modalStartTime)
+    const modalEnd = msToDate(modalEndTime)
     
     const submission = await prisma.submission.update({
         where: {
@@ -313,8 +314,8 @@ const updateSubmission = async (req, res) => {
             videoStartTime: videoStart,
             videoEndTime: videoEnd,
             timeSpentVideo: videoTotalWatchTime,
-            reflectionStartTime: reflectionStart,
-            reflectionEndTime: reflectionEnd
+            modalStartTime: modalStart,
+            modalEndTime: modalEnd
         }
     })
     res.status(200).send(submission)

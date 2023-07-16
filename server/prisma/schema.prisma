@@ -117,20 +117,21 @@ enum Language {
 }
 
 model Submission {
-  id                  String   @id @default(uuid())
-  correct             Boolean
-  selectedIndices     Int[]
-  timeStarted         DateTime
-  timeEnded           DateTime
-  videoWatched        Boolean
-  timeSpent           Int
-  videoStartTime      DateTime
-  videoEndTime        DateTime
-  timeSpentVideo      Int
-  reflectionStartTime DateTime @default(now())
-  reflectionEndTime   DateTime @default(now())
-  questionId          String
-  question            Question @relation(fields: [questionId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  id              String   @id @default(uuid())
+  correct         Boolean
+  selectedIndices Int[]
+  timeStarted     DateTime
+  timeEnded       DateTime
+  timeSpent       Int
+  videoStartTime  DateTime
+  videoEndTime    DateTime
+  timeSpentVideo  Int
+  modalStartTime  DateTime @default(now())
+  modalEndTime    DateTime @default(now())
+  modalTotalTime  Int
+  questionId      String
+  osFamily        String
+  question        Question @relation(fields: [questionId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 }
 
 model Semester {
