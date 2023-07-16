@@ -258,7 +258,7 @@ const deleteQuestion = async (req, res) => {
 const msToDate = (milliseconds) => new Date(0, 0, 0, 0, 0, 0, milliseconds)
 const createQuestionSubmission = async (req, res) => {
     const { questionId } = req.params
-    const { selectedChoiceIndeces, videoWatched, correct,
+    const { selectedChoiceIndices, videoWatched, correct,
         timeStarted, timeEnded, videoStartTime, videoEndTime,
         videoTotalWatchTime, reflectionStartTime, reflectionEndTime } = req.body
     const startTime = msToDate(timeStarted)
@@ -274,7 +274,7 @@ const createQuestionSubmission = async (req, res) => {
         data: {
             questionId: questionId,
             correct: Boolean(correct),
-            indeces: selectedChoiceIndeces,
+            indeces: selectedChoiceIndices,
             timeStarted: startTime,
             timeEnded: endTime,
             videoWatched: Boolean(videoWatched),
