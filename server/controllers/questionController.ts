@@ -283,7 +283,7 @@ const createQuestionSubmission = async (req, res) => {
             timeSpentVideo: Math.floor(videoTotalWatchTime),
             modalStartTime: modalStart,
             modalEndTime: modalEnd,
-            modalTotalTime: modalTotalTime, 
+            modalTotalTime: modalTotalTime,
             osFamily: osFamily
         }
     })
@@ -292,30 +292,26 @@ const createQuestionSubmission = async (req, res) => {
 
 const updateSubmission = async (req, res) => {
     const { submissionId } = req.params
-    const { timeStarted, timeEnded, timeSpent, videoStartTime,
+    const { timeSpent, videoStartTime,
         videoEndTime, videoTotalWatchTime, modalStartTime,
         modalEndTime, modalTotalTime } = req.body
-    
-    const startTime = new Date(timeStarted)
-    const endTime = new Date(timeEnded)
+
     const videoStart = new Date(videoStartTime)
     const videoEnd = new Date(videoEndTime)
     const modalStart = new Date(modalStartTime)
     const modalEnd = new Date(modalEndTime)
-    
+
     const submission = await prisma.submission.update({
         where: {
             id: submissionId
         },
         data: {
-            timeStarted: startTime,
-            timeEnded: endTime,
             timeSpent: timeSpent,
             videoStartTime: videoStart,
             videoEndTime: videoEnd,
             timeSpentVideo: videoTotalWatchTime,
             modalStartTime: modalStart,
-            modalEndTime: modalEnd, 
+            modalEndTime: modalEnd,
             modalTotalTime: modalTotalTime
         }
     })
