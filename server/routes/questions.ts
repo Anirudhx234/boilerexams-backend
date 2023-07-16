@@ -18,7 +18,7 @@ app.post("/courses/:courseId/exams/:examId/questions", asyncWrapper(createQuesti
 
 app.put("/courses/:courseId/exams/:examId/questions/:questionId", asyncWrapper(updateQuestion))
 
-app.put("/courses/:courseId/exams/:examId/questions/:questionId/togglePublished", asyncWrapper(toggleQuestionPublished))
+app.put("/questions/:questionId/togglePublished", asyncWrapper(toggleQuestionPublished))
 
 app.delete("/courses/:courseId/exams/:examId/questions/:questionId", asyncWrapper(deleteQuestion))
 
