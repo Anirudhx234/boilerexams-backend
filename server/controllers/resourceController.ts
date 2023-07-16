@@ -1,7 +1,9 @@
 import { PrismaClient, ResourceType, Language } from '@prisma/client'
+import { nanoid } from 'nanoid'
+import axios from 'axios';
 const prisma = new PrismaClient();
 
-const Aws = require('aws-sdk');
+var Aws = require('aws-sdk');
 
 const s3 = new Aws.S3({
     accessKeyId: process.env.AWS_ACCESS_KEY_ID,
@@ -23,13 +25,15 @@ const getResource = async (req, res) => {
 }
 
 const createImageResource = async (req, res, next) => {
+    const { altText } = req.body
+
     if (!req.file) {
         throw new Error("No file attached")
     }
 
     const params = {
         Bucket: process.env.AWS_BUCKET_NAME,
-        Key: req.file.originalname,
+        Key: nanoid(),
         Body: req.file.buffer,
         ACL: "public-read-write",
     };
@@ -42,7 +46,7 @@ const createImageResource = async (req, res, next) => {
 
     const data = await Promise.resolve(promise)
     if (!data) {
-        return res.status(400).send("Image(s) upload failed")
+        throw new Error("Image upload failed")
     }
 
     const resource = await prisma.resource.create({
@@ -52,7 +56,58 @@ const createImageResource = async (req, res, next) => {
                 create: {
                     key: data.Key,
                     url: data.Location,
-                    altText: req.body.altText
+                    altText: altText
+                }
+            }
+        },
+        include: {
+            image: true
+        }
+    })
+    res.status(200).send(resource)
+}
+
+const createImageResourceFromLink = async (req, res) => {
+    const { link, altText } = req.body
+
+    const image = await axios.get(link, {
+        responseType: 'arraybuffer',
+        maxContentLength: 500 * 1024
+    })
+
+    const contentType = image.headers['content-type']
+
+    if (contentType !== "image/png" && contentType !== "image/jpeg") {
+        throw new Error("Image upload failed, link must be JPEG or PNG")
+    }
+
+    const params = {
+        Bucket: process.env.AWS_BUCKET_NAME,
+        Key: nanoid(),
+        Body: image.data,
+        ACL: "public-read-write",
+        ContentType: contentType
+    };
+
+    const promise = s3.upload(params, (error, data) => {
+        if (error) {
+            throw new Error(error);
+        }
+    }).promise()
+
+    const data = await Promise.resolve(promise)
+    if (!data) {
+        throw new Error("Image upload failed")
+    }
+
+    const resource = await prisma.resource.create({
+        data: {
+            type: ResourceType.IMAGE,
+            image: {
+                create: {
+                    key: data.Key,
+                    url: data.Location,
+                    altText: altText
                 }
             }
         },
@@ -117,6 +172,7 @@ const deleteResource = async (req, res) => {
 export {
     getResource,
     createImageResource,
+    createImageResourceFromLink,
     createCodeResource,
     updateCodeResource,
     deleteResource

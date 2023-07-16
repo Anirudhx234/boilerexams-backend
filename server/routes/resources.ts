@@ -3,6 +3,7 @@ import multer from 'multer'
 import {
     getResource,
     createImageResource,
+    createImageResourceFromLink,
     createCodeResource,
     updateCodeResource,
     deleteResource
@@ -31,6 +32,8 @@ const upload = multer({
 app.get("/resources/:resourceId", asyncWrapper(getResource))
 
 app.post("/resources/images", upload.single('image'), asyncWrapper(createImageResource))
+
+app.post("/resources/images/link", asyncWrapper(createImageResourceFromLink))
 
 app.post("/resources/codes", asyncWrapper(createCodeResource))
 
