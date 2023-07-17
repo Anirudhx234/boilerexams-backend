@@ -24,7 +24,7 @@ const upload = multer({
     }
 });
 
-const FormData = require('form-data');
+import FormData from 'form-data';
 
 interface QuestionPart {
     content: string,

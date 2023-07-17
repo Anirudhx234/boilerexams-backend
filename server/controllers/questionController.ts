@@ -1,6 +1,6 @@
-const { PrismaClient } = require('@prisma/client');
+import { PrismaClient } from '@prisma/client';
 import { NotFoundError } from "../middleware/errors"
-import { default as validDate} from "../utils/validDate"
+import msToDate from "../utils/msToDate"
 const prisma = new PrismaClient();
 
 const getQuestion = async (req, res) => {
@@ -261,12 +261,12 @@ const createQuestionSubmission = async (req, res) => {
     const { selectedChoiceIndices, correct,
         timeStarted, timeEnded, videoStartTime, videoEndTime,
         videoTotalWatchTime, modalStartTime, modalEndTime, modalTotalTime, osFamily } = req.body
-    const startTime = new Date(timeStarted)
-    const endTime = new Date(timeEnded)
-    const videoStart = new Date(videoStartTime)
-    const videoEnd = new Date(videoEndTime)
-    const modalStart = new Date(modalStartTime)
-    const modalEnd = new Date(modalEndTime)
+    const startTime = msToDate(timeStarted)
+    const endTime = msToDate(timeEnded)
+    const videoStart = msToDate(videoStartTime)
+    const videoEnd = msToDate(videoEndTime)
+    const modalStart = msToDate(modalStartTime)
+    const modalEnd = msToDate(modalEndTime)
 
 
     const timeSpent = (endTime.valueOf() - startTime.valueOf())
@@ -292,21 +292,20 @@ const createQuestionSubmission = async (req, res) => {
 
 const updateSubmission = async (req, res) => {
     const { submissionId } = req.params
-    const { timeSpent, videoStartTime,
+    const { videoStartTime,
         videoEndTime, videoTotalWatchTime, modalStartTime,
         modalEndTime, modalTotalTime } = req.body
 
-    const videoStart = validDate(videoStartTime)
-    const videoEnd = validDate(videoEndTime)
-    const modalStart = validDate(modalStartTime)
-    const modalEnd = validDate(modalEndTime)
+    const videoStart = msToDate(videoStartTime)
+    const videoEnd = msToDate(videoEndTime)
+    const modalStart = msToDate(modalStartTime)
+    const modalEnd = msToDate(modalEndTime)
 
     const submission = await prisma.submission.update({
         where: {
             id: submissionId
         },
         data: {
-            timeSpent: timeSpent,
             videoStartTime: videoStart,
             videoEndTime: videoEnd,
             timeSpentVideo: videoTotalWatchTime,

@@ -11,7 +11,7 @@ import _ from 'lodash'
 import asyncWrapper from '../middleware/wrappers/asyncWrapper'
 import sendPublished from "../middleware/sendPublished";
 
-const validCourseRegex = require('../utils/validCourseRegex')
+import validCourseRegex from '../utils/validCourseRegex'
 
 app.use(sendPublished)
 // All courses metadata, with no relations

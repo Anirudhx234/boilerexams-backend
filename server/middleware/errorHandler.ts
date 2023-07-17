@@ -1,6 +1,6 @@
 import { Prisma } from '@prisma/client';
 import {InvalidCourseError, InvalidSeasonError, NotFoundError} from "./errors/index";
-const multer = require('multer');
+import multer from 'multer';
 
 const errorHandler = (error, req, res, next) => {
     if (error instanceof NotFoundError) {
