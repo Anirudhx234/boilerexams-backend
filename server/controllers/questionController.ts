@@ -269,7 +269,7 @@ const createQuestionSubmission = async (req, res) => {
     const modalEnd = new Date(modalEndTime)
 
 
-    const timeSpent = (endTime.valueOf() - startTime.valueOf()) / 1000.0
+    const timeSpent = (endTime.valueOf() - startTime.valueOf())
     const submission = await prisma.submission.create({
         data: {
             questionId: questionId,
