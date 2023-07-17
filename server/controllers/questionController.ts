@@ -274,7 +274,7 @@ const createQuestionSubmission = async (req, res) => {
         data: {
             questionId: questionId,
             correct: Boolean(correct),
-            selectedIndices: selectedChoiceIndices,
+            selectedChoiceIndices: selectedChoiceIndices,
             timeStarted: startTime,
             timeEnded: endTime,
             timeSpent: Math.floor(timeSpent),
