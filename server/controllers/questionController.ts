@@ -1,6 +1,6 @@
 const { PrismaClient } = require('@prisma/client');
 import { NotFoundError } from "../middleware/errors"
-const validDate = require("../utils/validDate")
+import { default as validDate} from "../utils/validDate"
 const prisma = new PrismaClient();
 
 const getQuestion = async (req, res) => {
