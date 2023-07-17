@@ -167,11 +167,10 @@ const createFeatureRequest = async (req: Request, res: Response) => {
 }
 
 const createFeedbackReport = async (req: Request, res: Response) => {
-    const { test } = req.body;
+    // ToDo Content Feedback Reporting and stuff
+    
 
-
-
-    res.status(200).send("Success");
+    res.status(200).send();
 }
 
 const createWebhook = async (req: Request, res: Response) => {
