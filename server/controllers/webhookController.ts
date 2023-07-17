@@ -11,10 +11,10 @@ const createCourseRequest = async (req: Request, res: Response) => {
 
     const { abbreviation, number } = req.body;
 
-    const purdueIoSubject = await PurdueIoAPI.getSubject(abbreviation.toUpperCase());
     const stringifiedNumber = String(number);
     const courseNumber = stringifiedNumber + "0".repeat(5 - stringifiedNumber.length);
-    const purdueIoCourse = await PurdueIoAPI.getCourse(abbreviation.toUpperCase(), courseNumber);
+    const purdueIoSubject = await PurdueIoAPI.getSubject(abbreviation.toUpperCase());
+    const purdueIoCourse = await PurdueIoAPI.getCourse(purdueIoSubject, courseNumber);
 
     const existingCourse: Prisma.CourseGetPayload<Prisma.CourseArgs> = await prisma.course.findFirst({
         where: {
@@ -23,10 +23,9 @@ const createCourseRequest = async (req: Request, res: Response) => {
                 { number: Number(purdueIoCourse.Number) }
             ]
         }
-    })
+    });
 
     if (existingCourse) throw new CourseAlreadyExistsError(`Existing Course Requested`);
-
 
     await prisma.courseRequest.upsert({
         where: {
@@ -140,7 +139,7 @@ const createQuestionBugReport = async (req: Request, res: Response) => {
 
     const embed = {
         url: url,
-        title: title,
+        title: title.replace("Exam 0", "Final Exam"),
         description: description,
         timestamp: new Date().toISOString(),
         color: 15548997,
@@ -164,6 +163,14 @@ const createFeatureRequest = async (req: Request, res: Response) => {
 
     const data = { embeds: [embed] };
     await DiscordAPI.sendWebhookMessage("Feature Requests", data);
+    res.status(200).send("Success");
+}
+
+const createFeedbackReport = async (req: Request, res: Response) => {
+    const { test } = req.body;
+
+
+
     res.status(200).send("Success");
 }
 
