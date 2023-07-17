@@ -1,13 +1,14 @@
-const { PrismaClient } = require('@prisma/client');
+import { PrismaClient } from '@prisma/client';
 import { NotFoundError } from "../middleware/errors"
-
+import msToDate from "../utils/msToDate"
 const prisma = new PrismaClient();
 
 const getQuestion = async (req, res) => {
     const { questionId } = req.params
-    const question = await prisma.question.findUnique({
+    const question = await prisma.question.findFirst({
         where: {
-            id: questionId
+            id: questionId,
+            OR: req.published
         },
         include: {
             topics: true,
@@ -207,6 +208,40 @@ const updateQuestion = async (req, res) => {
     res.status(200).send(question)
 }
 
+const toggleQuestionPublished = async (req, res) => {
+    const { questionId } = req.params
+    const question = await prisma.question.findUnique({
+        where: {
+            id: questionId
+        },
+        select: {
+            exam: {
+                select: {
+                    published: true
+                }
+            },
+            published: true
+        }
+    })
+    if (!question) {
+        throw new NotFoundError("Question not found")
+    }
+    if (!question.exam.published) {
+        throw new Error("Exam must be published")
+    }
+
+    const published = !question.published
+    await prisma.question.update({
+        where: {
+            id: questionId
+        },
+        data: {
+            published: published
+        }
+    })
+    res.status(200).send({ message: `Question is now ${published ? "published" : "unpublished"}` })
+}
+
 const deleteQuestion = async (req, res) => {
     const { questionId } = req.params
     const question = await prisma.question.delete({
@@ -223,54 +258,60 @@ const deleteQuestion = async (req, res) => {
 
 const createQuestionSubmission = async (req, res) => {
     const { questionId } = req.params
-    const { selectedChoiceIndex, videoWatched, correct, timeStarted, timeEnded, videoStartTime, videoEndTime } = req.body
-
-    const msToDate = (milliseconds) => new Date(0, 0, 0, 0, 0, 0, milliseconds)
+    const { selectedChoiceIndices, correct,
+        timeStarted, timeEnded, videoStartTime, videoEndTime,
+        videoTotalWatchTime, modalStartTime, modalEndTime, modalTotalTime, osFamily } = req.body
     const startTime = msToDate(timeStarted)
     const endTime = msToDate(timeEnded)
     const videoStart = msToDate(videoStartTime)
     const videoEnd = msToDate(videoEndTime)
+    const modalStart = msToDate(modalStartTime)
+    const modalEnd = msToDate(modalEndTime)
 
-    const answerChoiceIndex = Number(selectedChoiceIndex)
 
-    const data = await prisma.question.findUnique({
-        where: {
-            id: questionId
-        },
-        select: {
-            submissions: true,
-        }
-    })
-    if (!data) {
-        throw new NotFoundError("Question not found")
-    }
-
-    const submissionsTemp = data.submissions
-
-    const timeSpent = (endTime.valueOf() - startTime.valueOf()) / 1000.0
-    const timeSpentVideo = (videoEnd.valueOf() - videoStart.valueOf()) / 1000.0
-    submissionsTemp[answerChoiceIndex] = submissionsTemp[answerChoiceIndex] + 1
-
-    await prisma.question.update({
-        where: {
-            id: questionId
-        },
-        data: {
-            submissions: submissionsTemp,
-        }
-    })
-
+    const timeSpent = (endTime.valueOf() - startTime.valueOf())
     const submission = await prisma.submission.create({
         data: {
             questionId: questionId,
             correct: Boolean(correct),
+            selectedChoiceIndices: selectedChoiceIndices,
             timeStarted: startTime,
             timeEnded: endTime,
-            videoWatched: Boolean(videoWatched),
             timeSpent: Math.floor(timeSpent),
             videoStartTime: videoStart,
             videoEndTime: videoEnd,
-            timeSpentVideo: Math.floor(timeSpentVideo)
+            timeSpentVideo: Math.floor(videoTotalWatchTime),
+            modalStartTime: modalStart,
+            modalEndTime: modalEnd,
+            modalTotalTime: modalTotalTime,
+            osFamily: osFamily
+        }
+    })
+    res.status(200).send(submission)
+}
+
+const updateSubmission = async (req, res) => {
+    const { submissionId } = req.params
+    const { videoStartTime,
+        videoEndTime, videoTotalWatchTime, modalStartTime,
+        modalEndTime, modalTotalTime } = req.body
+
+    const videoStart = msToDate(videoStartTime)
+    const videoEnd = msToDate(videoEndTime)
+    const modalStart = msToDate(modalStartTime)
+    const modalEnd = msToDate(modalEndTime)
+
+    const submission = await prisma.submission.update({
+        where: {
+            id: submissionId
+        },
+        data: {
+            videoStartTime: videoStart,
+            videoEndTime: videoEnd,
+            timeSpentVideo: videoTotalWatchTime,
+            modalStartTime: modalStart,
+            modalEndTime: modalEnd,
+            modalTotalTime: modalTotalTime
         }
     })
     res.status(200).send(submission)
@@ -280,6 +321,8 @@ export {
     getQuestion,
     createQuestion,
     updateQuestion,
+    toggleQuestionPublished,
     deleteQuestion,
-    createQuestionSubmission
+    createQuestionSubmission,
+    updateSubmission
 }

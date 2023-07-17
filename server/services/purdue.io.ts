@@ -1,6 +1,5 @@
 import {InvalidCourseError, NotFoundError} from "../middleware/errors";
-
-const axios = require("axios");
+import axios from "axios"
 
 export type PurdueIoCourse = { Id: string, Number: string, SubjectId: string, Title: string, CreditHours: number, Description: string };
 export type PurdueIoSubject = { Id: string, Name: string, Abbreviation: string };

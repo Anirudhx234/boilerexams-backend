@@ -9,4 +9,4 @@ const validCourseRegex = (courseAbbrev) => {
     throw new InvalidCourseError("Invalid parameters")
 }
 
-module.exports = validCourseRegex
+export default validCourseRegex

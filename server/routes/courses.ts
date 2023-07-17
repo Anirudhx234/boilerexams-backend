@@ -2,8 +2,8 @@ import express from 'express'
 import {
     createCourse,
     updateCourse,
-    unpublishCourse,
-    deleteCourse
+    deleteCourse,
+    toggleCoursePublished
 } from "../controllers/courseController"
 import asyncWrapper from "../middleware/wrappers/asyncWrapper"
 
@@ -13,8 +13,8 @@ app.post("/courses", asyncWrapper(createCourse))
 
 app.put("/courses/:courseId", asyncWrapper(updateCourse))
 
-app.delete("/courses/softDelete/:courseId", asyncWrapper(unpublishCourse))
+app.put("/courses/:courseId/togglePublished", asyncWrapper(toggleCoursePublished))
 
-app.delete("/courses/hardDelete/:courseId", asyncWrapper(deleteCourse))
+app.delete("/courses/:courseId/hardDelete", asyncWrapper(deleteCourse))
 
 export default app

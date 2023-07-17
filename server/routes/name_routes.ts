@@ -11,10 +11,10 @@ import _ from 'lodash'
 import asyncWrapper from '../middleware/wrappers/asyncWrapper'
 import sendPublished from "../middleware/sendPublished";
 
-const validCourseRegex = require('../utils/validCourseRegex')
+import validCourseRegex from '../utils/validCourseRegex'
 
 app.use(sendPublished)
-// All courses metadata, no relations
+// All courses metadata, with no relations
 app.get("/courses", asyncWrapper(async (req, res) => {
     let courses = await prisma.course.findMany({
         where: {
@@ -152,9 +152,7 @@ app.get("/courses/:courseAbbrev/topics/questions", asyncWrapper(async (req, res)
                 include: {
                     questions: {
                         where: {
-                            exam: {
-                                OR: req.published
-                            }
+                            OR: req.published
                         },
                         select: {
                             id: true,
@@ -219,6 +217,9 @@ app.get("/courses/:courseAbbrev/exams/questions", asyncWrapper(async (req, res) 
                 },
                 include: {
                     questions: {
+                        where: {
+                            OR: req.published
+                        },
                         orderBy: {
                             number: 'asc'
                         },
@@ -249,9 +250,10 @@ app.get("/courses/:courseAbbrev/topics/:topicName/questions", asyncWrapper(async
         include: {
             questions: {
                 where: {
-                    exam: {
+                    course: {
                         OR: req.published
-                    }
+                    },
+                    OR: req.published
                 },
                 include: {
                     topics: true,
@@ -327,6 +329,9 @@ app.get("/courses/:courseAbbrev/exams/:season-:year-:examNumber", asyncWrapper(a
         },
         include: {
             questions: {
+                where: {
+                    OR: req.published
+                },
                 orderBy: {
                     number: 'asc'
                 },
@@ -387,6 +392,9 @@ app.get("/courses/:courseAbbrev/exams/:season-:year-:examNumber/questions", asyn
         },
         include: {
             questions: {
+                where: {
+                    OR: req.published
+                },
                 orderBy: {
                     number: 'asc'
                 },
@@ -474,8 +482,29 @@ const examStats = async (examId) => {
 app.get("/stats/questions/:questionId", async (req, res) => {
     try {
         const { questionId } = req.params
-        const ret = await questionStats(questionId)
-        res.status(200).send(ret)
+        const timeStats = await questionStats(questionId)
+        const choices = await prisma.question.findUnique({
+            where: {
+                id: questionId
+            },
+            select: {
+                answerChoices: true
+            }
+        })
+        const len = choices.answerChoices.length
+        const answerStats: number[] = []
+        for (let i = 0; i < len; i++) {
+            const counted = await prisma.submission.count({
+                where: {
+                    questionId: questionId,
+                    selectedIndices: {
+                        has: i
+                    }
+                }
+            })
+            answerStats.push(counted)
+        }
+        res.status(200).send({timeStats, answerStats})
     } catch (e) {
         res.status(400).send(e)
     }
