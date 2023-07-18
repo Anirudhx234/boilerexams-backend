@@ -3,6 +3,7 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import routes from './routes/index'
 import errorHandler from './middleware/errorHandler';
+import { APIError } from './middleware/errors';
 
 const app = express();
 
@@ -14,7 +15,7 @@ const corsOptions = {
     if (allowList.includes(origin) || !origin || regexp.test(origin)) {
       cb(null, true)
     } else {
-      cb(new Error('Not allowed by CORS'))
+      cb(new APIError('Not allowed by CORS', 403))
     }
   },
   credentials: true,

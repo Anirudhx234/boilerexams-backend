@@ -1,6 +1,6 @@
 import { InvalidCourseError } from "../middleware/errors";
 
-const validCourseRegex = (courseAbbrev) => {
+const validCourseRegex = (courseAbbrev: string) => {
     const regex = /([a-zA-Z]+)(\d+)/;
     const matches = courseAbbrev.match(regex);
     if (matches) {

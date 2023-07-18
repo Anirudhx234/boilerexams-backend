@@ -1,6 +1,6 @@
 import express from 'express'
 import name_routes from "./name_routes"
-import ocr_routes from "./ocr_routes"
+import parsing from "./parsing"
 import courses from "./courses"
 import exams from "./exams"
 import questions from "./questions"
@@ -11,6 +11,6 @@ import webhooks from "./webhooks"
 
 const app = express();
 
-app.use(name_routes, ocr_routes, courses, exams, questions, resources, topics, users, webhooks);
+app.use(name_routes, parsing, courses, exams, questions, resources, topics, users, webhooks);
 
 export default app

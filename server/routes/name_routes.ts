@@ -90,7 +90,7 @@ app.get("/courses/all", asyncWrapper(async (req, res) => {
         }
     })
     if (!courses) {
-        throw new Error("Courses not found")
+        throw new NotFoundError("Courses not found")
     }
     res.status(200).send(courses);
 }));

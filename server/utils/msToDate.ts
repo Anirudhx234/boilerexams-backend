@@ -1,4 +1,4 @@
-const msToDate = (milliseconds) => {
+const msToDate = (milliseconds: number) => {
     return new Date(milliseconds)
 }
 
