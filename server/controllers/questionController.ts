@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-import { NotFoundError } from "../middleware/errors"
+import { APIError, NotFoundError } from "../middleware/errors"
 import msToDate from "../utils/msToDate"
 const prisma = new PrismaClient();
 
@@ -227,7 +227,7 @@ const toggleQuestionPublished = async (req, res) => {
         throw new NotFoundError("Question not found")
     }
     if (!question.exam.published) {
-        throw new Error("Exam must be published")
+        throw new APIError("Exam must be published", 409)
     }
 
     const published = !question.published
