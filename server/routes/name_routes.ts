@@ -1,6 +1,6 @@
 import { InvalidSeasonError, NotFoundError } from "../middleware/errors/index";
 
-const { PrismaClient, Season } = require('@prisma/client');
+import { PrismaClient, Season } from '@prisma/client';
 const prisma = new PrismaClient();
 
 import express from 'express'
@@ -196,7 +196,9 @@ app.get("/courses/:courseAbbrev/exams", asyncWrapper(async (req, res) => {
     if (!course) {
         throw new NotFoundError("Course not found")
     }
-    res.status(200).send(course.exams);
+    const exams = course.exams
+    const sortedExams = _.orderBy(exams, ["semester.year", "semester.season", (exam) => exam.number === 0 ? 10 : 0], ['desc', 'asc', 'asc']);
+    res.status(200).send(sortedExams);
 }));
 
 // All exams with question ids and numbers
@@ -237,7 +239,9 @@ app.get("/courses/:courseAbbrev/exams/questions", asyncWrapper(async (req, res) 
     if (!course) {
         throw new NotFoundError("Course not found")
     }
-    res.status(200).send(course.exams);
+    const exams = course.exams
+    const sortedExams = _.orderBy(exams, ["semester.year", "semester.season", (exam) => exam.number === 0 ? 10 : 0], ['desc', 'asc', 'asc']);
+    res.status(200).send(sortedExams);
 }))
 
 // Full question information for specific topic
@@ -430,165 +434,5 @@ app.get("/courses/:courseAbbrev/exams/:season-:year-:examNumber/questions", asyn
     res.status(200).send(exam)
 }));
 
-const questionStats = async (questionId) => {
-    const submissions = await prisma.submission.aggregate({
-        where: {
-            questionId: questionId
-        },
-        _sum: {
-            timeSpent: true,
-            timeSpentVideo: true,
-        },
-        _count: true,
-    })
-    const timeSpent = submissions._sum.timeSpent
-    const timeSpentVideo = submissions._sum.timeSpentVideo
-    const submissionTotal = submissions._count
-
-    const submissionCorrect = await prisma.submission.count({
-        where: {
-            questionId: questionId,
-            correct: true
-        }
-    })
-    return { timeSpent, timeSpentVideo, submissionTotal, submissionCorrect }
-}
-
-const examStats = async (examId) => {
-    const questions = await prisma.exam.findUnique({
-        where: {
-            id: examId
-        },
-        select: {
-            questions: {
-                select: {
-                    id: true
-                }
-            }
-        }
-    })
-    const ids = questions.questions.map(q => q.id)
-
-    const obj = { timeSpent: 0, timeSpentVideo: 0, submissionTotal: 0, submissionCorrect: 0 };
-    const keys = Object.keys(obj)
-    for (let x = 0; x < ids.length; x++) {
-        const tempStats = Object.values(await questionStats(ids[x]))
-        for (let i = 0; i < tempStats.length; i++) {
-            obj[keys[i]] += tempStats[i]
-        }
-    }
-    return obj
-}
-app.get("/stats/questions/:questionId", async (req, res) => {
-    try {
-        const { questionId } = req.params
-        const timeStats = await questionStats(questionId)
-        const choices = await prisma.question.findUnique({
-            where: {
-                id: questionId
-            },
-            select: {
-                answerChoices: true
-            }
-        })
-        const len = choices.answerChoices.length
-        const answerStats: number[] = []
-        for (let i = 0; i < len; i++) {
-            const counted = await prisma.submission.count({
-                where: {
-                    questionId: questionId,
-                    selectedIndices: {
-                        has: i
-                    }
-                }
-            })
-            answerStats.push(counted)
-        }
-        res.status(200).send({timeStats, answerStats})
-    } catch (e) {
-        res.status(400).send(e)
-    }
-})
-app.get("/stats/exams/:examId", async (req, res) => {
-    try {
-        const { examId } = req.params
-        const obj = await examStats(examId)
-        res.status(200).send(obj)
-
-    } catch (e) {
-        res.status(400).send(e)
-    }
-
-})
-
-app.get("/stats/courses/:courseId", async (req, res) => {
-
-    try {
-        const { courseId } = req.params
-        const exams = await prisma.course.findUnique({
-            where: {
-                id: courseId
-            },
-            select: {
-                exams: {
-                    select: {
-                        id: true
-                    }
-                }
-            }
-        })
-        const ids = exams.exams.map(q => q.id)
-
-        const obj = { timeSpent: 0, timeSpentVideo: 0, submissionTotal: 0, submissionCorrect: 0 };
-        const keys = Object.keys(obj)
-        for (let x = 0; x < ids.length; x++) {
-            const tempStats = Object.values(await examStats(ids[x]))
-            for (let i = 0; i < tempStats.length; i++) {
-                obj[keys[i]] += tempStats[i]
-            }
-        }
-        res.status(200).send(obj)
-
-
-    } catch (e) {
-        res.status(400).send(e)
-    }
-})
-app.get("/stats/submissions",
-    async (req, res) => {
-        try {
-            const validTime = 0
-            const times = await prisma.submission.aggregate({
-                _sum: {
-                    timeSpent: true
-                },
-                _avg: {
-                    timeSpent: true
-                },
-                _count: true,
-                where: {
-                    timeSpent: {
-                        gte: validTime
-                    }
-                },
-            })
-            const timeSpent = times._sum.timeSpent
-            const avgTime = times._avg.timeSpent
-            const submissionTotal = times._count
-            const totalCorrect = await prisma.submission.count({
-                where: {
-                    correct: true,
-                    timeSpent: {
-                        gte: validTime
-                    }
-                }
-            })
-
-            const percentCorrect = 100.0 * (totalCorrect / submissionTotal)
-            res.status(200).send({ submissionTotal, timeSpent, avgTime, percentCorrect })
-        } catch (e) {
-            res.status(400).send(e)
-        }
-    })
 
 export default app

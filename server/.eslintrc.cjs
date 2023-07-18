@@ -6,5 +6,7 @@ module.exports = {
     root: true,
     rules: {
         '@typescript-eslint/no-var-requires': 0,
+        'sort-imports': 1,
+        'no-useless-escape': 0
     }
   };

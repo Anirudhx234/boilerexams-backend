@@ -8,9 +8,10 @@ import resources from "./resources"
 import topics from "./topics"
 import users from "./users"
 import webhooks from "./webhooks"
+import stats from "./stats"
 
 const app = express();
 
-app.use(name_routes, parsing, courses, exams, questions, resources, topics, users, webhooks);
+app.use(name_routes, parsing, courses, exams, questions, resources, topics, users, webhooks, stats);
 
 export default app

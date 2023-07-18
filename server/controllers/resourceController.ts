@@ -24,7 +24,7 @@ const getResource = async (req, res) => {
     res.status(200).send(resource)
 }
 
-const createImageResource = async (req, res, next) => {
+const createImageResource = async (req, res) => {
     const { altText } = req.body
 
     if (!req.file) {
@@ -38,7 +38,7 @@ const createImageResource = async (req, res, next) => {
         ACL: "public-read-write",
     };
 
-    const promise = s3.upload(params, (error, data) => {
+    const promise = s3.upload(params, (error) => {
         if (error) {
             throw new Error(error);
         }
@@ -89,7 +89,7 @@ const createImageResourceFromLink = async (req, res) => {
         ContentType: contentType
     };
 
-    const promise = s3.upload(params, (error, data) => {
+    const promise = s3.upload(params, (error) => {
         if (error) {
             throw new Error(error);
         }
