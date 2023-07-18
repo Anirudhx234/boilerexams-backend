@@ -197,7 +197,7 @@ app.get("/courses/:courseAbbrev/exams", asyncWrapper(async (req, res) => {
         throw new NotFoundError("Course not found")
     }
     const exams = course.exams
-    const sortedExams = _.orderBy(exams, ["semester.year", "semester.season", (exam) => exam.number === 0 ? 10 : 0], ['desc', 'asc', 'asc']);
+    const sortedExams = _.orderBy(exams, ["semester.year", "semester.season", (exam) => exam.number === 0 ? 10 : exam.number], ['desc', 'asc', 'asc']);
     res.status(200).send(sortedExams);
 }));
 
@@ -240,7 +240,7 @@ app.get("/courses/:courseAbbrev/exams/questions", asyncWrapper(async (req, res) 
         throw new NotFoundError("Course not found")
     }
     const exams = course.exams
-    const sortedExams = _.orderBy(exams, ["semester.year", "semester.season", (exam) => exam.number === 0 ? 10 : 0], ['desc', 'asc', 'asc']);
+    const sortedExams = _.orderBy(exams, ["semester.year", "semester.season", (exam) => exam.number === 0 ? 10 : exam.number], ['desc', 'asc', 'asc']);
     res.status(200).send(sortedExams);
 }))
 
