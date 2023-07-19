@@ -3,7 +3,7 @@ import asyncWrapper from './wrappers/asyncWrapper';
 const prisma = new PrismaClient();
 
 const sendPublished = asyncWrapper(async (req, res, next) => {
-    if (req.cookies && req.cookies.accessToken) {
+    if (req.cookies && req.cookies["next-auth.session-token"]) {
         const account = await prisma.account.findFirst({
             where: {
                 access_token: req.cookies.accessToken
