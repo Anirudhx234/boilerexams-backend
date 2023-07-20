@@ -1,0 +1,4 @@
+-- AlterTable
+ALTER TABLE "Exam" ADD COLUMN     "pdfId" TEXT NOT NULL DEFAULT '',
+ADD COLUMN     "pdfKey" TEXT NOT NULL DEFAULT '',
+ADD COLUMN     "pdfLink" TEXT NOT NULL DEFAULT '';

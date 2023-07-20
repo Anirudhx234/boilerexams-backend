@@ -31,6 +31,9 @@ model Exam {
   id         String     @id @default(uuid())
   number     Int
   published  Boolean    @default(false)
+  pdfId      String     @default("")
+  pdfKey     String     @default("")
+  pdfLink    String     @default("")
   courseId   String
   semesterId String
   course     Course     @relation(fields: [courseId], references: [id], onDelete: Cascade, onUpdate: Cascade)

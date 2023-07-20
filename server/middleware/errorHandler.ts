@@ -2,7 +2,7 @@ import { Prisma } from '@prisma/client';
 import {APIError, InvalidCourseError, InvalidSeasonError, NotFoundError} from "./errors/index";
 import multer from 'multer';
 
-const errorHandler = (error, req, res) => {
+const errorHandler = (error, req, res, next) => {
     if (error instanceof NotFoundError) {
         return res.status(error.errorCode).json({message: error.message})
     }
@@ -29,7 +29,9 @@ const errorHandler = (error, req, res) => {
     }
 
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        return res.status(400).json({message: error.meta?.cause})
+        if (error.meta?.cause) {
+            return res.status(400).json({message: error.meta?.cause})
+        }
     }
 
     if (error instanceof Prisma.PrismaClientValidationError) {
