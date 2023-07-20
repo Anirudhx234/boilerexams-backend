@@ -11,33 +11,33 @@ import savePDFtoExam from '../helpers/mathpix/savePDFtoExam';
 const prisma = new PrismaClient
 dotenv.config()
 
-const checkExistingQuestions = async (courseId: string, examId: string) => {
+const checkExistingQuestions = async (examId: string) => {
     const exam = await prisma.exam.findFirst({
         where: {
-            id: examId,
-            courseId: courseId
+            id: examId
         },
         include: {
+            course: true,
             questions: true
         }
     })
     
     if (!exam) {
-        throw new NotFoundError("Course and/or exam not found")
+        throw new NotFoundError("Exam not found")
     }
     if (exam.questions.length > 0) {
         throw new Error("Exam already contains questions. Delete questions before scanning new PDF.")
     }
     else {
-        return
+        return exam.course.id
     }
 }
 
 
 const parseFromFile = async (req, res) => {
-    const { courseId, examId, choices } = req.body
+    const { examId, choices } = req.body
 
-    await checkExistingQuestions(courseId, examId)
+    const courseId = await checkExistingQuestions(examId)
     if (!req.file) {
         throw new Error("No file attached")
     }
@@ -84,9 +84,9 @@ const parseFromFile = async (req, res) => {
 }
 
 const parseFromLink = async (req, res) => {
-    const { courseId, examId, link, choices } = req.body
+    const { examId, link, choices } = req.body
 
-    await checkExistingQuestions(courseId, examId)
+    const courseId = await checkExistingQuestions(examId)
     if (!link) {
         throw new Error("No link provided");
     }
@@ -149,9 +149,9 @@ const parseFromLink = async (req, res) => {
 //2023_06_25_d25c2986903bb495d7edg
 
 const getIdResults = async (req, res) => {
-    const { courseId, examId, pdf_id, choices } = req.body
+    const { examId, pdf_id, choices } = req.body
 
-    await checkExistingQuestions(courseId, examId)
+    const courseId = await checkExistingQuestions(examId)
     let content;
     try {
         content = await getPDFResult(pdf_id);
