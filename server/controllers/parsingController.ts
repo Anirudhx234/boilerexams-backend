@@ -1,14 +1,43 @@
+import { PrismaClient } from '@prisma/client';
 import parseQuestions from "../helpers/mathpix/questionParser";
 import getPDFResult from "../helpers/mathpix/retrievePDF";
 import dotenv from 'dotenv'
 import FormData from 'form-data';
 import axios from 'axios';
-import { APIError } from "../middleware/errors";
+import { APIError, NotFoundError } from "../middleware/errors/index";
+import uploadQuestions from "../helpers/mathpix/uploadQuestions";
+import savePDFtoExam from '../helpers/mathpix/savePDFtoExam';
 
+const prisma = new PrismaClient
 dotenv.config()
 
+const checkExistingQuestions = async (courseId: string, examId: string) => {
+    const exam = await prisma.exam.findFirst({
+        where: {
+            id: examId,
+            courseId: courseId
+        },
+        include: {
+            questions: true
+        }
+    })
+    
+    if (!exam) {
+        throw new NotFoundError("Course and/or exam not found")
+    }
+    if (exam.questions.length > 0) {
+        throw new Error("Exam already contains questions. Delete questions before scanning new PDF.")
+    }
+    else {
+        return
+    }
+}
+
+
 const parseFromFile = async (req, res) => {
-    const { choices } = req.body
+    const { courseId, examId, choices } = req.body
+
+    await checkExistingQuestions(courseId, examId)
     if (!req.file) {
         throw new Error("No file attached")
     }
@@ -38,29 +67,36 @@ const parseFromFile = async (req, res) => {
         },
         data: data
     }
-    const id = await axios.request(config)
+    const pdf = await axios.request(config)
+    const id = pdf.data.pdf_id
+
+    await savePDFtoExam(examId, id, req.file.buffer)
 
     let content;
     try {
-        content = await getPDFResult(id.data.pdf_id);
+        content = await getPDFResult(id);
     } catch (error) {
-        return res.status(202).send({ id: id.data.pdf_id, message: "PDF not processed yet, please try again later using id" })
+        return res.status(202).send({ id: id, message: "PDF not processed yet, please try again later using id" })
     }
     const questions = parseQuestions(content, Number(choices));
-    return res.status(200).send({ id: id.data.pdf_id, questions: questions })
+    const uploadedQuestions = await uploadQuestions(courseId, examId, questions)
+    return res.status(200).send({ id: id, questions: uploadedQuestions })
 }
 
 const parseFromLink = async (req, res) => {
-    const { link, choices } = req.body
+    const { courseId, examId, link, choices } = req.body
+
+    await checkExistingQuestions(courseId, examId)
     if (!link) {
         throw new Error("No link provided");
     }
 
-    const pdf = await axios.get(link, {
+    const file = await axios.get(link, {
+        responseType: 'arraybuffer',
         maxContentLength: 5 * 1024 * 1024,
     })
 
-    if (pdf.headers["content-type"] !== "application/pdf") {
+    if (file.headers["content-type"] !== "application/pdf") {
         throw new APIError("Link must be pdf", 415)
     }
 
@@ -69,7 +105,7 @@ const parseFromLink = async (req, res) => {
         'app_key': process.env.MATHPIX_KEY,
         'Content-Type': 'application/json'
     }
-    const id = await axios.post("https://api.mathpix.com/v3/pdf", {
+    const pdf = await axios.post("https://api.mathpix.com/v3/pdf", {
         url: link,
         conversion_formats: {
             "tex.zip": true,
@@ -82,15 +118,19 @@ const parseFromLink = async (req, res) => {
     }, {
         headers: headers
     })
+    const id = pdf.data.pdf_id
+
+    await savePDFtoExam(examId, id, file.data)
 
     let content;
     try {
-        content = await getPDFResult(id.data.pdf_id);
+        content = await getPDFResult(id);
     } catch (error) {
-        return res.status(202).send({ id: id.data.pdf_id, message: "PDF not processed yet, please try again later using id" })
+        return res.status(202).send({ id: id, message: "PDF not processed yet, please try again later using id" })
     }
     const questions = parseQuestions(content, choices);
-    return res.status(200).send({ id: id.data.pdf_id, questions: questions })
+    const uploadedQuestions = await uploadQuestions(courseId, examId, questions)
+    return res.status(200).send({ id: id, questions: uploadedQuestions })
 }
 
 // SAMPLE IDS TO USE FOR TESTING (ALREADY PROCESSED)
@@ -109,7 +149,9 @@ const parseFromLink = async (req, res) => {
 //2023_06_25_d25c2986903bb495d7edg
 
 const getIdResults = async (req, res) => {
-    const { pdf_id, choices } = req.body
+    const { courseId, examId, pdf_id, choices } = req.body
+
+    await checkExistingQuestions(courseId, examId)
     let content;
     try {
         content = await getPDFResult(pdf_id);
@@ -117,7 +159,8 @@ const getIdResults = async (req, res) => {
         return res.status(202).send({ id: pdf_id, message: "PDF not processed yet, please try again later using id" })
     }
     const questions = parseQuestions(content, choices);
-    res.status(200).send({ id: pdf_id, questions: questions })
+    const uploadedQuestions = await uploadQuestions(courseId, examId, questions)
+    res.status(200).send({ id: pdf_id, questions: uploadedQuestions })
 }
 
 export {
