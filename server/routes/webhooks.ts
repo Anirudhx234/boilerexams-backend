@@ -9,7 +9,6 @@ import {
     getWebhooks,
     getCourseRequest,
     getCourseRequests,
-    updateWebhook,
     deleteWebhook
 } from "../controllers/webhookController";
 import asyncWrapper from "../middleware/wrappers/asyncWrapper"
