@@ -168,7 +168,7 @@ const createFeatureRequest = async (req: Request, res: Response) => {
 
 const createFeedbackReport = async (req: Request, res: Response) => {
     // ToDo Content Feedback Reporting and stuff
-    
+
 
     res.status(200).send();
 }
@@ -176,8 +176,17 @@ const createFeedbackReport = async (req: Request, res: Response) => {
 const createWebhook = async (req: Request, res: Response) => {
     const { id, token, name, avatar, channelId } = req.body;
 
-    const webhook = await prisma.webhook.create({
-        data: {
+    const webhook = await prisma.webhook.upsert({
+        where: {
+            name: name
+        },
+        update: {
+            id: id,
+            token: token,
+            avatar: avatar,
+            channelId: channelId
+        },
+        create: {
             id: id,
             token: token,
             name: name,
@@ -221,22 +230,6 @@ const getWebhooks = async (req: Request, res: Response) => {
     res.status(200).send(webhooks);
 }
 
-const updateWebhook = async (req: Request, res: Response) => {
-    const { webhookId } = req.params;
-    const { avatar } = req.body;
-
-    const webhook = await prisma.webhook.update({
-        where: {
-            id: webhookId
-        },
-        data: {
-            avatar: avatar
-        }
-    });
-
-    res.status(200).send(webhook);
-}
-
 const deleteWebhook = async (req: Request, res: Response) => {
     const { webhookId } = req.params;
 
@@ -259,6 +252,5 @@ export {
     getCourseRequests,
     getWebhook,
     getWebhooks,
-    updateWebhook,
     deleteWebhook
 };

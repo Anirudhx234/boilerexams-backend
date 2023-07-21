@@ -34,8 +34,6 @@ app.get("/webhooks", asyncWrapper(getWebhooks));
 
 app.get("/webhooks/:webhookId", asyncWrapper(getWebhook));
 
-app.put("/webhooks/:webhookId", asyncWrapper(updateWebhook))
-
 app.delete("/webhooks/:webhookId", asyncWrapper(deleteWebhook));
 
 export default app
