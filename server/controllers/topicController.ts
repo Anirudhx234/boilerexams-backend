@@ -4,10 +4,14 @@ import { NotFoundError } from "../middleware/errors";
 const prisma = new PrismaClient();
 
 const createTopic = async (req, res) => {
+    const { courseId } = req.params
     const { name } = req.body
     const topic = await prisma.topic.create({
         data: {
-            name: name
+            name: name,
+            courses: {
+                connect: { id: courseId }
+            }
         },
         include: {
             courses: true,
