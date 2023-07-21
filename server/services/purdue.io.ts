@@ -1,16 +1,16 @@
 import {InvalidCourseError, NotFoundError} from "../middleware/errors";
 import axios from "axios"
 
-type PurdueIoCourse = { Id: string, Number: string, SubjectId: string, Title: string, CreditHours: number, Description: string };
-type PurdueIoSubject = { Id: string, Name: string, Abbreviation: string };
-type PurdueIoTerm = { Id: string, Code: string, Name: string, StartDate: string, EndDate: string };
+export type PurdueIoCourse = { Id: string, Number: string, SubjectId: string, Title: string, CreditHours: number, Description: string };
+export type PurdueIoSubject = { Id: string, Name: string, Abbreviation: string };
+export type PurdueIoTerm = { Id: string, Code: string, Name: string, StartDate: string, EndDate: string };
 
 export class PurdueIoAPI {
-    public static async getCourse(abbreviation: string, number: string) {
-        const query = `https://api.purdue.io/odata/Courses?$filter=Subject/Abbreviation eq '${abbreviation}' and Number eq '${number}'`;
+    public static async getCourse(subject: PurdueIoSubject, number: string) {
+        const query = `https://api.purdue.io/odata/Courses?$filter=Subject/Abbreviation eq '${subject.Abbreviation}' and Number eq '${number}'`;
         const request = await axios.get(query);
         const course = request.data.value[0] as PurdueIoCourse;
-        if (!course) throw new InvalidCourseError(`Invalid Course ${abbreviation} ${number}`);
+        if (!course) throw new InvalidCourseError(`Invalid Course ${subject.Abbreviation} ${number}`);
         return course;
     }
 
@@ -26,11 +26,11 @@ export class PurdueIoAPI {
         const query = `https://api.purdue.io/odata/Terms?$orderby=EndDate asc`;
         const request = await axios.get(query);
         const terms = request.data.value as PurdueIoTerm[];
-        const term = terms.find(term => {
+        const term = terms.find(element => {
             const now = Date.now();
-            const date = Date.parse(term.EndDate);
+            const date = Date.parse(element.EndDate);
             return now < date;
-        });
+        }) as PurdueIoTerm;
         if (!term) throw new NotFoundError(`Could Not Find Current Term`);
         return term;
     }

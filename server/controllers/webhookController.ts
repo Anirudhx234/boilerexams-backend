@@ -11,10 +11,10 @@ const createCourseRequest = async (req: Request, res: Response) => {
 
     const { abbreviation, number } = req.body;
 
-    const purdueIoSubject = await PurdueIoAPI.getSubject(abbreviation.toUpperCase());
     const stringifiedNumber = String(number);
     const courseNumber = stringifiedNumber + "0".repeat(5 - stringifiedNumber.length);
-    const purdueIoCourse = await PurdueIoAPI.getCourse(abbreviation.toUpperCase(), courseNumber);
+    const purdueIoSubject = await PurdueIoAPI.getSubject(abbreviation.toUpperCase());
+    const purdueIoCourse = await PurdueIoAPI.getCourse(purdueIoSubject, courseNumber);
 
     const existingCourse: Prisma.CourseGetPayload<Prisma.CourseArgs> = await prisma.course.findFirst({
         where: {
@@ -23,10 +23,9 @@ const createCourseRequest = async (req: Request, res: Response) => {
                 { number: Number(purdueIoCourse.Number) }
             ]
         }
-    })
+    });
 
     if (existingCourse) throw new CourseAlreadyExistsError(`Existing Course Requested`);
-
 
     await prisma.courseRequest.upsert({
         where: {
@@ -140,7 +139,7 @@ const createQuestionBugReport = async (req: Request, res: Response) => {
 
     const embed = {
         url: url,
-        title: title,
+        title: title.replace("Exam 0", "Final Exam"),
         description: description,
         timestamp: new Date().toISOString(),
         color: 15548997,
@@ -167,11 +166,27 @@ const createFeatureRequest = async (req: Request, res: Response) => {
     res.status(200).send("Success");
 }
 
+const createFeedbackReport = async (req: Request, res: Response) => {
+    // ToDo Content Feedback Reporting and stuff
+
+
+    res.status(200).send();
+}
+
 const createWebhook = async (req: Request, res: Response) => {
     const { id, token, name, avatar, channelId } = req.body;
 
-    const webhook = await prisma.webhook.create({
-        data: {
+    const webhook = await prisma.webhook.upsert({
+        where: {
+            name: name
+        },
+        update: {
+            id: id,
+            token: token,
+            avatar: avatar,
+            channelId: channelId
+        },
+        create: {
             id: id,
             token: token,
             name: name,
@@ -215,22 +230,6 @@ const getWebhooks = async (req: Request, res: Response) => {
     res.status(200).send(webhooks);
 }
 
-const updateWebhook = async (req: Request, res: Response) => {
-    const { webhookId } = req.params;
-    const { avatar } = req.body;
-
-    const webhook = await prisma.webhook.update({
-        where: {
-            id: webhookId
-        },
-        data: {
-            avatar: avatar
-        }
-    });
-
-    res.status(200).send(webhook);
-}
-
 const deleteWebhook = async (req: Request, res: Response) => {
     const { webhookId } = req.params;
 
@@ -253,6 +252,5 @@ export {
     getCourseRequests,
     getWebhook,
     getWebhooks,
-    updateWebhook,
     deleteWebhook
 };

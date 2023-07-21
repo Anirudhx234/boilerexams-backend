@@ -9,7 +9,6 @@ import {
     getWebhooks,
     getCourseRequest,
     getCourseRequests,
-    updateWebhook,
     deleteWebhook
 } from "../controllers/webhookController";
 import asyncWrapper from "../middleware/wrappers/asyncWrapper"
@@ -33,8 +32,6 @@ app.get("/course-requests/:courseRequestId", asyncWrapper(getCourseRequest));
 app.get("/webhooks", asyncWrapper(getWebhooks));
 
 app.get("/webhooks/:webhookId", asyncWrapper(getWebhook));
-
-app.put("/webhooks/:webhookId", asyncWrapper(updateWebhook))
 
 app.delete("/webhooks/:webhookId", asyncWrapper(deleteWebhook));
 

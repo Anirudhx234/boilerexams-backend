@@ -7,10 +7,10 @@ const prisma = new PrismaClient();
 const createCourse = async (req, res) => {
     const { abbreviation, number, backgroundColor, graphicLink, published } = req.body
 
-    const purdueIoSubject = await PurdueIoAPI.getSubject(abbreviation.toUpperCase());
     const stringifiedNumber = String(number);
     const courseNumber = stringifiedNumber + "0".repeat(5 - stringifiedNumber.length);
-    const purdueIoCourse = await PurdueIoAPI.getCourse(abbreviation.toUpperCase(), courseNumber);
+    const purdueIoSubject = await PurdueIoAPI.getSubject(abbreviation.toUpperCase());
+    const purdueIoCourse = await PurdueIoAPI.getCourse(purdueIoSubject, courseNumber);
 
     const course = await prisma.course.create({
         data: {
@@ -36,10 +36,10 @@ const updateCourse = async (req, res) => {
     const { courseId } = req.params
     const { abbreviation, number, backgroundColor, graphicLink } = req.body;
 
-    const purdueIoSubject = await PurdueIoAPI.getSubject(abbreviation.toUpperCase());
     const stringifiedNumber = String(number);
     const courseNumber = stringifiedNumber + "0".repeat(5 - stringifiedNumber.length);
-    const purdueIoCourse = await PurdueIoAPI.getCourse(abbreviation, courseNumber);
+    const purdueIoSubject = await PurdueIoAPI.getSubject(abbreviation.toUpperCase());
+    const purdueIoCourse = await PurdueIoAPI.getCourse(purdueIoSubject, courseNumber);
 
     const course = await prisma.course.update({
         where: {
