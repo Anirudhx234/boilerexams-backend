@@ -1,4 +1,5 @@
 import express from 'express'
+import auth from '../middleware/auth/auth'
 import name_routes from "./name_routes"
 import parsing from "./parsing"
 import courses from "./courses"
@@ -12,6 +13,6 @@ import stats from "./stats"
 
 const app = express();
 
-app.use(name_routes, parsing, courses, exams, questions, resources, topics, users, webhooks, stats);
+app.use(auth, name_routes, parsing, courses, exams, questions, resources, topics, users, webhooks, stats);
 
 export default app

@@ -1,9 +1,15 @@
 import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
+import session from 'express-session'
+import connect from 'connect-pg-simple'
+import passport from 'passport'
 import routes from './routes/index'
 import errorHandler from './middleware/errorHandler';
 import { APIError } from './middleware/errors';
+
+require('./middleware/auth/discordPassport')
+require('./middleware/auth/googlePassport')
 
 const app = express();
 
@@ -22,14 +28,32 @@ const corsOptions = {
   exposedHeaders: ["set-cookie"]
 };
 
+
 app.use(cors(corsOptions));
 app.use(cookieParser());
 app.use(express.json());
+
+app.use(session({
+  store: new (connect(session))({
+    conString: process.env.DATABASE_URL,
+    tableName: 'Session',
+    createTableIfMissing: true
+  }),
+  secret: process.env.SESSION_SECRET,
+  resave: false,
+  saveUninitialized: false,
+  cookie: { httpOnly: true, secure: false, maxAge: 60*1000 },
+  name: 'sessionId'
+}))
+app.use(passport.initialize())
+app.use(passport.session())
+
 app.use(routes)
+
 app.use(errorHandler);
 
 app.get("/", (req, res) => {
-  res.send("Working");
+  res.send("Working")
 });
 
 const PORT = process.env.PORT || 8080;
