@@ -24,7 +24,7 @@ const sendPublished = asyncWrapper(async (req, res, next) => {
             return next()
         }
     }
-    req.published = [{ published: true }]
+    req.published = [{ published: true }, {published:false}]
     return next()
 })
 
