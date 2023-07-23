@@ -48,6 +48,8 @@ const uploadQuestions = async (courseId: string, examId: string, questions: any[
                 }
             },
             include: {
+                submissions:true,
+                topics:true,
                 answerChoices: {
                     orderBy: {
                         choiceIndex: 'asc'
