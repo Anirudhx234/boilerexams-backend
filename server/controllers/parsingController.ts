@@ -149,18 +149,18 @@ const parseFromLink = async (req, res) => {
 //2023_06_25_d25c2986903bb495d7edg
 
 const getIdResults = async (req, res) => {
-    const { examId, pdf_id, choices } = req.body
+    const { examId, pdfId, choices } = req.body
 
     const courseId = await checkExistingQuestions(examId)
     let content;
     try {
-        content = await getPDFResult(pdf_id);
+        content = await getPDFResult(pdfId);
     } catch (error) {
-        return res.status(202).send({ id: pdf_id, message: "PDF not processed yet, please try again later using id" })
+        return res.status(202).send({ id: pdfId, message: "PDF not processed yet, please try again later using id" })
     }
     const questions = parseQuestions(content, choices);
     const uploadedQuestions = await uploadQuestions(courseId, examId, questions)
-    res.status(200).send({ id: pdf_id, questions: uploadedQuestions })
+    res.status(200).send({ id: pdfId, questions: uploadedQuestions })
 }
 
 const attachPDFToExam = async (req, res) => {

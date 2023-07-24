@@ -12,11 +12,11 @@ import topics from "./topics"
 import users from "./users"
 import webhooks from "./webhooks"
 import stats from "./stats"
-
+import id_routes from "./id_routes"
 const app = express();
 
 app.use(sendPublished)
 
-app.use(auth, name_routes, parsing, courses, exams, questions, resources, topics, users, webhooks, stats);
+app.use(auth, name_routes, id_routes, parsing, courses, exams, questions, resources, topics, users, webhooks, stats);
 
 export default app
