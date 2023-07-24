@@ -9,18 +9,19 @@ import {
     updateSubmission,
 } from "../controllers/questionController"
 import asyncWrapper from "../middleware/wrappers/asyncWrapper"
+import authorizedHandler from '../middleware/auth/authorizedHandler';
 
 const app = express();
 
 app.get("/id/questions/:questionId", asyncWrapper(getQuestion))
 
-app.post("/courses/:courseId/exams/:examId/questions", asyncWrapper(createQuestion))
+app.post("/courses/:courseId/exams/:examId/questions", authorizedHandler, asyncWrapper(createQuestion))
 
-app.put("/courses/:courseId/exams/:examId/questions/:questionId", asyncWrapper(updateQuestion))
+app.put("/courses/:courseId/exams/:examId/questions/:questionId", authorizedHandler, asyncWrapper(updateQuestion))
 
-app.put("/questions/:questionId/togglePublished", asyncWrapper(toggleQuestionPublished))
+app.put("/questions/:questionId/togglePublished", authorizedHandler, asyncWrapper(toggleQuestionPublished))
 
-app.delete("/courses/:courseId/exams/:examId/questions/:questionId", asyncWrapper(deleteQuestion))
+app.delete("/courses/:courseId/exams/:examId/questions/:questionId", authorizedHandler, asyncWrapper(deleteQuestion))
 
 app.post("/questions/:questionId/submit", asyncWrapper(createQuestionSubmission))
 

@@ -6,15 +6,16 @@ import {
     toggleCoursePublished
 } from "../controllers/courseController"
 import asyncWrapper from "../middleware/wrappers/asyncWrapper"
+import authorizedHandler from '../middleware/auth/authorizedHandler';
 
 const app = express();
 
-app.post("/courses", asyncWrapper(createCourse))
+app.post("/courses", authorizedHandler, asyncWrapper(createCourse))
 
-app.put("/courses/:courseId", asyncWrapper(updateCourse))
+app.put("/courses/:courseId", authorizedHandler, asyncWrapper(updateCourse))
 
-app.put("/courses/:courseId/togglePublished", asyncWrapper(toggleCoursePublished))
+app.put("/courses/:courseId/togglePublished", authorizedHandler, asyncWrapper(toggleCoursePublished))
 
-app.delete("/courses/:courseId/hardDelete", asyncWrapper(deleteCourse))
+app.delete("/courses/:courseId/hardDelete", authorizedHandler, asyncWrapper(deleteCourse))
 
 export default app

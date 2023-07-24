@@ -28,7 +28,7 @@ passport.use(
     new Strategy({
         clientID: process.env.DISCORD_CLIENT_ID,
         clientSecret: process.env.DISCORD_CLIENT_SECRET,
-        callbackURL: 'http://localhost:8080/auth/discord/redirect',
+        callbackURL: `${process.env.API_URL}/auth/discord/redirect`,
         scope: ['identify', 'email']
     }, async (accessToken, refreshToken, profile, done) => {
         try {

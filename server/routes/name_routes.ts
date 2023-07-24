@@ -9,7 +9,6 @@ const app = express();
 const cache = require('../cache/caching');
 import _ from 'lodash'
 import asyncWrapper from '../middleware/wrappers/asyncWrapper'
-import sendPublished from "../middleware/sendPublished";
 
 import validCourseRegex from '../utils/validCourseRegex'
 import authorizedHandler from "../middleware/auth/authorizedHandler";
