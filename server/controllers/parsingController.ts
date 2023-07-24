@@ -70,7 +70,7 @@ const parseFromFile = async (req, res) => {
     const pdf = await axios.request(config)
     const id = pdf.data.pdf_id
 
-    await savePDFtoExam(examId, id, req.file.buffer)
+    await savePDFtoExam(examId, req.file.buffer, id)
 
     let content;
     try {
@@ -120,7 +120,7 @@ const parseFromLink = async (req, res) => {
     })
     const id = pdf.data.pdf_id
 
-    await savePDFtoExam(examId, id, file.data)
+    await savePDFtoExam(examId, file.data, id)
 
     let content;
     try {
@@ -163,8 +163,19 @@ const getIdResults = async (req, res) => {
     res.status(200).send({ id: pdfId, questions: uploadedQuestions })
 }
 
+const attachPDFToExam = async (req, res) => {
+    const { examId } = req.params
+
+    if (!req.file) {
+        throw new Error("No file attached")
+    }
+    const exam = await savePDFtoExam(examId, req.file.buffer)
+    res.status(200).send(exam)
+}
+
 export {
     parseFromFile,
     parseFromLink,
-    getIdResults
+    getIdResults,
+    attachPDFToExam
 }

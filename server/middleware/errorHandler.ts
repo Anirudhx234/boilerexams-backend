@@ -39,7 +39,7 @@ const errorHandler = (error, req, res, next) => {
     }
 
     if (error instanceof APIError) {
-        return res.status(error.errorCode).status({message: error.message})
+        return res.status(error.errorCode).json({message: error.message})
     }
 
     return res.status(400).json({message: error.message})

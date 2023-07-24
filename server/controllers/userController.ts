@@ -15,6 +15,18 @@ const getAllUsers = async (req, res) => {
     res.status(200).send(users)
 }
 
+const getUserMe = async (req, res) => {
+    const user = await prisma.user.findUnique({
+        where: {
+            id: req.user.id
+        },
+        include: {
+            courses: true
+        }
+    })
+    return res.status(200).send(user)
+}
+
 const getUser = async (req, res) => {
     const { userId } = req.params
     const user = await prisma.user.findUnique({
@@ -35,7 +47,7 @@ const updateUserRole = async (req, res) => {
     const { userId } = req.params
     const { role } = req.body
 
-    if (!role || typeof(role) !== "string" || !Role[role.toUpperCase() as keyof typeof Role]) {
+    if (!role || typeof (role) !== "string" || !Role[role.toUpperCase() as keyof typeof Role]) {
         throw new Error("Role must be USER, CONTENT, or ADMIN")
     }
     const user = await prisma.user.update({
@@ -101,6 +113,7 @@ const deleteUser = async (req, res) => {
 
 export {
     getAllUsers,
+    getUserMe,
     getUser,
     updateUserRole,
     assignUserCourses,

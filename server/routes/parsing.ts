@@ -1,7 +1,8 @@
 import express from 'express'
 import multer from 'multer'
 import asyncWrapper from "../middleware/wrappers/asyncWrapper"
-import { getIdResults, parseFromFile, parseFromLink } from '../controllers/parsingController';
+import { getIdResults, parseFromFile, parseFromLink, attachPDFToExam } from '../controllers/parsingController';
+import authorizedHandler from '../middleware/auth/authorizedHandler';
 
 const app = express();
 const storage = multer.memoryStorage()
@@ -22,10 +23,12 @@ const upload = multer({
     }
 });
 
-app.post("/convert-link", asyncWrapper(parseFromLink))
+app.post("/convert-link", authorizedHandler, asyncWrapper(parseFromLink))
 
-app.post("/convert-file", upload.single("pdf"), asyncWrapper(parseFromFile))
+app.post("/convert-file", authorizedHandler, upload.single("pdf"), asyncWrapper(parseFromFile))
 
-app.post("/convert-id", asyncWrapper(getIdResults))
+app.post("/convert-id", authorizedHandler, asyncWrapper(getIdResults))
+
+app.post("/exams/:examId/attachPDF", authorizedHandler, upload.single("pdf"), asyncWrapper(attachPDFToExam))
 
 export default app

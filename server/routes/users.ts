@@ -1,23 +1,27 @@
 import express from 'express'
 import {
     getAllUsers,
+    getUserMe,
     getUser,
     updateUserRole,
     assignUserCourses,
     deleteUser
 } from "../controllers/userController"
 import asyncWrapper from "../middleware/wrappers/asyncWrapper"
+import authorizedHandler from '../middleware/auth/authorizedHandler';
 
 const app = express();
 
-app.get("/users/all", asyncWrapper(getAllUsers))
+app.get("/users/all", authorizedHandler, asyncWrapper(getAllUsers))
 
-app.get("/users/:userId", asyncWrapper(getUser))
+app.get("/users/me", authorizedHandler, asyncWrapper(getUserMe))
 
-app.put("/users/:userId/updateRole", asyncWrapper(updateUserRole))
+app.get("/users/:userId", authorizedHandler, asyncWrapper(getUser))
 
-app.put("/users/:userId/assignCourses", asyncWrapper(assignUserCourses))
+app.put("/users/:userId/updateRole", authorizedHandler, asyncWrapper(updateUserRole))
 
-app.delete("/users/:userId", asyncWrapper(deleteUser))
+app.put("/users/:userId/assignCourses", authorizedHandler, asyncWrapper(assignUserCourses))
+
+app.delete("/users/:userId", authorizedHandler, asyncWrapper(deleteUser))
 
 export default app

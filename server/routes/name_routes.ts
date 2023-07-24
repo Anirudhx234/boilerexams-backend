@@ -9,11 +9,10 @@ const app = express();
 const cache = require('../cache/caching');
 import _ from 'lodash'
 import asyncWrapper from '../middleware/wrappers/asyncWrapper'
-import sendPublished from "../middleware/sendPublished";
 
 import validCourseRegex from '../utils/validCourseRegex'
+import authorizedHandler from "../middleware/auth/authorizedHandler";
 
-app.use(sendPublished)
 // All courses metadata, with no relations
 app.get("/courses", asyncWrapper(async (req, res) => {
     let courses = await prisma.course.findMany({
