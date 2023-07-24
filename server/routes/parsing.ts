@@ -1,7 +1,7 @@
 import express from 'express'
 import multer from 'multer'
 import asyncWrapper from "../middleware/wrappers/asyncWrapper"
-import { getIdResults, parseFromFile, parseFromLink } from '../controllers/parsingController';
+import { getIdResults, parseFromFile, parseFromLink, attachPDFToExam } from '../controllers/parsingController';
 
 const app = express();
 const storage = multer.memoryStorage()
@@ -27,5 +27,7 @@ app.post("/convert-link", asyncWrapper(parseFromLink))
 app.post("/convert-file", upload.single("pdf"), asyncWrapper(parseFromFile))
 
 app.post("/convert-id", asyncWrapper(getIdResults))
+
+app.post("/exams/:examId/attachPDF", upload.single("pdf"), asyncWrapper(attachPDFToExam))
 
 export default app

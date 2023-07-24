@@ -30,7 +30,6 @@ passport.use(
         clientSecret: process.env.GOOGLE_CLIENT_SECRET,
         callbackURL: 'http://localhost:8080/auth/google/redirect',
         scope: [ 'profile', 'email' ],
-        state: true
     }, async (accessToken, refreshToken, profile, done) => {
         try {
             const user = await prisma.user.findUnique({
