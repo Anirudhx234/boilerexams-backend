@@ -11,6 +11,7 @@ model Course {
   id              String     @id @default(uuid())
   name            String     @unique
   backgroundColor String     @default("")
+  secondaryColor  String     @default("")
   graphicLink     String     @default("")
   number          Int
   published       Boolean    @default(false)
