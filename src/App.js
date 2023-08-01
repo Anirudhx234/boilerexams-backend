@@ -3,34 +3,32 @@ import axios from 'axios';
 import './App.css';
 
 function App() {
-
-  //const API_URL = "http://localhost:8080";
-  const API_URL = "https://testing-387121.uc.r.appspot.com"
+  axios.defaults.withCredentials = true;
+  const API_URL = "http://localhost:8080";
+  //const API_URL = "https://testing-387121.uc.r.appspot.com"
 
   const login = async () => {
     window.open(`${API_URL}/auth/discord/login`, "_self");
   }
 
   const getCourses = async () => {
-    await axios.get(`${API_URL}/courses`, { withCredentials: true })
+    await axios.get(`${API_URL}/courses`)
       .then((resp) => alert("success"))
-      .catch((error) => console.log("error"))
+      .catch((error) => alert("error"))
   }
 
   const logout = async () => {
-    await axios.get(`${API_URL}/auth/logout`, { withCredentials: true })
-      .then((resp) => alert(resp.data))
-      .catch((err) => alert("something went wrong"))
+    await axios.get(`${API_URL}/auth/logout`)
   }
 
   const test = async () => {
-    await axios.get(`${API_URL}/auth/test`, { withCredentials: true })
+    await axios.get(`${API_URL}/auth/test`)
       .then((resp) => alert(resp.data))
       .catch((err) => alert("Unauthorized"))
   }
 
   const getMe = async () => {
-    await axios.get(`${API_URL}/users/me`, { withCredentials: true })
+    await axios.get(`${API_URL}/users/me`)
       .then((resp) => alert(resp.data.email))
       .catch((err) => alert("Unauthorized"))
   }

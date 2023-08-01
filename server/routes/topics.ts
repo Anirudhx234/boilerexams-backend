@@ -5,7 +5,7 @@ import {
     deleteTopic
 } from "../controllers/topicController"
 import asyncWrapper from "../middleware/wrappers/asyncWrapper"
-import authorizedHandler from '../middleware/auth/authorizedHandler';
+import authorizedHandler from '../middleware/auth/authHandler';
 
 const app = express();
 

@@ -11,7 +11,7 @@ import _ from 'lodash'
 import asyncWrapper from '../middleware/wrappers/asyncWrapper'
 
 import validCourseRegex from '../utils/validCourseRegex'
-import authorizedHandler from "../middleware/auth/authorizedHandler";
+import authorizedHandler from "../middleware/auth/authHandler";
 
 // All courses metadata, with no relations
 app.get("/courses", asyncWrapper(async (req, res) => {

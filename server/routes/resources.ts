@@ -9,7 +9,7 @@ import {
     deleteResource
 } from "../controllers/resourceController"
 import asyncWrapper from "../middleware/wrappers/asyncWrapper"
-import authorizedHandler from '../middleware/auth/authorizedHandler';
+import authorizedHandler from '../middleware/auth/authHandler';
 
 const app = express();
 const storage = multer.memoryStorage()

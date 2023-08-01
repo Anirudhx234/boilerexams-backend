@@ -1,7 +1,8 @@
 import express from 'express'
 import passport from 'passport'
-import authorizedHandler from './authorizedHandler'
+import authorizedHandler from './authHandler'
 import { URL } from 'url'
+import authTester from './authTester'
 
 const app = express()
 
@@ -46,18 +47,20 @@ app.get("/auth/google/login", (req, res, next) => {
 
 app.get("/auth/google/redirect", passport.authenticate('google'), redirect);
 
-app.get('/auth/logout', authorizedHandler, (req, res, next) => {
+app.get('/auth/logout', authTester, (req, res, next) => {
     // Extend req later
     //@ts-ignore
     req.logOut(error => {
         if (error) {
             next(error)
         }
-        res.status(200).send("Logged out")
+        const url = redirectUrl(req)
+        const { redirect } = JSON.parse(Buffer.from(url, 'base64').toString())
+        return res.json({ redirectUrl: redirect })
     })
 })
 
-app.get("/auth/test", authorizedHandler, (req, res) => {
+app.get("/auth/test", authTester, (req, res) => {
     return res.status(200).send("Success")
 })
 

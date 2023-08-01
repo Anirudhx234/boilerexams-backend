@@ -2,7 +2,7 @@ import express from 'express'
 import multer from 'multer'
 import asyncWrapper from "../middleware/wrappers/asyncWrapper"
 import { getIdResults, parseFromFile, parseFromLink, attachPDFToExam } from '../controllers/parsingController';
-import authorizedHandler from '../middleware/auth/authorizedHandler';
+import authorizedHandler from '../middleware/auth/authHandler';
 
 const app = express();
 const storage = multer.memoryStorage()
