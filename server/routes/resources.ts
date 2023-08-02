@@ -9,7 +9,7 @@ import {
     deleteResource
 } from "../controllers/resourceController"
 import asyncWrapper from "../middleware/wrappers/asyncWrapper"
-import authorizedHandler from '../middleware/auth/authHandler';
+import authHandler from '../middleware/auth/authHandler';
 
 const app = express();
 const storage = multer.memoryStorage()
@@ -32,14 +32,14 @@ const upload = multer({
 
 app.get("/resources/:resourceId", asyncWrapper(getResource))
 
-app.post("/resources/images", authorizedHandler, upload.single('image'), asyncWrapper(createImageResource))
+app.post("/resources/images", authHandler, upload.single('image'), asyncWrapper(createImageResource))
 
-app.post("/resources/images/link", authorizedHandler, asyncWrapper(createImageResourceFromLink))
+app.post("/resources/images/link", authHandler, asyncWrapper(createImageResourceFromLink))
 
-app.post("/resources/codes", authorizedHandler, asyncWrapper(createCodeResource))
+app.post("/resources/codes", authHandler, asyncWrapper(createCodeResource))
 
-app.put("/resources/:resourceId/code", authorizedHandler, asyncWrapper(updateCodeResource))
+app.put("/resources/:resourceId/code", authHandler, asyncWrapper(updateCodeResource))
 
-app.delete("/resources/:resourceId", authorizedHandler, asyncWrapper(deleteResource))
+app.delete("/resources/:resourceId", authHandler, asyncWrapper(deleteResource))
 
 export default app

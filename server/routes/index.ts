@@ -1,6 +1,6 @@
 import express from 'express'
 import auth from '../middleware/auth/auth'
-import sendPublished from "../middleware/sendPublished";
+import sendPublished from "../middleware/auth/sendPublished";
 
 import name_routes from "./name_routes"
 import parsing from "./parsing"
@@ -14,8 +14,6 @@ import webhooks from "./webhooks"
 import stats from "./stats"
 import id_routes from "./id_routes"
 const app = express();
-
-app.use(sendPublished)
 
 app.use(auth, name_routes, id_routes, parsing, courses, exams, questions, resources, topics, users, webhooks, stats);
 

@@ -1,6 +1,5 @@
 import express from 'express'
 import passport from 'passport'
-import authorizedHandler from './authHandler'
 import { URL } from 'url'
 import authTester from './authTester'
 

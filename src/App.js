@@ -13,7 +13,7 @@ function App() {
 
   const getCourses = async () => {
     await axios.get(`${API_URL}/courses`)
-      .then((resp) => alert("success"))
+      .then((resp) => console.log(resp))
       .catch((error) => alert("error"))
   }
 

@@ -5,14 +5,14 @@ import {
     deleteTopic
 } from "../controllers/topicController"
 import asyncWrapper from "../middleware/wrappers/asyncWrapper"
-import authorizedHandler from '../middleware/auth/authHandler';
+import authHandler from '../middleware/auth/authHandler';
 
 const app = express();
 
-app.post("/courses/:courseId/topics", authorizedHandler, asyncWrapper(createTopic))
+app.post("/courses/:courseId/topics", authHandler, asyncWrapper(createTopic))
 
-app.put("/topics/:topicId", authorizedHandler, asyncWrapper(updateTopic))
+app.put("/topics/:topicId", authHandler, asyncWrapper(updateTopic))
 
-app.delete("/topics/:topicId", authorizedHandler, asyncWrapper(deleteTopic))
+app.delete("/topics/:topicId", authHandler, asyncWrapper(deleteTopic))
 
 export default app

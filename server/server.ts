@@ -8,13 +8,13 @@ import routes from './routes/index'
 import errorHandler from './middleware/errorHandler';
 import { APIError } from './middleware/errors';
 
-require('./middleware/auth/discordPassport')
-require('./middleware/auth/googlePassport')
+require('./middleware/auth/passport/discordPassport')
+require('./middleware/auth/passport/googlePassport')
 
 const app = express();
 
 const vercelRegexp = new RegExp('https:\/\/boilerexams-frontend-[^ ]*-boilerexams.vercel.app');
-const prodRegexp = new RegExp('https:\/\/*.boilerexams.com')
+const prodRegexp = new RegExp('https:\/\/[^ ]*.boilerexams.com')
 
 const allowList = ["https://boilerexams-frontend.vercel.app", "https://boilerexams.com", "http://localhost:3000", "http://127.0.0.1:3000"];
 
@@ -35,7 +35,7 @@ app.use(cors(corsOptions));
 app.use(cookieParser());
 app.use(express.json());
 
-app.set('trust proxy', 1)
+//app.set('trust proxy', 1)
 app.use(session({
   store: new (connect(session))({
     conString: process.env.DATABASE_URL,
@@ -45,7 +45,7 @@ app.use(session({
   secret: process.env.SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
-  cookie: { httpOnly: true, sameSite: 'none', secure: true, maxAge: 7 * 24 * 60 * 60 * 1000 },
+  cookie: { httpOnly: true, maxAge: 7 * 24 * 60 * 60 * 1000 },
   name: 'sessionId'
 }))
 app.use(passport.initialize())

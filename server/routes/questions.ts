@@ -9,19 +9,19 @@ import {
     updateSubmission,
 } from "../controllers/questionController"
 import asyncWrapper from "../middleware/wrappers/asyncWrapper"
-import authorizedHandler from '../middleware/auth/authHandler';
+import authHandler from '../middleware/auth/authHandler';
 
 const app = express();
 
-app.get("/id/questions/:questionId", asyncWrapper(getQuestion))
+app.get("/id/questions/:questionId", authHandler, asyncWrapper(getQuestion))
 
-app.post("/courses/:courseId/exams/:examId/questions", authorizedHandler, asyncWrapper(createQuestion))
+app.post("/courses/:courseId/exams/:examId/questions", authHandler, asyncWrapper(createQuestion))
 
-app.put("/courses/:courseId/exams/:examId/questions/:questionId", authorizedHandler, asyncWrapper(updateQuestion))
+app.put("/courses/:courseId/exams/:examId/questions/:questionId", authHandler, asyncWrapper(updateQuestion))
 
-app.put("/questions/:questionId/togglePublished", authorizedHandler, asyncWrapper(toggleQuestionPublished))
+app.put("/questions/:questionId/togglePublished", authHandler, asyncWrapper(toggleQuestionPublished))
 
-app.delete("/courses/:courseId/exams/:examId/questions/:questionId", authorizedHandler, asyncWrapper(deleteQuestion))
+app.delete("/courses/:courseId/exams/:examId/questions/:questionId", authHandler, asyncWrapper(deleteQuestion))
 
 app.post("/questions/:questionId/submit", asyncWrapper(createQuestionSubmission))
 

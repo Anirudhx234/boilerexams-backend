@@ -11,10 +11,11 @@ import _ from 'lodash'
 import asyncWrapper from '../middleware/wrappers/asyncWrapper'
 
 import validCourseRegex from '../utils/validCourseRegex'
-import authorizedHandler from "../middleware/auth/authHandler";
+
+import sendPublished from "../middleware/auth/sendPublished"
 
 // All courses metadata, with no relations
-app.get("/courses", asyncWrapper(async (req, res) => {
+app.get("/courses", sendPublished, asyncWrapper(async (req, res) => {
     let courses = await prisma.course.findMany({
         where: {
             OR: req.published
@@ -42,7 +43,7 @@ app.get("/courses", asyncWrapper(async (req, res) => {
 }));
 
 // All topics metadata, no relations
-app.get("/topics", asyncWrapper(async (req, res) => {
+app.get("/topics", sendPublished, asyncWrapper(async (req, res) => {
     const topics = await prisma.topic.findMany()
     if (!topics.length) {
         throw new NotFoundError("No topics found")
@@ -51,7 +52,7 @@ app.get("/topics", asyncWrapper(async (req, res) => {
 }));
 
 // All courses with relations
-app.get("/courses/all", asyncWrapper(async (req, res) => {
+app.get("/courses/all", sendPublished, asyncWrapper(async (req, res) => {
     const courses = await prisma.course.findMany({
         include: {
             topics: true,
@@ -95,7 +96,7 @@ app.get("/courses/all", asyncWrapper(async (req, res) => {
 }));
 
 // Metadata for specific course, no relations
-app.get("/courses/:courseAbbrev", asyncWrapper(async (req, res) => {
+app.get("/courses/:courseAbbrev", sendPublished, asyncWrapper(async (req, res) => {
     const { courseAbbrev } = req.params
     const { abbreviation, number } = validCourseRegex(courseAbbrev);
 
@@ -113,7 +114,7 @@ app.get("/courses/:courseAbbrev", asyncWrapper(async (req, res) => {
 }));
 
 // All topics for a specific course, no other relations
-app.get("/courses/:courseAbbrev/topics", asyncWrapper(async (req, res) => {
+app.get("/courses/:courseAbbrev/topics", sendPublished, asyncWrapper(async (req, res) => {
     const { courseAbbrev } = req.params;
     const { abbreviation, number } = validCourseRegex(courseAbbrev);
 
@@ -136,7 +137,7 @@ app.get("/courses/:courseAbbrev/topics", asyncWrapper(async (req, res) => {
 
 // All questions with topics included for a specific topic in a course.
 // Includes questions from other courses.
-app.get("/courses/:courseAbbrev/topics/questions", asyncWrapper(async (req, res) => {
+app.get("/courses/:courseAbbrev/topics/questions", sendPublished, asyncWrapper(async (req, res) => {
     const { courseAbbrev } = req.params;
     const { abbreviation, number } = validCourseRegex(courseAbbrev);
 
@@ -170,7 +171,7 @@ app.get("/courses/:courseAbbrev/topics/questions", asyncWrapper(async (req, res)
 }));
 
 // All exams with semester (no questions)
-app.get("/courses/:courseAbbrev/exams", asyncWrapper(async (req, res) => {
+app.get("/courses/:courseAbbrev/exams", sendPublished, asyncWrapper(async (req, res) => {
     const { courseAbbrev } = req.params;
     const { abbreviation, number } = validCourseRegex(courseAbbrev);
 
@@ -201,7 +202,7 @@ app.get("/courses/:courseAbbrev/exams", asyncWrapper(async (req, res) => {
 }));
 
 // All exams with question ids and numbers
-app.get("/courses/:courseAbbrev/exams/questions", asyncWrapper(async (req, res) => {
+app.get("/courses/:courseAbbrev/exams/questions", sendPublished, asyncWrapper(async (req, res) => {
     const { courseAbbrev } = req.params;
     const { abbreviation, number } = validCourseRegex(courseAbbrev);
 
@@ -244,7 +245,7 @@ app.get("/courses/:courseAbbrev/exams/questions", asyncWrapper(async (req, res) 
 }))
 
 // Full question information for specific topic
-app.get("/courses/:courseAbbrev/topics/:topicName/questions", asyncWrapper(async (req, res) => {
+app.get("/courses/:courseAbbrev/topics/:topicName/questions", sendPublished, asyncWrapper(async (req, res) => {
     const { topicName } = req.params;
     const topic = await prisma.topic.findUnique({
         where: {
@@ -291,7 +292,7 @@ app.get("/courses/:courseAbbrev/topics/:topicName/questions", asyncWrapper(async
 }));
 
 // All questions with id, number, and topics for an exam
-app.get("/courses/:courseAbbrev/exams/:season-:year-:examNumber", asyncWrapper(async (req, res) => {
+app.get("/courses/:courseAbbrev/exams/:season-:year-:examNumber", sendPublished, asyncWrapper(async (req, res) => {
     const { courseAbbrev, season, year, examNumber } = req.params;
     const { abbreviation, number } = validCourseRegex(courseAbbrev);
     const season_type = Season[season.toUpperCase() as keyof typeof Season]
@@ -354,7 +355,7 @@ app.get("/courses/:courseAbbrev/exams/:season-:year-:examNumber", asyncWrapper(a
 }))
 
 // All questions for a specific exam, includes topics within questions.
-app.get("/courses/:courseAbbrev/exams/:season-:year-:examNumber/questions", asyncWrapper(async (req, res) => {
+app.get("/courses/:courseAbbrev/exams/:season-:year-:examNumber/questions", sendPublished, asyncWrapper(async (req, res) => {
     const { courseAbbrev, season, year, examNumber } = req.params
     const { abbreviation, number } = validCourseRegex(courseAbbrev);
     const season_type = Season[season.toUpperCase() as keyof typeof Season]
