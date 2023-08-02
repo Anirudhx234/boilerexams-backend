@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client'
+import { PrismaClient, AccountType } from '@prisma/client'
 import passport from 'passport'
 import { Strategy } from 'passport-google-oauth20'
 
@@ -32,30 +32,43 @@ passport.use(
         scope: [ 'profile', 'email' ],
     }, async (accessToken, refreshToken, profile, done) => {
         try {
-            const user = await prisma.user.findUnique({
+            const user = await prisma.user.findFirst({
                 where: {
-                    googleId: profile.id
+                    accountType: AccountType.GOOGLE,
+                    accountId: profile.id
                 }
             })
+
+            let profilePicture: string;
+            if (profile?.photos[0]?.value) {
+                profilePicture = profile.photos[0].value
+            }
+            else {
+                profilePicture = "https://upload.wikimedia.org/wikipedia/commons/2/2c/Default_pfp.svg"
+            }
 
             if (!user) {
                 const newUser = await prisma.user.create({
                     data: {
-                        googleId: profile.id,
                         name: profile.displayName,
-                        email: profile.emails[0].value
+                        email: profile.emails[0].value,
+                        profilePicture: profilePicture,
+                        accountType: AccountType.GOOGLE,
+                        accountId: profile.id
                     }
                 })
                 done(null, newUser)
             }
             else {
-                await prisma.user.update({
+                await prisma.user.updateMany({
                     where: {
-                        googleId: profile.id
+                        accountType: AccountType.GOOGLE,
+                        accountId: profile.id
                     },
                     data: {
                         name: profile.displayName,
-                        email: profile.emails[0].value
+                        email: profile.emails[0].value,
+                        profilePicture: profilePicture
                     }
                 })
                 done(null, user)

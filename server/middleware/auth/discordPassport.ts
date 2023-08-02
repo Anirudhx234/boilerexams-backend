@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client'
+import { PrismaClient, AccountType } from '@prisma/client'
 import passport from 'passport'
 import { Strategy } from 'passport-discord'
 
@@ -32,30 +32,43 @@ passport.use(
         scope: ['identify', 'email']
     }, async (accessToken, refreshToken, profile, done) => {
         try {
-            const user = await prisma.user.findUnique({
+            const user = await prisma.user.findFirst({
                 where: {
-                    discordId: profile.id
+                    accountType: AccountType.DISCORD,
+                    accountId: profile.id
                 }
             })
+
+            let profilePicture: string;
+            if (profile.avatar) {
+                profilePicture = `https://cdn.discordapp.com/avatars/${profile.id}/${profile.avatar}`
+            }
+            else {
+                profilePicture = "https://upload.wikimedia.org/wikipedia/commons/2/2c/Default_pfp.svg"
+            }
 
             if (!user) {
                 const newUser = await prisma.user.create({
                     data: {
-                        discordId: profile.id,
                         name: profile.username,
-                        email: profile.email
+                        email: profile.email,
+                        profilePicture: profilePicture,
+                        accountType: AccountType.DISCORD,
+                        accountId: profile.id
                     }
                 })
                 done(null, newUser)
             }
             else {
-                await prisma.user.update({
+                await prisma.user.updateMany({
                     where: {
-                        discordId: profile.id
+                        accountType: AccountType.DISCORD,
+                        accountId: profile.id
                     },
                     data: {
                         name: profile.username,
-                        email: profile.email
+                        email: profile.email,
+                        profilePicture: profilePicture
                     }
                 })
                 done(null, user)

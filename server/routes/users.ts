@@ -9,12 +9,13 @@ import {
 } from "../controllers/userController"
 import asyncWrapper from "../middleware/wrappers/asyncWrapper"
 import authorizedHandler from '../middleware/auth/authHandler';
+import authTester from '../middleware/auth/authTester';
 
 const app = express();
 
 app.get("/users/all", authorizedHandler, asyncWrapper(getAllUsers))
 
-app.get("/users/me", authorizedHandler, asyncWrapper(getUserMe))
+app.get("/users/me", authTester, asyncWrapper(getUserMe))
 
 app.get("/users/:userId", authorizedHandler, asyncWrapper(getUser))
 

@@ -13,12 +13,14 @@ require('./middleware/auth/googlePassport')
 
 const app = express();
 
-const regexp = new RegExp('https:\/\/boilerexams-frontend-[^ ]*-boilerexams.vercel.app');
-const allowList = ["https://boilerexams-frontend.vercel.app", "http://localhost:3000", "http://127.0.0.1:3000"];
+const vercelRegexp = new RegExp('https:\/\/boilerexams-frontend-[^ ]*-boilerexams.vercel.app');
+const prodRegexp = new RegExp('https:\/\/*.boilerexams.com')
+
+const allowList = ["https://boilerexams-frontend.vercel.app", "https://boilerexams.com", "http://localhost:3000", "http://127.0.0.1:3000"];
 
 const corsOptions = {
   origin: (origin: any, cb: any) => {
-    if (allowList.includes(origin) || !origin || regexp.test(origin)) {
+    if (allowList.includes(origin) || !origin || vercelRegexp.test(origin) || prodRegexp.test(origin)) {
       cb(null, true)
     } else {
       cb(new APIError('Not allowed by CORS', 403))

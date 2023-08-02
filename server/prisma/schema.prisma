@@ -154,15 +154,14 @@ model CourseRequest {
 }
 
 model User {
-  id            String    @id @default(uuid())
-  name          String?
-  email         String?   @unique
-  emailVerified DateTime?
-  image         String?
-  role          Role      @default(USER)
-  discordId     String?   @unique
-  googleId      String?   @unique
-  courses       Course[]  @relation("CourseToUser")
+  id             String      @id @default(uuid())
+  name           String?
+  email          String?     @unique
+  profilePicture String?
+  role           Role        @default(USER)
+  accountType    AccountType
+  accountId      String?     @unique
+  courses        Course[]    @relation("CourseToUser")
 }
 
 model Session {
@@ -171,6 +170,11 @@ model Session {
   expire DateTime @db.Timestamp(6)
 
   @@index([expire], map: "IDX_session_expire")
+}
+
+enum AccountType {
+  DISCORD
+  GOOGLE
 }
 
 enum ResourceType {
