@@ -30,13 +30,11 @@ const corsOptions = {
   exposedHeaders: ["set-cookie"]
 };
 
-
 app.use(cors(corsOptions));
 app.use(cookieParser());
 app.use(express.json());
 
-app.set('trust proxy', 1)
-app.use(session({
+const sessionOptions = {
   store: new (connect(session))({
     conString: process.env.DATABASE_URL,
     tableName: 'Session',
@@ -45,19 +43,25 @@ app.use(session({
   secret: process.env.SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
-  cookie: { httpOnly: true, sameSite: 'none', secure: true, maxAge: 7 * 24 * 60 * 60 * 1000 },
+  cookie: { httpOnly: true, sameSite: "strict", secure: false, maxAge: 7 * 24 * 60 * 60 * 1000 },
   name: 'sessionId'
-}))
+}
+
+if (process.env.NODE_ENV === "production") {
+  sessionOptions.cookie.secure = true
+}
+
+app.use(session(sessionOptions))
 app.use(passport.initialize())
 app.use(passport.session())
-
-app.use(routes)
-
-app.use(errorHandler);
 
 app.get("/", (req, res) => {
   res.send("Working")
 });
+
+app.use(routes)
+
+app.use(errorHandler);
 
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {

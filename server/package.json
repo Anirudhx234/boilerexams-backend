@@ -5,12 +5,12 @@
   "main": "app.js",
   "scripts": {
     "deploy": "dotenv -e .env.production npx prisma migrate deploy",
-    "dev": "nodemon server.ts",
+    "dev": "SET NODE_ENV=development&nodemon server.ts",
     "lint": "npx eslint .",
     "postinstall": "npx prisma generate",
     "reset": "dotenv -e .env npx prisma migrate reset",
     "seed": "node prisma/seed.ts",
-    "start": "ts-node server.ts"
+    "start": "SET NODE_ENV=production&ts-node server.ts"
   },
   "keywords": [],
   "author": "",

@@ -4,8 +4,8 @@ import './App.css';
 
 function App() {
   axios.defaults.withCredentials = true;
-  //const API_URL = "http://localhost:8080";
-  const API_URL = "https://testing-387121.uc.r.appspot.com"
+  const API_URL = "http://localhost:8080";
+  //const API_URL = "https://testing-387121.uc.r.appspot.com"
 
   const login = async () => {
     window.open(`${API_URL}/auth/discord/login`, "_self");
@@ -33,6 +33,10 @@ function App() {
       .catch((err) => alert("Unauthorized"))
   }
 
+  const base = async () => {
+    await axios.get(`${API_URL}/`)
+  }
+
   return (
     <div>
       <button onClick={login}></button>
@@ -40,6 +44,7 @@ function App() {
       <button onClick={logout}></button>
       <button onClick={test}></button>
       <button onClick={getMe}></button>
+      <button onClick={base}></button>
     </div>
   );
 }
