@@ -10,7 +10,7 @@
     "postinstall": "npx prisma generate",
     "reset": "dotenv -e .env npx prisma migrate reset",
     "seed": "node prisma/seed.ts",
-    "start": "SET NODE_ENV=production&ts-node server.ts"
+    "start": "NODE_ENV=production&ts-node server.ts"
   },
   "keywords": [],
   "author": "",

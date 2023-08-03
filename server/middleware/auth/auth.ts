@@ -60,7 +60,7 @@ app.get('/auth/logout', authTester, (req, res, next) => {
 })
 
 app.get("/auth/test", authTester, (req, res) => {
-    return res.status(200).send("Success")
+    return res.status(200).send("Successfully authenticated")
 })
 
 export default app
