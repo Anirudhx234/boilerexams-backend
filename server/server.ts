@@ -35,7 +35,7 @@ app.use(cors(corsOptions));
 app.use(cookieParser());
 app.use(express.json());
 
-//app.set('trust proxy', 1)
+app.set('trust proxy', 1)
 app.use(session({
   store: new (connect(session))({
     conString: process.env.DATABASE_URL,
@@ -45,7 +45,7 @@ app.use(session({
   secret: process.env.SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
-  cookie: { httpOnly: true, maxAge: 7 * 24 * 60 * 60 * 1000 },
+  cookie: { httpOnly: true, sameSite: 'none', secure: true, maxAge: 7 * 24 * 60 * 60 * 1000 },
   name: 'sessionId'
 }))
 app.use(passport.initialize())

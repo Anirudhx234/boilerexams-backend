@@ -4,8 +4,8 @@ import './App.css';
 
 function App() {
   axios.defaults.withCredentials = true;
-  const API_URL = "http://localhost:8080";
-  //const API_URL = "https://testing-387121.uc.r.appspot.com"
+  //const API_URL = "http://localhost:8080";
+  const API_URL = "https://testing-387121.uc.r.appspot.com"
 
   const login = async () => {
     window.open(`${API_URL}/auth/discord/login`, "_self");

@@ -7,7 +7,7 @@ const authTester = asyncWrapper(async (req, res, next) => {
         req.session.touch();
         return next()
     }
-    throw new APIError("Unauthorized", 401)
+    throw new APIError("Unauthenticated", 401)
 })
 
 export default authTester

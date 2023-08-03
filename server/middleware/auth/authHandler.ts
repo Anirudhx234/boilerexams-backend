@@ -9,7 +9,7 @@ const authHandler = asyncWrapper(async (req, res, next) => {
             return next()
         }
     }
-    throw new APIError("Unauthorized", 401)
+    throw new APIError("Unauthorized", 403)
 })
 
 export default authHandler
