@@ -1,14 +1,14 @@
-import { PrismaClient, AccountType } from '@prisma/client'
+import { PrismaClient, AccountType, User } from '@prisma/client'
 import passport from 'passport'
 import { Strategy } from 'passport-discord'
 
 const prisma = new PrismaClient();
 
-passport.serializeUser((user, done) => {
+passport.serializeUser((user: User, done: any) => {
     done(null, user.id)
 });
 
-passport.deserializeUser(async (id, done) => {
+passport.deserializeUser(async (id: string, done: any) => {
     try {
         const user = await prisma.user.findUnique({
             where: {
@@ -30,7 +30,7 @@ passport.use(
         clientSecret: process.env.DISCORD_CLIENT_SECRET,
         callbackURL: `${process.env.API_URL}/auth/discord/redirect`,
         scope: ['identify', 'email']
-    }, async (accessToken, refreshToken, profile, done) => {
+    }, async (accessToken: string, refreshToken: string, profile: any, done: any) => {
         try {
             const user = await prisma.user.findFirst({
                 where: {

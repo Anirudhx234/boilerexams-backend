@@ -10,6 +10,7 @@ import {
 } from "../controllers/resourceController"
 import asyncWrapper from "../middleware/wrappers/asyncWrapper"
 import authHandler from '../middleware/auth/authHandler';
+import { APIError } from '../middleware/errors';
 
 const app = express();
 const storage = multer.memoryStorage()
@@ -18,7 +19,7 @@ const fileFilter = (req, file, cb) => {
     if (file.mimetype === 'image/jpeg' || file.mimetype === 'image/png') {
         cb(null, true)
     } else {
-        cb(new multer.MulterError('File type must be JPEG or PNG'))
+        cb(new APIError('File type must be JPEG or PNG', 415))
     }
 }
 

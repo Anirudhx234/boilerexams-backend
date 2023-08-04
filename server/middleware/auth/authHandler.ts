@@ -1,7 +1,8 @@
+import { Request, Response, NextFunction } from "express";
 import asyncWrapper from '../wrappers/asyncWrapper';
 import { APIError } from '../errors';
 
-const authHandler = asyncWrapper(async (req, res, next) => {
+const authHandler = asyncWrapper(async (req: Request, res: Response, next: NextFunction) => {
     if (req.user) {
         req.session._garbage = Date();
         req.session.touch();

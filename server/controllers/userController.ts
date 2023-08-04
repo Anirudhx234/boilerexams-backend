@@ -1,9 +1,10 @@
 import { PrismaClient, Role } from '@prisma/client';
+import { Request, Response } from 'express'
 import { NotFoundError } from "../middleware/errors";
 
 const prisma = new PrismaClient();
 
-const getAllUsers = async (req, res) => {
+const getAllUsers = async (req: Request, res: Response) => {
     const users = await prisma.user.findMany({
         include: {
             courses: true
@@ -15,7 +16,7 @@ const getAllUsers = async (req, res) => {
     res.status(200).send(users)
 }
 
-const getUserMe = async (req, res) => {
+const getUserMe = async (req: Request, res: Response) => {
     const user = await prisma.user.findUnique({
         where: {
             id: req.user.id
@@ -27,7 +28,7 @@ const getUserMe = async (req, res) => {
     return res.status(200).send(user)
 }
 
-const getUser = async (req, res) => {
+const getUser = async (req: Request, res: Response) => {
     const { userId } = req.params
     const user = await prisma.user.findUnique({
         where: {
@@ -43,7 +44,7 @@ const getUser = async (req, res) => {
     res.status(200).send(user)
 }
 
-const updateUserRole = async (req, res) => {
+const updateUserRole = async (req: Request, res: Response) => {
     const { userId } = req.params
     const { role } = req.body
 
@@ -67,7 +68,7 @@ const updateUserRole = async (req, res) => {
     res.status(200).send(user)
 }
 
-const assignUserCourses = async (req, res) => {
+const assignUserCourses = async (req: Request, res: Response) => {
     const { userId } = req.params
     const { courseIds } = req.body
 
@@ -101,7 +102,7 @@ const assignUserCourses = async (req, res) => {
     res.status(200).send(resp)
 }
 
-const deleteUser = async (req, res) => {
+const deleteUser = async (req: Request, res: Response) => {
     const { userId } = req.params
     const user = prisma.user.delete({
         where: {

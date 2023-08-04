@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import { Request, Response } from 'express'
 import _ from 'lodash'
 import { NotFoundError } from '../middleware/errors';
 import questionStats from '../helpers/stats/questionStats';
@@ -6,7 +7,7 @@ import examStats from '../helpers/stats/examStats';
 const prisma = new PrismaClient();
 
 
-const getQuestionStats = async (req, res) => {
+const getQuestionStats = async (req: Request, res: Response) => {
     const { questionId } = req.params
     const timeStats = await questionStats(questionId)
     const question = await prisma.question.findUnique({
@@ -36,13 +37,13 @@ const getQuestionStats = async (req, res) => {
     res.status(200).send({ timeStats, answerStats })
 }
 
-const getExamStats = async (req, res) => {
+const getExamStats = async (req: Request, res: Response) => {
     const { examId } = req.params
     const obj = await examStats(examId)
     res.status(200).send(obj)
 }
 
-const getCourseStats = async (req, res) => {
+const getCourseStats = async (req: Request, res: Response) => {
     const { courseId } = req.params
     const course = await prisma.course.findUnique({
         where: {
@@ -72,7 +73,7 @@ const getCourseStats = async (req, res) => {
     res.status(200).send(obj)
 }
 
-const getSubmissionStats = async (req, res) => {
+const getSubmissionStats = async (req: Request, res: Response) => {
     const validTime = 0
     const times = await prisma.submission.aggregate({
         _sum: {

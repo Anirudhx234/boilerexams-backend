@@ -1,14 +1,14 @@
 import { PrismaClient } from '@prisma/client';
+import { Request, Response } from 'express'
 import { APIError, NotFoundError } from "../middleware/errors"
 import msToDate from "../utils/msToDate"
 const prisma = new PrismaClient();
 
-const getQuestion = async (req, res) => {
+const getQuestion = async (req: Request, res: Response) => {
     const { questionId } = req.params
-    const question = await prisma.question.findFirst({
+    const question = await prisma.question.findUnique({
         where: {
-            id: questionId,
-            OR: req.published
+            id: questionId
         },
         include: {
             topics: true,
@@ -40,7 +40,7 @@ const getQuestion = async (req, res) => {
     res.status(200).send(question)
 }
 
-const createQuestion = async (req, res) => {
+const createQuestion = async (req: Request, res: Response) => {
     const { courseId, examId } = req.params
     const { topics, number, body, answerChoices, correctChoiceIndices, solutionVideoLink, resourceIds } = req.body
 
@@ -107,7 +107,7 @@ const createQuestion = async (req, res) => {
     res.status(200).send(question)
 }
 
-const updateQuestion = async (req, res) => {
+const updateQuestion = async (req: Request, res: Response) => {
     const { courseId, examId, questionId } = req.params
     const { topics, number, body, answerChoices, correctChoiceIndices, solutionVideoLink, resourceIds } = req.body
 
@@ -208,7 +208,7 @@ const updateQuestion = async (req, res) => {
     res.status(200).send(question)
 }
 
-const toggleQuestionPublished = async (req, res) => {
+const toggleQuestionPublished = async (req: Request, res: Response) => {
     const { questionId } = req.params
     const question = await prisma.question.findUnique({
         where: {
@@ -242,7 +242,7 @@ const toggleQuestionPublished = async (req, res) => {
     res.status(200).send({ message: `Question is now ${published ? "published" : "unpublished"}` })
 }
 
-const deleteQuestion = async (req, res) => {
+const deleteQuestion = async (req: Request, res: Response) => {
     const { questionId } = req.params
     const question = await prisma.question.delete({
         where: {
@@ -256,7 +256,7 @@ const deleteQuestion = async (req, res) => {
     res.status(200).send(question)
 }
 
-const createQuestionSubmission = async (req, res) => {
+const createQuestionSubmission = async (req: Request, res: Response) => {
     const { questionId } = req.params
     const { selectedChoiceIndices, correct,
         timeStarted, timeEnded, videoStartTime, videoEndTime,
@@ -290,7 +290,7 @@ const createQuestionSubmission = async (req, res) => {
     res.status(200).send(submission)
 }
 
-const updateSubmission = async (req, res) => {
+const updateSubmission = async (req: Request, res: Response) => {
     const { submissionId } = req.params
     const { videoStartTime,
         videoEndTime, videoTotalWatchTime, modalStartTime,
