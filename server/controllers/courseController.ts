@@ -1,11 +1,12 @@
 import { PrismaClient } from "@prisma/client";
+import { Request, Response } from 'express'
 import { NotFoundError } from "../middleware/errors";
 import { PurdueIoAPI } from "../services/purdue.io";
 import hexModifier from "../utils/hexModifier";
 
 const prisma = new PrismaClient();
 
-const createCourse = async (req, res) => {
+const createCourse = async (req: Request, res: Response) => {
     const { abbreviation, number, backgroundColor, graphicLink, published } = req.body
 
     const secondaryColor = hexModifier(backgroundColor, -50);
@@ -36,7 +37,7 @@ const createCourse = async (req, res) => {
     res.status(200).send(course)
 }
 
-const updateCourse = async (req, res) => {
+const updateCourse = async (req: Request, res: Response) => {
     const { courseId } = req.params
     const { abbreviation, number, backgroundColor, graphicLink } = req.body;
 
@@ -64,7 +65,7 @@ const updateCourse = async (req, res) => {
     res.status(200).send(course)
 }
 
-const toggleCoursePublished = async (req, res) => {
+const toggleCoursePublished = async (req: Request, res: Response) => {
     const { courseId } = req.params;
     const course = await prisma.course.findUnique({
         where: {
@@ -91,7 +92,7 @@ const toggleCoursePublished = async (req, res) => {
     res.status(200).send({ message: `${course.name} is now ${published ? "published" : "unpublished"}` })
 }
 
-const deleteCourse = async (req, res) => {
+const deleteCourse = async (req: Request, res: Response) => {
     const { courseId } = req.params;
     const course = await prisma.course.delete({
         where: {

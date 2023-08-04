@@ -1,4 +1,5 @@
 import express from 'express';
+import { Request, Response } from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import session from 'express-session'
@@ -52,11 +53,12 @@ if (process.env.NODE_ENV === "production") {
   sessionOptions.cookie.secure = true
 }
 
+//@ts-ignore
 app.use(session(sessionOptions))
 app.use(passport.initialize())
 app.use(passport.session())
 
-app.get("/", (req, res) => {
+app.get("/", (req: Request, res: Response) => {
   res.send("Working")
 });
 

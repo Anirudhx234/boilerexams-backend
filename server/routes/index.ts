@@ -1,6 +1,5 @@
 import express from 'express'
 import auth from '../middleware/auth/auth'
-import sendPublished from "../middleware/auth/sendPublished";
 
 import name_routes from "./name_routes"
 import parsing from "./parsing"

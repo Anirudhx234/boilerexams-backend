@@ -1,8 +1,8 @@
 import { PurdueIoAPI } from "../services/purdue.io";
+import { Request, Response } from "express";
 import { DiscordAPI } from "../services/discord.api";
 import { CourseAlreadyExistsError, NotFoundError } from "../middleware/errors/index";
-import { Request, Response } from "express";
-import { Prisma} from "@prisma/client";
+import { Prisma } from "@prisma/client";
 
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
@@ -226,7 +226,7 @@ const getWebhook = async (req: Request, res: Response) => {
 }
 
 const getWebhooks = async (req: Request, res: Response) => {
-    const webhooks = await prisma.webhook.findMany({  });
+    const webhooks = await prisma.webhook.findMany({});
     res.status(200).send(webhooks);
 }
 

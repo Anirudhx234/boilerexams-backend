@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import { Request, Response } from 'express'
 import parseQuestions from "../helpers/mathpix/questionParser";
 import getPDFResult from "../helpers/mathpix/retrievePDF";
 import dotenv from 'dotenv'
@@ -34,7 +35,7 @@ const checkExistingQuestions = async (examId: string) => {
 }
 
 
-const parseFromFile = async (req, res) => {
+const parseFromFile = async (req: Request, res: Response) => {
     const { examId, choices } = req.body
 
     const courseId = await checkExistingQuestions(examId)
@@ -83,7 +84,7 @@ const parseFromFile = async (req, res) => {
     return res.status(200).send({ id: id, questions: uploadedQuestions })
 }
 
-const parseFromLink = async (req, res) => {
+const parseFromLink = async (req: Request, res: Response) => {
     const { examId, link, choices } = req.body
 
     const courseId = await checkExistingQuestions(examId)
@@ -148,7 +149,7 @@ const parseFromLink = async (req, res) => {
 //2023_06_28_75fdd6edc01be3a36ec9g -> CS
 //2023_06_25_d25c2986903bb495d7edg
 
-const getIdResults = async (req, res) => {
+const getIdResults = async (req: Request, res: Response) => {
     const { examId, pdfId, choices } = req.body
 
     const courseId = await checkExistingQuestions(examId)
@@ -163,7 +164,7 @@ const getIdResults = async (req, res) => {
     res.status(200).send({ id: pdfId, questions: uploadedQuestions })
 }
 
-const attachPDFToExam = async (req, res) => {
+const attachPDFToExam = async (req: Request, res: Response) => {
     const { examId } = req.params
 
     if (!req.file) {

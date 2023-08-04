@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+import { Request, Response } from "express";
 import express from "express";
 import _ from "lodash";
 import asyncWrapper from "../middleware/wrappers/asyncWrapper";
@@ -8,7 +9,7 @@ import authHandler from "../middleware/auth/authHandler";
 const prisma = new PrismaClient();
 const app = express();
 
-app.get("/id/courses/:courseId", authHandler, asyncWrapper(async (req, res) => {
+app.get("/id/courses/:courseId", authHandler, asyncWrapper(async (req: Request, res: Response) => {
 	const { courseId } = req.params;
 	const course = await prisma.course.findUnique({
 		where: {
@@ -30,7 +31,7 @@ app.get("/id/courses/:courseId", authHandler, asyncWrapper(async (req, res) => {
 	return res.status(200).send(course);
 }));
 
-app.get("/id/courses/:courseId/topics", authHandler, asyncWrapper(async (req, res) => {
+app.get("/id/courses/:courseId/topics", authHandler, asyncWrapper(async (req: Request, res: Response) => {
 	const { courseId } = req.params;
 	const course = await prisma.course.findUnique({
 		where: {
@@ -46,7 +47,7 @@ app.get("/id/courses/:courseId/topics", authHandler, asyncWrapper(async (req, re
 	return res.status(200).send(course.topics);
 }));
 
-app.get("/id/courses/:courseId/semesters", authHandler, asyncWrapper(async (req, res) => {
+app.get("/id/courses/:courseId/semesters", authHandler, asyncWrapper(async (req: Request, res: Response) => {
 	const { courseId } = req.params;
 	const course = await prisma.course.findUnique({
 		where: {
@@ -67,7 +68,7 @@ app.get("/id/courses/:courseId/semesters", authHandler, asyncWrapper(async (req,
 	return res.status(200).send(course.semesters);
 }));
 
-app.get("/id/courses/:courseId/:semesterId/exams", authHandler, asyncWrapper(async (req, res) => {
+app.get("/id/courses/:courseId/:semesterId/exams", authHandler, asyncWrapper(async (req: Request, res: Response) => {
 	const { courseId, semesterId } = req.params;
 	const exams = await prisma.exam.findMany({
 		where: {
@@ -82,7 +83,7 @@ app.get("/id/courses/:courseId/:semesterId/exams", authHandler, asyncWrapper(asy
 	return res.status(200).send(exams);
 }));
 
-app.get("/id/exams/:examId", authHandler, asyncWrapper(async (req, res) => {
+app.get("/id/exams/:examId", authHandler, asyncWrapper(async (req: Request, res: Response) => {
 	const { examId } = req.params;
 	const exam = await prisma.exam.findUnique({
 		where: {
@@ -126,7 +127,7 @@ app.get("/id/exams/:examId", authHandler, asyncWrapper(async (req, res) => {
 	return res.status(200).send(exam);
 }));
 
-app.get("/id/exams/:examId/questions", authHandler, asyncWrapper(async (req, res) => {
+app.get("/id/exams/:examId/questions", authHandler, asyncWrapper(async (req: Request, res: Response) => {
 	const { examId } = req.params;
 	const exam = await prisma.exam.findUnique({
 		where: {
@@ -147,7 +148,7 @@ app.get("/id/exams/:examId/questions", authHandler, asyncWrapper(async (req, res
 	return res.status(200).send(exam.questions);
 }));
 
-app.get("/id/courses/:courseId/:topicId/questions", authHandler, asyncWrapper(async (req, res) => {
+app.get("/id/courses/:courseId/:topicId/questions", authHandler, asyncWrapper(async (req: Request, res: Response) => {
 	const { courseId, topicId } = req.params;
 	const topic = await prisma.topic.findUnique({
 		where: {
