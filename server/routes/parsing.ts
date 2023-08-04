@@ -3,6 +3,7 @@ import multer from 'multer'
 import asyncWrapper from "../middleware/wrappers/asyncWrapper"
 import { getIdResults, parseFromFile, parseFromLink, attachPDFToExam } from '../controllers/parsingController';
 import authHandler from '../middleware/auth/authHandler';
+import { APIError } from '../middleware/errors';
 
 const app = express();
 const storage = multer.memoryStorage()
@@ -11,7 +12,7 @@ const fileFilter = (req, file, cb) => {
     if (file.mimetype === 'application/pdf') {
         cb(null, true)
     } else {
-        cb(new multer.MulterError('File type must be PDF'))
+        cb(new APIError('File type must be PDF', 415))
     }
 }
 

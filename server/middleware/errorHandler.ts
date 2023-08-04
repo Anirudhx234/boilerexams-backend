@@ -25,10 +25,6 @@ const errorHandler = (error, req: Request, res: Response, next: NextFunction) =>
         }
     }
 
-    if (error instanceof multer.MulterError) {
-        return res.status(415).json({ message: error.code })
-    }
-
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
         if (error.meta?.cause) {
             return res.status(400).json({ message: error.meta?.cause })
