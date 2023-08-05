@@ -14,7 +14,7 @@ require('./middleware/auth/passport/googlePassport')
 
 const app = express();
 
-const vercelRegexp = new RegExp('https:\/\/boilerexams-frontend-[^ ]*-boilerexams.vercel.app');
+const vercelRegexp = new RegExp('https:\/\/boilerexams-frontend[^ ]*.vercel.app');
 const prodRegexp = new RegExp('https:\/\/[^ ]*.boilerexams.com')
 
 const allowList = ["https://boilerexams-frontend.vercel.app", "https://boilerexams.com", "http://localhost:3000", "http://127.0.0.1:3000"];
@@ -30,6 +30,8 @@ const corsOptions = {
   credentials: true,
   exposedHeaders: ["set-cookie"]
 };
+
+app.use('/favicon.ico', express.static('images/favicon.ico'));
 
 app.use(cors(corsOptions));
 app.use(cookieParser());

@@ -1,6 +1,6 @@
 import { PrismaClient, Role } from '@prisma/client';
 import { Request, Response } from 'express'
-import { NotFoundError } from "../middleware/errors";
+import { APIError, NotFoundError } from "../middleware/errors";
 
 const prisma = new PrismaClient();
 
@@ -83,7 +83,7 @@ const assignUserCourses = async (req: Request, res: Response) => {
         }
     })
     if (!user) {
-        return res.status(401).send("User not authorized or not found")
+        throw new APIError("User must have role CONTENT or ADMIN, or not found", 403)
     }
 
     const resp = await prisma.user.update({

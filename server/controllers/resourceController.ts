@@ -2,6 +2,7 @@ import { PrismaClient, ResourceType, Language } from '@prisma/client'
 import { Request, Response } from 'express'
 import { nanoid } from 'nanoid'
 import axios from 'axios';
+import { APIError } from '../middleware/errors';
 const prisma = new PrismaClient();
 
 var Aws = require('aws-sdk');
@@ -79,7 +80,7 @@ const createImageResourceFromLink = async (req: Request, res: Response) => {
     const contentType = image.headers['content-type']
 
     if (contentType !== "image/png" && contentType !== "image/jpeg") {
-        throw new Error("Image upload failed, link must be JPEG or PNG")
+        throw new APIError("Image upload failed, link must be JPEG or PNG", 415)
     }
 
     const params = {
