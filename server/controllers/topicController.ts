@@ -1,13 +1,18 @@
 import { PrismaClient } from '@prisma/client';
+import { Request, Response } from 'express'
 import { NotFoundError } from "../middleware/errors";
 
 const prisma = new PrismaClient();
 
-const createTopic = async (req, res) => {
+const createTopic = async (req: Request, res: Response) => {
+    const { courseId } = req.params
     const { name } = req.body
     const topic = await prisma.topic.create({
         data: {
-            name: name
+            name: name,
+            courses: {
+                connect: { id: courseId }
+            }
         },
         include: {
             courses: true,
@@ -17,7 +22,7 @@ const createTopic = async (req, res) => {
     res.status(200).send(topic)
 }
 
-const updateTopic = async (req, res) => {
+const updateTopic = async (req: Request, res: Response) => {
     const { topicId } = req.params
     const topic = await prisma.topic.update({
         where: {
@@ -28,7 +33,7 @@ const updateTopic = async (req, res) => {
     res.status(200).send(topic)
 }
 
-const deleteTopic = async (req, res) => {
+const deleteTopic = async (req: Request, res: Response) => {
     const { topicId } = req.params;
     const topic = await prisma.topic.delete({
         where: {

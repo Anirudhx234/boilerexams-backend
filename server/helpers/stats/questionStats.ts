@@ -1,7 +1,7 @@
 import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient()
 
-const questionStats = async (questionId) => {
+const questionStats = async (questionId: string) => {
     const submissions = await prisma.submission.aggregate({
         where: {
             questionId: questionId

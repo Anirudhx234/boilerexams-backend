@@ -1,7 +1,9 @@
 import express from 'express'
 import multer from 'multer'
 import asyncWrapper from "../middleware/wrappers/asyncWrapper"
-import { getIdResults, parseFromFile, parseFromLink } from '../controllers/parsingController';
+import { getIdResults, parseFromFile, parseFromLink, attachPDFToExam } from '../controllers/parsingController';
+import authHandler from '../middleware/auth/authHandler';
+import { APIError } from '../middleware/errors';
 
 const app = express();
 const storage = multer.memoryStorage()
@@ -10,7 +12,7 @@ const fileFilter = (req, file, cb) => {
     if (file.mimetype === 'application/pdf') {
         cb(null, true)
     } else {
-        cb(new multer.MulterError('File type must be PDF'))
+        cb(new APIError('File type must be PDF', 415))
     }
 }
 
@@ -22,10 +24,12 @@ const upload = multer({
     }
 });
 
-app.post("/convert-link", asyncWrapper(parseFromLink))
+app.post("/convert-link", authHandler, asyncWrapper(parseFromLink))
 
-app.post("/convert-file", upload.single("pdf"), asyncWrapper(parseFromFile))
+app.post("/convert-file", authHandler, upload.single("pdf"), asyncWrapper(parseFromFile))
 
-app.post("/convert-id", asyncWrapper(getIdResults))
+app.post("/convert-id", authHandler, asyncWrapper(getIdResults))
+
+app.post("/exams/:examId/attachPDF", authHandler, upload.single("pdf"), asyncWrapper(attachPDFToExam))
 
 export default app
