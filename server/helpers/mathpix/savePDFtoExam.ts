@@ -9,7 +9,7 @@ const s3 = new Aws.S3({
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
 })
 
-const savePDFtoExam = async (examId: string, id: string, buffer) => {
+const savePDFtoExam = async (examId: string, buffer, id?: string) => {
     const params = {
         Bucket: process.env.AWS_BUCKET_NAME,
         Key: nanoid(),
@@ -29,7 +29,7 @@ const savePDFtoExam = async (examId: string, id: string, buffer) => {
         throw new Error("PDF upload failed")
     }
 
-    await prisma.exam.update({
+    return await prisma.exam.update({
         where: {
             id: examId
         },

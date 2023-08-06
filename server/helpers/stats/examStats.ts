@@ -3,7 +3,7 @@ import { NotFoundError } from "../../middleware/errors";
 import questionStats from "./questionStats";
 const prisma = new PrismaClient()
 
-const examStats = async (examId) => {
+const examStats = async (examId: string) => {
     const exam = await prisma.exam.findUnique({
         where: {
             id: examId

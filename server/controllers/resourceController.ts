@@ -1,6 +1,8 @@
 import { PrismaClient, ResourceType, Language } from '@prisma/client'
+import { Request, Response } from 'express'
 import { nanoid } from 'nanoid'
 import axios from 'axios';
+import { APIError } from '../middleware/errors';
 const prisma = new PrismaClient();
 
 var Aws = require('aws-sdk');
@@ -10,7 +12,7 @@ const s3 = new Aws.S3({
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
 })
 
-const getResource = async (req, res) => {
+const getResource = async (req: Request, res: Response) => {
     const { resourceId } = req.params
     const resource = await prisma.resource.findUnique({
         where: {
@@ -24,7 +26,7 @@ const getResource = async (req, res) => {
     res.status(200).send(resource)
 }
 
-const createImageResource = async (req, res) => {
+const createImageResource = async (req: Request, res: Response) => {
     const { altText } = req.body
 
     if (!req.file) {
@@ -67,7 +69,7 @@ const createImageResource = async (req, res) => {
     res.status(200).send(resource)
 }
 
-const createImageResourceFromLink = async (req, res) => {
+const createImageResourceFromLink = async (req: Request, res: Response) => {
     const { link, altText } = req.body
 
     const image = await axios.get(link, {
@@ -78,7 +80,7 @@ const createImageResourceFromLink = async (req, res) => {
     const contentType = image.headers['content-type']
 
     if (contentType !== "image/png" && contentType !== "image/jpeg") {
-        throw new Error("Image upload failed, link must be JPEG or PNG")
+        throw new APIError("Image upload failed, link must be JPEG or PNG", 415)
     }
 
     const params = {
@@ -118,7 +120,7 @@ const createImageResourceFromLink = async (req, res) => {
     res.status(200).send(resource)
 }
 
-const createCodeResource = async (req, res) => {
+const createCodeResource = async (req: Request, res: Response) => {
     const { language, code } = req.body
     const resource = await prisma.resource.create({
         data: {
@@ -137,7 +139,7 @@ const createCodeResource = async (req, res) => {
     res.status(200).send(resource)
 }
 
-const updateCodeResource = async (req, res) => {
+const updateCodeResource = async (req: Request, res: Response) => {
     const { resourceId } = req.params
     const { language, code } = req.body
     const resource = await prisma.resource.update({
@@ -159,7 +161,7 @@ const updateCodeResource = async (req, res) => {
     res.status(200).send(resource)
 }
 
-const deleteResource = async (req, res) => {
+const deleteResource = async (req: Request, res: Response) => {
     const { resourceId } = req.params;
     const resource = await prisma.resource.delete({
         where: {

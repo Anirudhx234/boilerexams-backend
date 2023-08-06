@@ -1,9 +1,10 @@
 import { PrismaClient, Season } from "@prisma/client";
+import { Request, Response } from 'express';
 import { NotFoundError } from "../middleware/errors";
 
 const prisma = new PrismaClient();
 
-const createExam = async (req, res) => {
+const createExam = async (req: Request, res: Response) => {
     const { courseId } = req.params
     const { semester: { season, year }, number } = req.body
 
@@ -48,7 +49,7 @@ const createExam = async (req, res) => {
     res.status(200).send(exam)
 }
 
-const updateExam = async (req, res) => {
+const updateExam = async (req: Request, res: Response) => {
     const { courseId, examId } = req.params
     const { semester: { season, year }, number } = req.body
     let semesterId;
@@ -96,7 +97,7 @@ const updateExam = async (req, res) => {
     res.status(200).send(exam)
 }
 
-const toggleExamPublished = async (req, res) => {
+const toggleExamPublished = async (req: Request, res: Response) => {
     const { examId } = req.params
     const exam = await prisma.exam.findUnique({
         where: {
@@ -132,7 +133,7 @@ const toggleExamPublished = async (req, res) => {
     res.status(200).send({ message: `Exam and questions are now ${published ? "published" : "unpublished"}` })
 }
 
-const deleteExam = async (req, res) => {
+const deleteExam = async (req: Request, res: Response) => {
     const { examId } = req.params
     const exam = await prisma.exam.delete({
         where: {

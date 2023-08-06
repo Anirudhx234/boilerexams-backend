@@ -1,9 +1,10 @@
 import { PrismaClient, Role } from '@prisma/client';
-import { NotFoundError } from "../middleware/errors";
+import { Request, Response } from 'express'
+import { APIError, NotFoundError } from "../middleware/errors";
 
 const prisma = new PrismaClient();
 
-const getAllUsers = async (req, res) => {
+const getAllUsers = async (req: Request, res: Response) => {
     const users = await prisma.user.findMany({
         include: {
             courses: true
@@ -15,7 +16,19 @@ const getAllUsers = async (req, res) => {
     res.status(200).send(users)
 }
 
-const getUser = async (req, res) => {
+const getUserMe = async (req: Request, res: Response) => {
+    const user = await prisma.user.findUnique({
+        where: {
+            id: req.user.id
+        },
+        include: {
+            courses: true
+        }
+    })
+    return res.status(200).send(user)
+}
+
+const getUser = async (req: Request, res: Response) => {
     const { userId } = req.params
     const user = await prisma.user.findUnique({
         where: {
@@ -31,11 +44,11 @@ const getUser = async (req, res) => {
     res.status(200).send(user)
 }
 
-const updateUserRole = async (req, res) => {
+const updateUserRole = async (req: Request, res: Response) => {
     const { userId } = req.params
     const { role } = req.body
 
-    if (!role || typeof(role) !== "string" || !Role[role.toUpperCase() as keyof typeof Role]) {
+    if (!role || typeof (role) !== "string" || !Role[role.toUpperCase() as keyof typeof Role]) {
         throw new Error("Role must be USER, CONTENT, or ADMIN")
     }
     const user = await prisma.user.update({
@@ -55,7 +68,7 @@ const updateUserRole = async (req, res) => {
     res.status(200).send(user)
 }
 
-const assignUserCourses = async (req, res) => {
+const assignUserCourses = async (req: Request, res: Response) => {
     const { userId } = req.params
     const { courseIds } = req.body
 
@@ -70,7 +83,7 @@ const assignUserCourses = async (req, res) => {
         }
     })
     if (!user) {
-        return res.status(401).send("User not authorized or not found")
+        throw new APIError("User must have role CONTENT or ADMIN, or not found", 403)
     }
 
     const resp = await prisma.user.update({
@@ -89,7 +102,7 @@ const assignUserCourses = async (req, res) => {
     res.status(200).send(resp)
 }
 
-const deleteUser = async (req, res) => {
+const deleteUser = async (req: Request, res: Response) => {
     const { userId } = req.params
     const user = prisma.user.delete({
         where: {
@@ -101,6 +114,7 @@ const deleteUser = async (req, res) => {
 
 export {
     getAllUsers,
+    getUserMe,
     getUser,
     updateUserRole,
     assignUserCourses,
