@@ -1,17 +1,18 @@
-import express from 'express'
 import {
-    createCourseRequest,
     createBugReport,
-    createQuestionBugReport,
+    createCourseRequest,
     createFeatureRequest,
+    createFeedbackReport,
+    createQuestionBugReport,
     createWebhook,
-    getWebhook,
-    getWebhooks,
+    deleteWebhook,
     getCourseRequest,
     getCourseRequests,
-    deleteWebhook
+    getWebhook,
+    getWebhooks
 } from "../controllers/webhookController";
-import asyncWrapper from "../middleware/wrappers/asyncWrapper"
+import asyncWrapper from "../middleware/wrappers/asyncWrapper";
+import express from 'express';
 
 const app = express();
 
@@ -22,6 +23,8 @@ app.post("/bug-reports", asyncWrapper(createBugReport));
 app.post("/bug-reports/questions/:questionId", asyncWrapper(createQuestionBugReport));
 
 app.post("/feature-requests", asyncWrapper(createFeatureRequest));
+
+app.post("/video-feedback/:questionId", asyncWrapper(createFeedbackReport));
 
 app.post("/webhooks", asyncWrapper(createWebhook));
 

@@ -6,8 +6,8 @@ import {
     WebhookMessageCreateOptions,
     WebhookMessageEditOptions
 } from "discord.js";
-import { PrismaClient } from '@prisma/client'
 import { NotFoundError } from "../middleware/errors";
+import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient();
 
 export class DiscordAPI {

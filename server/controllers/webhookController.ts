@@ -168,6 +168,17 @@ const createFeatureRequest = async (req: Request, res: Response) => {
 
 const createFeedbackReport = async (req: Request, res: Response) => {
     // ToDo Content Feedback Reporting and stuff
+    type QualityRating = 1 | 2 | 3 | 4 | 5;
+    type Feedback = {
+        explanationQuality: QualityRating,
+        productionQuality: QualityRating,
+        videoRecommendation: boolean,
+        additionalFeedback: string
+    };
+
+    const { questionId } = req.params;
+    const feedback = req.body as Feedback;
+
 
 
     res.status(200).send();
@@ -247,6 +258,7 @@ export {
     createBugReport,
     createQuestionBugReport,
     createFeatureRequest,
+    createFeedbackReport,
     createWebhook,
     getCourseRequest,
     getCourseRequests,
