@@ -9,7 +9,7 @@ const prisma = new PrismaClient();
 const createCourse = async (req: Request, res: Response) => {
     const { abbreviation, number, backgroundColor, graphicLink, published } = req.body
 
-    const secondaryColor = hexModifier(backgroundColor, -50);
+    const secondaryColor = hexModifier(backgroundColor, 1.4);
 
     const stringifiedNumber = String(number);
     const courseNumber = stringifiedNumber + "0".repeat(5 - stringifiedNumber.length);
@@ -41,7 +41,7 @@ const updateCourse = async (req: Request, res: Response) => {
     const { courseId } = req.params
     const { abbreviation, number, backgroundColor, graphicLink } = req.body;
 
-    const secondaryColor = hexModifier(backgroundColor, -50);
+    const secondaryColor = hexModifier(backgroundColor, 1.4);
 
     const stringifiedNumber = String(number);
     const courseNumber = stringifiedNumber + "0".repeat(5 - stringifiedNumber.length);
