@@ -24,11 +24,14 @@ const createTopic = async (req: Request, res: Response) => {
 
 const updateTopic = async (req: Request, res: Response) => {
     const { topicId } = req.params
+    const { name } = req.body
     const topic = await prisma.topic.update({
         where: {
             id: topicId
         },
-        data: req.body
+        data: {
+            name: name
+        }
     })
     res.status(200).send(topic)
 }

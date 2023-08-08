@@ -1,5 +1,4 @@
 import express from 'express'
-import multer from 'multer'
 import {
     getResource,
     createImageResource,
@@ -10,26 +9,9 @@ import {
 } from "../controllers/resourceController"
 import asyncWrapper from "../middleware/wrappers/asyncWrapper"
 import authHandler from '../middleware/auth/authHandler';
-import { APIError } from '../middleware/errors';
+import upload from "../middleware/multer/image"
 
 const app = express();
-const storage = multer.memoryStorage()
-
-const fileFilter = (req, file, cb) => {
-    if (file.mimetype === 'image/jpeg' || file.mimetype === 'image/png') {
-        cb(null, true)
-    } else {
-        cb(new APIError('File type must be JPEG or PNG', 415))
-    }
-}
-
-const upload = multer({
-    storage: storage,
-    fileFilter: fileFilter,
-    limits: {
-        fileSize: 500 * 1024
-    }
-});
 
 app.get("/resources/:resourceId", asyncWrapper(getResource))
 

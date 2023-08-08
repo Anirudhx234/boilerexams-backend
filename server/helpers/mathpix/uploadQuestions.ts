@@ -1,14 +1,8 @@
 import { PrismaClient, ResourceType } from '@prisma/client'
 import axios from "axios";
-import { nanoid } from 'nanoid';
+import uploadFileToS3 from '../../utils/uploadFileToS3';
 
 const prisma = new PrismaClient()
-var Aws = require('aws-sdk');
-
-const s3 = new Aws.S3({
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
-})
 
 const uploadQuestions = async (courseId: string, examId: string, questions: any[]) => {
     const promises: Promise<any>[] = []
@@ -82,23 +76,10 @@ const uploadResources = (resources) => {
         const image = await axios.get(resource, {
             responseType: 'arraybuffer',
         })
-        const params = {
-            Bucket: process.env.AWS_BUCKET_NAME,
-            Key: nanoid(),
-            Body: image.data,
-            ACL: "public-read-write",
-        };
 
-        const promise = s3.upload(params, (error) => {
-            if (error) {
-                throw new Error(error);
-            }
-        }).promise()
+        const contentType = image.headers['content-type'];
 
-        const data = await Promise.resolve(promise)
-        if (!data) {
-            throw new Error("Image upload failed")
-        }
+        const data = await uploadFileToS3(image.data, contentType);
 
         const resp = await prisma.resource.create({
             data: {
