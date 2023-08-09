@@ -2,14 +2,25 @@ import { PrismaClient } from "@prisma/client";
 import { Request, Response } from 'express'
 import { NotFoundError } from "../middleware/errors";
 import { PurdueIoAPI } from "../services/purdue.io";
+import uploadFileToS3 from "../utils/uploadFileToS3";
 import hexModifier from "../utils/hexModifier";
 
 const prisma = new PrismaClient();
 
+
 const createCourse = async (req: Request, res: Response) => {
     const { abbreviation, number, backgroundColor, graphicLink, published } = req.body
 
-    const secondaryColor = hexModifier(backgroundColor, -50);
+    let graphic: string;
+    if (req.file) {
+        const data = await uploadFileToS3(req.file.buffer, req.file.mimetype);
+        graphic = data.Location
+    }
+    else {
+        graphic = graphicLink
+    }
+
+    const secondaryColor = hexModifier(backgroundColor, 1.4);
 
     const stringifiedNumber = String(number);
     const courseNumber = stringifiedNumber + "0".repeat(5 - stringifiedNumber.length);
@@ -24,7 +35,7 @@ const createCourse = async (req: Request, res: Response) => {
             number: Number(courseNumber),
             backgroundColor: backgroundColor,
             secondaryColor: secondaryColor,
-            graphicLink: graphicLink,
+            graphicLink: graphic,
             published: published
         },
         include: {
@@ -41,7 +52,16 @@ const updateCourse = async (req: Request, res: Response) => {
     const { courseId } = req.params
     const { abbreviation, number, backgroundColor, graphicLink } = req.body;
 
-    const secondaryColor = hexModifier(backgroundColor, -50);
+    let graphic: string;
+    if (req.file) {
+        const data = await uploadFileToS3(req.file.buffer, req.file.mimetype);
+        graphic = data.Location
+    }
+    else {
+        graphic = graphicLink
+    }
+
+    const secondaryColor = hexModifier(backgroundColor, 1.4);
 
     const stringifiedNumber = String(number);
     const courseNumber = stringifiedNumber + "0".repeat(5 - stringifiedNumber.length);
@@ -59,7 +79,7 @@ const updateCourse = async (req: Request, res: Response) => {
             number: Number(courseNumber),
             backgroundColor: backgroundColor,
             secondaryColor: secondaryColor,
-            graphicLink: graphicLink,
+            graphicLink: graphic,
         }
     })
     res.status(200).send(course)

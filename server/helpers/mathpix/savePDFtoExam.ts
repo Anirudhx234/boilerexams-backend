@@ -1,33 +1,10 @@
 import { PrismaClient, ResourceType } from '@prisma/client'
-import { nanoid } from 'nanoid';
+import uploadFileToS3 from '../../utils/uploadFileToS3';
 
 const prisma = new PrismaClient()
-var Aws = require('aws-sdk');
 
-const s3 = new Aws.S3({
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
-})
-
-const savePDFtoExam = async (examId: string, buffer, id?: string) => {
-    const params = {
-        Bucket: process.env.AWS_BUCKET_NAME,
-        Key: nanoid(),
-        Body: buffer,
-        ACL: "public-read-write",
-        ContentType: "application/pdf"
-    };
-
-    const promise = s3.upload(params, (error) => {
-        if (error) {
-            throw new Error(error);
-        }
-    }).promise()
-
-    const data = await Promise.resolve(promise)
-    if (!data) {
-        throw new Error("PDF upload failed")
-    }
+const savePDFtoExam = async (examId: string, buffer: Buffer, contentType: string, id?: string) => {
+    const data = await uploadFileToS3(buffer, contentType);
 
     return await prisma.exam.update({
         where: {

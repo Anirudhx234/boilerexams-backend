@@ -55,12 +55,21 @@ app.get("/topics", sendPublished, asyncWrapper(async (req: Request, res: Respons
 // All courses with relations
 app.get("/courses/all", sendPublished, asyncWrapper(async (req: Request, res: Response) => {
     const courses = await prisma.course.findMany({
+        where: {
+            OR: req.published
+        },
         include: {
             topics: true,
             semesters: true,
             exams: {
+                where: {
+                    OR: req.published
+                },
                 include: {
                     questions: {
+                        where: {
+                            OR: req.published
+                        },
                         include: {
                             topics: true,
                             answerChoices: {
@@ -157,7 +166,9 @@ app.get("/courses/:courseAbbrev/topics/questions", sendPublished, asyncWrapper(a
                         },
                         select: {
                             id: true,
-                            number: true
+                            number: true,
+                            exam: true,
+                            topics: true
                         }
                     }
                 },

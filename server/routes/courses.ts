@@ -7,12 +7,13 @@ import {
 } from "../controllers/courseController"
 import asyncWrapper from "../middleware/wrappers/asyncWrapper"
 import authHandler from '../middleware/auth/authHandler';
+import upload from "../middleware/multer/image"
 
 const app = express();
 
-app.post("/courses", authHandler, asyncWrapper(createCourse))
+app.post("/courses", authHandler, upload.single('image'), asyncWrapper(createCourse))
 
-app.put("/courses/:courseId", authHandler, asyncWrapper(updateCourse))
+app.put("/courses/:courseId", authHandler, upload.single('image'), asyncWrapper(updateCourse))
 
 app.put("/courses/:courseId/togglePublished", authHandler, asyncWrapper(toggleCoursePublished))
 

@@ -71,7 +71,7 @@ const parseFromFile = async (req: Request, res: Response) => {
     const pdf = await axios.request(config)
     const id = pdf.data.pdf_id
 
-    await savePDFtoExam(examId, req.file.buffer, id)
+    await savePDFtoExam(examId, req.file.buffer, req.file.mimetype, id)
 
     let content;
     try {
@@ -97,7 +97,9 @@ const parseFromLink = async (req: Request, res: Response) => {
         maxContentLength: 5 * 1024 * 1024,
     })
 
-    if (file.headers["content-type"] !== "application/pdf") {
+    const contentType = file.headers["content-type"];
+
+    if (contentType !== "application/pdf") {
         throw new APIError("Link must be pdf", 415)
     }
 
@@ -121,7 +123,7 @@ const parseFromLink = async (req: Request, res: Response) => {
     })
     const id = pdf.data.pdf_id
 
-    await savePDFtoExam(examId, file.data, id)
+    await savePDFtoExam(examId, file.data, contentType, id)
 
     let content;
     try {
@@ -170,7 +172,7 @@ const attachPDFToExam = async (req: Request, res: Response) => {
     if (!req.file) {
         throw new Error("No file attached")
     }
-    const exam = await savePDFtoExam(examId, req.file.buffer)
+    const exam = await savePDFtoExam(examId, req.file.buffer, req.file.mimetype)
     res.status(200).send(exam)
 }
 

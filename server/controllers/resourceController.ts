@@ -1,16 +1,9 @@
 import { PrismaClient, ResourceType, Language } from '@prisma/client'
 import { Request, Response } from 'express'
-import { nanoid } from 'nanoid'
 import axios from 'axios';
 import { APIError } from '../middleware/errors';
+import uploadFileToS3 from '../utils/uploadFileToS3';
 const prisma = new PrismaClient();
-
-var Aws = require('aws-sdk');
-
-const s3 = new Aws.S3({
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
-})
 
 const getResource = async (req: Request, res: Response) => {
     const { resourceId } = req.params
@@ -30,26 +23,10 @@ const createImageResource = async (req: Request, res: Response) => {
     const { altText } = req.body
 
     if (!req.file) {
-        throw new Error("No file attached")
+        throw new APIError("No file attached", 400);
     }
 
-    const params = {
-        Bucket: process.env.AWS_BUCKET_NAME,
-        Key: nanoid(),
-        Body: req.file.buffer,
-        ACL: "public-read-write",
-    };
-
-    const promise = s3.upload(params, (error) => {
-        if (error) {
-            throw new Error(error);
-        }
-    }).promise()
-
-    const data = await Promise.resolve(promise)
-    if (!data) {
-        throw new Error("Image upload failed")
-    }
+    const data = await uploadFileToS3(req.file.buffer, req.file.mimetype);
 
     const resource = await prisma.resource.create({
         data: {
@@ -83,24 +60,7 @@ const createImageResourceFromLink = async (req: Request, res: Response) => {
         throw new APIError("Image upload failed, link must be JPEG or PNG", 415)
     }
 
-    const params = {
-        Bucket: process.env.AWS_BUCKET_NAME,
-        Key: nanoid(),
-        Body: image.data,
-        ACL: "public-read-write",
-        ContentType: contentType
-    };
-
-    const promise = s3.upload(params, (error) => {
-        if (error) {
-            throw new Error(error);
-        }
-    }).promise()
-
-    const data = await Promise.resolve(promise)
-    if (!data) {
-        throw new Error("Image upload failed")
-    }
+    const data = await uploadFileToS3(image.data, contentType);
 
     const resource = await prisma.resource.create({
         data: {
