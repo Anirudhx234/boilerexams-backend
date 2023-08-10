@@ -2,7 +2,7 @@ import { PurdueIoAPI } from "../services/purdue.io";
 import { Request, Response } from "express";
 import { DiscordAPI } from "../services/discord.api";
 import { CourseAlreadyExistsError, NotFoundError } from "../middleware/errors/index";
-import { Prisma } from "@prisma/client";
+import { Prisma, AccountType } from "@prisma/client";
 
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
@@ -107,11 +107,7 @@ const createQuestionBugReport = async (req: Request, res: Response) => {
                 select: {
                     abbreviation: true,
                     number: true,
-                    users: {
-                        include: {
-                            accounts: true
-                        }
-                    },
+                    users: true,
                 }
             },
             exam: {
@@ -133,8 +129,8 @@ const createQuestionBugReport = async (req: Request, res: Response) => {
     const examNumber = exam.number;
     const semester = exam.semester;
     const title = `${abbreviation}${courseNumber} | ${semester.season} ${semester.year} | Exam ${examNumber} | Question ${question.number}`;
-    const accounts = users.map(user => user.accounts.filter(account => account.provider == "discord")).flat();
-    const content = accounts.map(account => `<@${account.providerAccountId}>`).join("");
+    const discordUsers = users.filter(user => user.accountType === AccountType.DISCORD);
+    const content = discordUsers.map(user => `<@${user.accountId}>`).join("");
     const url = `https://boilerexams-frontend.vercel.app/courses/${abbreviation}${courseNumber}/${semester.season}-${semester.year}-${examNumber}?q=${questionId}`;
 
     const embed = {
