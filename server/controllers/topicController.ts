@@ -1,12 +1,17 @@
 import { PrismaClient } from '@prisma/client';
 import { Request, Response } from 'express'
-import { NotFoundError } from "../middleware/errors";
+import { APIError, NotFoundError } from "../middleware/errors";
 
 const prisma = new PrismaClient();
 
 const createTopic = async (req: Request, res: Response) => {
     const { courseId } = req.params
     const { name } = req.body
+
+    if (typeof name === "string" && name.length > 50) {
+        throw new APIError("Topic length must be under 50 characters", 400);
+    }
+
     const topic = await prisma.topic.create({
         data: {
             name: name,
@@ -25,6 +30,11 @@ const createTopic = async (req: Request, res: Response) => {
 const updateTopic = async (req: Request, res: Response) => {
     const { topicId } = req.params
     const { name } = req.body
+
+    if (typeof name === "string" && name.length > 50) {
+        throw new APIError("Topic length must be under 50 characters", 400);
+    }
+
     const topic = await prisma.topic.update({
         where: {
             id: topicId

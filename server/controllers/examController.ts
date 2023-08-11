@@ -1,6 +1,6 @@
 import { PrismaClient, Season } from "@prisma/client";
 import { Request, Response } from 'express';
-import { NotFoundError } from "../middleware/errors";
+import { APIError, NotFoundError } from "../middleware/errors";
 
 const prisma = new PrismaClient();
 
@@ -8,53 +8,12 @@ const createExam = async (req: Request, res: Response) => {
     const { courseId } = req.params
     const { semester: { season, year }, number } = req.body
 
-    const semester = await prisma.semester.upsert({
-        where: {
-            season_year: {
-                season: Season[season.toUpperCase() as keyof typeof Season],
-                year: Number(year)
-            }
-        },
-        update: {},
-        create: {
-            season: Season[season.toUpperCase() as keyof typeof Season],
-            year: Number(year)
-        }
-    })
+    if (!season || !year) {
+        throw new APIError("Season and year required", 400);
+    }
 
-    await prisma.course.update({
-        where: {
-            id: courseId
-        },
-        data: {
-            semesters: {
-                connect: {
-                    id: semester.id
-                }
-            }
-        }
-    })
-
-    const exam = await prisma.exam.create({
-        data: {
-            courseId: courseId,
-            number: Number(number),
-            semesterId: semester.id
-        },
-        include: {
-            semester: true,
-            questions: true
-        }
-    })
-    res.status(200).send(exam)
-}
-
-const updateExam = async (req: Request, res: Response) => {
-    const { courseId, examId } = req.params
-    const { semester: { season, year }, number } = req.body
-    let semesterId;
-    if (season && year) {
-        const semester = await prisma.semester.upsert({
+    const exam = await prisma.$transaction(async (tx) => {
+        const semester = await tx.semester.upsert({
             where: {
                 season_year: {
                     season: Season[season.toUpperCase() as keyof typeof Season],
@@ -67,8 +26,8 @@ const updateExam = async (req: Request, res: Response) => {
                 year: Number(year)
             }
         })
-        semesterId = semester.id
-        await prisma.course.update({
+
+        await tx.course.update({
             where: {
                 id: courseId
             },
@@ -80,19 +39,70 @@ const updateExam = async (req: Request, res: Response) => {
                 }
             }
         })
+
+        return await tx.exam.create({
+            data: {
+                courseId: courseId,
+                number: Number(number),
+                semesterId: semester.id
+            },
+            include: {
+                semester: true,
+                questions: true
+            }
+        })
+    })
+    res.status(200).send(exam)
+}
+
+const updateExam = async (req: Request, res: Response) => {
+    const { courseId, examId } = req.params
+    const { semester: { season, year }, number } = req.body
+
+    if (!season || !year) {
+        throw new APIError("Season and year required", 400);
     }
 
-    const exam = await prisma.exam.update({
-        where: {
-            id: examId
-        },
-        data: {
-            semesterId: semesterId,
-            number: number,
-        },
-        include: {
-            semester: true
-        }
+    const exam = await prisma.$transaction(async (tx) => {
+        const semester = await tx.semester.upsert({
+            where: {
+                season_year: {
+                    season: Season[season.toUpperCase() as keyof typeof Season],
+                    year: Number(year)
+                }
+            },
+            update: {},
+            create: {
+                season: Season[season.toUpperCase() as keyof typeof Season],
+                year: Number(year)
+            }
+        })
+
+        await tx.course.update({
+            where: {
+                id: courseId
+            },
+            data: {
+                semesters: {
+                    connect: {
+                        id: semester.id
+                    }
+                }
+            }
+        })
+
+        return await tx.exam.update({
+            where: {
+                id: examId
+            },
+            data: {
+                semesterId: semester.id,
+                number: number,
+            },
+            include: {
+                semester: true
+            }
+        })
     })
     res.status(200).send(exam)
 }

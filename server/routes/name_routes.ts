@@ -167,7 +167,13 @@ app.get("/courses/:courseAbbrev/topics/questions", sendPublished, asyncWrapper(a
                         select: {
                             id: true,
                             number: true,
-                            exam: true,
+                            exam: {
+                                select: {
+                                    id: true,
+                                    number: true,
+                                    semester: true
+                                }
+                            },
                             topics: true
                         }
                     }
