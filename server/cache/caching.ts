@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express"
-const NodeCache = require('node-cache');
+import NodeCache from 'node-cache';
 const serverCache = new NodeCache();
 
 module.exports = duration => (req: Request, res, next: NextFunction) => {
@@ -13,6 +13,7 @@ module.exports = duration => (req: Request, res, next: NextFunction) => {
     const cachedBody = serverCache.get(key);
     if (cachedBody) {
         try {
+            // @ts-ignore
             res.json(JSON.parse(cachedBody));
         }
         catch { }

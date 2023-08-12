@@ -7,7 +7,7 @@ const prisma = new PrismaClient();
 import express from 'express'
 const app = express();
 
-const cache = require('../cache/caching');
+// import cache from '../cache/caching';
 import _ from 'lodash'
 import asyncWrapper from '../middleware/wrappers/asyncWrapper'
 

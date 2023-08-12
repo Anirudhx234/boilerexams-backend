@@ -2,9 +2,8 @@ import { PurdueIoAPI } from "../services/purdue.io";
 import { Request, Response } from "express";
 import { DiscordAPI } from "../services/discord.api";
 import { CourseAlreadyExistsError, NotFoundError } from "../middleware/errors/index";
-import { Prisma, AccountType } from "@prisma/client";
+import { PrismaClient, Prisma, AccountType } from "@prisma/client";
 
-const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 const createCourseRequest = async (req: Request, res: Response) => {
@@ -16,7 +15,7 @@ const createCourseRequest = async (req: Request, res: Response) => {
     const purdueIoSubject = await PurdueIoAPI.getSubject(abbreviation.toUpperCase());
     const purdueIoCourse = await PurdueIoAPI.getCourse(purdueIoSubject, courseNumber);
 
-    const existingCourse: Prisma.CourseGetPayload<Prisma.CourseArgs> = await prisma.course.findFirst({
+    const existingCourse = await prisma.course.findFirst({
         where: {
             AND: [
                 { abbreviation: purdueIoSubject.Abbreviation },

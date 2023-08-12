@@ -6,8 +6,11 @@
     "lib": ["esnext"],
     "esModuleInterop": true,
     "noImplicitAny": false,
-    "target": "es6",
-    "moduleResolution": "node"
-  },
-  "typeRoots": ["./types", "./node_modules/@types"]
+    "moduleResolution": "node",
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "composite": true,
+    "target": "ES2022",
+    "typeRoots": ["./types"]
+  }
 }

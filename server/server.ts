@@ -9,10 +9,13 @@ import routes from './routes/index'
 import errorHandler from './middleware/errorHandler';
 import { APIError } from './middleware/errors';
 
-require('./middleware/auth/passport/discordPassport')
-require('./middleware/auth/passport/googlePassport')
+import discordPassport from './middleware/auth/passport/discordPassport'
+import googlePassport from './middleware/auth/passport/googlePassport'
 
 const app = express();
+
+discordPassport(passport);
+googlePassport(passport);
 
 const vercelRegexp = new RegExp('https:\/\/boilerexams-frontend[^ ]*.vercel.app');
 const prodRegexp = new RegExp('https:\/\/[^ ]*.boilerexams.com')
@@ -50,10 +53,10 @@ const sessionOptions = {
   name: 'sessionId'
 }
 
-if (process.env.NODE_ENV === "production") {
-  app.set('trust proxy', 1);
-  sessionOptions.cookie.secure = true
-}
+//if (process.env.NODE_ENV === "production") {
+//  app.set('trust proxy', 1);
+//  sessionOptions.cookie.secure = true
+//}
 
 //@ts-ignore
 app.use(session(sessionOptions))

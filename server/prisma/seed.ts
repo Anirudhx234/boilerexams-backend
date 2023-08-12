@@ -1,7 +1,8 @@
-const { PrismaClient, Season } = require('@prisma/client')
+import { PrismaClient, Season } from '@prisma/client';
 const prisma = new PrismaClient();
 
 async function main() {
+    /*
     const semester = await prisma.semester.create({
         data: {
             season: Season.SPRING,
@@ -61,8 +62,7 @@ async function main() {
                 ]
             }
         },
-    })
+    }) */
 }
 
 main()
-export { }
