@@ -53,10 +53,10 @@ const sessionOptions = {
   name: 'sessionId'
 }
 
-//if (process.env.NODE_ENV === "production") {
-//  app.set('trust proxy', 1);
-//  sessionOptions.cookie.secure = true
-//}
+if (process.env.NODE_ENV === "production") {
+  app.set('trust proxy', 1);
+  sessionOptions.cookie.secure = true
+}
 
 //@ts-ignore
 app.use(session(sessionOptions))
