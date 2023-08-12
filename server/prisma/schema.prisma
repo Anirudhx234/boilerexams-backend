@@ -60,6 +60,7 @@ model Question {
   body                 String
   courseId             String
   solutionVideoLink    String         @default("")
+  videoFeedback        VideoFeedback[]
   correctChoiceIndices Int[]
   published            Boolean        @default(false)
   answerChoices        AnswerChoice[]
@@ -152,6 +153,16 @@ model CourseRequest {
   abbreviation String
   name         String @unique
   number       Int
+}
+
+model VideoFeedback {
+  id                  String   @id @default(uuid())
+  questionId          String
+  question            Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  explanationQuality  Int
+  productionQuality   Int
+  videoRecommendation Boolean
+  additionalFeedback  String
 }
 
 model User {
