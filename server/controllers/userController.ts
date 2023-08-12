@@ -1,6 +1,6 @@
 import { PrismaClient, Role } from '@prisma/client';
 import { Request, Response } from 'express'
-import { APIError, NotFoundError } from "../middleware/errors";
+import { APIError, NotFoundError } from "../middleware/errors/index.js";
 
 const prisma = new PrismaClient();
 

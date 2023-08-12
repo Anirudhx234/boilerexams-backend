@@ -1,6 +1,6 @@
 import { PrismaClient } from '@prisma/client'
-import { NotFoundError } from "../../middleware/errors";
-import questionStats from "./questionStats";
+import { NotFoundError } from "../../middleware/errors/index.js";
+import questionStats from "./questionStats.js";
 const prisma = new PrismaClient()
 
 const examStats = async (examId: string) => {

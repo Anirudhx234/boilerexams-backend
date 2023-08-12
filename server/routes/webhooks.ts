@@ -10,8 +10,8 @@ import {
     getCourseRequest,
     getCourseRequests,
     deleteWebhook
-} from "../controllers/webhookController";
-import asyncWrapper from "../middleware/wrappers/asyncWrapper"
+} from "../controllers/webhookController.js";
+import asyncWrapper from "../middleware/wrappers/asyncWrapper.js"
 
 const app = express();
 

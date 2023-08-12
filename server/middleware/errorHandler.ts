@@ -1,6 +1,6 @@
 import { Prisma } from '@prisma/client';
 import { Request, Response, NextFunction } from "express"
-import { APIError, InvalidCourseError, InvalidSeasonError, NotFoundError } from "./errors/index";
+import { APIError, InvalidCourseError, InvalidSeasonError, NotFoundError } from "./errors/index.js";
 import multer from 'multer';
 
 const errorHandler = (error, req: Request, res: Response, next: NextFunction) => {

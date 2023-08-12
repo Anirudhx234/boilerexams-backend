@@ -4,9 +4,9 @@ import {
     updateExam,
     deleteExam,
     toggleExamPublished
-} from "../controllers/examController"
-import asyncWrapper from "../middleware/wrappers/asyncWrapper"
-import authHandler from '../middleware/auth/authHandler';
+} from "../controllers/examController.js"
+import asyncWrapper from "../middleware/wrappers/asyncWrapper.js"
+import authHandler from '../middleware/auth/authHandler.js';
 
 const app = express();
 

@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express"
-import asyncWrapper from '../wrappers/asyncWrapper';
+import asyncWrapper from '../wrappers/asyncWrapper.js';
 
 const sendPublished = asyncWrapper(async (req: Request, res: Response, next: NextFunction) => {
     if (req.user) {

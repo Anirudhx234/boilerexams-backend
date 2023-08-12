@@ -1,4 +1,4 @@
-import {InvalidCourseError, NotFoundError} from "../middleware/errors";
+import {InvalidCourseError, NotFoundError} from "../middleware/errors/index.js";
 import axios from "axios"
 
 export type PurdueIoCourse = { Id: string, Number: string, SubjectId: string, Title: string, CreditHours: number, Description: string };

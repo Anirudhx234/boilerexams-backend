@@ -1,8 +1,8 @@
 import { PrismaClient, ResourceType, Language } from '@prisma/client'
 import { Request, Response } from 'express'
 import axios from 'axios';
-import { APIError } from '../middleware/errors';
-import uploadFileToS3 from '../utils/uploadFileToS3';
+import { APIError } from '../middleware/errors/index.js';
+import uploadFileToS3 from '../utils/uploadFileToS3.js';
 const prisma = new PrismaClient();
 
 const getResource = async (req: Request, res: Response) => {

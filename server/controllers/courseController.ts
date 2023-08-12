@@ -1,9 +1,9 @@
 import { PrismaClient } from "@prisma/client";
 import { Request, Response } from 'express'
-import { NotFoundError } from "../middleware/errors";
-import { PurdueIoAPI } from "../services/purdue.io";
-import uploadFileToS3 from "../utils/uploadFileToS3";
-import hexModifier from "../utils/hexModifier";
+import { NotFoundError } from "../middleware/errors/index.js";
+import { PurdueIoAPI } from "../services/purdue.io.js";
+import uploadFileToS3 from "../utils/uploadFileToS3.js";
+import hexModifier from "../utils/hexModifier.js";
 
 const prisma = new PrismaClient();
 

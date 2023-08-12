@@ -1,4 +1,4 @@
-import { InvalidSeasonError, NotFoundError } from "../middleware/errors/index";
+import { InvalidSeasonError, NotFoundError } from "../middleware/errors/index.js";
 
 import { PrismaClient, Season } from '@prisma/client';
 import { Request, Response } from "express";
@@ -9,11 +9,11 @@ const app = express();
 
 // import cache from '../cache/caching';
 import _ from 'lodash'
-import asyncWrapper from '../middleware/wrappers/asyncWrapper'
+import asyncWrapper from '../middleware/wrappers/asyncWrapper.js'
 
-import validCourseRegex from '../utils/validCourseRegex'
+import validCourseRegex from '../utils/validCourseRegex.js'
 
-import sendPublished from "../middleware/auth/sendPublished"
+import sendPublished from "../middleware/auth/sendPublished.js"
 
 // All courses metadata, with no relations
 app.get("/courses", sendPublished, asyncWrapper(async (req: Request, res: Response) => {

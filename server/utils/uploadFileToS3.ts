@@ -1,5 +1,5 @@
 import { nanoid } from "nanoid";
-import { APIError } from "../middleware/errors";
+import { APIError } from "../middleware/errors/index.js";
 import Aws from 'aws-sdk';
 
 const s3 = new Aws.S3({

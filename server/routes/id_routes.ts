@@ -2,9 +2,9 @@ import { PrismaClient } from "@prisma/client";
 import { Request, Response } from "express";
 import express from "express";
 import _ from "lodash";
-import asyncWrapper from "../middleware/wrappers/asyncWrapper";
-import { NotFoundError } from "../middleware/errors/index";
-import authHandler from "../middleware/auth/authHandler";
+import asyncWrapper from "../middleware/wrappers/asyncWrapper.js";
+import { NotFoundError } from "../middleware/errors/index.js";
+import authHandler from "../middleware/auth/authHandler.js";
 
 const prisma = new PrismaClient();
 const app = express();

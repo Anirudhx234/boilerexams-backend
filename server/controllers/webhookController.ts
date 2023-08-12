@@ -1,7 +1,7 @@
-import { PurdueIoAPI } from "../services/purdue.io";
+import { PurdueIoAPI } from "../services/purdue.io.js";
 import { Request, Response } from "express";
-import { DiscordAPI } from "../services/discord.api";
-import { CourseAlreadyExistsError, NotFoundError } from "../middleware/errors/index";
+import { DiscordAPI } from "../services/discord.api.js";
+import { CourseAlreadyExistsError, NotFoundError } from "../middleware/errors/index.js";
 import { PrismaClient, Prisma, AccountType } from "@prisma/client";
 
 const prisma = new PrismaClient();
