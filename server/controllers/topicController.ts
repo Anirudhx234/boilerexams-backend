@@ -35,15 +35,54 @@ const updateTopic = async (req: Request, res: Response) => {
         throw new APIError("Topic length must be under 50 characters", 400);
     }
 
-    const topic = await prisma.topic.update({
+    const existingTopic = await prisma.topic.findUnique({
         where: {
-            id: topicId
-        },
-        data: {
             name: name
         }
     })
-    res.status(200).send(topic)
+
+    let result;
+    if (existingTopic) {
+        const originalTopic = await prisma.topic.findUnique({
+            where: {
+                id: topicId
+            },
+            include: {
+                questions: true
+            }
+        })
+        if (!originalTopic) {
+            throw new NotFoundError("Invalid topic id")
+        }
+
+        result = await prisma.topic.update({
+            where: {
+                name: name
+            },
+            data: {
+                questions: {
+                    connect: originalTopic.questions.map((question) => ({ id: question.id }))
+                }
+            }
+        })
+
+        await prisma.topic.delete({
+            where: {
+                id: topicId
+            }
+        })
+    }
+    else {
+        result = await prisma.topic.update({
+            where: {
+                id: topicId
+            },
+            data: {
+                name: name
+            }
+        })
+    }
+    res.status(200).send(result)
 }
 
 const deleteTopic = async (req: Request, res: Response) => {
