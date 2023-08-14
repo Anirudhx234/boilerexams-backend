@@ -15,6 +15,31 @@ import validCourseRegex from '../utils/validCourseRegex.js'
 
 import sendPublished from "../middleware/auth/sendPublished.js"
 
+const questionSort: any = [
+    {
+        exam: {
+            semester: {
+                year: 'desc',
+            },
+        }
+    },
+    {
+        exam: {
+            semester: {
+                season: 'asc'
+            },
+        }
+    },
+    {
+        exam: {
+            number: 'asc',
+        }
+    },
+    {
+        number: 'asc'
+    }
+]
+
 // All courses metadata, with no relations
 app.get("/courses", sendPublished, asyncWrapper(async (req: Request, res: Response) => {
     let courses = await prisma.course.findMany({
@@ -137,6 +162,9 @@ app.get("/courses/:courseAbbrev/topics", sendPublished, asyncWrapper(async (req:
         select: {
             topics: true
         },
+        orderBy: {
+            name: 'asc'
+        }
     })
 
     if (!course) {
@@ -162,6 +190,10 @@ app.get("/courses/:courseAbbrev/topics/questions", sendPublished, asyncWrapper(a
                 include: {
                     questions: {
                         where: {
+                            course: {
+                                abbreviation: abbreviation.toUpperCase(),
+                                number: Number(number)
+                            },
                             OR: req.published
                         },
                         select: {
@@ -174,18 +206,39 @@ app.get("/courses/:courseAbbrev/topics/questions", sendPublished, asyncWrapper(a
                                     semester: true
                                 }
                             },
-                            topics: true
-                        }
+                            topics: {
+                                orderBy: {
+                                    name: 'asc'
+                                }
+                            },
+                        },
+                        orderBy: questionSort
                     }
                 },
+                orderBy: {
+                    name: 'asc'
+                }
             },
+            questions: {
+                where: {
+                    course: {
+                        abbreviation: abbreviation.toUpperCase(),
+                        number: Number(number)
+                    },
+                    topics: {
+                        none: {}
+                    }
+                },
+                orderBy: questionSort,
+            },
+            
         },
     })
 
     if (!course) {
         throw new NotFoundError("Course not found")
     }
-    res.status(200).send(course.topics);
+    res.status(200).send(course);
 }));
 
 // All exams with semester (no questions)
@@ -249,7 +302,7 @@ app.get("/courses/:courseAbbrev/exams/questions", sendPublished, asyncWrapper(as
                         },
                     },
                     semester: true
-                },
+                }
             },
         },
     })
@@ -264,7 +317,9 @@ app.get("/courses/:courseAbbrev/exams/questions", sendPublished, asyncWrapper(as
 
 // Full question information for specific topic
 app.get("/courses/:courseAbbrev/topics/:topicName/questions", sendPublished, asyncWrapper(async (req: Request, res: Response) => {
-    const { topicName } = req.params;
+    const { courseAbbrev, topicName } = req.params;
+    const { abbreviation, number } = validCourseRegex(courseAbbrev);
+
     const topic = await prisma.topic.findUnique({
         where: {
             name: topicName
@@ -273,6 +328,8 @@ app.get("/courses/:courseAbbrev/topics/:topicName/questions", sendPublished, asy
             questions: {
                 where: {
                     course: {
+                        abbreviation: abbreviation.toUpperCase(),
+                        number: Number(number),
                         OR: req.published
                     },
                     OR: req.published
@@ -298,7 +355,8 @@ app.get("/courses/:courseAbbrev/topics/:topicName/questions", sendPublished, asy
                             code: true
                         }
                     }
-                }
+                },
+                orderBy: questionSort
             }
         }
     })
