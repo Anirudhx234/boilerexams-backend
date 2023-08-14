@@ -231,7 +231,6 @@ app.get("/courses/:courseAbbrev/topics/questions", sendPublished, asyncWrapper(a
                 },
                 orderBy: questionSort,
             },
-            
         },
     })
 

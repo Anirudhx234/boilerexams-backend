@@ -17,6 +17,30 @@ import _ from 'lodash';
 import asyncWrapper from '../middleware/wrappers/asyncWrapper.js';
 import validCourseRegex from '../utils/validCourseRegex.js';
 import sendPublished from "../middleware/auth/sendPublished.js";
+const questionSort = [
+    {
+        exam: {
+            semester: {
+                year: 'desc',
+            },
+        }
+    },
+    {
+        exam: {
+            semester: {
+                season: 'asc'
+            },
+        }
+    },
+    {
+        exam: {
+            number: 'asc',
+        }
+    },
+    {
+        number: 'asc'
+    }
+];
 // All courses metadata, with no relations
 app.get("/courses", sendPublished, asyncWrapper((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     let courses = yield prisma.course.findMany({
@@ -132,6 +156,9 @@ app.get("/courses/:courseAbbrev/topics", sendPublished, asyncWrapper((req, res) 
         select: {
             topics: true
         },
+        orderBy: {
+            name: 'asc'
+        }
     });
     if (!course) {
         throw new NotFoundError("Course not found");
@@ -154,6 +181,10 @@ app.get("/courses/:courseAbbrev/topics/questions", sendPublished, asyncWrapper((
                 include: {
                     questions: {
                         where: {
+                            course: {
+                                abbreviation: abbreviation.toUpperCase(),
+                                number: Number(number)
+                            },
                             OR: req.published
                         },
                         select: {
@@ -166,17 +197,37 @@ app.get("/courses/:courseAbbrev/topics/questions", sendPublished, asyncWrapper((
                                     semester: true
                                 }
                             },
-                            topics: true
-                        }
+                            topics: {
+                                orderBy: {
+                                    name: 'asc'
+                                }
+                            },
+                        },
+                        orderBy: questionSort
                     }
                 },
+                orderBy: {
+                    name: 'asc'
+                }
+            },
+            questions: {
+                where: {
+                    course: {
+                        abbreviation: abbreviation.toUpperCase(),
+                        number: Number(number)
+                    },
+                    topics: {
+                        none: {}
+                    }
+                },
+                orderBy: questionSort,
             },
         },
     });
     if (!course) {
         throw new NotFoundError("Course not found");
     }
-    res.status(200).send(course.topics);
+    res.status(200).send(course);
 })));
 // All exams with semester (no questions)
 app.get("/courses/:courseAbbrev/exams", sendPublished, asyncWrapper((req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -235,7 +286,7 @@ app.get("/courses/:courseAbbrev/exams/questions", sendPublished, asyncWrapper((r
                         },
                     },
                     semester: true
-                },
+                }
             },
         },
     });
@@ -248,7 +299,8 @@ app.get("/courses/:courseAbbrev/exams/questions", sendPublished, asyncWrapper((r
 })));
 // Full question information for specific topic
 app.get("/courses/:courseAbbrev/topics/:topicName/questions", sendPublished, asyncWrapper((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { topicName } = req.params;
+    const { courseAbbrev, topicName } = req.params;
+    const { abbreviation, number } = validCourseRegex(courseAbbrev);
     const topic = yield prisma.topic.findUnique({
         where: {
             name: topicName
@@ -257,6 +309,8 @@ app.get("/courses/:courseAbbrev/topics/:topicName/questions", sendPublished, asy
             questions: {
                 where: {
                     course: {
+                        abbreviation: abbreviation.toUpperCase(),
+                        number: Number(number),
                         OR: req.published
                     },
                     OR: req.published
@@ -282,7 +336,8 @@ app.get("/courses/:courseAbbrev/topics/:topicName/questions", sendPublished, asy
                             code: true
                         }
                     }
-                }
+                },
+                orderBy: questionSort
             }
         }
     });
