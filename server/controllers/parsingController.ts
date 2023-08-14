@@ -57,7 +57,7 @@ const parseFromFile = async (req: Request, res: Response) => {
     };
     data.append('options_json', JSON.stringify(options_json))
 
-    let config = {
+    const config = {
         method: "post",
         maxBodyLength: Infinity,
         url: "https://api.mathpix.com/v3/pdf",

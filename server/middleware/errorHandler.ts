@@ -2,7 +2,7 @@ import { Prisma } from '@prisma/client';
 import { Request, Response, NextFunction } from "express"
 import { APIError, InvalidCourseError, InvalidSeasonError, NotFoundError } from "./errors/index.js";
 import multer from 'multer';
-import { ErrorResponse } from '../types/express/errors/index.js';
+import { ErrorResponse } from '../types/errors/index.js';
 
 const errorHandler = (error, req: Request, res: Response, next: NextFunction) => {
     if (!error.message) {
