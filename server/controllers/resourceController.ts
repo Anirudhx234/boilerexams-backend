@@ -51,7 +51,7 @@ const createImageResourceFromLink = async (req: Request, res: Response) => {
 
     const image = await axios.get(link, {
         responseType: 'arraybuffer',
-        maxContentLength: 500 * 1024
+        maxContentLength: 1000 * 1024
     })
 
     const contentType = image.headers['content-type']

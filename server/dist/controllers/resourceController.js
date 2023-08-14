@@ -52,7 +52,7 @@ const createImageResourceFromLink = (req, res) => __awaiter(void 0, void 0, void
     const { link, altText } = req.body;
     const image = yield axios.get(link, {
         responseType: 'arraybuffer',
-        maxContentLength: 500 * 1024
+        maxContentLength: 1000 * 1024
     });
     const contentType = image.headers['content-type'];
     if (contentType !== "image/png" && contentType !== "image/jpeg") {

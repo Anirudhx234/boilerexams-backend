@@ -14,7 +14,7 @@ const errorHandler = (error, req, res, next) => {
     }
     if (error instanceof multer.MulterError && error.code == "LIMIT_FILE_SIZE") {
         if (error.field === "image") {
-            return res.status(413).json({ message: "Image size must be under 500 KB" });
+            return res.status(413).json({ message: "Image size must be under 1 MB" });
         }
         else if (error.field === "pdf") {
             return res.status(413).json({ message: "PDF size must be under 5 MB" });
