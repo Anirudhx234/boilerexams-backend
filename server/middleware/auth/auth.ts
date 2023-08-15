@@ -2,7 +2,7 @@ import express from 'express'
 import { Request, Response, NextFunction } from "express"
 import passport from 'passport'
 import { URL } from 'url'
-import authTester from './authTester'
+import authTester from './authTester.js'
 
 const app = express()
 

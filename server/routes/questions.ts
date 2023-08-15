@@ -7,9 +7,9 @@ import {
     deleteQuestion,
     createQuestionSubmission,
     updateSubmission,
-} from "../controllers/questionController"
-import asyncWrapper from "../middleware/wrappers/asyncWrapper"
-import authHandler from '../middleware/auth/authHandler';
+} from "../controllers/questionController.js"
+import asyncWrapper from "../middleware/wrappers/asyncWrapper.js"
+import authHandler from '../middleware/auth/authHandler.js';
 
 const app = express();
 

@@ -1,11 +1,11 @@
 import express from 'express'
-import asyncWrapper from '../middleware/wrappers/asyncWrapper';
+import asyncWrapper from '../middleware/wrappers/asyncWrapper.js';
 import {
     getQuestionStats,
     getExamStats,
     getCourseStats,
     getSubmissionStats
-} from '../controllers/statsController'
+} from '../controllers/statsController.js'
 const app = express()
 
 app.get("/stats/questions/:questionId", asyncWrapper(getQuestionStats))

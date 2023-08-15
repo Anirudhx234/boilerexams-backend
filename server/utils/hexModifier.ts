@@ -1,4 +1,4 @@
-import { APIError } from "../middleware/errors";
+import { APIError } from "../middleware/errors/index.js";
 
 const hexModifier = (color: string, decimal: number): string => {
     if (color === "") {

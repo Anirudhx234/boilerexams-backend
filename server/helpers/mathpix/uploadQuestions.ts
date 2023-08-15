@@ -1,6 +1,6 @@
 import { PrismaClient, ResourceType } from '@prisma/client'
 import axios from "axios";
-import uploadFileToS3 from '../../utils/uploadFileToS3';
+import uploadFileToS3 from '../../utils/uploadFileToS3.js';
 
 const prisma = new PrismaClient()
 

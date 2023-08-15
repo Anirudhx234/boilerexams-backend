@@ -4,10 +4,10 @@ import {
     updateCourse,
     deleteCourse,
     toggleCoursePublished
-} from "../controllers/courseController"
-import asyncWrapper from "../middleware/wrappers/asyncWrapper"
-import authHandler from '../middleware/auth/authHandler';
-import upload from "../middleware/multer/image"
+} from "../controllers/courseController.js"
+import asyncWrapper from "../middleware/wrappers/asyncWrapper.js"
+import authHandler from '../middleware/auth/authHandler.js';
+import upload from "../middleware/multer/image.js"
 
 const app = express();
 

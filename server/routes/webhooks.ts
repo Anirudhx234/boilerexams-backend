@@ -1,3 +1,4 @@
+import express from 'express';
 import {
     createBugReport,
     createCourseRequest,
@@ -10,9 +11,8 @@ import {
     getCourseRequests,
     getWebhook,
     getWebhooks
-} from "../controllers/webhookController";
-import asyncWrapper from "../middleware/wrappers/asyncWrapper";
-import express from 'express';
+} from "../controllers/webhookController.js";
+import asyncWrapper from "../middleware/wrappers/asyncWrapper.js"
 
 const app = express();
 

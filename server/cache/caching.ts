@@ -1,8 +1,8 @@
 import { Request, Response, NextFunction } from "express"
-const NodeCache = require('node-cache');
+import NodeCache from 'node-cache';
 const serverCache = new NodeCache();
 
-module.exports = duration => (req: Request, res, next: NextFunction) => {
+const cache = duration => (req: Request, res, next: NextFunction) => {
     if (req.method !== 'GET') {
         if (serverCache.has(req.originalUrl)) {
             serverCache.del(req.originalUrl);
@@ -13,6 +13,7 @@ module.exports = duration => (req: Request, res, next: NextFunction) => {
     const cachedBody = serverCache.get(key);
     if (cachedBody) {
         try {
+            // @ts-ignore
             res.json(JSON.parse(cachedBody));
         }
         catch { }
@@ -25,3 +26,5 @@ module.exports = duration => (req: Request, res, next: NextFunction) => {
         next();
     }
 };
+
+export default cache;

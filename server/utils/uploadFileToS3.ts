@@ -1,7 +1,6 @@
 import { nanoid } from "nanoid";
-import { APIError } from "../middleware/errors";
-
-var Aws = require('aws-sdk');
+import { APIError } from "../middleware/errors/index.js";
+import Aws from 'aws-sdk';
 
 const s3 = new Aws.S3({
     accessKeyId: process.env.AWS_ACCESS_KEY_ID,
@@ -14,7 +13,7 @@ const uploadFileToS3 = async (buffer: Buffer, contentType: string) => {
     }
 
     const params = {
-        Bucket: process.env.AWS_BUCKET_NAME,
+        Bucket: process.env.AWS_BUCKET_NAME || "",
         Key: nanoid(),
         Body: buffer,
         ACL: "public-read-write",

@@ -1,13 +1,13 @@
 import { PrismaClient } from '@prisma/client';
 import { Request, Response } from 'express'
-import parseQuestions from "../helpers/mathpix/questionParser";
-import getPDFResult from "../helpers/mathpix/retrievePDF";
+import parseQuestions from "../helpers/mathpix/questionParser.js";
+import getPDFResult from "../helpers/mathpix/retrievePDF.js";
 import dotenv from 'dotenv'
 import FormData from 'form-data';
 import axios from 'axios';
-import { APIError, NotFoundError } from "../middleware/errors/index";
-import uploadQuestions from "../helpers/mathpix/uploadQuestions";
-import savePDFtoExam from '../helpers/mathpix/savePDFtoExam';
+import { APIError, NotFoundError } from "../middleware/errors/index.js";
+import uploadQuestions from "../helpers/mathpix/uploadQuestions.js";
+import savePDFtoExam from '../helpers/mathpix/savePDFtoExam.js';
 
 const prisma = new PrismaClient
 dotenv.config()
@@ -57,7 +57,7 @@ const parseFromFile = async (req: Request, res: Response) => {
     };
     data.append('options_json', JSON.stringify(options_json))
 
-    let config = {
+    const config = {
         method: "post",
         maxBodyLength: Infinity,
         url: "https://api.mathpix.com/v3/pdf",

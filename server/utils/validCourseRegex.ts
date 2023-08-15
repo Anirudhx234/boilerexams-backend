@@ -1,4 +1,4 @@
-import { InvalidCourseError } from "../middleware/errors";
+import { InvalidCourseError } from "../middleware/errors/index.js";
 
 const validCourseRegex = (courseAbbrev: string) => {
     const regex = /([a-zA-Z]+)(\d+)/;

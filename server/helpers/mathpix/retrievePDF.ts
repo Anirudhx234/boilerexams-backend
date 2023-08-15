@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { NotFoundError } from '../../middleware/errors'
+import { NotFoundError } from '../../middleware/errors/index.js'
 
 const getPDFResult = async (pdf_id: string) => {
     const headers = {
