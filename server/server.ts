@@ -5,12 +5,12 @@ import cookieParser from 'cookie-parser';
 import session from 'express-session'
 import connect from 'connect-pg-simple'
 import passport from 'passport'
-import routes from './routes/index'
-import errorHandler from './middleware/errorHandler';
-import { APIError } from './middleware/errors';
+import routes from './routes/index.js'
+import errorHandler from './middleware/errorHandler.js';
+import { APIError } from './middleware/errors/index.js';
 
-import discordPassport from './middleware/auth/passport/discordPassport'
-import googlePassport from './middleware/auth/passport/googlePassport'
+import discordPassport from './middleware/auth/passport/discordPassport.js'
+import googlePassport from './middleware/auth/passport/googlePassport.js'
 
 const app = express();
 
@@ -53,10 +53,10 @@ const sessionOptions = {
   name: 'sessionId'
 }
 
-//if (process.env.NODE_ENV === "production") {
-//  app.set('trust proxy', 1);
-//  sessionOptions.cookie.secure = true
-//}
+if (process.env.NODE_ENV === "production") {
+  app.set('trust proxy', 1);
+  sessionOptions.cookie.secure = true
+}
 
 //@ts-ignore
 app.use(session(sessionOptions))

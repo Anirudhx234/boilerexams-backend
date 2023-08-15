@@ -3,9 +3,9 @@ import {
     createTopic,
     updateTopic,
     deleteTopic
-} from "../controllers/topicController"
-import asyncWrapper from "../middleware/wrappers/asyncWrapper"
-import authHandler from '../middleware/auth/authHandler';
+} from "../controllers/topicController.js"
+import asyncWrapper from "../middleware/wrappers/asyncWrapper.js"
+import authHandler from '../middleware/auth/authHandler.js';
 
 const app = express();
 

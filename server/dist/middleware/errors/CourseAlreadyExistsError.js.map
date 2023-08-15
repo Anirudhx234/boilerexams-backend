@@ -1,0 +1,1 @@
+{"version":3,"file":"CourseAlreadyExistsError.js","sourceRoot":"","sources":["../../../middleware/errors/CourseAlreadyExistsError.ts"],"names":[],"mappings":"AAAA,MAAM,CAAC,OAAO,OAAO,wBAAyB,SAAQ,KAAK;IAGvD,YAAY,OAAO;QACf,KAAK,CAAC,OAAO,CAAC,CAAA;QACd,IAAI,CAAC,SAAS,GAAG,GAAG,CAAA;IACxB,CAAC;CACJ"}

@@ -1,9 +1,9 @@
 import { PrismaClient } from '@prisma/client';
 import { Request, Response } from 'express'
 import _ from 'lodash'
-import { NotFoundError } from '../middleware/errors';
-import questionStats from '../helpers/stats/questionStats';
-import examStats from '../helpers/stats/examStats';
+import { NotFoundError } from '../middleware/errors/index.js';
+import questionStats from '../helpers/stats/questionStats.js';
+import examStats from '../helpers/stats/examStats.js';
 const prisma = new PrismaClient();
 
 

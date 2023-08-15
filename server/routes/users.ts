@@ -6,10 +6,10 @@ import {
     updateUserRole,
     assignUserCourses,
     deleteUser
-} from "../controllers/userController"
-import asyncWrapper from "../middleware/wrappers/asyncWrapper"
-import authHandler from '../middleware/auth/authHandler';
-import authTester from '../middleware/auth/authTester';
+} from "../controllers/userController.js"
+import asyncWrapper from "../middleware/wrappers/asyncWrapper.js"
+import authHandler from '../middleware/auth/authHandler.js';
+import authTester from '../middleware/auth/authTester.js';
 
 const app = express();
 

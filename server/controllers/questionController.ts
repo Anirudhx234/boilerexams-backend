@@ -1,7 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import { Request, Response } from 'express'
-import { APIError, NotFoundError } from "../middleware/errors"
-import msToDate from "../utils/msToDate"
+import { APIError, NotFoundError } from "../middleware/errors/index.js"
+import msToDate from "../utils/msToDate.js"
 const prisma = new PrismaClient();
 
 const getQuestion = async (req: Request, res: Response) => {

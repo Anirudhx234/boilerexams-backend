@@ -1,8 +1,8 @@
 import express from 'express'
-import asyncWrapper from "../middleware/wrappers/asyncWrapper"
-import { getIdResults, parseFromFile, parseFromLink, attachPDFToExam } from '../controllers/parsingController';
-import authHandler from '../middleware/auth/authHandler';
-import upload from '../middleware/multer/pdf'
+import asyncWrapper from "../middleware/wrappers/asyncWrapper.js"
+import { getIdResults, parseFromFile, parseFromLink, attachPDFToExam } from '../controllers/parsingController.js';
+import authHandler from '../middleware/auth/authHandler.js';
+import upload from '../middleware/multer/pdf.js'
 
 const app = express();
 

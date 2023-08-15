@@ -1,5 +1,5 @@
 import multer from 'multer';
-import { APIError } from '../errors';
+import { APIError } from '../errors/index.js';
 
 const storage = multer.memoryStorage()
 
@@ -15,7 +15,7 @@ const upload = multer({
     storage: storage,
     fileFilter: fileFilter,
     limits: {
-        fileSize: 500 * 1024
+        fileSize: 1000 * 1024
     }
 });
 

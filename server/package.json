@@ -5,16 +5,16 @@
   "main": "server.ts",
   "scripts": {
     "deploy": "dotenv -e .env.production npx prisma migrate deploy",
-    "dev": "SET NODE_ENV=development&nodemon server.ts",
     "lint": "npx eslint .",
     "postinstall": "npx prisma generate",
     "reset": "dotenv -e .env npx prisma migrate reset",
     "seed": "node prisma/seed.ts",
     "build": "rimraf build && tsc -p tsconfig.json",
-    "start": "SET NODE_ENV=production&ts-node server.ts",
-    "prod": "SET NODE_ENV=production&pm2 start dist/server.js",
-    "test": "SET NODE_ENV=production&node dist/server.js"
+    "dev": "SET NODE_ENV=development&nodemon --config config/nodemon.json server.ts",
+    "start": "SET NODE_ENV=production&ts-node-esm server.ts",
+    "prod": "SET NODE_ENV=production&pm2 start dist/server.js"
   },
+  "type": "module",
   "keywords": [],
   "author": "",
   "license": "ISC",
