@@ -1,10 +1,14 @@
 import { nanoid } from "nanoid";
 import { APIError } from "../middleware/errors/index.js";
-import Aws from 'aws-sdk';
+import { Upload } from "@aws-sdk/lib-storage";
+import { S3 } from "@aws-sdk/client-s3";
 
-const s3 = new Aws.S3({
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
+const s3 = new S3({
+    credentials: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID ?? "",
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY ?? ""
+    },
+    region: 'us-east-2'
 })
 
 const uploadFileToS3 = async (buffer: Buffer, contentType: string) => {
@@ -13,23 +17,23 @@ const uploadFileToS3 = async (buffer: Buffer, contentType: string) => {
     }
 
     const params = {
-        Bucket: process.env.AWS_BUCKET_NAME || "",
+        Bucket: process.env.AWS_BUCKET_NAME ?? "",
         Key: nanoid(),
         Body: buffer,
         ACL: "public-read-write",
         ContentType: contentType
     };
-    
-    const promise = s3.upload(params, (error) => {
-        if (error) {
-            throw new Error(error);
-        }
-    }).promise()
-    
-    const data = await Promise.resolve(promise)
-    if (!data) {
-        throw new Error("File upload failed")
+
+    await new Upload({
+        client: s3,
+        params
+    }).done()
+
+    const data = {
+        Location: `https://${params.Bucket}.s3.us-east-2.amazonaws.com/${params.Key}`,
+        Key: params.Key
     }
+
     return data
 }
 

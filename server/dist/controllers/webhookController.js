@@ -147,7 +147,8 @@ const createFeatureRequest = (req, res) => __awaiter(void 0, void 0, void 0, fun
     res.status(200).send("Success");
 });
 const createFeedbackReport = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    // ToDo Content Feedback Reporting and stuff
+    const { questionId } = req.params;
+    const feedback = req.body;
     res.status(200).send();
 });
 const createWebhook = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -207,5 +208,5 @@ const deleteWebhook = (req, res) => __awaiter(void 0, void 0, void 0, function* 
     });
     res.status(200).send(webhook);
 });
-export { createCourseRequest, createBugReport, createQuestionBugReport, createFeatureRequest, createWebhook, getCourseRequest, getCourseRequests, getWebhook, getWebhooks, deleteWebhook };
+export { createCourseRequest, createBugReport, createQuestionBugReport, createFeatureRequest, createFeedbackReport, createWebhook, getCourseRequest, getCourseRequests, getWebhook, getWebhooks, deleteWebhook };
 //# sourceMappingURL=webhookController.js.map

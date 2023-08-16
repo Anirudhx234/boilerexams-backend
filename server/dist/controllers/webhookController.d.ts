@@ -3,10 +3,11 @@ declare const createCourseRequest: (req: Request, res: Response) => Promise<void
 declare const createBugReport: (req: Request, res: Response) => Promise<void>;
 declare const createQuestionBugReport: (req: Request, res: Response) => Promise<void>;
 declare const createFeatureRequest: (req: Request, res: Response) => Promise<void>;
+declare const createFeedbackReport: (req: Request, res: Response) => Promise<void>;
 declare const createWebhook: (req: Request, res: Response) => Promise<void>;
 declare const getCourseRequest: (req: Request, res: Response) => Promise<void>;
 declare const getCourseRequests: (req: Request, res: Response) => Promise<void>;
 declare const getWebhook: (req: Request, res: Response) => Promise<void>;
 declare const getWebhooks: (req: Request, res: Response) => Promise<void>;
 declare const deleteWebhook: (req: Request, res: Response) => Promise<void>;
-export { createCourseRequest, createBugReport, createQuestionBugReport, createFeatureRequest, createWebhook, getCourseRequest, getCourseRequests, getWebhook, getWebhooks, deleteWebhook };
+export { createCourseRequest, createBugReport, createQuestionBugReport, createFeatureRequest, createFeedbackReport, createWebhook, getCourseRequest, getCourseRequests, getWebhook, getWebhooks, deleteWebhook };
