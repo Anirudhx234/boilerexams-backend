@@ -1,3 +1,4 @@
+/// <reference types="node" />
 declare const savePDFtoExam: (examId: string, buffer: Buffer, contentType: string, id?: string) => Promise<{
     id: string;
     number: number;

@@ -16,14 +16,16 @@ const s3 = new S3({
     credentials: {
         accessKeyId: (_a = process.env.AWS_ACCESS_KEY_ID) !== null && _a !== void 0 ? _a : "",
         secretAccessKey: (_b = process.env.AWS_SECRET_ACCESS_KEY) !== null && _b !== void 0 ? _b : ""
-    }
+    },
+    region: 'us-east-2'
 });
 const uploadFileToS3 = (buffer, contentType) => __awaiter(void 0, void 0, void 0, function* () {
+    var _c;
     if (!buffer) {
         throw new APIError("No file attached", 400);
     }
     const params = {
-        Bucket: process.env.AWS_BUCKET_NAME || "",
+        Bucket: (_c = process.env.AWS_BUCKET_NAME) !== null && _c !== void 0 ? _c : "",
         Key: nanoid(),
         Body: buffer,
         ACL: "public-read-write",
