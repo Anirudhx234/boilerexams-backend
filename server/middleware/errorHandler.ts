@@ -5,6 +5,7 @@ import multer from 'multer';
 import { ErrorResponse } from '../types/errors/index.js';
 
 const errorHandler = (error, req: Request, res: Response, next: NextFunction) => {
+    console.log(error)
     if (!error.message) {
         error.message = {}
     }
