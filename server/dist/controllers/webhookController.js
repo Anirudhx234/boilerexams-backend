@@ -7,11 +7,11 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+import prisma from "../libs/prisma.js";
 import { PurdueIoAPI } from "../services/purdue.io.js";
 import { DiscordAPI } from "../services/discord.api.js";
 import { CourseAlreadyExistsError, NotFoundError } from "../middleware/errors/index.js";
-import { PrismaClient, AccountType } from "@prisma/client";
-const prisma = new PrismaClient();
+import { AccountType } from "@prisma/client";
 const createCourseRequest = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { abbreviation, number } = req.body;
     const stringifiedNumber = String(number);

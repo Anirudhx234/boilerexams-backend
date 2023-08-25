@@ -7,11 +7,10 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-import { PrismaClient } from '@prisma/client';
+import prisma from "../libs/prisma.js";
 import { NotFoundError } from '../middleware/errors/index.js';
 import questionStats from '../helpers/stats/questionStats.js';
 import examStats from '../helpers/stats/examStats.js';
-const prisma = new PrismaClient();
 const getQuestionStats = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { questionId } = req.params;
     const timeStats = yield questionStats(questionId);

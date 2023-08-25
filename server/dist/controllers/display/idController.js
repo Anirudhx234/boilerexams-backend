@@ -7,9 +7,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-import { PrismaClient } from "@prisma/client";
+import prisma from "../../libs/prisma.js";
 import { NotFoundError } from "../../middleware/errors/index.js";
-const prisma = new PrismaClient();
 const getCourse = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { courseId } = req.params;
     const course = yield prisma.course.findUnique({

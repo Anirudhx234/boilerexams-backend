@@ -1,10 +1,9 @@
+import prisma from "../../libs/prisma.js";
 import { InvalidSeasonError, NotFoundError } from "../../middleware/errors/index.js";
-import { PrismaClient, Season } from '@prisma/client';
+import { Season } from '@prisma/client';
 import { Request, Response } from "express";
-import _ from 'lodash'
+import _ from 'lodash';
 import validCourseRegex from '../../utils/validCourseRegex.js'
-
-const prisma = new PrismaClient();
 
 const questionSort: any = [
     {

@@ -7,11 +7,11 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-import { PrismaClient, ResourceType, Language } from '@prisma/client';
+import prisma from "../libs/prisma.js";
+import { ResourceType, Language } from '@prisma/client';
 import axios from 'axios';
 import { APIError } from '../middleware/errors/index.js';
 import uploadFileToS3 from '../utils/uploadFileToS3.js';
-const prisma = new PrismaClient();
 const getResource = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { resourceId } = req.params;
     const resource = yield prisma.resource.findUnique({

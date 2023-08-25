@@ -1,7 +1,6 @@
-import { PrismaClient, AccountType, User } from '@prisma/client'
+import prisma from "../../../libs/prisma.js";
+import { AccountType, User } from '@prisma/client'
 import { Strategy } from 'passport-discord'
-
-const prisma = new PrismaClient();
 
 const discordPassport = (passport) => {
     passport.serializeUser((user: User, done: any) => {

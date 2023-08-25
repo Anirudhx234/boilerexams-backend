@@ -7,9 +7,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-import { PrismaClient, AccountType } from '@prisma/client';
+import prisma from "../../../libs/prisma.js";
+import { AccountType } from '@prisma/client';
 import { Strategy } from 'passport-discord';
-const prisma = new PrismaClient();
 const discordPassport = (passport) => {
     passport.serializeUser((user, done) => {
         done(null, user.id);

@@ -7,10 +7,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-import { PrismaClient } from '@prisma/client';
+import prisma from "../libs/prisma.js";
 import { APIError, NotFoundError } from "../middleware/errors/index.js";
 import msToDate from "../utils/msToDate.js";
-const prisma = new PrismaClient();
 const getQuestion = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { questionId } = req.params;
     const question = yield prisma.question.findUnique({

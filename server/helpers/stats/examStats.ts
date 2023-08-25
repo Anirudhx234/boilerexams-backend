@@ -1,7 +1,6 @@
-import { PrismaClient } from '@prisma/client'
+import prisma from "../../libs/prisma.js";
 import { NotFoundError } from "../../middleware/errors/index.js";
 import questionStats from "./questionStats.js";
-const prisma = new PrismaClient()
 
 const examStats = async (examId: string) => {
     const exam = await prisma.exam.findUnique({

@@ -2,6 +2,7 @@ import { Prisma } from '@prisma/client';
 import { APIError, InvalidCourseError, InvalidSeasonError, NotFoundError } from "./errors/index.js";
 import multer from 'multer';
 const errorHandler = (error, req, res, next) => {
+    console.log(error);
     if (!error.message) {
         error.message = {};
     }

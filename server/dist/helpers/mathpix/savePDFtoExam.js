@@ -7,9 +7,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-import { PrismaClient } from '@prisma/client';
+import prisma from "../../libs/prisma.js";
 import uploadFileToS3 from '../../utils/uploadFileToS3.js';
-const prisma = new PrismaClient();
 const savePDFtoExam = (examId, buffer, contentType, id) => __awaiter(void 0, void 0, void 0, function* () {
     const data = yield uploadFileToS3(buffer, contentType);
     return yield prisma.exam.update({

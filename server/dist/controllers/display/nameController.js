@@ -7,11 +7,11 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+import prisma from "../../libs/prisma.js";
 import { InvalidSeasonError, NotFoundError } from "../../middleware/errors/index.js";
-import { PrismaClient, Season } from '@prisma/client';
+import { Season } from '@prisma/client';
 import _ from 'lodash';
 import validCourseRegex from '../../utils/validCourseRegex.js';
-const prisma = new PrismaClient();
 const questionSort = [
     {
         exam: {

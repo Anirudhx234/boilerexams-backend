@@ -1,8 +1,6 @@
-import { PrismaClient } from '@prisma/client';
+import prisma from "../libs/prisma.js";
 import { Request, Response } from 'express'
 import { APIError, NotFoundError } from "../middleware/errors/index.js";
-
-const prisma = new PrismaClient();
 
 const createTopic = async (req: Request, res: Response) => {
     const { courseId } = req.params

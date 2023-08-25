@@ -1,8 +1,6 @@
-import { PrismaClient, AccountType, User } from '@prisma/client'
-import passport from 'passport'
+import prisma from "../../../libs/prisma.js";
+import { AccountType, User } from '@prisma/client'
 import { Strategy } from 'passport-google-oauth20'
-
-const prisma = new PrismaClient();
 
 const googlePassport = (passport) => {
     passport.serializeUser((user: User, done: any) => {

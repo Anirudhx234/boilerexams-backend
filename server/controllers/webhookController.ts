@@ -1,10 +1,9 @@
+import prisma from "../libs/prisma.js";
 import { PurdueIoAPI } from "../services/purdue.io.js";
 import { Request, Response } from "express";
 import { DiscordAPI } from "../services/discord.api.js";
 import { CourseAlreadyExistsError, NotFoundError } from "../middleware/errors/index.js";
-import { PrismaClient, Prisma, AccountType } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { AccountType } from "@prisma/client";
 
 const createCourseRequest = async (req: Request, res: Response) => {
 

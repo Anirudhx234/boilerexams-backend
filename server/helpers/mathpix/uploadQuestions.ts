@@ -1,8 +1,7 @@
-import { PrismaClient, ResourceType } from '@prisma/client'
+import prisma from "../../libs/prisma.js";
+import { ResourceType } from '@prisma/client'
 import axios from "axios";
 import uploadFileToS3 from '../../utils/uploadFileToS3.js';
-
-const prisma = new PrismaClient()
 
 const uploadQuestions = async (courseId: string, examId: string, questions: any[]) => {
     const promises: Promise<any>[] = []
