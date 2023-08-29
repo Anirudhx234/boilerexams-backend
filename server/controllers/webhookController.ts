@@ -65,7 +65,7 @@ const createCourseRequest = async (req: Request, res: Response) => {
     };
 
     const data = { embeds: [embed] };
-    await DiscordAPI.editWebhookMessage("Course Requests", "1127497040822284308", data)
+    await DiscordAPI.editWebhookMessage("Course Requests", "1146116623267270806", data)
     res.status(200).send("Success")
 };
 
