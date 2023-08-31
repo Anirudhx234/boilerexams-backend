@@ -1,7 +1,15 @@
 declare const questionStats: (questionId: string) => Promise<{
-    timeSpent: number | null;
-    timeSpentVideo: number | null;
-    submissionTotal: number;
-    submissionCorrect: number;
+    totalTimeSpent: {
+        hours: number;
+        minutes: number;
+        seconds: number;
+    };
+    totalVideoWatchTime: {
+        hours: number;
+        minutes: number;
+        seconds: number;
+    };
+    totalSubmissions: number;
+    totalCorrectSubmissions: number;
 }>;
 export default questionStats;

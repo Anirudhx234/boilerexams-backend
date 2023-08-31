@@ -11,50 +11,79 @@ import prisma from "../libs/prisma.js";
 import { NotFoundError } from '../middleware/errors/index.js';
 import questionStats from '../helpers/stats/questionStats.js';
 import examStats from '../helpers/stats/examStats.js';
-const getQuestionStats = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { questionId } = req.params;
-    const timeStats = yield questionStats(questionId);
-    const question = yield prisma.question.findUnique({
+import msToHMS from "../utils/msToHMS.js";
+import answerChoiceStats from "../helpers/stats/answerChoiceStats.js";
+const minimumValidSubmissionTime = 0;
+const getGeneralStats = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const promises = [];
+    promises.push(prisma.course.aggregate({
         where: {
-            id: questionId
+            published: true
         },
-        select: {
-            answerChoices: true
-        }
-    });
-    if (!question) {
-        throw new NotFoundError("Question not found");
-    }
-    const len = question.answerChoices.length;
-    const answerStats = [];
-    for (let i = 0; i < len; i++) {
-        const counted = yield prisma.submission.count({
-            where: {
-                questionId: questionId,
-                selectedChoiceIndices: {
-                    has: i
-                }
+        _count: true
+    }));
+    promises.push(prisma.exam.aggregate({
+        where: {
+            published: true
+        },
+        _count: true
+    }));
+    promises.push(prisma.question.aggregate({
+        where: {
+            published: true
+        },
+        _count: true
+    }));
+    promises.push(prisma.submission.aggregate({
+        where: {
+            question: {
+                published: true
+            },
+            timeSpent: {
+                gte: minimumValidSubmissionTime
             }
-        });
-        answerStats.push(counted);
-    }
-    res.status(200).send({ timeStats, answerStats });
-});
-const getExamStats = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { examId } = req.params;
-    const obj = yield examStats(examId);
-    res.status(200).send(obj);
+        },
+        _count: true,
+        _sum: {
+            timeSpent: true
+        }
+    }));
+    const resolved = yield Promise.all(promises);
+    const courses = resolved[0];
+    const exams = resolved[1];
+    const questions = resolved[2];
+    const submissions = resolved[3];
+    const totalTimeSpent = msToHMS(submissions._sum.timeSpent);
+    const stats = {
+        totalCourses: courses._count,
+        totalExams: exams._count,
+        totalQuestions: questions._count,
+        totalSubmissions: submissions._count,
+        totalTimeSpent: totalTimeSpent
+    };
+    res.status(200).json(stats);
 });
 const getCourseStats = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { courseId } = req.params;
-    const course = yield prisma.course.findUnique({
+    const promises = [];
+    const course = yield prisma.course.findFirst({
         where: {
-            id: courseId
+            id: courseId,
+            published: true
         },
-        select: {
-            exams: {
+        include: {
+            _count: {
                 select: {
-                    id: true
+                    exams: {
+                        where: {
+                            published: true
+                        }
+                    },
+                    questions: {
+                        where: {
+                            published: true
+                        }
+                    }
                 }
             }
         }
@@ -62,46 +91,134 @@ const getCourseStats = (req, res) => __awaiter(void 0, void 0, void 0, function*
     if (!course) {
         throw new NotFoundError("Course not found");
     }
-    const ids = course.exams.map(q => q.id);
-    const obj = { timeSpent: 0, timeSpentVideo: 0, submissionTotal: 0, submissionCorrect: 0 };
-    const keys = Object.keys(obj);
-    for (let x = 0; x < ids.length; x++) {
-        const tempStats = Object.values(yield examStats(ids[x]));
-        for (let i = 0; i < tempStats.length; i++) {
-            obj[keys[i]] += tempStats[i];
+    promises.push(prisma.submission.aggregate({
+        where: {
+            question: {
+                courseId: courseId,
+                published: true
+            },
+            timeSpent: {
+                gte: minimumValidSubmissionTime
+            }
+        },
+        _count: true,
+        _sum: {
+            timeSpent: true,
+            timeSpentVideo: true,
         }
+    }));
+    promises.push(prisma.submission.aggregate({
+        where: {
+            question: {
+                courseId: courseId,
+                published: true
+            },
+            timeSpent: {
+                gte: minimumValidSubmissionTime
+            },
+            correct: true
+        },
+        _count: true,
+    }));
+    const resolved = yield Promise.all(promises);
+    const submissions = resolved[0];
+    const correctSubmissions = resolved[1];
+    const totalTimeSpent = msToHMS(submissions._sum.timeSpent);
+    const totalVideoWatchTime = msToHMS(submissions._sum.timeSpentVideo);
+    const courseStats = {
+        totalExams: course._count.exams,
+        totalQuestions: course._count.questions,
+        totalTimeSpent: totalTimeSpent,
+        totalVideoWatchTime: totalVideoWatchTime,
+        totalSubmissions: submissions._count,
+        totalCorrectSubmissions: correctSubmissions._count
+    };
+    res.status(200).json(courseStats);
+});
+const getCourseExamsStats = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { courseId } = req.params;
+    const promises = [];
+    const course = yield prisma.course.findFirst({
+        where: {
+            id: courseId,
+            published: true
+        },
+        select: {
+            exams: {
+                where: {
+                    published: true
+                },
+                select: {
+                    id: true,
+                    number: true,
+                    semester: true
+                }
+            }
+        }
+    });
+    if (!course) {
+        throw new NotFoundError("Course not found");
     }
-    res.status(200).send(obj);
+    const examsStats = [];
+    for (const exam of course.exams) {
+        promises.push(examStats(exam.id));
+    }
+    const resolved = yield Promise.all(promises);
+    let i = 0;
+    for (const exam of course.exams) {
+        examsStats.push({ exam: exam, stats: resolved[i] });
+        i++;
+    }
+    res.status(200).json(examsStats);
+});
+const getExamStats = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { examId } = req.params;
+    const stats = yield examStats(examId);
+    res.status(200).json(stats);
+});
+const getQuestionStats = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { questionId } = req.params;
+    const mainStats = yield questionStats(questionId);
+    const answerStats = yield answerChoiceStats(questionId);
+    const stats = {
+        questionStats: mainStats,
+        answerChoiceStats: answerStats
+    };
+    res.status(200).json(stats);
 });
 const getSubmissionStats = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const validTime = 0;
-    const times = yield prisma.submission.aggregate({
+    const submissions = yield prisma.submission.aggregate({
+        where: {
+            timeSpent: {
+                gte: minimumValidSubmissionTime
+            }
+        },
         _sum: {
-            timeSpent: true
+            timeSpent: true,
         },
         _avg: {
             timeSpent: true
         },
-        _count: true,
-        where: {
-            timeSpent: {
-                gte: validTime
-            }
-        },
+        _count: true
     });
-    const timeSpent = times._sum.timeSpent;
-    const avgTime = times._avg.timeSpent;
-    const submissionTotal = times._count;
-    const totalCorrect = yield prisma.submission.count({
+    const correctSubmissions = yield prisma.submission.count({
         where: {
             correct: true,
             timeSpent: {
-                gte: validTime
+                gte: minimumValidSubmissionTime
             }
         }
     });
-    const percentCorrect = 100.0 * (totalCorrect / submissionTotal);
-    res.status(200).send({ submissionTotal, timeSpent, avgTime, percentCorrect });
+    const totalTimeSpent = msToHMS(submissions._sum.timeSpent);
+    const averageTimeSpent = msToHMS(submissions._avg.timeSpent);
+    const percentCorrect = 100.0 * (correctSubmissions / submissions._count);
+    const submissionsStats = {
+        totalSubmissions: submissions._count,
+        totalTimeSpent: totalTimeSpent,
+        averageTimeSpent: averageTimeSpent,
+        percentCorrect: percentCorrect
+    };
+    res.status(200).json(submissionsStats);
 });
-export { getQuestionStats, getExamStats, getCourseStats, getSubmissionStats };
+export { getGeneralStats, getCourseExamsStats, getQuestionStats, getExamStats, getCourseStats, getSubmissionStats };
 //# sourceMappingURL=statsController.js.map
