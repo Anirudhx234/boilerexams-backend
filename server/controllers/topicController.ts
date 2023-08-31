@@ -83,6 +83,22 @@ const updateTopic = async (req: Request, res: Response) => {
     res.status(200).send(result)
 }
 
+const setTopicQuestions = async (req: Request, res: Response) => {
+    const { topicId } = req.params
+    const { questionIds } = req.body
+    const topic = await prisma.topic.update({
+        where: {
+            id: topicId
+        },
+        data: {
+            questions: {
+                set: questionIds.map((id: string) => ({ id: id }))
+            }
+        }
+    })
+    res.status(200).send(topic)
+}
+
 const deleteTopic = async (req: Request, res: Response) => {
     const { topicId } = req.params;
     const topic = await prisma.topic.delete({
@@ -100,5 +116,6 @@ const deleteTopic = async (req: Request, res: Response) => {
 export {
     createTopic,
     updateTopic,
+    setTopicQuestions,
     deleteTopic
 }
