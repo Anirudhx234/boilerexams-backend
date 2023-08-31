@@ -12,6 +12,7 @@ import { InvalidSeasonError, NotFoundError } from "../../middleware/errors/index
 import { Season } from '@prisma/client';
 import _ from 'lodash';
 import validCourseRegex from '../../utils/validCourseRegex.js';
+import answerChoiceStats from "../../helpers/stats/answerChoiceStats.js";
 const questionSort = [
     {
         exam: {
@@ -350,6 +351,16 @@ const getCourseTopicWithFullQuestionInfo = (req, res) => __awaiter(void 0, void 
     if (!topic) {
         throw new NotFoundError("Topic not found");
     }
+    const promises = [];
+    for (const question of topic.questions) {
+        promises.push(answerChoiceStats(question.id));
+    }
+    const resolved = yield Promise.all(promises);
+    for (let i = 0; i < resolved.length; i++) {
+        // @ts-ignore
+        // Extend later
+        topic.questions[i].answerChoiceStats = resolved[i];
+    }
     res.status(200).send(topic);
 });
 // All questions with id, number, and topics for an exam
@@ -480,6 +491,16 @@ const getCourseExamWithFullQuestionInfo = (req, res) => __awaiter(void 0, void 0
     });
     if (!exam) {
         throw new NotFoundError("Exam not found");
+    }
+    const promises = [];
+    for (const question of exam.questions) {
+        promises.push(answerChoiceStats(question.id));
+    }
+    const resolved = yield Promise.all(promises);
+    for (let i = 0; i < resolved.length; i++) {
+        // @ts-ignore
+        // Extend later
+        exam.questions[i].answerChoiceStats = resolved[i];
     }
     res.status(200).send(exam);
 });
