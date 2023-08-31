@@ -7,6 +7,9 @@ import examStats from '../helpers/stats/examStats.js';
 import msToHMS from "../utils/msToHMS.js";
 import answerChoiceStats from "../helpers/stats/answerChoiceStats.js";
 
+const OLD_SUBMISSIONS = 1920571
+const OLD_TIME_SPENT_HRS = 95074.53
+const OLD_PERCENT_CORRECT = 0.6571
 const minimumValidSubmissionTime = 0
 
 const getGeneralStats = async (req: Request, res: Response) => {
@@ -54,13 +57,19 @@ const getGeneralStats = async (req: Request, res: Response) => {
     const questions = resolved[2]
     const submissions = resolved[3]
 
-    const totalTimeSpent = msToHMS(submissions._sum.timeSpent)
+    let timeSpent = submissions._sum.timeSpent;
+    if (!timeSpent) {
+        timeSpent = 0
+    }
+
+    const totalTimeSpent = msToHMS(timeSpent + OLD_TIME_SPENT_HRS * 3600000)
 
     const stats = {
+        totalStudents: 10000,
         totalCourses: courses._count,
         totalExams: exams._count,
         totalQuestions: questions._count,
-        totalSubmissions: submissions._count,
+        totalSubmissions: submissions._count + OLD_SUBMISSIONS,
         totalTimeSpent: totalTimeSpent
     }
 
@@ -238,13 +247,19 @@ const getSubmissionStats = async (req: Request, res: Response) => {
         }
     })
 
+    const totalSubmissions = submissions._count + OLD_SUBMISSIONS
 
-    const totalTimeSpent = msToHMS(submissions._sum.timeSpent)
+    let timeSpent = submissions._sum.timeSpent;
+    if (!timeSpent) {
+        timeSpent = 0
+    }
+
+    const totalTimeSpent = msToHMS(timeSpent + OLD_TIME_SPENT_HRS * 3600000)
     const averageTimeSpent = msToHMS(submissions._avg.timeSpent)
-    const percentCorrect = 100.0 * (correctSubmissions / submissions._count)
+    const percentCorrect = 100.0 * ((correctSubmissions + OLD_PERCENT_CORRECT * OLD_SUBMISSIONS) / totalSubmissions)
 
     const submissionsStats = {
-        totalSubmissions: submissions._count,
+        totalSubmissions: submissions._count + OLD_SUBMISSIONS,
         totalTimeSpent: totalTimeSpent,
         averageTimeSpent: averageTimeSpent,
         percentCorrect: percentCorrect
