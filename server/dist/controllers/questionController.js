@@ -15,8 +15,7 @@ const getQuestion = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
     const { questionId } = req.params;
     const question = yield prisma.question.findFirst({
         where: {
-            id: questionId,
-            published: true
+            id: questionId
         },
         include: {
             topics: true,
