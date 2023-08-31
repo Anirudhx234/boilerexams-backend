@@ -8,8 +8,7 @@ const getQuestion = async (req: Request, res: Response) => {
     const { questionId } = req.params
     const question = await prisma.question.findFirst({
         where: {
-            id: questionId,
-            published: true
+            id: questionId
         },
         include: {
             topics: true,

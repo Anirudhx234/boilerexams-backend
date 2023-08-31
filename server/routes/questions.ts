@@ -13,7 +13,7 @@ import authHandler from '../middleware/auth/authHandler.js';
 
 const app = express();
 
-app.get("/id/questions/:questionId", asyncWrapper(getQuestion))
+app.get("/id/questions/:questionId", authHandler, asyncWrapper(getQuestion))
 
 app.post("/courses/:courseId/exams/:examId/questions", authHandler, asyncWrapper(createQuestion))
 
