@@ -2,11 +2,16 @@ import { Prisma } from '@prisma/client';
 import { APIError, InvalidCourseError, InvalidSeasonError, NotFoundError } from "./errors/index.js";
 import multer from 'multer';
 const errorHandler = (error, req, res, next) => {
-    console.log(error);
-    if (!error.message) {
-        error.message = {};
+    let fullError = {};
+    if (req.user) {
+        if (["ADMIN", "CONTENT"].includes(req.user.role)) {
+            fullError = error;
+        }
     }
-    const errorResponse = { message: error.message, fullError: error };
+    if (!error.message) {
+        error.message = "";
+    }
+    const errorResponse = { message: error.message, fullError: fullError };
     if (error instanceof NotFoundError) {
         return res.status(error.errorCode).json(errorResponse);
     }
@@ -46,7 +51,7 @@ const errorHandler = (error, req, res, next) => {
     if (error instanceof APIError) {
         return res.status(error.errorCode).json(errorResponse);
     }
-    return res.status(400).json(errorResponse);
+    return res.status(400).json("An error occurred");
 };
 export default errorHandler;
 //# sourceMappingURL=errorHandler.js.map
