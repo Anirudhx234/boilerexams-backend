@@ -10,16 +10,16 @@ import {
 } from '../controllers/statsController.js'
 const app = express()
 
-app.get("/stats", asyncWrapper(getGeneralStats))
+app.get("/", asyncWrapper(getGeneralStats))
 
-app.get("/stats/courses/:courseId", asyncWrapper(getCourseStats))
+app.get("/courses/:courseId", asyncWrapper(getCourseStats))
 
-app.get("/stats/:courseId/exams/all", asyncWrapper(getCourseExamsStats))
+app.get("/:courseId/exams/all", asyncWrapper(getCourseExamsStats))
 
-app.get("/stats/exams/:examId", asyncWrapper(getExamStats))
+app.get("/exams/:examId", asyncWrapper(getExamStats))
 
-app.get("/stats/questions/:questionId", asyncWrapper(getQuestionStats))
+app.get("/questions/:questionId", asyncWrapper(getQuestionStats))
 
-app.get("/stats/submissions", asyncWrapper(getSubmissionStats))
+app.get("/submissions", asyncWrapper(getSubmissionStats))
 
 export default app

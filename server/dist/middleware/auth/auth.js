@@ -26,19 +26,19 @@ const redirect = (req, res) => {
         return res.redirect("https://boilerexams-frontend.vercel.app/");
     }
 };
-app.get('/auth/discord/login', (req, res, next) => {
+app.get('/discord/login', (req, res, next) => {
     const state = redirectUrl(req);
     const authenticator = passport.authenticate('discord', { state });
     authenticator(req, res, next);
 });
-app.get('/auth/discord/redirect', passport.authenticate('discord'), redirect);
-app.get("/auth/google/login", (req, res, next) => {
+app.get('/discord/redirect', passport.authenticate('discord'), redirect);
+app.get("/google/login", (req, res, next) => {
     const state = redirectUrl(req);
     const authenticator = passport.authenticate('google', { state });
     authenticator(req, res, next);
 });
-app.get("/auth/google/redirect", passport.authenticate('google'), redirect);
-app.get('/auth/logout', authTester, (req, res, next) => {
+app.get("/google/redirect", passport.authenticate('google'), redirect);
+app.get('/logout', authTester, (req, res, next) => {
     // Will extend req later
     //@ts-ignore
     req.logOut(error => {
@@ -50,7 +50,7 @@ app.get('/auth/logout', authTester, (req, res, next) => {
         return res.json({ redirectUrl: redirect });
     });
 });
-app.get("/auth/test", authTester, (req, res) => {
+app.get("/test", authTester, (req, res) => {
     return res.status(200).send("Successfully authenticated");
 });
 export default app;

@@ -13,16 +13,16 @@ import upload from "../middleware/multer/image.js"
 
 const app = express();
 
-app.get("/resources/:resourceId", asyncWrapper(getResource))
+app.get("/:resourceId", asyncWrapper(getResource))
 
-app.post("/resources/images", authHandler, upload.single('image'), asyncWrapper(createImageResource))
+app.post("/images", authHandler, upload.single('image'), asyncWrapper(createImageResource))
 
-app.post("/resources/images/link", authHandler, asyncWrapper(createImageResourceFromLink))
+app.post("/images/link", authHandler, asyncWrapper(createImageResourceFromLink))
 
-app.post("/resources/codes", authHandler, asyncWrapper(createCodeResource))
+app.post("/codes", authHandler, asyncWrapper(createCodeResource))
 
-app.put("/resources/:resourceId/code", authHandler, asyncWrapper(updateCodeResource))
+app.put("/:resourceId/code", authHandler, asyncWrapper(updateCodeResource))
 
-app.delete("/resources/:resourceId", authHandler, asyncWrapper(deleteResource))
+app.delete("/:resourceId", authHandler, asyncWrapper(deleteResource))
 
 export default app
