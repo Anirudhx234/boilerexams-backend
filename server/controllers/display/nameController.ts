@@ -191,10 +191,8 @@ const getCourseTopicsWithBasicQuestionInfo = async (req: Request, res: Response)
                             id: true,
                             number: true,
                             exam: {
-                                select: {
-                                    id: true,
-                                    number: true,
-                                    semester: true
+                                include: {
+                                    semester: true,
                                 }
                             },
                             topics: {
@@ -224,10 +222,8 @@ const getCourseTopicsWithBasicQuestionInfo = async (req: Request, res: Response)
                     id: true,
                     number: true,
                     exam: {
-                        select: {
-                            id: true,
-                            number: true,
-                            semester: true
+                        include: {
+                            semester: true,
                         }
                     }
                 },
