@@ -2,6 +2,7 @@ import prisma from "../libs/prisma.js";
 import { PurdueIoAPI } from "../services/purdue.io.js";
 import { Request, Response } from "express";
 import { DiscordAPI } from "../services/discord.api.js";
+import getPingsFromLocation from "../helpers/webhooks/getPingsFromLocation.js";
 import { CourseAlreadyExistsError, NotFoundError } from "../middleware/errors/index.js";
 import { AccountType } from "@prisma/client";
 
@@ -70,14 +71,8 @@ const createCourseRequest = async (req: Request, res: Response) => {
 };
 
 const createBugReport = async (req: Request, res: Response) => {
-    const { title, description, footer, pingableIds } = req.body
-
-    const roleIds = ["1074060567339352145", "1078747995979403326", "1078748911298170891", "1074061247647068160"];
-
-    const content = pingableIds ? pingableIds.map(element => {
-        if (roleIds.includes(element)) return `<@&${element}>`;
-        return `<@${element}>`;
-    }).join("") : null;
+    const { title, description, footer, location } = req.body
+    const content = getPingsFromLocation(location);
 
     const embed = {
         title: title,
