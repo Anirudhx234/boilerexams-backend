@@ -2,6 +2,7 @@ import prisma from "../libs/prisma.js";
 import { PurdueIoAPI } from "../services/purdue.io.js";
 import { Request, Response } from "express";
 import { DiscordAPI } from "../services/discord.api.js";
+import getPingsFromLocation from "../helpers/webhooks/getPingsFromLocation.js";
 import { CourseAlreadyExistsError, NotFoundError } from "../middleware/errors/index.js";
 import { AccountType } from "@prisma/client";
 
@@ -72,7 +73,7 @@ const createCourseRequest = async (req: Request, res: Response) => {
 const createBugReport = async (req: Request, res: Response) => {
     const { title, description, footer, location } = req.body
     const content = getPingsFromLocation(location);
-    
+
     const embed = {
         title: title,
         description: description,
@@ -239,33 +240,6 @@ const deleteWebhook = async (req: Request, res: Response) => {
     });
 
     res.status(200).send(webhook);
-}
-
-enum Ping {
-    Matthew =  "<@266021275992850433>",
-    Anish =    "<@748640361592651886>",
-    Trevin =   "<@534143614993956865>",
-    Thomas =   "<@341741687065804812>",
-    Chris =    "<@455084750487683102>",
-    Frontend = "<@&1078747995979403326>"
-}
-
-function getPingsFromLocation(location: string) {
-    switch (location) {
-        case "home":      return Ping.Matthew;
-        case "about":     return Ping.Anish;
-        case "stats":     return Ping.Trevin;
-        case "courses":   return Ping.Matthew;
-        case "feedback":  return Ping.Matthew;
-        case "study":     return Ping.Thomas;
-        case "resources": return Ping.Chris;
-        case "question":  return Ping.Anish;
-        case "navbar":    return Ping.Matthew + Ping.Anish;
-        case "footer":    return Ping.Matthew;
-        case "dashboard": return Ping.Matthew + Ping.Thomas;
-        case "other":     return Ping.Frontend;
-        default:          return Ping.Frontend;
-    }
 }
 
 export {
