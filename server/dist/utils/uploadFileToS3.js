@@ -7,33 +7,38 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var _a, _b;
 import { nanoid } from "nanoid";
 import { APIError } from "../middleware/errors/index.js";
-import Aws from 'aws-sdk';
-const s3 = new Aws.S3({
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
+import { Upload } from "@aws-sdk/lib-storage";
+import { S3 } from "@aws-sdk/client-s3";
+const s3 = new S3({
+    credentials: {
+        accessKeyId: (_a = process.env.AWS_ACCESS_KEY_ID) !== null && _a !== void 0 ? _a : "",
+        secretAccessKey: (_b = process.env.AWS_SECRET_ACCESS_KEY) !== null && _b !== void 0 ? _b : ""
+    },
+    region: 'us-east-2'
 });
 const uploadFileToS3 = (buffer, contentType) => __awaiter(void 0, void 0, void 0, function* () {
+    var _c;
     if (!buffer) {
         throw new APIError("No file attached", 400);
     }
     const params = {
-        Bucket: process.env.AWS_BUCKET_NAME || "",
+        Bucket: (_c = process.env.AWS_BUCKET_NAME) !== null && _c !== void 0 ? _c : "",
         Key: nanoid(),
         Body: buffer,
         ACL: "public-read-write",
         ContentType: contentType
     };
-    const promise = s3.upload(params, (error) => {
-        if (error) {
-            throw new Error(error);
-        }
-    }).promise();
-    const data = yield Promise.resolve(promise);
-    if (!data) {
-        throw new Error("File upload failed");
-    }
+    yield new Upload({
+        client: s3,
+        params
+    }).done();
+    const data = {
+        Location: `https://${params.Bucket}.s3.us-east-2.amazonaws.com/${params.Key}`,
+        Key: params.Key
+    };
     return data;
 });
 export default uploadFileToS3;

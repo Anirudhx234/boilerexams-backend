@@ -1,10 +1,10 @@
+import prisma from "../../libs/prisma.js";
 import { InvalidSeasonError, NotFoundError } from "../../middleware/errors/index.js";
-import { PrismaClient, Season } from '@prisma/client';
+import { Season } from '@prisma/client';
 import { Request, Response } from "express";
-import _ from 'lodash'
+import _ from 'lodash';
 import validCourseRegex from '../../utils/validCourseRegex.js'
-
-const prisma = new PrismaClient();
+import answerChoiceStats from "../../helpers/stats/answerChoiceStats.js";
 
 const questionSort: any = [
     {
@@ -361,10 +361,23 @@ const getCourseTopicWithFullQuestionInfo = async (req: Request, res: Response) =
             }
         }
     })
-
     if (!topic) {
         throw new NotFoundError("Topic not found")
     }
+
+    const promises: Promise<any>[] = []
+
+    for (const question of topic.questions) {
+        promises.push(answerChoiceStats(question.id))
+    }
+
+    const resolved = await Promise.all(promises)
+    for (let i = 0; i < resolved.length; i++) {
+        // @ts-ignore
+        // Extend later
+        topic.questions[i].answerChoiceStats = resolved[i]
+    }
+
     res.status(200).send(topic);
 };
 
@@ -504,10 +517,23 @@ const getCourseExamWithFullQuestionInfo = async (req: Request, res: Response) =>
             }
         }
     })
-
     if (!exam) {
         throw new NotFoundError("Exam not found")
     }
+
+    const promises: Promise<any>[] = []
+
+    for (const question of exam.questions) {
+        promises.push(answerChoiceStats(question.id))
+    }
+
+    const resolved = await Promise.all(promises)
+    for (let i = 0; i < resolved.length; i++) {
+        // @ts-ignore
+        // Extend later
+        exam.questions[i].answerChoiceStats = resolved[i]
+    }
+
     res.status(200).send(exam)
 };
 

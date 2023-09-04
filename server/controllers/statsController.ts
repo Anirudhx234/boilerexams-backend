@@ -1,58 +1,104 @@
-import { PrismaClient } from '@prisma/client';
+import prisma from "../libs/prisma.js";
 import { Request, Response } from 'express'
 import _ from 'lodash'
 import { NotFoundError } from '../middleware/errors/index.js';
 import questionStats from '../helpers/stats/questionStats.js';
 import examStats from '../helpers/stats/examStats.js';
-const prisma = new PrismaClient();
+import msToHMS from "../utils/msToHMS.js";
+import answerChoiceStats from "../helpers/stats/answerChoiceStats.js";
 
+const OLD_SUBMISSIONS = 1920571
+const OLD_TIME_SPENT_HRS = 95074.53
+const OLD_PERCENT_CORRECT = 0.6571
+const minimumValidSubmissionTime = 0
 
-const getQuestionStats = async (req: Request, res: Response) => {
-    const { questionId } = req.params
-    const timeStats = await questionStats(questionId)
-    const question = await prisma.question.findUnique({
+const getGeneralStats = async (req: Request, res: Response) => {
+    const promises: Promise<any>[] = []
+
+    promises.push(prisma.course.aggregate({
         where: {
-            id: questionId
+            published: true
         },
-        select: {
-            answerChoices: true
-        }
-    })
-    if (!question) {
-        throw new NotFoundError("Question not found")
-    }
-    const len = question.answerChoices.length
-    const answerStats: number[] = []
-    for (let i = 0; i < len; i++) {
-        const counted = await prisma.submission.count({
-            where: {
-                questionId: questionId,
-                selectedChoiceIndices: {
-                    has: i
-                }
-            }
-        })
-        answerStats.push(counted)
-    }
-    res.status(200).send({ timeStats, answerStats })
-}
+        _count: true
+    }))
 
-const getExamStats = async (req: Request, res: Response) => {
-    const { examId } = req.params
-    const obj = await examStats(examId)
-    res.status(200).send(obj)
+    promises.push(prisma.exam.aggregate({
+        where: {
+            published: true
+        },
+        _count: true
+    }))
+
+    promises.push(prisma.question.aggregate({
+        where: {
+            published: true
+        },
+        _count: true
+    }))
+
+    promises.push(prisma.submission.aggregate({
+        where: {
+            question: {
+                published: true
+            },
+            timeSpent: {
+                gte: minimumValidSubmissionTime
+            }
+        },
+        _count: true,
+        _sum: {
+            timeSpent: true
+        }
+    }))
+
+    const resolved = await Promise.all(promises);
+    const courses = resolved[0]
+    const exams = resolved[1]
+    const questions = resolved[2]
+    const submissions = resolved[3]
+
+    let timeSpent = submissions._sum.timeSpent;
+    if (!timeSpent) {
+        timeSpent = 0
+    }
+
+    const totalTimeSpent = msToHMS(timeSpent + OLD_TIME_SPENT_HRS * 3600000)
+
+    const stats = {
+        totalStudents: 10000,
+        totalCourses: courses._count,
+        totalExams: exams._count,
+        totalQuestions: questions._count,
+        totalSubmissions: submissions._count + OLD_SUBMISSIONS,
+        totalTimeSpent: totalTimeSpent
+    }
+
+    res.status(200).json(stats);
 }
 
 const getCourseStats = async (req: Request, res: Response) => {
     const { courseId } = req.params
-    const course = await prisma.course.findUnique({
+
+    const promises: Promise<any>[] = []
+
+    const course = await prisma.course.findFirst({
         where: {
-            id: courseId
+            id: courseId,
+            published: true
         },
-        select: {
-            exams: {
+        include: {
+            _count: {
                 select: {
-                    id: true
+                    exams: {
+                        where: {
+                            published: true
+                        }
+                    },
+                    questions: {
+                        where: {
+                            published: true
+                        }
+                    }
                 }
             }
         }
@@ -60,52 +106,170 @@ const getCourseStats = async (req: Request, res: Response) => {
     if (!course) {
         throw new NotFoundError("Course not found")
     }
-    const ids = course.exams.map(q => q.id)
 
-    const obj = { timeSpent: 0, timeSpentVideo: 0, submissionTotal: 0, submissionCorrect: 0 };
-    const keys = Object.keys(obj)
-    for (let x = 0; x < ids.length; x++) {
-        const tempStats = Object.values(await examStats(ids[x]))
-        for (let i = 0; i < tempStats.length; i++) {
-            obj[keys[i]] += tempStats[i]
+    promises.push(prisma.submission.aggregate({
+        where: {
+            question: {
+                courseId: courseId,
+                published: true
+            },
+            timeSpent: {
+                gte: minimumValidSubmissionTime
+            }
+        },
+        _count: true,
+        _sum: {
+            timeSpent: true,
+            timeSpentVideo: true,
         }
+    }))
+
+    promises.push(prisma.submission.aggregate({
+        where: {
+            question: {
+                courseId: courseId,
+                published: true
+            },
+            timeSpent: {
+                gte: minimumValidSubmissionTime
+            },
+            correct: true
+        },
+        _count: true,
+    }))
+
+    const resolved = await Promise.all(promises);
+    const submissions = resolved[0]
+    const correctSubmissions = resolved[1]
+
+    const totalTimeSpent = msToHMS(submissions._sum.timeSpent)
+    const totalVideoWatchTime = msToHMS(submissions._sum.timeSpentVideo)
+
+    const courseStats = {
+        totalExams: course._count.exams,
+        totalQuestions: course._count.questions,
+        totalTimeSpent: totalTimeSpent,
+        totalVideoWatchTime: totalVideoWatchTime,
+        totalSubmissions: submissions._count,
+        totalCorrectSubmissions: correctSubmissions._count
+    };
+
+    res.status(200).json(courseStats)
+}
+
+const getCourseExamsStats = async (req: Request, res: Response) => {
+    const { courseId } = req.params
+
+    const promises: Promise<any>[] = []
+
+    const course = await prisma.course.findFirst({
+        where: {
+            id: courseId,
+            published: true
+        },
+        select: {
+            exams: {
+                where: {
+                    published: true
+                },
+                select: {
+                    id: true,
+                    number: true,
+                    semester: true
+                }
+            }
+        }
+    })
+    if (!course) {
+        throw new NotFoundError("Course not found")
     }
-    res.status(200).send(obj)
+
+    const examsStats: any = []
+
+    for (const exam of course.exams) {
+        promises.push(examStats(exam.id))
+    }
+    const resolved = await Promise.all(promises)
+
+    let i = 0
+    for (const exam of course.exams) {
+        examsStats.push({ exam: exam, stats: resolved[i] })
+        i++
+    }
+
+    res.status(200).json(examsStats);
+}
+
+const getExamStats = async (req: Request, res: Response) => {
+    const { examId } = req.params
+    const stats = await examStats(examId)
+    res.status(200).json(stats)
+}
+
+
+const getQuestionStats = async (req: Request, res: Response) => {
+    const { questionId } = req.params
+
+    const mainStats = await questionStats(questionId)
+
+    const answerStats = await answerChoiceStats(questionId)
+
+    const stats = {
+        questionStats: mainStats,
+        answerChoiceStats: answerStats
+    }
+
+    res.status(200).json(stats);
 }
 
 const getSubmissionStats = async (req: Request, res: Response) => {
-    const validTime = 0
-    const times = await prisma.submission.aggregate({
+    const submissions = await prisma.submission.aggregate({
+        where: {
+            timeSpent: {
+                gte: minimumValidSubmissionTime
+            }
+        },
         _sum: {
-            timeSpent: true
+            timeSpent: true,
         },
         _avg: {
             timeSpent: true
         },
-        _count: true,
-        where: {
-            timeSpent: {
-                gte: validTime
-            }
-        },
+        _count: true
     })
-    const timeSpent = times._sum.timeSpent
-    const avgTime = times._avg.timeSpent
-    const submissionTotal = times._count
-    const totalCorrect = await prisma.submission.count({
+
+    const correctSubmissions = await prisma.submission.count({
         where: {
             correct: true,
             timeSpent: {
-                gte: validTime
+                gte: minimumValidSubmissionTime
             }
         }
     })
 
-    const percentCorrect = 100.0 * (totalCorrect / submissionTotal)
-    res.status(200).send({ submissionTotal, timeSpent, avgTime, percentCorrect })
+    const totalSubmissions = submissions._count + OLD_SUBMISSIONS
+
+    let timeSpent = submissions._sum.timeSpent;
+    if (!timeSpent) {
+        timeSpent = 0
+    }
+
+    const totalTimeSpent = msToHMS(timeSpent + OLD_TIME_SPENT_HRS * 3600000)
+    const averageTimeSpent = msToHMS(submissions._avg.timeSpent)
+    const percentCorrect = 100.0 * ((correctSubmissions + OLD_PERCENT_CORRECT * OLD_SUBMISSIONS) / totalSubmissions)
+
+    const submissionsStats = {
+        totalSubmissions: submissions._count + OLD_SUBMISSIONS,
+        totalTimeSpent: totalTimeSpent,
+        averageTimeSpent: averageTimeSpent,
+        percentCorrect: percentCorrect
+    }
+    res.status(200).json(submissionsStats)
 }
 
 export {
+    getGeneralStats,
+    getCourseExamsStats,
     getQuestionStats,
     getExamStats,
     getCourseStats,

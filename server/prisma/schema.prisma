@@ -54,21 +54,21 @@ model Topic {
 }
 
 model Question {
-  id                   String         @id @default(uuid())
+  id                   String          @id @default(uuid())
   examId               String
   number               Int
   body                 String
   courseId             String
-  solutionVideoLink    String         @default("")
+  solutionVideoLink    String          @default("")
   videoFeedback        VideoFeedback[]
   correctChoiceIndices Int[]
-  published            Boolean        @default(false)
+  published            Boolean         @default(false)
   answerChoices        AnswerChoice[]
-  course               Course         @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  exam                 Exam           @relation(fields: [examId], references: [id], onDelete: Cascade)
+  course               Course          @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  exam                 Exam            @relation(fields: [examId], references: [id], onDelete: Cascade)
   resources            Resource[]
   submissions          Submission[]
-  topics               Topic[]        @relation("QuestionToTopic")
+  topics               Topic[]         @relation("QuestionToTopic")
 }
 
 model AnswerChoice {

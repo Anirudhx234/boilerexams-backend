@@ -1,8 +1,7 @@
-import { PrismaClient, Role } from '@prisma/client';
+import prisma from "../libs/prisma.js";
+import { Role } from '@prisma/client';
 import { Request, Response } from 'express'
 import { APIError, NotFoundError } from "../middleware/errors/index.js";
-
-const prisma = new PrismaClient();
 
 const getAllUsers = async (req: Request, res: Response) => {
     const users = await prisma.user.findMany({

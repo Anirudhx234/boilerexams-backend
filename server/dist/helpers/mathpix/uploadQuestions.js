@@ -7,10 +7,10 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-import { PrismaClient, ResourceType } from '@prisma/client';
+import prisma from "../../libs/prisma.js";
+import { ResourceType } from '@prisma/client';
 import axios from "axios";
 import uploadFileToS3 from '../../utils/uploadFileToS3.js';
-const prisma = new PrismaClient();
 const uploadQuestions = (courseId, examId, questions) => __awaiter(void 0, void 0, void 0, function* () {
     const promises = [];
     yield questions.forEach((question, index) => __awaiter(void 0, void 0, void 0, function* () {

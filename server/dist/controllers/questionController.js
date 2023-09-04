@@ -7,13 +7,13 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-import { PrismaClient } from '@prisma/client';
+import prisma from "../libs/prisma.js";
 import { APIError, NotFoundError } from "../middleware/errors/index.js";
 import msToDate from "../utils/msToDate.js";
-const prisma = new PrismaClient();
+import answerChoiceStats from "../helpers/stats/answerChoiceStats.js";
 const getQuestion = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { questionId } = req.params;
-    const question = yield prisma.question.findUnique({
+    const question = yield prisma.question.findFirst({
         where: {
             id: questionId
         },
@@ -43,6 +43,9 @@ const getQuestion = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
     if (!question) {
         throw new NotFoundError("Question not found");
     }
+    // @ts-ignore
+    // Extend later
+    question.answerChoiceStats = yield answerChoiceStats(questionId);
     res.status(200).send(question);
 });
 const createQuestion = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -253,6 +256,9 @@ const deleteQuestion = (req, res) => __awaiter(void 0, void 0, void 0, function*
 const createQuestionSubmission = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { questionId } = req.params;
     const { selectedChoiceIndices, correct, timeStarted, timeEnded, videoStartTime, videoEndTime, videoTotalWatchTime, modalStartTime, modalEndTime, modalTotalTime, osFamily } = req.body;
+    if (selectedChoiceIndices.length === 0) {
+        throw new APIError("Submission must contain selected choice(s)", 400);
+    }
     const startTime = msToDate(timeStarted);
     const endTime = msToDate(timeEnded);
     const videoStart = msToDate(videoStartTime);

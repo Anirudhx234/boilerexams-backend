@@ -1,35 +1,48 @@
-import { PrismaClient } from '@prisma/client'
-import { NotFoundError } from "../../middleware/errors/index.js";
-import questionStats from "./questionStats.js";
-const prisma = new PrismaClient()
+import prisma from "../../libs/prisma.js";
+import msToHMS from "../../utils/msToHMS.js";
+
+const minimumValidSubmissionTime = 0
 
 const examStats = async (examId: string) => {
-    const exam = await prisma.exam.findUnique({
+    const submissions = await prisma.submission.aggregate({
         where: {
-            id: examId
-        },
-        select: {
-            questions: {
-                select: {
-                    id: true
-                }
+            question: {
+                examId: examId,
+                published: true
+            },
+            timeSpent: {
+                gte: minimumValidSubmissionTime
             }
+        },
+        _count: true,
+        _sum: {
+            timeSpent: true,
+            timeSpentVideo: true,
         }
     })
-    if (!exam) {
-        throw new NotFoundError("Exam not found")
-    }
-    const ids = exam.questions.map(q => q.id)
 
-    const obj = { timeSpent: 0, timeSpentVideo: 0, submissionTotal: 0, submissionCorrect: 0 };
-    const keys = Object.keys(obj)
-    for (let x = 0; x < ids.length; x++) {
-        const tempStats = Object.values(await questionStats(ids[x]))
-        for (let i = 0; i < tempStats.length; i++) {
-            obj[keys[i]] += tempStats[i]
+    const correctSubmissions = await prisma.submission.count({
+        where: {
+            question: {
+                examId: examId
+            },
+            timeSpent: {
+                gte: minimumValidSubmissionTime
+            },
+            correct: true
         }
+    })
+
+    const totalTimeSpent = msToHMS(submissions._sum.timeSpent)
+    const totalVideoWatchTime = msToHMS(submissions._sum.timeSpentVideo)
+
+    const stats = {
+        totalTimeSpent: totalTimeSpent,
+        totalVideoWatchTime: totalVideoWatchTime,
+        totalSubmissions: submissions._count,
+        totalCorrectSubmissions: correctSubmissions
     }
-    return obj
+    return stats
 }
 
 export default examStats

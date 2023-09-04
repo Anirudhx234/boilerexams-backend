@@ -1,12 +1,12 @@
-import { PrismaClient } from '@prisma/client';
+import prisma from "../libs/prisma.js";
 import { Request, Response } from 'express'
 import { APIError, NotFoundError } from "../middleware/errors/index.js"
 import msToDate from "../utils/msToDate.js"
-const prisma = new PrismaClient();
+import answerChoiceStats from "../helpers/stats/answerChoiceStats.js";
 
 const getQuestion = async (req: Request, res: Response) => {
     const { questionId } = req.params
-    const question = await prisma.question.findUnique({
+    const question = await prisma.question.findFirst({
         where: {
             id: questionId
         },
@@ -33,10 +33,14 @@ const getQuestion = async (req: Request, res: Response) => {
             }
         }
     })
-
     if (!question) {
         throw new NotFoundError("Question not found");
     }
+
+    // @ts-ignore
+    // Extend later
+    question.answerChoiceStats = await answerChoiceStats(questionId)
+
     res.status(200).send(question)
 }
 
@@ -136,7 +140,7 @@ const updateQuestion = async (req: Request, res: Response) => {
             courseId: courseId,
             examId: examId,
             topics: {
-                set: topics.map((topic) => ({ name: topic }))
+                set: topics.map((topic: string) => ({ name: topic }))
             },
             number: Number(number),
             body: body,
@@ -261,6 +265,11 @@ const createQuestionSubmission = async (req: Request, res: Response) => {
     const { selectedChoiceIndices, correct,
         timeStarted, timeEnded, videoStartTime, videoEndTime,
         videoTotalWatchTime, modalStartTime, modalEndTime, modalTotalTime, osFamily } = req.body
+
+    if (selectedChoiceIndices.length === 0) {
+        throw new APIError("Submission must contain selected choice(s)", 400)
+    }
+
     const startTime = msToDate(timeStarted)
     const endTime = msToDate(timeEnded)
     const videoStart = msToDate(videoStartTime)

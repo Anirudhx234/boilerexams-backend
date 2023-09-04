@@ -31,23 +31,23 @@ const redirect = (req: Request, res: Response) => {
     }
 }
 
-app.get('/auth/discord/login', (req: Request, res: Response, next: NextFunction) => {
+app.get('/discord/login', (req: Request, res: Response, next: NextFunction) => {
     const state = redirectUrl(req)
     const authenticator = passport.authenticate('discord', { state })
     authenticator(req, res, next)
 })
 
-app.get('/auth/discord/redirect', passport.authenticate('discord'), redirect)
+app.get('/discord/redirect', passport.authenticate('discord'), redirect)
 
-app.get("/auth/google/login", (req: Request, res: Response, next: NextFunction) => {
+app.get("/google/login", (req: Request, res: Response, next: NextFunction) => {
     const state = redirectUrl(req)
     const authenticator = passport.authenticate('google', { state })
     authenticator(req, res, next)
 })
 
-app.get("/auth/google/redirect", passport.authenticate('google'), redirect);
+app.get("/google/redirect", passport.authenticate('google'), redirect);
 
-app.get('/auth/logout', authTester, (req: Request, res: Response, next: NextFunction) => {
+app.get('/logout', authTester, (req: Request, res: Response, next: NextFunction) => {
     // Will extend req later
     //@ts-ignore
     req.logOut(error => {
@@ -60,7 +60,7 @@ app.get('/auth/logout', authTester, (req: Request, res: Response, next: NextFunc
     })
 })
 
-app.get("/auth/test", authTester, (req: Request, res: Response) => {
+app.get("/test", authTester, (req: Request, res: Response) => {
     return res.status(200).send("Successfully authenticated")
 })
 

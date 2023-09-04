@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import prisma from "../libs/prisma.js";
 import { Request, Response } from 'express'
 import parseQuestions from "../helpers/mathpix/questionParser.js";
 import getPDFResult from "../helpers/mathpix/retrievePDF.js";
@@ -9,7 +9,6 @@ import { APIError, NotFoundError } from "../middleware/errors/index.js";
 import uploadQuestions from "../helpers/mathpix/uploadQuestions.js";
 import savePDFtoExam from '../helpers/mathpix/savePDFtoExam.js';
 
-const prisma = new PrismaClient
 dotenv.config()
 
 const checkExistingQuestions = async (examId: string) => {
@@ -22,7 +21,7 @@ const checkExistingQuestions = async (examId: string) => {
             questions: true
         }
     })
-    
+
     if (!exam) {
         throw new NotFoundError("Exam not found")
     }

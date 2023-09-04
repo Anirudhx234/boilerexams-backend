@@ -4,8 +4,7 @@ import { NotFoundError } from '../../middleware/errors/index.js'
 const getPDFResult = async (pdf_id: string) => {
     const headers = {
         'app_id': process.env.MATHPIX_ID,
-        'app_key': process.env.MATHPIX_KEY,
-        'Content-Type': 'application/json'
+        'app_key': process.env.MATHPIX_KEY
     }
     const url = "https://api.mathpix.com/v3/pdf/".concat(pdf_id)
     const response = await axios.get(url, {

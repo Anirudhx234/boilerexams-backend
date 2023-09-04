@@ -7,9 +7,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-import { PrismaClient } from '@prisma/client';
+import prisma from "../libs/prisma.js";
 import { APIError, NotFoundError } from "../middleware/errors/index.js";
-const prisma = new PrismaClient();
 const createTopic = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { courseId } = req.params;
     const { name } = req.body;
@@ -82,6 +81,21 @@ const updateTopic = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
     }
     res.status(200).send(result);
 });
+const setTopicQuestions = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { topicId } = req.params;
+    const { questionIds } = req.body;
+    const topic = yield prisma.topic.update({
+        where: {
+            id: topicId
+        },
+        data: {
+            questions: {
+                set: questionIds.map((id) => ({ id: id }))
+            }
+        }
+    });
+    res.status(200).send(topic);
+});
 const deleteTopic = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { topicId } = req.params;
     const topic = yield prisma.topic.delete({
@@ -94,5 +108,5 @@ const deleteTopic = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
     }
     res.status(200).send(topic);
 });
-export { createTopic, updateTopic, deleteTopic };
+export { createTopic, updateTopic, setTopicQuestions, deleteTopic };
 //# sourceMappingURL=topicController.js.map

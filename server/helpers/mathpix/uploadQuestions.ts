@@ -1,8 +1,7 @@
-import { PrismaClient, ResourceType } from '@prisma/client'
+import prisma from "../../libs/prisma.js";
+import { ResourceType } from '@prisma/client'
 import axios from "axios";
 import uploadFileToS3 from '../../utils/uploadFileToS3.js';
-
-const prisma = new PrismaClient()
 
 const uploadQuestions = async (courseId: string, examId: string, questions: any[]) => {
     const promises: Promise<any>[] = []
@@ -14,7 +13,7 @@ const uploadQuestions = async (courseId: string, examId: string, questions: any[
         const tempResources = (question[0].hasImage) ? (question[0].imageLinks) : ([])
         const questionResources = await uploadResources(tempResources)
         question.shift()
-        const answerChoices : any[] = []
+        const answerChoices: any[] = []
         question.forEach(async (answerChoice, index) => {
             const ac = {
                 choiceIndex: index,
@@ -38,12 +37,12 @@ const uploadQuestions = async (courseId: string, examId: string, questions: any[
                     }
                 },
                 resources: {
-                    connect: questionResources?.map((id) => ({id: id}))
+                    connect: questionResources?.map((id) => ({ id: id }))
                 }
             },
             include: {
-                submissions:true,
-                topics:true,
+                submissions: true,
+                topics: true,
                 answerChoices: {
                     orderBy: {
                         choiceIndex: 'asc'

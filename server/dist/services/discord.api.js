@@ -8,9 +8,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle, WebhookClient } from "discord.js";
-import { PrismaClient } from '@prisma/client';
+import prisma from "../libs/prisma.js";
 import { NotFoundError } from "../middleware/errors/index.js";
-const prisma = new PrismaClient();
 export class DiscordAPI {
     static getWebhook(name) {
         return __awaiter(this, void 0, void 0, function* () {

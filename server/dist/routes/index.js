@@ -12,6 +12,12 @@ import webhooks from "./webhooks.js";
 import stats from "./stats.js";
 import id_routes from "./id_routes.js";
 const app = express();
-app.use(auth, name_routes, id_routes, parsing, courses, exams, questions, resources, topics, users, webhooks, stats);
+app.use("/auth", auth);
+app.use("/id", id_routes);
+app.use("/resources", resources);
+app.use("/webhooks", webhooks);
+app.use("/users", users);
+app.use("/stats", stats);
+app.use(name_routes, parsing, courses, exams, questions, topics);
 export default app;
 //# sourceMappingURL=index.js.map

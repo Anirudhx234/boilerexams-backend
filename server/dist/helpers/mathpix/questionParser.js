@@ -32,7 +32,12 @@ const parseQuestions = (content, choices) => {
                 section.push(checkImage(singleQ, images));
                 qs += 1;
             }
-            q = q.substring(0, multiQ[0].length - 2);
+            if (qs >= 10) {
+                q = q.substring(0, multiQ[0].length - 3);
+            }
+            else {
+                q = q.substring(0, multiQ[0].length - 2);
+            }
         }
         if (singleQ = q.match(sQR)) {
             section.push(checkImage(singleQ, images));

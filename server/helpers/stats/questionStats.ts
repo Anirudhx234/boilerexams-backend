@@ -1,10 +1,18 @@
-import { PrismaClient } from '@prisma/client'
-const prisma = new PrismaClient()
+import prisma from "../../libs/prisma.js";
+import msToHMS from "../../utils/msToHMS.js";
+
+const minimumValidSubmissionTime = 0
 
 const questionStats = async (questionId: string) => {
     const submissions = await prisma.submission.aggregate({
         where: {
-            questionId: questionId
+            question: {
+                id: questionId,
+                published: true
+            },
+            timeSpent: {
+                gte: minimumValidSubmissionTime
+            }
         },
         _sum: {
             timeSpent: true,
@@ -12,17 +20,30 @@ const questionStats = async (questionId: string) => {
         },
         _count: true,
     })
-    const timeSpent = submissions._sum.timeSpent
-    const timeSpentVideo = submissions._sum.timeSpentVideo
-    const submissionTotal = submissions._count
 
-    const submissionCorrect = await prisma.submission.count({
+    const correctSubmissions = await prisma.submission.count({
         where: {
-            questionId: questionId,
+            question: {
+                id: questionId,
+                published: true
+            },
+            timeSpent: {
+                gte: minimumValidSubmissionTime
+            },
             correct: true
         }
     })
-    return { timeSpent, timeSpentVideo, submissionTotal, submissionCorrect }
+
+    const totalTimeSpent = msToHMS(submissions._sum.timeSpent)
+    const totalVideoWatchTime = msToHMS(submissions._sum.timeSpentVideo)
+
+    const stats = {
+        totalTimeSpent: totalTimeSpent,
+        totalVideoWatchTime: totalVideoWatchTime,
+        totalSubmissions: submissions._count,
+        totalCorrectSubmissions: correctSubmissions
+    }
+    return stats
 }
 
 export default questionStats
