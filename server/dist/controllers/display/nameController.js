@@ -187,10 +187,8 @@ const getCourseTopicsWithBasicQuestionInfo = (req, res) => __awaiter(void 0, voi
                             id: true,
                             number: true,
                             exam: {
-                                select: {
-                                    id: true,
-                                    number: true,
-                                    semester: true
+                                include: {
+                                    semester: true,
                                 }
                             },
                             topics: {
@@ -220,10 +218,8 @@ const getCourseTopicsWithBasicQuestionInfo = (req, res) => __awaiter(void 0, voi
                     id: true,
                     number: true,
                     exam: {
-                        select: {
-                            id: true,
-                            number: true,
-                            semester: true
+                        include: {
+                            semester: true,
                         }
                     }
                 },

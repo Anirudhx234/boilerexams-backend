@@ -1,9 +1,11 @@
+/// <reference types="node" />
 declare const savePDFtoExam: (examId: string, buffer: Buffer, contentType: string, id?: string) => Promise<{
     id: string;
     number: number;
     courseId: string;
     semesterId: string;
     published: boolean;
+    practice: boolean;
     pdfId: string;
     pdfKey: string;
     pdfLink: string;
