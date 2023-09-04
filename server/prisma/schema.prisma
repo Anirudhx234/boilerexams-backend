@@ -26,7 +26,6 @@ model Course {
 
   @@unique([subject, number])
   @@unique([abbreviation, number])
-  @@unique([abbreviation, number, published])
 }
 
 model Exam {
@@ -35,6 +34,7 @@ model Exam {
   courseId   String
   semesterId String
   published  Boolean    @default(false)
+  practice   Boolean    @default(false)
   pdfId      String     @default("")
   pdfKey     String     @default("")
   pdfLink    String     @default("")
@@ -43,7 +43,6 @@ model Exam {
   questions  Question[]
 
   @@unique([number, courseId, semesterId])
-  @@unique([number, courseId, semesterId, published])
 }
 
 model Topic {
@@ -60,15 +59,15 @@ model Question {
   body                 String
   courseId             String
   solutionVideoLink    String          @default("")
-  videoFeedback        VideoFeedback[]
   correctChoiceIndices Int[]
   published            Boolean         @default(false)
   answerChoices        AnswerChoice[]
   course               Course          @relation(fields: [courseId], references: [id], onDelete: Cascade)
   exam                 Exam            @relation(fields: [examId], references: [id], onDelete: Cascade)
+  topics               Topic[]         @relation("QuestionToTopic")
   resources            Resource[]
   submissions          Submission[]
-  topics               Topic[]         @relation("QuestionToTopic")
+  videoFeedback        VideoFeedback[]
 }
 
 model AnswerChoice {
@@ -97,8 +96,8 @@ model Image {
   id         String   @id @default(uuid())
   key        String
   url        String
-  resourceId String   @unique
   altText    String   @default("")
+  resourceId String   @unique
   resource   Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
 }
 

@@ -5,7 +5,7 @@ import { APIError, NotFoundError } from "../middleware/errors/index.js";
 
 const createExam = async (req: Request, res: Response) => {
     const { courseId } = req.params
-    const { semester: { season, year }, number } = req.body
+    const { semester: { season, year }, number, practice } = req.body
 
     if (!season || !year) {
         throw new APIError("Season and year required", 400);
@@ -43,7 +43,8 @@ const createExam = async (req: Request, res: Response) => {
             data: {
                 courseId: courseId,
                 number: Number(number),
-                semesterId: semester.id
+                semesterId: semester.id,
+                practice: practice
             },
             include: {
                 semester: true,
@@ -56,7 +57,7 @@ const createExam = async (req: Request, res: Response) => {
 
 const updateExam = async (req: Request, res: Response) => {
     const { courseId, examId } = req.params
-    const { semester: { season, year }, number } = req.body
+    const { semester: { season, year }, number, practice } = req.body
 
     if (!season || !year) {
         throw new APIError("Season and year required", 400);
@@ -97,6 +98,7 @@ const updateExam = async (req: Request, res: Response) => {
             data: {
                 semesterId: semester.id,
                 number: number,
+                practice: practice
             },
             include: {
                 semester: true

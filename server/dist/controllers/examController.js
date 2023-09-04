@@ -12,7 +12,7 @@ import { Season } from "@prisma/client";
 import { APIError, NotFoundError } from "../middleware/errors/index.js";
 const createExam = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { courseId } = req.params;
-    const { semester: { season, year }, number } = req.body;
+    const { semester: { season, year }, number, practice } = req.body;
     if (!season || !year) {
         throw new APIError("Season and year required", 400);
     }
@@ -46,7 +46,8 @@ const createExam = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
             data: {
                 courseId: courseId,
                 number: Number(number),
-                semesterId: semester.id
+                semesterId: semester.id,
+                practice: practice
             },
             include: {
                 semester: true,
@@ -58,7 +59,7 @@ const createExam = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
 });
 const updateExam = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { courseId, examId } = req.params;
-    const { semester: { season, year }, number } = req.body;
+    const { semester: { season, year }, number, practice } = req.body;
     if (!season || !year) {
         throw new APIError("Season and year required", 400);
     }
@@ -95,6 +96,7 @@ const updateExam = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
             data: {
                 semesterId: semester.id,
                 number: number,
+                practice: practice
             },
             include: {
                 semester: true
