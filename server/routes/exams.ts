@@ -10,12 +10,12 @@ import authHandler from '../middleware/auth/authHandler.js';
 
 const app = express();
 
-app.post("/courses/:courseId/exams", authHandler, asyncWrapper(createExam))
+app.post("/courses/:courseId/exams", asyncWrapper(createExam))
 
-app.put("/courses/:courseId/exams/:examId", authHandler, asyncWrapper(updateExam))
+app.put("/courses/:courseId/exams/:examId", asyncWrapper(updateExam))
 
-app.put("/courses/:courseId/exams/:examId/togglePublished", authHandler, asyncWrapper(toggleExamPublished))
+app.put("/courses/:courseId/exams/:examId/togglePublished", asyncWrapper(toggleExamPublished))
 
-app.delete("/courses/:courseId/exams/:examId/hardDelete", authHandler, asyncWrapper(deleteExam))
+app.delete("/courses/:courseId/exams/:examId/hardDelete", asyncWrapper(deleteExam))
 
 export default app

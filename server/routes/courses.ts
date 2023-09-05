@@ -11,12 +11,12 @@ import upload from "../middleware/multer/image.js"
 
 const app = express();
 
-app.post("/courses", authHandler, upload.single('image'), asyncWrapper(createCourse))
+app.post("/courses", upload.single('image'), asyncWrapper(createCourse))
 
-app.put("/courses/:courseId", authHandler, upload.single('image'), asyncWrapper(updateCourse))
+app.put("/courses/:courseId", upload.single('image'), asyncWrapper(updateCourse))
 
-app.put("/courses/:courseId/togglePublished", authHandler, asyncWrapper(toggleCoursePublished))
+app.put("/courses/:courseId/togglePublished", asyncWrapper(toggleCoursePublished))
 
-app.delete("/courses/:courseId/hardDelete", authHandler, asyncWrapper(deleteCourse))
+app.delete("/courses/:courseId/hardDelete", asyncWrapper(deleteCourse))
 
 export default app

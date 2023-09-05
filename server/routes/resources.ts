@@ -15,14 +15,14 @@ const app = express();
 
 app.get("/:resourceId", asyncWrapper(getResource))
 
-app.post("/images", authHandler, upload.single('image'), asyncWrapper(createImageResource))
+app.post("/images", upload.single('image'), asyncWrapper(createImageResource))
 
-app.post("/images/link", authHandler, asyncWrapper(createImageResourceFromLink))
+app.post("/images/link", asyncWrapper(createImageResourceFromLink))
 
-app.post("/codes", authHandler, asyncWrapper(createCodeResource))
+app.post("/codes", asyncWrapper(createCodeResource))
 
-app.put("/:resourceId/code", authHandler, asyncWrapper(updateCodeResource))
+app.put("/:resourceId/code", asyncWrapper(updateCodeResource))
 
-app.delete("/:resourceId", authHandler, asyncWrapper(deleteResource))
+app.delete("/:resourceId", asyncWrapper(deleteResource))
 
 export default app
