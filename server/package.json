@@ -49,6 +49,7 @@
     "@typescript-eslint/eslint-plugin": "^5.60.1",
     "@typescript-eslint/parser": "^5.60.1",
     "eslint": "^8.43.0",
-    "nodemon": "^3.0.1"
+    "nodemon": "^3.0.1",
+    "pdf-to-png-converter": "^3.1.0"
   }
 }

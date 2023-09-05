@@ -10,7 +10,7 @@ import prisma from "../libs/prisma.js";
 import { NotFoundError } from "../middleware/errors/index.js";
 
 export class DiscordAPI {
-    private static async getWebhook(name: string) {
+    static async getWebhook(name: string) {
         return prisma.webhook.findUnique({
             where: {
                 name: name

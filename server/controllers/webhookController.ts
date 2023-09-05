@@ -5,10 +5,45 @@ import { DiscordAPI } from "../services/discord.api.js";
 import getPingsFromLocation from "../helpers/webhooks/getPingsFromLocation.js";
 import { CourseAlreadyExistsError, NotFoundError } from "../middleware/errors/index.js";
 import { AccountType } from "@prisma/client";
+import {AttachmentBuilder, EmbedBuilder, WebhookClient} from "discord.js";
+import {pdfToPng} from "pdf-to-png-converter";
 
 const createApplication = async (req: Request, res: Response) => {
-    console.log(req.body);
-    console.log(req.file);
+    const { name, email, year, why } = req.body;
+    const file = req.file;
+
+    if (!file) {
+        res.status(400).send("Missing File");
+        return;
+    }
+
+    try {
+        const pngPages = await pdfToPng(file.buffer, // The function accepts PDF file path or a Buffer
+            {
+                disableFontFace: true,
+                useSystemFonts: true,
+                enableXfa: false,
+                viewportScale: 4.0,
+                outputFileMask: 'buffer',
+                pagesToProcess: [ 1 ],
+                verbosityLevel: 0
+            });
+        const attachment = new AttachmentBuilder(pngPages[0].content, { name: "resume.png" });
+        const embed = new EmbedBuilder()
+            .setTitle(name)
+            .setDescription(why)
+            .setFooter({ text: `${year} - ${email}` })
+            .setImage("attachment://resume.png");
+
+        const webhook = await DiscordAPI.getWebhook("Applications");
+        const webhookUrl = `https://discord.com/api/webhooks/${webhook?.id}/${webhook?.token}`;
+        const webhookClient = new WebhookClient({ url: webhookUrl });
+        await webhookClient.send({ embeds: [ embed ], files: [ attachment ] });
+    } catch (error) {
+        console.log(error);
+    }
+
+
     res.status(200).send();
 }
 
