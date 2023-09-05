@@ -17,32 +17,27 @@ const createApplication = async (req: Request, res: Response) => {
         return;
     }
 
-    try {
-        const pngPages = await pdfToPng(file.buffer, // The function accepts PDF file path or a Buffer
-            {
-                disableFontFace: true,
-                useSystemFonts: true,
-                enableXfa: false,
-                viewportScale: 4.0,
-                outputFileMask: 'buffer',
-                pagesToProcess: [ 1 ],
-                verbosityLevel: 0
-            });
-        const attachment = new AttachmentBuilder(pngPages[0].content, { name: "resume.png" });
-        const embed = new EmbedBuilder()
-            .setTitle(name)
-            .setDescription(why)
-            .setFooter({ text: `${year} - ${email}` })
-            .setImage("attachment://resume.png");
+    const pngPages = await pdfToPng(file.buffer, // The function accepts PDF file path or a Buffer
+        {
+            disableFontFace: true,
+            useSystemFonts: true,
+            enableXfa: false,
+            viewportScale: 4.0,
+            outputFileMask: 'buffer',
+            pagesToProcess: [ 1 ],
+            verbosityLevel: 0
+        });
+    const attachment = new AttachmentBuilder(pngPages[0].content, { name: "resume.png" });
+    const embed = new EmbedBuilder()
+        .setTitle(name)
+        .setDescription(why)
+        .setFooter({ text: `${year} - ${email}` })
+        .setImage("attachment://resume.png");
 
-        const webhook = await DiscordAPI.getWebhook("Applications");
-        const webhookUrl = `https://discord.com/api/webhooks/${webhook?.id}/${webhook?.token}`;
-        const webhookClient = new WebhookClient({ url: webhookUrl });
-        await webhookClient.send({ embeds: [ embed ], files: [ attachment ] });
-    } catch (error) {
-        console.log(error);
-    }
-
+    const webhook = await DiscordAPI.getWebhook("Applications");
+    const webhookUrl = `https://discord.com/api/webhooks/${webhook?.id}/${webhook?.token}`;
+    const webhookClient = new WebhookClient({ url: webhookUrl });
+    await webhookClient.send({ embeds: [ embed ], files: [ attachment ] });
 
     res.status(200).send();
 }
