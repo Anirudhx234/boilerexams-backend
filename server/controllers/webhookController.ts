@@ -6,6 +6,12 @@ import getPingsFromLocation from "../helpers/webhooks/getPingsFromLocation.js";
 import { CourseAlreadyExistsError, NotFoundError } from "../middleware/errors/index.js";
 import { AccountType } from "@prisma/client";
 
+const createApplication = async (req: Request, res: Response) => {
+    console.log(req.body);
+    console.log(req.file);
+    res.status(200).send();
+}
+
 const createCourseRequest = async (req: Request, res: Response) => {
 
     const { abbreviation, number } = req.body;
@@ -243,6 +249,7 @@ const deleteWebhook = async (req: Request, res: Response) => {
 }
 
 export {
+    createApplication,
     createCourseRequest,
     createBugReport,
     createQuestionBugReport,

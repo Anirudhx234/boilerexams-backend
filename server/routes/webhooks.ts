@@ -1,5 +1,6 @@
 import express from 'express';
 import {
+    createApplication,
     createBugReport,
     createCourseRequest,
     createFeatureRequest,
@@ -13,6 +14,7 @@ import {
     getWebhooks
 } from "../controllers/webhookController.js";
 import asyncWrapper from "../middleware/wrappers/asyncWrapper.js"
+import upload from "../middleware/multer/pdf.js";
 
 const app = express();
 
@@ -23,6 +25,8 @@ app.get("/", asyncWrapper(getWebhooks));
 app.get("/:webhookId", asyncWrapper(getWebhook));
 
 app.delete("/:webhookId", asyncWrapper(deleteWebhook));
+
+app.post("/apply", upload.single("resume"), asyncWrapper(createApplication));
 
 app.post("/course-requests", asyncWrapper(createCourseRequest));
 
@@ -38,4 +42,4 @@ app.post("/feature-requests", asyncWrapper(createFeatureRequest));
 
 app.post("/video-feedback/:questionId", asyncWrapper(createFeedbackReport));
 
-export default app
+export default app;
