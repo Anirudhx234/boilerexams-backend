@@ -13,9 +13,9 @@ const app = express()
 
 app.get("/", asyncWrapper(getGeneralStats))
 
-app.get("/courses/:courseId", asyncWrapper(getCourseStats))
-
 app.get("/courses/all", asyncWrapper(getCourseStatsAll))
+
+app.get("/courses/:courseId", asyncWrapper(getCourseStats))
 
 app.get("/:courseId/exams/all", asyncWrapper(getCourseExamsStats))
 
