@@ -51,6 +51,14 @@ const getGeneralStats = async (req: Request, res: Response) => {
         }
     }))
 
+    const correctSubmissions = await prisma.submission.count({
+        where: {
+            correct: true,
+            timeSpent: {
+                gte: minimumValidSubmissionTime
+            }
+        }
+    })
     const resolved = await Promise.all(promises);
     const courses = resolved[0]
     const exams = resolved[1]
@@ -63,6 +71,8 @@ const getGeneralStats = async (req: Request, res: Response) => {
     }
 
     const totalTimeSpent = msToHMS(timeSpent + OLD_TIME_SPENT_HRS * 3600000)
+    const totalSubmissions = submissions._count + OLD_SUBMISSIONS
+    const percentCorrect = 100.0 * ((correctSubmissions + OLD_PERCENT_CORRECT * OLD_SUBMISSIONS) / totalSubmissions)
 
     const stats = {
         totalStudents: 10000,
@@ -70,7 +80,8 @@ const getGeneralStats = async (req: Request, res: Response) => {
         totalExams: exams._count,
         totalQuestions: questions._count,
         totalSubmissions: submissions._count + OLD_SUBMISSIONS,
-        totalTimeSpent: totalTimeSpent
+        totalTimeSpent: totalTimeSpent,
+        percentCorrect: percentCorrect
     }
 
     res.status(200).json(stats);
@@ -155,6 +166,107 @@ const getCourseStats = async (req: Request, res: Response) => {
     };
 
     res.status(200).json(courseStats)
+}
+
+const getCourseStatsAll = async (req: Request, res: Response) => {
+    // console.log("hi anirudh");
+
+    const courses = await prisma.course.findMany({
+        where: {
+            published: true
+        },
+        include: {
+            _count: {
+                select: {
+                    exams: {
+                        where: {
+                            published: true
+                        }
+                    },
+                    questions: {
+                        where: {
+                            published: true
+                        }
+                    }
+                }
+            }
+        }
+    });
+    //weird error for array
+    const courseStatsArray: Array<{
+        courseName: string;
+        totalExams: number;
+        totalQuestions: number;
+        totalTimeSpent: {
+            hours: number;
+            minutes: number;
+            seconds: number;
+        };
+        totalVideoWatchTime: {
+            hours: number;
+            minutes: number;
+            seconds: number;
+        };
+        totalSubmissions: number;
+        totalCorrectSubmissions: number;
+    }> = [];
+
+    for (const course of courses) {
+        const promises: Promise<any>[] = [];
+
+        promises.push(prisma.submission.aggregate({
+            where: {
+                question: {
+                    courseId: course.id,
+                    published: true
+                },
+                timeSpent: {
+                    gte: minimumValidSubmissionTime
+                }
+            },
+            _count: true,
+            _sum: {
+                timeSpent: true,
+                timeSpentVideo: true,
+            }
+        }));
+
+        promises.push(prisma.submission.aggregate({
+            where: {
+                question: {
+                    courseId: course.id,
+                    published: true
+                },
+                timeSpent: {
+                    gte: minimumValidSubmissionTime
+                },
+                correct: true
+            },
+            _count: true,
+        }));
+
+        const resolved = await Promise.all(promises);
+        const submissions = resolved[0];
+        const correctSubmissions = resolved[1];
+
+        const totalTimeSpent = msToHMS(submissions._sum.timeSpent);
+        const totalVideoWatchTime = msToHMS(submissions._sum.timeSpentVideo);
+
+        const courseStats = {
+            courseName: course.name,
+            courseID: course.id,
+            totalExams: course._count.exams,
+            totalQuestions: course._count.questions,
+            totalTimeSpent: totalTimeSpent,
+            totalVideoWatchTime: totalVideoWatchTime,
+            totalSubmissions: submissions._count,
+            totalCorrectSubmissions: correctSubmissions._count
+        };
+
+        courseStatsArray.push(courseStats);
+    }
+
+    res.status(200).json(courseStatsArray);
 }
 
 const getCourseExamsStats = async (req: Request, res: Response) => {
@@ -273,5 +385,6 @@ export {
     getQuestionStats,
     getExamStats,
     getCourseStats,
+    getCourseStatsAll,
     getSubmissionStats
 }

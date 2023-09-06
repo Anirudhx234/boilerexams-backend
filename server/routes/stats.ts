@@ -6,13 +6,16 @@ import {
     getQuestionStats,
     getExamStats,
     getCourseStats,
-    getSubmissionStats
+    getSubmissionStats,
+    getCourseStatsAll
 } from '../controllers/statsController.js'
 const app = express()
 
 app.get("/", asyncWrapper(getGeneralStats))
 
 app.get("/courses/:courseId", asyncWrapper(getCourseStats))
+
+app.get("/courses/all", asyncWrapper(getCourseStatsAll))
 
 app.get("/:courseId/exams/all", asyncWrapper(getCourseExamsStats))
 
