@@ -126,7 +126,7 @@ const createBugReport = async (req: Request, res: Response) => {
 
 const createQuestionBugReport = async (req: Request, res: Response) => {
     const { questionId } = req.params;
-    const { description, footer } = req.body;
+    const { referer, description, footer } = req.body;
 
     const question = await prisma.question.findUnique({
         where: {
@@ -161,10 +161,9 @@ const createQuestionBugReport = async (req: Request, res: Response) => {
     const title = `${abbreviation}${courseNumber} | ${semester.season} ${semester.year} | Exam ${examNumber} | Question ${question.number}`;
     const discordUsers = users.filter(user => user.accountType === AccountType.DISCORD);
     const content = discordUsers.map(user => `<@${user.accountId}>`).join("");
-    const url = `https://boilerexams-frontend.vercel.app/courses/${abbreviation}${courseNumber}/${semester.season}-${semester.year}-${examNumber}?q=${questionId}`;
 
     const embed = {
-        url: url,
+        url: referer,
         title: title.replace("Exam 0", "Final Exam"),
         description: description,
         timestamp: new Date().toISOString(),
