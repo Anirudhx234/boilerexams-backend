@@ -5,7 +5,7 @@ import { DiscordAPI } from "../services/discord.api.js";
 import getPingsFromLocation from "../helpers/webhooks/getPingsFromLocation.js";
 import { CourseAlreadyExistsError, NotFoundError } from "../middleware/errors/index.js";
 import { AccountType } from "@prisma/client";
-import {AttachmentBuilder, EmbedBuilder, WebhookClient} from "discord.js";
+import {AttachmentBuilder, Colors, EmbedBuilder, WebhookClient} from "discord.js";
 import {pdfToPng} from "pdf-to-png-converter";
 
 const createApplication = async (req: Request, res: Response) => {
@@ -27,12 +27,13 @@ const createApplication = async (req: Request, res: Response) => {
             pagesToProcess: [ 1 ],
             verbosityLevel: 0
         });
-    const attachment = new AttachmentBuilder(pngPages[0].content, { name: "resume.png" });
+    const attachment = new AttachmentBuilder(pngPages[0].content, { name: "pdf.png" });
     const embed = new EmbedBuilder()
         .setTitle(name)
         .setDescription(why)
+        .setColor(Colors.Blue)
         .setFooter({ text: `${year} - ${email}` })
-        .setImage("attachment://resume.png");
+        .setImage("attachment://pdf.png");
 
     const webhook = await DiscordAPI.getWebhook("Applications");
     const webhookUrl = `https://discord.com/api/webhooks/${webhook?.id}/${webhook?.token}`;

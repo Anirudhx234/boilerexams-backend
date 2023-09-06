@@ -26,7 +26,7 @@ app.get("/:webhookId", asyncWrapper(getWebhook));
 
 app.delete("/:webhookId", asyncWrapper(deleteWebhook));
 
-app.post("/apply", upload.single("resume"), asyncWrapper(createApplication));
+app.post("/apply", upload.single("pdf"), asyncWrapper(createApplication));
 
 app.post("/course-requests", asyncWrapper(createCourseRequest));
 
