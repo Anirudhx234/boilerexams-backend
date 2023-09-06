@@ -6,7 +6,7 @@ import {
     createFeatureRequest,
     createFeedbackReport,
     createQuestionBugReport,
-    createWebhook,
+    upsertWebhook,
     deleteWebhook,
     getCourseRequest,
     getCourseRequests,
@@ -18,7 +18,7 @@ import upload from "../middleware/multer/pdf.js";
 
 const app = express();
 
-app.post("/", asyncWrapper(createWebhook));
+app.post("/", asyncWrapper(upsertWebhook));
 
 app.get("/", asyncWrapper(getWebhooks));
 

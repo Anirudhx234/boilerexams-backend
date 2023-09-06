@@ -210,7 +210,7 @@ const createFeedbackReport = async (req: Request, res: Response) => {
     res.status(200).send();
 }
 
-const createWebhook = async (req: Request, res: Response) => {
+const upsertWebhook = async (req: Request, res: Response) => {
     const { id, token, name, avatar, channelId } = req.body;
 
     const webhook = await prisma.webhook.upsert({
@@ -286,7 +286,7 @@ export {
     createQuestionBugReport,
     createFeatureRequest,
     createFeedbackReport,
-    createWebhook,
+    upsertWebhook,
     getCourseRequest,
     getCourseRequests,
     getWebhook,
