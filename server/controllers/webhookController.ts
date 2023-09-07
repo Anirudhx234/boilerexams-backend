@@ -3,18 +3,17 @@ import { PurdueIoAPI } from "../services/purdue.io.js";
 import { Request, Response } from "express";
 import { DiscordAPI } from "../services/discord.api.js";
 import getPingsFromLocation from "../helpers/webhooks/getPingsFromLocation.js";
-import { CourseAlreadyExistsError, NotFoundError } from "../middleware/errors/index.js";
+import { APIError, CourseAlreadyExistsError, NotFoundError } from "../middleware/errors/index.js";
 import { AccountType } from "@prisma/client";
-import {AttachmentBuilder, Colors, EmbedBuilder, WebhookClient} from "discord.js";
-import {pdfToPng} from "pdf-to-png-converter";
+import { AttachmentBuilder, Colors, EmbedBuilder, WebhookClient } from "discord.js";
+import { pdfToPng } from "pdf-to-png-converter";
 
 const createApplication = async (req: Request, res: Response) => {
     const { name, email, year, why } = req.body;
     const file = req.file;
 
     if (!file) {
-        res.status(400).send("Missing File");
-        return;
+        throw new APIError("No file attached", 400);
     }
 
     const pngPages = await pdfToPng(file.buffer, // The function accepts PDF file path or a Buffer
@@ -24,7 +23,7 @@ const createApplication = async (req: Request, res: Response) => {
             enableXfa: false,
             viewportScale: 4.0,
             outputFileMask: 'buffer',
-            pagesToProcess: [ 1 ],
+            pagesToProcess: [1],
             verbosityLevel: 0
         });
     const attachment = new AttachmentBuilder(pngPages[0].content, { name: "pdf.png" });
@@ -38,9 +37,9 @@ const createApplication = async (req: Request, res: Response) => {
     const webhook = await DiscordAPI.getWebhook("Applications");
     const webhookUrl = `https://discord.com/api/webhooks/${webhook?.id}/${webhook?.token}`;
     const webhookClient = new WebhookClient({ url: webhookUrl });
-    await webhookClient.send({ embeds: [ embed ], files: [ attachment ] });
+    await webhookClient.send({ embeds: [embed], files: [attachment] });
 
-    res.status(200).send();
+    res.status(200).send("Success");
 }
 
 const createCourseRequest = async (req: Request, res: Response) => {
