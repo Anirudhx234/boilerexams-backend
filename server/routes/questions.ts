@@ -10,6 +10,7 @@ import {
 } from "../controllers/questionController.js"
 import asyncWrapper from "../middleware/wrappers/asyncWrapper.js"
 import authHandler from '../middleware/auth/authHandler.js';
+import generalLimiter from '../middleware/rateLimiting/generalLimiter.js';
 
 const app = express();
 
@@ -23,8 +24,8 @@ app.put("/questions/:questionId/togglePublished", authHandler, asyncWrapper(togg
 
 app.delete("/courses/:courseId/exams/:examId/questions/:questionId", authHandler, asyncWrapper(deleteQuestion))
 
-app.post("/questions/:questionId/submit", asyncWrapper(createQuestionSubmission))
+app.post("/questions/:questionId/submit", generalLimiter, asyncWrapper(createQuestionSubmission))
 
-app.put("/submissions/:submissionId", asyncWrapper(updateSubmission))
+app.put("/submissions/:submissionId", generalLimiter, asyncWrapper(updateSubmission))
 
 export default app;

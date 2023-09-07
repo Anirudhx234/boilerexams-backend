@@ -4,7 +4,7 @@ import authHandler from '../middleware/auth/authHandler.js'
 
 import generalLimiter from"../middleware/rateLimiting/generalLimiter.js"
 import webhookLimiter from '../middleware/rateLimiting/webhookLimiter.js'
-import contentLimiter from '../middleware/rateLimiting/contentLimiter.js'
+import globalLimiter from '../middleware/rateLimiting/globalLimiter.js'
 
 import auth from '../middleware/auth/auth.js'
 import name_routes from "./name_routes.js"
@@ -21,28 +21,35 @@ import id_routes from "./id_routes.js"
 
 const app = express();
 
+// Global rate limit for all routes
+app.use(globalLimiter);
+
+// Standard user routes (has stricter rate limit)
 app.use("/auth", generalLimiter, auth);
 
 app.use("/stats", generalLimiter, stats);
 
-app.use(generalLimiter, name_routes);
+app.use(name_routes);
 
 app.use("/webhooks", webhookLimiter, webhooks);
 
-app.use("/id", authHandler, contentLimiter, id_routes);
+// Content routes (uses global rate limit)
+app.use(questions);
 
-app.use("/resources", authHandler, contentLimiter, resources);
+app.use(users);
 
-app.use("/users", contentLimiter, users);
+app.use(authHandler);
 
-app.use(authHandler, contentLimiter, parsing);
+app.use("/id", id_routes);
 
-app.use(authHandler, contentLimiter, courses);
+app.use("/resources", resources);
 
-app.use(authHandler, contentLimiter, exams);
- 
-app.use(contentLimiter, questions);
+app.use(parsing);
 
-app.use(authHandler, contentLimiter, topics);
+app.use(courses);
+
+app.use(exams);
+
+app.use(topics);
 
 export default app

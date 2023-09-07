@@ -2,7 +2,7 @@ import { rateLimit } from 'express-rate-limit';
 
 const allowList = ["178.128.158.20", "73.103.19.222"]
 
-const contentLimiter = rateLimit({
+const globalLimiter = rateLimit({
 	windowMs: 1000,
 	max: 50,
 	standardHeaders: 'draft-7',
@@ -10,4 +10,4 @@ const contentLimiter = rateLimit({
     skip: (req, res) => allowList.includes(req.ip),
 })
 
-export default contentLimiter
+export default globalLimiter
