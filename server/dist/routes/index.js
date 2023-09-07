@@ -25,7 +25,7 @@ app.use(name_routes);
 app.use("/webhooks", webhookLimiter, webhooks);
 // Content routes (uses global rate limit)
 app.use(questions);
-app.use(users);
+app.use("/users", users);
 app.use(authHandler);
 app.use("/id", id_routes);
 app.use("/resources", resources);
