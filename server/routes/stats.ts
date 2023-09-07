@@ -17,7 +17,7 @@ app.get("/courses/all", asyncWrapper(getCourseStatsAll))
 
 app.get("/courses/:courseId", asyncWrapper(getCourseStats))
 
-app.get("/:courseId/exams/all", asyncWrapper(getCourseExamsStats))
+app.get("/courses/:courseId/exams/all", asyncWrapper(getCourseExamsStats))
 
 app.get("/exams/:examId", asyncWrapper(getExamStats))
 

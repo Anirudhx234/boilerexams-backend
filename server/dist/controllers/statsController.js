@@ -13,6 +13,7 @@ import questionStats from '../helpers/stats/questionStats.js';
 import examStats from '../helpers/stats/examStats.js';
 import msToHMS from "../utils/msToHMS.js";
 import answerChoiceStats from "../helpers/stats/answerChoiceStats.js";
+import courseStats from "../helpers/stats/courseStats.js";
 const OLD_SUBMISSIONS = 1920571;
 const OLD_TIME_SPENT_HRS = 95074.53;
 const OLD_PERCENT_CORRECT = 0.6571;
@@ -51,97 +52,55 @@ const getGeneralStats = (req, res) => __awaiter(void 0, void 0, void 0, function
             timeSpent: true
         }
     }));
+    promises.push(prisma.submission.count({
+        where: {
+            correct: true,
+            timeSpent: {
+                gte: minimumValidSubmissionTime
+            }
+        }
+    }));
     const resolved = yield Promise.all(promises);
     const courses = resolved[0];
     const exams = resolved[1];
     const questions = resolved[2];
     const submissions = resolved[3];
+    const correctSubmissions = resolved[4];
     let timeSpent = submissions._sum.timeSpent;
     if (!timeSpent) {
         timeSpent = 0;
     }
     const totalTimeSpent = msToHMS(timeSpent + OLD_TIME_SPENT_HRS * 3600000);
+    const totalSubmissions = submissions._count + OLD_SUBMISSIONS;
+    const percentCorrect = 100.0 * ((correctSubmissions + OLD_PERCENT_CORRECT * OLD_SUBMISSIONS) / totalSubmissions);
     const stats = {
         totalStudents: 10000,
         totalCourses: courses._count,
         totalExams: exams._count,
         totalQuestions: questions._count,
         totalSubmissions: submissions._count + OLD_SUBMISSIONS,
-        totalTimeSpent: totalTimeSpent
+        totalTimeSpent: totalTimeSpent,
+        percentCorrect: percentCorrect
     };
     res.status(200).json(stats);
 });
 const getCourseStats = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { courseId } = req.params;
-    const promises = [];
-    const course = yield prisma.course.findFirst({
+    const stats = yield courseStats(courseId);
+    res.status(200).json(stats);
+});
+const getCourseStatsAll = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const courses = yield prisma.course.findMany({
         where: {
-            id: courseId,
             published: true
-        },
-        include: {
-            _count: {
-                select: {
-                    exams: {
-                        where: {
-                            published: true
-                        }
-                    },
-                    questions: {
-                        where: {
-                            published: true
-                        }
-                    }
-                }
-            }
         }
     });
-    if (!course) {
-        throw new NotFoundError("Course not found");
+    const promises = [];
+    for (const course of courses) {
+        promises.push(courseStats(course.id));
     }
-    promises.push(prisma.submission.aggregate({
-        where: {
-            question: {
-                courseId: courseId,
-                published: true
-            },
-            timeSpent: {
-                gte: minimumValidSubmissionTime
-            }
-        },
-        _count: true,
-        _sum: {
-            timeSpent: true,
-            timeSpentVideo: true,
-        }
-    }));
-    promises.push(prisma.submission.aggregate({
-        where: {
-            question: {
-                courseId: courseId,
-                published: true
-            },
-            timeSpent: {
-                gte: minimumValidSubmissionTime
-            },
-            correct: true
-        },
-        _count: true,
-    }));
-    const resolved = yield Promise.all(promises);
-    const submissions = resolved[0];
-    const correctSubmissions = resolved[1];
-    const totalTimeSpent = msToHMS(submissions._sum.timeSpent);
-    const totalVideoWatchTime = msToHMS(submissions._sum.timeSpentVideo);
-    const courseStats = {
-        totalExams: course._count.exams,
-        totalQuestions: course._count.questions,
-        totalTimeSpent: totalTimeSpent,
-        totalVideoWatchTime: totalVideoWatchTime,
-        totalSubmissions: submissions._count,
-        totalCorrectSubmissions: correctSubmissions._count
-    };
-    res.status(200).json(courseStats);
+    const coursesStats = yield Promise.all(promises);
+    res.status(200).json(coursesStats);
 });
 const getCourseExamsStats = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { courseId } = req.params;
@@ -174,7 +133,7 @@ const getCourseExamsStats = (req, res) => __awaiter(void 0, void 0, void 0, func
     const resolved = yield Promise.all(promises);
     let i = 0;
     for (const exam of course.exams) {
-        examsStats.push({ exam: exam, stats: resolved[i] });
+        examsStats.push(Object.assign({ id: exam.id, number: exam.number, semester: exam.semester }, resolved[i]));
         i++;
     }
     res.status(200).json(examsStats);
@@ -233,5 +192,5 @@ const getSubmissionStats = (req, res) => __awaiter(void 0, void 0, void 0, funct
     };
     res.status(200).json(submissionsStats);
 });
-export { getGeneralStats, getCourseExamsStats, getQuestionStats, getExamStats, getCourseStats, getSubmissionStats };
+export { getGeneralStats, getCourseExamsStats, getQuestionStats, getExamStats, getCourseStats, getCourseStatsAll, getSubmissionStats };
 //# sourceMappingURL=statsController.js.map
