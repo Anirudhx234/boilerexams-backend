@@ -12,7 +12,7 @@
     "build": "rimraf build && tsc -p tsconfig.json",
     "dev": "SET NODE_ENV=development&nodemon --config config/nodemon.json server.ts",
     "start": "SET NODE_ENV=production&ts-node-esm server.ts",
-    "prod": "SET NODE_ENV=production&pm2 start dist/server.js"
+    "prod": "NODE_ENV=production&pm2 start dist/server.js"
   },
   "type": "module",
   "keywords": [],
