@@ -3,8 +3,44 @@ import { PurdueIoAPI } from "../services/purdue.io.js";
 import { Request, Response } from "express";
 import { DiscordAPI } from "../services/discord.api.js";
 import getPingsFromLocation from "../helpers/webhooks/getPingsFromLocation.js";
-import { CourseAlreadyExistsError, NotFoundError } from "../middleware/errors/index.js";
+import { APIError, CourseAlreadyExistsError, NotFoundError } from "../middleware/errors/index.js";
 import { AccountType } from "@prisma/client";
+import { AttachmentBuilder, Colors, EmbedBuilder, WebhookClient } from "discord.js";
+import { pdfToPng } from "pdf-to-png-converter";
+
+const createApplication = async (req: Request, res: Response) => {
+    const { name, email, year, why } = req.body;
+    const file = req.file;
+
+    if (!file) {
+        throw new APIError("No file attached", 400);
+    }
+
+    const pngPages = await pdfToPng(file.buffer, // The function accepts PDF file path or a Buffer
+        {
+            disableFontFace: true,
+            useSystemFonts: true,
+            enableXfa: false,
+            viewportScale: 4.0,
+            outputFileMask: 'buffer',
+            pagesToProcess: [1],
+            verbosityLevel: 0
+        });
+    const attachment = new AttachmentBuilder(pngPages[0].content, { name: "pdf.png" });
+    const embed = new EmbedBuilder()
+        .setTitle(name)
+        .setDescription(why)
+        .setColor(Colors.Blue)
+        .setFooter({ text: `${year} - ${email}` })
+        .setImage("attachment://pdf.png");
+
+    const webhook = await DiscordAPI.getWebhook("Applications");
+    const webhookUrl = `https://discord.com/api/webhooks/${webhook?.id}/${webhook?.token}`;
+    const webhookClient = new WebhookClient({ url: webhookUrl });
+    await webhookClient.send({ embeds: [embed], files: [attachment] });
+
+    res.status(200).send("Success");
+}
 
 const createCourseRequest = async (req: Request, res: Response) => {
 
@@ -89,7 +125,7 @@ const createBugReport = async (req: Request, res: Response) => {
 
 const createQuestionBugReport = async (req: Request, res: Response) => {
     const { questionId } = req.params;
-    const { description, footer } = req.body;
+    const { referer, description, footer } = req.body;
 
     const question = await prisma.question.findUnique({
         where: {
@@ -124,10 +160,9 @@ const createQuestionBugReport = async (req: Request, res: Response) => {
     const title = `${abbreviation}${courseNumber} | ${semester.season} ${semester.year} | Exam ${examNumber} | Question ${question.number}`;
     const discordUsers = users.filter(user => user.accountType === AccountType.DISCORD);
     const content = discordUsers.map(user => `<@${user.accountId}>`).join("");
-    const url = `https://boilerexams-frontend.vercel.app/courses/${abbreviation}${courseNumber}/${semester.season}-${semester.year}-${examNumber}?q=${questionId}`;
 
     const embed = {
-        url: url,
+        url: referer,
         title: title.replace("Exam 0", "Final Exam"),
         description: description,
         timestamp: new Date().toISOString(),
@@ -173,7 +208,7 @@ const createFeedbackReport = async (req: Request, res: Response) => {
     res.status(200).send();
 }
 
-const createWebhook = async (req: Request, res: Response) => {
+const upsertWebhook = async (req: Request, res: Response) => {
     const { id, token, name, avatar, channelId } = req.body;
 
     const webhook = await prisma.webhook.upsert({
@@ -243,12 +278,13 @@ const deleteWebhook = async (req: Request, res: Response) => {
 }
 
 export {
+    createApplication,
     createCourseRequest,
     createBugReport,
     createQuestionBugReport,
     createFeatureRequest,
     createFeedbackReport,
-    createWebhook,
+    upsertWebhook,
     getCourseRequest,
     getCourseRequests,
     getWebhook,
