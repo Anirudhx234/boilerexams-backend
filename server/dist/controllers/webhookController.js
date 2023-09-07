@@ -11,8 +11,39 @@ import prisma from "../libs/prisma.js";
 import { PurdueIoAPI } from "../services/purdue.io.js";
 import { DiscordAPI } from "../services/discord.api.js";
 import getPingsFromLocation from "../helpers/webhooks/getPingsFromLocation.js";
-import { CourseAlreadyExistsError, NotFoundError } from "../middleware/errors/index.js";
+import { APIError, CourseAlreadyExistsError, NotFoundError } from "../middleware/errors/index.js";
 import { AccountType } from "@prisma/client";
+import { AttachmentBuilder, Colors, EmbedBuilder, WebhookClient } from "discord.js";
+import { pdfToPng } from "pdf-to-png-converter";
+const createApplication = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { name, email, year, why } = req.body;
+    const file = req.file;
+    if (!file) {
+        throw new APIError("No file attached", 400);
+    }
+    const pngPages = yield pdfToPng(file.buffer, // The function accepts PDF file path or a Buffer
+    {
+        disableFontFace: true,
+        useSystemFonts: true,
+        enableXfa: false,
+        viewportScale: 4.0,
+        outputFileMask: 'buffer',
+        pagesToProcess: [1],
+        verbosityLevel: 0
+    });
+    const attachment = new AttachmentBuilder(pngPages[0].content, { name: "pdf.png" });
+    const embed = new EmbedBuilder()
+        .setTitle(name)
+        .setDescription(why)
+        .setColor(Colors.Blue)
+        .setFooter({ text: `${year} - ${email}` })
+        .setImage("attachment://pdf.png");
+    const webhook = yield DiscordAPI.getWebhook("Applications");
+    const webhookUrl = `https://discord.com/api/webhooks/${webhook === null || webhook === void 0 ? void 0 : webhook.id}/${webhook === null || webhook === void 0 ? void 0 : webhook.token}`;
+    const webhookClient = new WebhookClient({ url: webhookUrl });
+    yield webhookClient.send({ embeds: [embed], files: [attachment] });
+    res.status(200).send("Success");
+});
 const createCourseRequest = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { abbreviation, number } = req.body;
     const stringifiedNumber = String(number);
@@ -84,7 +115,7 @@ const createBugReport = (req, res) => __awaiter(void 0, void 0, void 0, function
 });
 const createQuestionBugReport = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { questionId } = req.params;
-    const { description, footer } = req.body;
+    const { referer, description, footer } = req.body;
     const question = yield prisma.question.findUnique({
         where: {
             id: questionId
@@ -117,9 +148,8 @@ const createQuestionBugReport = (req, res) => __awaiter(void 0, void 0, void 0, 
     const title = `${abbreviation}${courseNumber} | ${semester.season} ${semester.year} | Exam ${examNumber} | Question ${question.number}`;
     const discordUsers = users.filter(user => user.accountType === AccountType.DISCORD);
     const content = discordUsers.map(user => `<@${user.accountId}>`).join("");
-    const url = `https://boilerexams-frontend.vercel.app/courses/${abbreviation}${courseNumber}/${semester.season}-${semester.year}-${examNumber}?q=${questionId}`;
     const embed = {
-        url: url,
+        url: referer,
         title: title.replace("Exam 0", "Final Exam"),
         description: description,
         timestamp: new Date().toISOString(),
@@ -147,7 +177,7 @@ const createFeedbackReport = (req, res) => __awaiter(void 0, void 0, void 0, fun
     const feedback = req.body;
     res.status(200).send();
 });
-const createWebhook = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+const upsertWebhook = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { id, token, name, avatar, channelId } = req.body;
     const webhook = yield prisma.webhook.upsert({
         where: {
@@ -204,5 +234,5 @@ const deleteWebhook = (req, res) => __awaiter(void 0, void 0, void 0, function* 
     });
     res.status(200).send(webhook);
 });
-export { createCourseRequest, createBugReport, createQuestionBugReport, createFeatureRequest, createFeedbackReport, createWebhook, getCourseRequest, getCourseRequests, getWebhook, getWebhooks, deleteWebhook };
+export { createApplication, createCourseRequest, createBugReport, createQuestionBugReport, createFeatureRequest, createFeedbackReport, upsertWebhook, getCourseRequest, getCourseRequests, getWebhook, getWebhooks, deleteWebhook };
 //# sourceMappingURL=webhookController.js.map

@@ -1,11 +1,13 @@
 import express from 'express';
-import { createBugReport, createCourseRequest, createFeatureRequest, createFeedbackReport, createQuestionBugReport, createWebhook, deleteWebhook, getCourseRequest, getCourseRequests, getWebhook, getWebhooks } from "../controllers/webhookController.js";
+import { createApplication, createBugReport, createCourseRequest, createFeatureRequest, createFeedbackReport, createQuestionBugReport, upsertWebhook, deleteWebhook, getCourseRequest, getCourseRequests, getWebhook, getWebhooks } from "../controllers/webhookController.js";
 import asyncWrapper from "../middleware/wrappers/asyncWrapper.js";
+import upload from "../middleware/multer/pdf.js";
 const app = express();
-app.post("/", asyncWrapper(createWebhook));
+app.post("/", asyncWrapper(upsertWebhook));
 app.get("/", asyncWrapper(getWebhooks));
 app.get("/:webhookId", asyncWrapper(getWebhook));
 app.delete("/:webhookId", asyncWrapper(deleteWebhook));
+app.post("/apply", upload.single("pdf"), asyncWrapper(createApplication));
 app.post("/course-requests", asyncWrapper(createCourseRequest));
 app.get("/course-requests", asyncWrapper(getCourseRequests));
 app.get("/course-requests/:courseRequestId", asyncWrapper(getCourseRequest));
