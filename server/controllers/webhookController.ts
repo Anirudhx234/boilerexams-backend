@@ -108,7 +108,8 @@ const createCourseRequest = async (req: Request, res: Response) => {
 
 const createBugReport = async (req: Request, res: Response) => {
     const { title, description, footer, location } = req.body
-    const content = getPingsFromLocation(location);
+    const user = req.user;
+    const content = getPingsFromLocation(location).concat(user ? `from <@${user.accountId}>` : '');
 
     const embed = {
         title: title,
@@ -150,6 +151,7 @@ const createQuestionBugReport = async (req: Request, res: Response) => {
 
     if (!question) throw new NotFoundError("Question does not exist");
 
+    const user = req.user;
     const course = question.course;
     const exam = question.exam;
     const abbreviation = course.abbreviation;
@@ -159,7 +161,7 @@ const createQuestionBugReport = async (req: Request, res: Response) => {
     const semester = exam.semester;
     const title = `${abbreviation}${courseNumber} | ${semester.season} ${semester.year} | Exam ${examNumber} | Question ${question.number}`;
     const discordUsers = users.filter(user => user.accountType === AccountType.DISCORD);
-    const content = discordUsers.map(user => `<@${user.accountId}>`).join("");
+    const content = discordUsers.map(user => `<@${user.accountId}>`).join("").concat(user ? ` from <@${user.accountId}>` : '');
 
     const embed = {
         url: referer,
@@ -177,6 +179,8 @@ const createQuestionBugReport = async (req: Request, res: Response) => {
 
 const createFeatureRequest = async (req: Request, res: Response) => {
     const { title, description } = req.body;
+    const user = req.user;
+    const content = user ? `From <@${user.accountId}>` : undefined;
 
     const embed = {
         title: title,
@@ -185,7 +189,7 @@ const createFeatureRequest = async (req: Request, res: Response) => {
         color: 10181046,
     };
 
-    const data = { embeds: [embed] };
+    const data = { content: content, embeds: [embed] };
     await DiscordAPI.sendWebhookMessage("Feature Requests", data);
     res.status(200).send("Success");
 }
