@@ -10,13 +10,11 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 import prisma from "../libs/prisma.js";
 import parseQuestions from "../helpers/mathpix/questionParser.js";
 import getPDFResult from "../helpers/mathpix/retrievePDF.js";
-import dotenv from 'dotenv';
 import FormData from 'form-data';
 import axios from 'axios';
 import { APIError, NotFoundError } from "../middleware/errors/index.js";
 import uploadQuestions from "../helpers/mathpix/uploadQuestions.js";
 import savePDFtoExam from '../helpers/mathpix/savePDFtoExam.js';
-dotenv.config();
 const checkExistingQuestions = (examId) => __awaiter(void 0, void 0, void 0, function* () {
     const exam = yield prisma.exam.findFirst({
         where: {
