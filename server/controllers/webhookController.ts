@@ -109,7 +109,7 @@ const createCourseRequest = async (req: Request, res: Response) => {
 const createBugReport = async (req: Request, res: Response) => {
     const { title, description, footer, location } = req.body
     const user = req.user;
-    const content = getPingsFromLocation(location).concat(user ? `from <@${user.accountId}>` : '');
+    const content = getPingsFromLocation(location).concat(user ? ` from <@${user.accountId}>` : '');
 
     const embed = {
         title: title,
