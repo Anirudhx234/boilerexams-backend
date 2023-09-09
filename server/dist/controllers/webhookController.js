@@ -101,7 +101,8 @@ const createCourseRequest = (req, res) => __awaiter(void 0, void 0, void 0, func
 });
 const createBugReport = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { title, description, footer, location } = req.body;
-    const content = getPingsFromLocation(location);
+    const user = req.user;
+    const content = getPingsFromLocation(location).concat(user ? ` from <@${user.accountId}>` : '');
     const embed = {
         title: title,
         description: description,
@@ -138,6 +139,7 @@ const createQuestionBugReport = (req, res) => __awaiter(void 0, void 0, void 0, 
     });
     if (!question)
         throw new NotFoundError("Question does not exist");
+    const user = req.user;
     const course = question.course;
     const exam = question.exam;
     const abbreviation = course.abbreviation;
@@ -147,7 +149,7 @@ const createQuestionBugReport = (req, res) => __awaiter(void 0, void 0, void 0, 
     const semester = exam.semester;
     const title = `${abbreviation}${courseNumber} | ${semester.season} ${semester.year} | Exam ${examNumber} | Question ${question.number}`;
     const discordUsers = users.filter(user => user.accountType === AccountType.DISCORD);
-    const content = discordUsers.map(user => `<@${user.accountId}>`).join("");
+    const content = discordUsers.map(user => `<@${user.accountId}>`).join("").concat(user ? ` from <@${user.accountId}>` : '');
     const embed = {
         url: referer,
         title: title.replace("Exam 0", "Final Exam"),
@@ -162,13 +164,15 @@ const createQuestionBugReport = (req, res) => __awaiter(void 0, void 0, void 0, 
 });
 const createFeatureRequest = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { title, description } = req.body;
+    const user = req.user;
+    const content = user ? `From <@${user.accountId}>` : undefined;
     const embed = {
         title: title,
         description: description,
         timestamp: new Date().toISOString(),
         color: 10181046,
     };
-    const data = { embeds: [embed] };
+    const data = { content: content, embeds: [embed] };
     yield DiscordAPI.sendWebhookMessage("Feature Requests", data);
     res.status(200).send("Success");
 });
