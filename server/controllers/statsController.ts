@@ -6,6 +6,7 @@ import questionStats from '../helpers/stats/questionStats.js';
 import examStats from '../helpers/stats/examStats.js';
 import msToHMS from "../utils/msToHMS.js";
 import answerChoiceStats from "../helpers/stats/answerChoiceStats.js";
+import courseStats from "../helpers/stats/courseStats.js";
 
 const OLD_SUBMISSIONS = 1920571
 const OLD_TIME_SPENT_HRS = 95074.53
@@ -51,11 +52,21 @@ const getGeneralStats = async (req: Request, res: Response) => {
         }
     }))
 
+    promises.push(prisma.submission.count({
+        where: {
+            correct: true,
+            timeSpent: {
+                gte: minimumValidSubmissionTime
+            }
+        }
+    }))
+
     const resolved = await Promise.all(promises);
     const courses = resolved[0]
     const exams = resolved[1]
     const questions = resolved[2]
     const submissions = resolved[3]
+    const correctSubmissions = resolved[4]
 
     let timeSpent = submissions._sum.timeSpent;
     if (!timeSpent) {
@@ -63,6 +74,8 @@ const getGeneralStats = async (req: Request, res: Response) => {
     }
 
     const totalTimeSpent = msToHMS(timeSpent + OLD_TIME_SPENT_HRS * 3600000)
+    const totalSubmissions = submissions._count + OLD_SUBMISSIONS
+    const percentCorrect = 100.0 * ((correctSubmissions + OLD_PERCENT_CORRECT * OLD_SUBMISSIONS) / totalSubmissions)
 
     const stats = {
         totalStudents: 10000,
@@ -70,7 +83,8 @@ const getGeneralStats = async (req: Request, res: Response) => {
         totalExams: exams._count,
         totalQuestions: questions._count,
         totalSubmissions: submissions._count + OLD_SUBMISSIONS,
-        totalTimeSpent: totalTimeSpent
+        totalTimeSpent: totalTimeSpent,
+        percentCorrect: percentCorrect
     }
 
     res.status(200).json(stats);
@@ -79,82 +93,27 @@ const getGeneralStats = async (req: Request, res: Response) => {
 const getCourseStats = async (req: Request, res: Response) => {
     const { courseId } = req.params
 
-    const promises: Promise<any>[] = []
+    const stats = await courseStats(courseId);
 
-    const course = await prisma.course.findFirst({
+    res.status(200).json(stats);
+}
+
+const getCourseStatsAll = async (req: Request, res: Response) => {
+    const courses = await prisma.course.findMany({
         where: {
-            id: courseId,
             published: true
-        },
-        include: {
-            _count: {
-                select: {
-                    exams: {
-                        where: {
-                            published: true
-                        }
-                    },
-                    questions: {
-                        where: {
-                            published: true
-                        }
-                    }
-                }
-            }
         }
-    })
-    if (!course) {
-        throw new NotFoundError("Course not found")
+    });
+
+    const promises: Promise<any>[] = [];
+
+    for (const course of courses) {
+        promises.push(courseStats(course.id))
     }
 
-    promises.push(prisma.submission.aggregate({
-        where: {
-            question: {
-                courseId: courseId,
-                published: true
-            },
-            timeSpent: {
-                gte: minimumValidSubmissionTime
-            }
-        },
-        _count: true,
-        _sum: {
-            timeSpent: true,
-            timeSpentVideo: true,
-        }
-    }))
+    const coursesStats = await Promise.all(promises);
 
-    promises.push(prisma.submission.aggregate({
-        where: {
-            question: {
-                courseId: courseId,
-                published: true
-            },
-            timeSpent: {
-                gte: minimumValidSubmissionTime
-            },
-            correct: true
-        },
-        _count: true,
-    }))
-
-    const resolved = await Promise.all(promises);
-    const submissions = resolved[0]
-    const correctSubmissions = resolved[1]
-
-    const totalTimeSpent = msToHMS(submissions._sum.timeSpent)
-    const totalVideoWatchTime = msToHMS(submissions._sum.timeSpentVideo)
-
-    const courseStats = {
-        totalExams: course._count.exams,
-        totalQuestions: course._count.questions,
-        totalTimeSpent: totalTimeSpent,
-        totalVideoWatchTime: totalVideoWatchTime,
-        totalSubmissions: submissions._count,
-        totalCorrectSubmissions: correctSubmissions._count
-    };
-
-    res.status(200).json(courseStats)
+    res.status(200).json(coursesStats);
 }
 
 const getCourseExamsStats = async (req: Request, res: Response) => {
@@ -189,12 +148,18 @@ const getCourseExamsStats = async (req: Request, res: Response) => {
     for (const exam of course.exams) {
         promises.push(examStats(exam.id))
     }
+
     const resolved = await Promise.all(promises)
 
     let i = 0
     for (const exam of course.exams) {
-        examsStats.push({ exam: exam, stats: resolved[i] })
-        i++
+        examsStats.push({ 
+            id: exam.id,
+            number: exam.number,
+            semester: exam.semester,
+            ...resolved[i]
+        })
+        i++;
     }
 
     res.status(200).json(examsStats);
@@ -202,17 +167,19 @@ const getCourseExamsStats = async (req: Request, res: Response) => {
 
 const getExamStats = async (req: Request, res: Response) => {
     const { examId } = req.params
-    const stats = await examStats(examId)
-    res.status(200).json(stats)
+
+    const stats = await examStats(examId);
+
+    res.status(200).json(stats);
 }
 
 
 const getQuestionStats = async (req: Request, res: Response) => {
     const { questionId } = req.params
 
-    const mainStats = await questionStats(questionId)
+    const mainStats = await questionStats(questionId);
 
-    const answerStats = await answerChoiceStats(questionId)
+    const answerStats = await answerChoiceStats(questionId);
 
     const stats = {
         questionStats: mainStats,
@@ -273,5 +240,6 @@ export {
     getQuestionStats,
     getExamStats,
     getCourseStats,
+    getCourseStatsAll,
     getSubmissionStats
 }

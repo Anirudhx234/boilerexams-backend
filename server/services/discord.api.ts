@@ -26,7 +26,7 @@ export class DiscordAPI {
         const claimButton = new ButtonBuilder().setCustomId("claim").setLabel("Claim").setStyle(ButtonStyle.Primary);
         const redirectButton = new ButtonBuilder().setCustomId("redirect").setLabel("Redirect").setStyle(ButtonStyle.Secondary);
         const archiveButton = new ButtonBuilder().setCustomId("archive").setLabel("Archive").setStyle(ButtonStyle.Success);
-        data.components = [ new ActionRowBuilder<ButtonBuilder>().addComponents(claimButton, redirectButton, archiveButton) ]
+        data.components = [new ActionRowBuilder<ButtonBuilder>().addComponents(claimButton, redirectButton, archiveButton)]
         await webhookClient.send(data);
     }
 

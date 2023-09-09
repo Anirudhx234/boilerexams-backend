@@ -36,13 +36,13 @@ const examStats = async (examId: string) => {
     const totalTimeSpent = msToHMS(submissions._sum.timeSpent)
     const totalVideoWatchTime = msToHMS(submissions._sum.timeSpentVideo)
 
-    const stats = {
+    const examStats = {
         totalTimeSpent: totalTimeSpent,
         totalVideoWatchTime: totalVideoWatchTime,
         totalSubmissions: submissions._count,
         totalCorrectSubmissions: correctSubmissions
     }
-    return stats
+    return examStats
 }
 
 export default examStats

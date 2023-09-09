@@ -40,13 +40,13 @@ const examStats = (examId) => __awaiter(void 0, void 0, void 0, function* () {
     });
     const totalTimeSpent = msToHMS(submissions._sum.timeSpent);
     const totalVideoWatchTime = msToHMS(submissions._sum.timeSpentVideo);
-    const stats = {
+    const examStats = {
         totalTimeSpent: totalTimeSpent,
         totalVideoWatchTime: totalVideoWatchTime,
         totalSubmissions: submissions._count,
         totalCorrectSubmissions: correctSubmissions
     };
-    return stats;
+    return examStats;
 });
 export default examStats;
 //# sourceMappingURL=examStats.js.map
