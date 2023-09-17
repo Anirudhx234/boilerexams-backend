@@ -46,7 +46,7 @@ const getQuestion = async (req: Request, res: Response) => {
 
 const createQuestion = async (req: Request, res: Response) => {
     const { courseId, examId } = req.params
-    const { topics, number, body, answerChoices, correctChoiceIndices, solutionVideoLink, resourceIds } = req.body
+    const { topics, number, body, answerChoices, correctChoiceIndices, solutionVideoLink, explanationText, resourceIds } = req.body
 
     await prisma.course.update({
         where: {
@@ -81,6 +81,7 @@ const createQuestion = async (req: Request, res: Response) => {
             },
             correctChoiceIndices: correctChoiceIndices,
             solutionVideoLink: solutionVideoLink,
+            explanationText: explanationText,
             resources: {
                 connect: resourceIds.map((resourceId) => ({ id: resourceId }))
             }
@@ -113,7 +114,7 @@ const createQuestion = async (req: Request, res: Response) => {
 
 const updateQuestion = async (req: Request, res: Response) => {
     const { courseId, examId, questionId } = req.params
-    const { topics, number, body, answerChoices, correctChoiceIndices, solutionVideoLink, resourceIds } = req.body
+    const { topics, number, body, answerChoices, correctChoiceIndices, solutionVideoLink, explanationText, resourceIds } = req.body
 
     await prisma.course.update({
         where: {
@@ -177,6 +178,7 @@ const updateQuestion = async (req: Request, res: Response) => {
             },
             correctChoiceIndices: correctChoiceIndices,
             solutionVideoLink: solutionVideoLink,
+            explanationText: explanationText,
             resources: {
                 deleteMany: {
                     id: {
