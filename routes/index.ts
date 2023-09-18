@@ -3,7 +3,7 @@ import authHandler from '../middleware/auth/authHandler.js'
 import courses from "./courses.js"
 import exams from "./exams.js"
 import express from 'express'
-import feedback from "./feedback"
+import feedback from "./feedback.js"
 import feedbackLimiter from "../middleware/rateLimiting/feedbackLimiter.js"
 import generalLimiter from"../middleware/rateLimiting/generalLimiter.js"
 import globalLimiter from '../middleware/rateLimiting/globalLimiter.js'

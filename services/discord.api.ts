@@ -3,14 +3,14 @@ import axios from "axios";
 
 export class DiscordAPI {
     public static async createApplication(application: Application) {
-        await axios.post(`${process.env.DISCORD_URL}/feedback/applications`, application);
+        await axios.post(`${process.env.DISCORD_URL}/applications`, application);
     }
 
     public static async createReport(report: Report) {
-        await axios.post(`${process.env.DISCORD_URL}/feedback/reports`, report);
+        await axios.post(`${process.env.DISCORD_URL}/reports`, report);
     }
 
     public static async updateCourseRequests(courseRequests: CourseRequest[]) {
-        await axios.post(`${process.env.DISCORD_URL}/feedback/course-requests`, courseRequests);
+        await axios.post(`${process.env.DISCORD_URL}/course-requests`, courseRequests);
     }
 }

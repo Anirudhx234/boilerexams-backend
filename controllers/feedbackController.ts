@@ -4,7 +4,7 @@ import {Request, Response} from "express";
 import {DiscordAPI} from "../services/discord.api.js";
 import {PurdueIoAPI} from "../services/purdue.io.js";
 import prisma from "../libs/prisma.js";
-import uploadFileToS3 from "../utils/uploadFileToS3";
+import uploadFileToS3 from "../utils/uploadFileToS3.js";
 
 const createApplication = async (req: Request, res: Response) => {
     const { name, email, year, why } = req.body;
