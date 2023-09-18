@@ -165,9 +165,17 @@ const createQuestionBugReport = async (req: Request, res: Response) => {
                 include: {
                     course: {
                         select: {
+                            abbreviation: true,
+                            number: true,
                             users: true,
                         }
                     },
+                    exam: {
+                        select: {
+                            number: true,
+                            semester: true
+                        }
+                    }
                 }
             },
             user: true
@@ -235,10 +243,29 @@ const createFeedbackReport = async (req: Request, res: Response) => {
             questionId: question.id
         },
         include: {
-            question: true
+            question: {
+                include: {
+                    course: {
+                        select: {
+                            abbreviation: true,
+                            number: true,
+                            users: true,
+                        }
+                    },
+                    exam: {
+                        select: {
+                            number: true,
+                            semester: true
+                        }
+                    }
+                }
+            }
         }
     });
 
+    const videoFeedback = await prisma.videoFeedback.findMany({  });
+
+    await DiscordAPI.createVideoFeedback(videoFeedback);
     res.status(200).send(feedback);
 }
 
