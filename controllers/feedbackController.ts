@@ -157,8 +157,8 @@ const createQuestionBugReport = async (req: Request, res: Response) => {
             content: description,
             url: referer,
             userAgent: footer,
-            questionId: question.id,
-            userId: user.id
+            questionId: question?.id,
+            userId: user?.id
         },
         include: {
             question: {
@@ -188,7 +188,7 @@ const createFeatureRequest = async (req: Request, res: Response) => {
             title: title,
             content: description,
             status: "in-progress",
-            userId: user.id
+            userId: user?.id
         },
         include: {
             user: true
