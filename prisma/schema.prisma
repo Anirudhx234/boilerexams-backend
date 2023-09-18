@@ -59,6 +59,7 @@ model Question {
   body                 String
   courseId             String
   solutionVideoLink    String          @default("")
+  explanationText      String          @default("")
   correctChoiceIndices Int[]
   published            Boolean         @default(false)
   answerChoices        AnswerChoice[]
@@ -220,17 +221,18 @@ enum ReportType {
   FEATURE_REQUEST
 }
 
-enum Language {
-  C
-  JAVA
-}
-
 enum Year {
   FRESHMAN
   SOPHOMORE
   JUNIOR
   SENIOR
   GRADUATE
+}
+
+enum Language {
+  C
+  PYTHON
+  JAVA
 }
 
 enum Season {

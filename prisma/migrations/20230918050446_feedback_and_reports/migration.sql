@@ -1,8 +1,6 @@
 /*
   Warnings:
 
-  - The values [PYTHON] on the enum `Language` will be removed. If these variants are still used in the database, this will fail.
-  - You are about to drop the column `explanationText` on the `Question` table. All the data in the column will be lost.
   - You are about to drop the `Webhook` table. If the table is not empty, all the data it contains will be lost.
 
 */
@@ -11,18 +9,6 @@ CREATE TYPE "ReportType" AS ENUM ('BUG_REPORT', 'CONTENT_REPORT', 'FEATURE_REQUE
 
 -- CreateEnum
 CREATE TYPE "Year" AS ENUM ('FRESHMAN', 'SOPHOMORE', 'JUNIOR', 'SENIOR', 'GRADUATE');
-
--- AlterEnum
-BEGIN;
-CREATE TYPE "Language_new" AS ENUM ('C', 'JAVA');
-ALTER TABLE "Code" ALTER COLUMN "language" TYPE "Language_new" USING ("language"::text::"Language_new");
-ALTER TYPE "Language" RENAME TO "Language_old";
-ALTER TYPE "Language_new" RENAME TO "Language";
-DROP TYPE "Language_old";
-COMMIT;
-
--- AlterTable
-ALTER TABLE "Question" DROP COLUMN "explanationText";
 
 -- DropTable
 DROP TABLE "Webhook";
@@ -34,7 +20,9 @@ CREATE TABLE "Report" (
     "title" TEXT NOT NULL,
     "content" TEXT NOT NULL,
     "status" TEXT NOT NULL,
+    "url" TEXT,
     "location" TEXT,
+    "userAgent" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "userId" TEXT,
