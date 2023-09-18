@@ -6,6 +6,20 @@ import {PurdueIoAPI} from "../services/purdue.io.js";
 import prisma from "../libs/prisma.js";
 import uploadFileToS3 from "../utils/uploadFileToS3.js";
 
+const getReport = async(req: Request, res: Response) => {
+    const reportId = req.params.reportId;
+
+    const report = await prisma.report.findUnique({
+        where: {
+            id: reportId
+        }
+    });
+
+    if (!report) throw new NotFoundError("Report Not Found");
+
+    res.status(200).send(report);
+}
+
 const createApplication = async (req: Request, res: Response) => {
     const { name, email, year, why } = req.body;
     const file = req.file;
@@ -78,22 +92,27 @@ const createBugReport = async (req: Request, res: Response) => {
     const { title, description, footer, location } = req.body
     const user = req.user;
 
-    const report = await prisma.report.create({
-        data: {
-            type: ReportType.BUG_REPORT,
-            title: title,
-            status: "in-progress",
-            content: description,
-            location: location,
-            userAgent: footer,
-            userId: user.id
-        },
-        include: {
-            user: true
-        }
-    });
+    try {
+        const report = await prisma.report.create({
+            data: {
+                type: ReportType.BUG_REPORT,
+                title: title,
+                status: "in-progress",
+                content: description,
+                location: location,
+                userAgent: footer,
+                userId: user?.id
+            },
+            include: {
+                user: true
+            }
+        });
 
-    await DiscordAPI.createReport(report);
+        await DiscordAPI.createReport(report);
+    } catch(error) {
+        console.log(error);
+    }
+
     res.status(200).send("Success");
 }
 
@@ -142,7 +161,15 @@ const createQuestionBugReport = async (req: Request, res: Response) => {
             userId: user.id
         },
         include: {
-            question: true,
+            question: {
+                include: {
+                    course: {
+                        select: {
+                            users: true,
+                        }
+                    },
+                }
+            },
             user: true
         }
     });
@@ -215,6 +242,19 @@ const createFeedbackReport = async (req: Request, res: Response) => {
     res.status(200).send(feedback);
 }
 
+const updateReport = async (req: Request, res: Response) => {
+    const reportId = req.params.reportId;
+
+    const report = await prisma.report.update({
+        where: {
+            id: reportId
+        },
+        data: req.body
+    });
+
+    res.status(200).send(report);
+}
+
 export {
     createApplication,
     createCourseRequest,
@@ -222,4 +262,6 @@ export {
     createQuestionBugReport,
     createFeatureRequest,
     createFeedbackReport,
+    getReport,
+    updateReport
 };
