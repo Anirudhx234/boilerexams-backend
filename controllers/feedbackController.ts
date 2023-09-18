@@ -242,6 +242,13 @@ const createFeedbackReport = async (req: Request, res: Response) => {
     res.status(200).send(feedback);
 }
 
+const createReport = async (req: Request, res: Response) => {
+    const report = await prisma.report.create({
+        data: req.body
+    });
+    res.status(200).send(report);
+}
+
 const updateReport = async (req: Request, res: Response) => {
     const reportId = req.params.reportId;
 
@@ -262,6 +269,7 @@ export {
     createQuestionBugReport,
     createFeatureRequest,
     createFeedbackReport,
+    createReport,
     getReport,
     updateReport
 };

@@ -5,6 +5,7 @@ import {
     createFeatureRequest,
     createFeedbackReport,
     createQuestionBugReport,
+    createReport,
     getReport,
     updateReport,
 } from "../controllers/feedbackController.js";
@@ -15,6 +16,8 @@ import upload from "../middleware/multer/pdf.js";
 const app = express();
 
 app.get("/reports/:reportId", asyncWrapper(getReport));
+
+app.post("/reports/", asyncWrapper(createReport));
 
 app.post("/applications", upload.single("pdf"), asyncWrapper(createApplication));
 
