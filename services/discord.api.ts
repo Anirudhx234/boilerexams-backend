@@ -1,4 +1,4 @@
-import {Application, CourseRequest, Report, VideoFeedback} from "@prisma/client";
+import { Application, CourseRequest, Report, VideoFeedback } from "@prisma/client";
 import axios from "axios";
 
 export class DiscordAPI {

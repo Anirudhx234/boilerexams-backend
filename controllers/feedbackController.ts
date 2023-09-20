@@ -1,12 +1,12 @@
 import { APIError, CourseAlreadyExistsError, NotFoundError } from "../middleware/errors/index.js";
-import {ReportType, Year} from "@prisma/client";
-import {Request, Response} from "express";
-import {DiscordAPI} from "../services/discord.api.js";
-import {PurdueIoAPI} from "../services/purdue.io.js";
+import { ReportType, Year } from "@prisma/client";
+import { Request, Response } from "express";
+import { DiscordAPI } from "../services/discord.api.js";
+import { PurdueIoAPI } from "../services/purdue.io.js";
 import prisma from "../libs/prisma.js";
 import uploadFileToS3 from "../utils/uploadFileToS3.js";
 
-const getReport = async(req: Request, res: Response) => {
+const getReport = async (req: Request, res: Response) => {
     const reportId = req.params.reportId;
 
     const report = await prisma.report.findUnique({
@@ -83,7 +83,7 @@ const createCourseRequest = async (req: Request, res: Response) => {
         }
     });
 
-    const courseRequests = await prisma.courseRequest.findMany({  });
+    const courseRequests = await prisma.courseRequest.findMany({});
     await DiscordAPI.updateCourseRequests(courseRequests);
     res.status(200).send(courseRequest);
 };
@@ -109,7 +109,7 @@ const createBugReport = async (req: Request, res: Response) => {
         });
 
         await DiscordAPI.createReport(report);
-    } catch(error) {
+    } catch (error) {
         console.log(error);
     }
 
@@ -209,7 +209,7 @@ const createFeatureRequest = async (req: Request, res: Response) => {
 
 const createFeedbackReport = async (req: Request, res: Response) => {
     const { questionId } = req.params;
-    const { explanationQuality, productionQuality, videoRecommendation, additionalFeedback} = req.body;
+    const { explanationQuality, productionQuality, videoRecommendation, additionalFeedback } = req.body;
 
     const question = await prisma.question.findUnique({
         where: {
@@ -263,7 +263,7 @@ const createFeedbackReport = async (req: Request, res: Response) => {
         }
     });
 
-    const videoFeedback = await prisma.videoFeedback.findMany({  });
+    const videoFeedback = await prisma.videoFeedback.findMany({});
 
     await DiscordAPI.createVideoFeedback(videoFeedback);
     res.status(200).send(feedback);
