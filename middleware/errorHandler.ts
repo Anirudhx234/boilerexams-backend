@@ -66,7 +66,7 @@ const errorHandler = (error, req: Request, res: Response, next: NextFunction) =>
         return res.status(error.errorCode).json(errorResponse)
     }
 
-    return res.status(400).json("An error occurred")
+    return res.status(500).json("An error occurred")
 }
 
 export default errorHandler
