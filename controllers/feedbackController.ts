@@ -92,27 +92,22 @@ const createBugReport = async (req: Request, res: Response) => {
     const { title, description, footer, location } = req.body
     const user = req.user;
 
-    try {
-        const report = await prisma.report.create({
-            data: {
-                type: ReportType.BUG_REPORT,
-                title: title,
-                status: "in-progress",
-                content: description,
-                location: location,
-                userAgent: footer,
-                userId: user?.id
-            },
-            include: {
-                user: true
-            }
-        });
+    const report = await prisma.report.create({
+        data: {
+            type: ReportType.BUG_REPORT,
+            title: title,
+            status: "in-progress",
+            content: description,
+            location: location,
+            userAgent: footer,
+            userId: user?.id
+        },
+        include: {
+            user: true
+        }
+    });
 
-        await DiscordAPI.createReport(report);
-    } catch (error) {
-        console.log(error);
-    }
-
+    await DiscordAPI.createReport(report);
     res.status(200).send("Success");
 }
 
