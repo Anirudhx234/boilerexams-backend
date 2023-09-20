@@ -10,9 +10,9 @@
     "reset": "dotenv -e .env npx prisma migrate reset",
     "seed": "node prisma/seed.ts",
     "build": "rimraf build && tsc -p tsconfig.json",
-    "dev": "SET NODE_ENV=development&nodemon --config config/nodemon.json server.ts",
-    "start": "SET NODE_ENV=production&ts-node-esm server.ts",
-    "prod": "NODE_ENV=production&pm2 start dist/server.js"
+    "dev": "cross-env NODE_ENV=development nodemon --config config/nodemon.json server.ts",
+    "start": "cross-env NODE_ENV=production ts-node-esm server.ts",
+    "prod": "cross-env NODE_ENV=production pm2 start dist/server.js"
   },
   "type": "module",
   "keywords": [],
@@ -26,6 +26,7 @@
     "connect-pg-simple": "^9.0.0",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
+    "cross-env": "^7.0.3",
     "dotenv": "^16.0.3",
     "express": "^4.18.2",
     "express-rate-limit": "^6.10.0",

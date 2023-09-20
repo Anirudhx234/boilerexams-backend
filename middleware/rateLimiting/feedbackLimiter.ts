@@ -1,6 +1,6 @@
 import { rateLimit } from 'express-rate-limit';
 
-const allowList = ["178.128.158.20", "73.103.19.222", "::1"]
+const allowList = ["178.128.158.20", "178.128.159.255", "73.103.19.222"]
 
 const feedbackLimiter = rateLimit({
     windowMs: 60 * 1000,
