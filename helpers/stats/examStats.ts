@@ -24,7 +24,8 @@ const examStats = async (examId: string) => {
     const correctSubmissions = await prisma.submission.count({
         where: {
             question: {
-                examId: examId
+                examId: examId,
+                published: true
             },
             timeSpent: {
                 gte: minimumValidSubmissionTime

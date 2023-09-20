@@ -55,6 +55,9 @@ const getGeneralStats = async (req: Request, res: Response) => {
     promises.push(prisma.submission.count({
         where: {
             correct: true,
+            question: {
+                published: true
+            },
             timeSpent: {
                 gte: minimumValidSubmissionTime
             }
@@ -192,6 +195,9 @@ const getQuestionStats = async (req: Request, res: Response) => {
 const getSubmissionStats = async (req: Request, res: Response) => {
     const submissions = await prisma.submission.aggregate({
         where: {
+            question: {
+                published: true
+            },
             timeSpent: {
                 gte: minimumValidSubmissionTime
             }
@@ -208,6 +214,9 @@ const getSubmissionStats = async (req: Request, res: Response) => {
     const correctSubmissions = await prisma.submission.count({
         where: {
             correct: true,
+            question: {
+                published: true
+            },
             timeSpent: {
                 gte: minimumValidSubmissionTime
             }
