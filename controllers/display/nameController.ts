@@ -333,6 +333,11 @@ const getCourseTopicWithFullQuestionInfo = async (req: Request, res: Response) =
                 },
                 include: {
                     topics: true,
+                    exam: {
+                        include: {
+                            semester: true,
+                        }
+                    },
                     answerChoices: {
                         orderBy: {
                             choiceIndex: 'asc'
