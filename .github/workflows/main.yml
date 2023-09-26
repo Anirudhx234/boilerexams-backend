@@ -1,0 +1,36 @@
+name: Deploy API to EC2
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+  workflow_dispatch:
+
+jobs:
+  build:
+
+    runs-on: linux
+
+    if: github.ref == 'refs/heads/master'
+
+    strategy:
+      matrix:
+        node-version: [18.x]
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - run: npm ci
+      - run: npm run build
+
+      - name: rsync deployments
+        uses: burnett01/rsync-deployments@5.1
+        with:
+          switches: -avzr --delete
+          path: ./*
+          remote_path: boilerexams-backend/
+          remote_host: "${{ secrets.HOST }}"
+          remote_user: "${{ secrets.USER }}"
+          remote_key: "${{ secrets.SSH_KEY }}"
