@@ -19,6 +19,7 @@ jobs:
 
     env:
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      DATABASE_URL_BOUNCER: ${{ secrets.DATABASE_URL_BOUNCER }}
 
     steps:
       - uses: actions/checkout@v3
