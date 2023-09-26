@@ -4,6 +4,7 @@ import { APIError } from '../errors/index.js';
 
 const authTester = asyncWrapper(async (req: Request, res: Response, next: NextFunction) => {
     if (req.user) {
+        //@ts-ignore
         req.session._garbage = Date();
         req.session.touch();
         return next()
