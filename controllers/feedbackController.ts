@@ -89,7 +89,7 @@ const createCourseRequest = async (req: Request, res: Response) => {
 };
 
 const createBugReport = async (req: Request, res: Response) => {
-    const { title, description, email, footer, location } = req.body
+    const { title, description, contact, footer, location } = req.body
     const user = req.user;
 
     const report = await prisma.report.create({
@@ -98,7 +98,7 @@ const createBugReport = async (req: Request, res: Response) => {
             title: title,
             status: "in-progress",
             content: description,
-            email: email,
+            contact: contact,
             location: location,
             userAgent: footer,
             userId: user?.id
@@ -114,7 +114,7 @@ const createBugReport = async (req: Request, res: Response) => {
 
 const createQuestionBugReport = async (req: Request, res: Response) => {
     const { questionId } = req.params;
-    const { referer, description, email, footer } = req.body;
+    const { referer, description, contact, footer } = req.body;
 
     const question = await prisma.question.findUnique({
         where: {
@@ -151,7 +151,7 @@ const createQuestionBugReport = async (req: Request, res: Response) => {
             title: title,
             status: "in-progress",
             content: description,
-            email: email,
+            contact: contact,
             url: referer,
             userAgent: footer,
             questionId: question?.id,
