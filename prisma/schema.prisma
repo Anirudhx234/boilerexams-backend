@@ -145,6 +145,7 @@ model Report {
   title      String
   content    String
   status     String
+  email      String?
   url        String?
   location   String?
   userAgent  String?

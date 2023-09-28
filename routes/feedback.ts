@@ -3,7 +3,7 @@ import {
     createBugReport,
     createCourseRequest,
     createFeatureRequest,
-    createFeedbackReport,
+    createVideoFeedbackReport,
     createQuestionBugReport,
     createReport,
     getReport,
@@ -29,7 +29,7 @@ app.post("/content-reports/:questionId", asyncWrapper(createQuestionBugReport));
 
 app.post("/feature-requests", asyncWrapper(createFeatureRequest));
 
-app.post("/video-feedback/:questionId", asyncWrapper(createFeedbackReport));
+app.post("/video-feedback/:questionId", asyncWrapper(createVideoFeedbackReport));
 
 app.put("/reports/:reportId", asyncWrapper(updateReport));
 
