@@ -1,11 +1,11 @@
 import prisma from "../libs/prisma.js";
-import { Request, Response } from 'express'
-import { APIError, NotFoundError } from "../middleware/errors/index.js"
-import msToDate from "../utils/msToDate.js"
+import { Request, Response } from 'express';
+import { APIError, NotFoundError } from "../middleware/errors/index.js";
+import msToDate from "../utils/msToDate.js";
 import answerChoiceStats from "../helpers/stats/answerChoiceStats.js";
 
 const getQuestion = async (req: Request, res: Response) => {
-    const { questionId } = req.params
+    const { questionId } = req.params;
     const question = await prisma.question.findFirst({
         where: {
             id: questionId
@@ -32,21 +32,21 @@ const getQuestion = async (req: Request, res: Response) => {
                 }
             }
         }
-    })
+    });
     if (!question) {
         throw new NotFoundError("Question not found");
     }
 
     // @ts-ignore
     // Extend later
-    question.answerChoiceStats = await answerChoiceStats(questionId)
+    question.answerChoiceStats = await answerChoiceStats(questionId);
 
-    res.status(200).send(question)
-}
+    res.status(200).send(question);
+};
 
 const createQuestion = async (req: Request, res: Response) => {
-    const { courseId, examId } = req.params
-    const { topics, number, body, answerChoices, correctChoiceIndices, solutionVideoLink, explanationText, resourceIds } = req.body
+    const { courseId, examId } = req.params;
+    const { topics, number, body, answerChoices, correctChoiceIndices, solutionVideoLink, explanationText, resourceIds } = req.body;
 
     await prisma.course.update({
         where: {
@@ -59,7 +59,7 @@ const createQuestion = async (req: Request, res: Response) => {
                 }))
             }
         }
-    })
+    });
 
     const question = await prisma.question.create({
         data: {
@@ -108,13 +108,13 @@ const createQuestion = async (req: Request, res: Response) => {
                 }
             }
         }
-    })
-    res.status(200).send(question)
-}
+    });
+    res.status(200).send(question);
+};
 
 const updateQuestion = async (req: Request, res: Response) => {
-    const { courseId, examId, questionId } = req.params
-    const { topics, number, body, answerChoices, correctChoiceIndices, solutionVideoLink, explanationText, resourceIds } = req.body
+    const { courseId, examId, questionId } = req.params;
+    const { topics, number, body, answerChoices, correctChoiceIndices, solutionVideoLink, explanationText, resourceIds } = req.body;
 
     await prisma.course.update({
         where: {
@@ -127,11 +127,11 @@ const updateQuestion = async (req: Request, res: Response) => {
                 }))
             }
         }
-    })
+    });
 
     const existingAnswerChoices = answerChoices.filter((answerChoice) => {
         return answerChoice.id !== undefined;
-    })
+    });
 
     const question = await prisma.question.update({
         where: {
@@ -210,12 +210,12 @@ const updateQuestion = async (req: Request, res: Response) => {
                 }
             }
         }
-    })
-    res.status(200).send(question)
-}
+    });
+    res.status(200).send(question);
+};
 
 const toggleQuestionPublished = async (req: Request, res: Response) => {
-    const { questionId } = req.params
+    const { questionId } = req.params;
     const question = await prisma.question.findUnique({
         where: {
             id: questionId
@@ -228,15 +228,15 @@ const toggleQuestionPublished = async (req: Request, res: Response) => {
             },
             published: true
         }
-    })
+    });
     if (!question) {
-        throw new NotFoundError("Question not found")
+        throw new NotFoundError("Question not found");
     }
     if (!question.exam.published) {
-        throw new APIError("Exam must be published", 409)
+        throw new APIError("Exam must be published", 409);
     }
 
-    const published = !question.published
+    const published = !question.published;
     await prisma.question.update({
         where: {
             id: questionId
@@ -244,43 +244,43 @@ const toggleQuestionPublished = async (req: Request, res: Response) => {
         data: {
             published: published
         }
-    })
-    res.status(200).send({ message: `Question is now ${published ? "published" : "unpublished"}` })
-}
+    });
+    res.status(200).send({ message: `Question is now ${published ? "published" : "unpublished"}` });
+};
 
 const deleteQuestion = async (req: Request, res: Response) => {
-    const { questionId } = req.params
+    const { questionId } = req.params;
     const question = await prisma.question.delete({
         where: {
             id: questionId
         }
-    })
+    });
 
     if (!question) {
-        throw new NotFoundError("Question not found")
+        throw new NotFoundError("Question not found");
     }
-    res.status(200).send(question)
-}
+    res.status(200).send(question);
+};
 
 const createQuestionSubmission = async (req: Request, res: Response) => {
-    const { questionId } = req.params
+    const { questionId } = req.params;
     const { selectedChoiceIndices, correct,
         timeStarted, timeEnded, videoStartTime, videoEndTime,
-        videoTotalWatchTime, modalStartTime, modalEndTime, modalTotalTime, osFamily } = req.body
+        videoTotalWatchTime, modalStartTime, modalEndTime, modalTotalTime, osFamily } = req.body;
 
     if (selectedChoiceIndices.length === 0) {
-        throw new APIError("Submission must contain selected choice(s)", 400)
+        throw new APIError("Submission must contain selected choice(s)", 400);
     }
 
-    const startTime = msToDate(timeStarted)
-    const endTime = msToDate(timeEnded)
-    const videoStart = msToDate(videoStartTime)
-    const videoEnd = msToDate(videoEndTime)
-    const modalStart = msToDate(modalStartTime)
-    const modalEnd = msToDate(modalEndTime)
+    const startTime = msToDate(timeStarted);
+    const endTime = msToDate(timeEnded);
+    const videoStart = msToDate(videoStartTime);
+    const videoEnd = msToDate(videoEndTime);
+    const modalStart = msToDate(modalStartTime);
+    const modalEnd = msToDate(modalEndTime);
 
 
-    const timeSpent = (endTime.valueOf() - startTime.valueOf())
+    const timeSpent = (endTime.valueOf() - startTime.valueOf());
     const submission = await prisma.submission.create({
         data: {
             questionId: questionId,
@@ -297,20 +297,20 @@ const createQuestionSubmission = async (req: Request, res: Response) => {
             modalTotalTime: modalTotalTime,
             osFamily: osFamily
         }
-    })
-    res.status(200).send(submission)
-}
+    });
+    res.status(200).send(submission);
+};
 
 const updateSubmission = async (req: Request, res: Response) => {
-    const { submissionId } = req.params
+    const { submissionId } = req.params;
     const { videoStartTime,
         videoEndTime, videoTotalWatchTime, modalStartTime,
-        modalEndTime, modalTotalTime } = req.body
+        modalEndTime, modalTotalTime } = req.body;
 
-    const videoStart = msToDate(videoStartTime)
-    const videoEnd = msToDate(videoEndTime)
-    const modalStart = msToDate(modalStartTime)
-    const modalEnd = msToDate(modalEndTime)
+    const videoStart = msToDate(videoStartTime);
+    const videoEnd = msToDate(videoEndTime);
+    const modalStart = msToDate(modalStartTime);
+    const modalEnd = msToDate(modalEndTime);
 
     const submission = await prisma.submission.update({
         where: {
@@ -324,9 +324,9 @@ const updateSubmission = async (req: Request, res: Response) => {
             modalEndTime: modalEnd,
             modalTotalTime: modalTotalTime
         }
-    })
-    res.status(200).send(submission)
-}
+    });
+    res.status(200).send(submission);
+};
 
 export {
     getQuestion,
@@ -336,4 +336,4 @@ export {
     deleteQuestion,
     createQuestionSubmission,
     updateSubmission
-}
+};

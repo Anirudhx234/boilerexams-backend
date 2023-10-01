@@ -5,6 +5,6 @@ const generalLimiter = rateLimit({
 	max: 10,
 	standardHeaders: 'draft-7',
 	legacyHeaders: false,
-})
+});
 
-export default generalLimiter
+export default generalLimiter;

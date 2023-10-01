@@ -4,8 +4,8 @@ import { Request, Response } from 'express';
 import { APIError, NotFoundError } from "../middleware/errors/index.js";
 
 const createExam = async (req: Request, res: Response) => {
-    const { courseId } = req.params
-    const { semester: { season, year }, number, practice } = req.body
+    const { courseId } = req.params;
+    const { semester: { season, year }, number, practice } = req.body;
 
     if (!season || !year) {
         throw new APIError("Season and year required", 400);
@@ -24,7 +24,7 @@ const createExam = async (req: Request, res: Response) => {
                 season: Season[season.toUpperCase() as keyof typeof Season],
                 year: Number(year)
             }
-        })
+        });
 
         await tx.course.update({
             where: {
@@ -37,7 +37,7 @@ const createExam = async (req: Request, res: Response) => {
                     }
                 }
             }
-        })
+        });
 
         return await tx.exam.create({
             data: {
@@ -50,14 +50,14 @@ const createExam = async (req: Request, res: Response) => {
                 semester: true,
                 questions: true
             }
-        })
-    })
-    res.status(200).send(exam)
-}
+        });
+    });
+    res.status(200).send(exam);
+};
 
 const updateExam = async (req: Request, res: Response) => {
-    const { courseId, examId } = req.params
-    const { semester: { season, year }, number, practice } = req.body
+    const { courseId, examId } = req.params;
+    const { semester: { season, year }, number, practice } = req.body;
 
     if (!season || !year) {
         throw new APIError("Season and year required", 400);
@@ -76,7 +76,7 @@ const updateExam = async (req: Request, res: Response) => {
                 season: Season[season.toUpperCase() as keyof typeof Season],
                 year: Number(year)
             }
-        })
+        });
 
         await tx.course.update({
             where: {
@@ -89,7 +89,7 @@ const updateExam = async (req: Request, res: Response) => {
                     }
                 }
             }
-        })
+        });
 
         return await tx.exam.update({
             where: {
@@ -103,13 +103,13 @@ const updateExam = async (req: Request, res: Response) => {
             include: {
                 semester: true
             }
-        })
-    })
-    res.status(200).send(exam)
-}
+        });
+    });
+    res.status(200).send(exam);
+};
 
 const toggleExamPublished = async (req: Request, res: Response) => {
-    const { examId } = req.params
+    const { examId } = req.params;
     const exam = await prisma.exam.findUnique({
         where: {
             id: examId
@@ -117,12 +117,12 @@ const toggleExamPublished = async (req: Request, res: Response) => {
         select: {
             published: true
         }
-    })
+    });
     if (!exam) {
-        throw new NotFoundError("Exam not found")
+        throw new NotFoundError("Exam not found");
     }
 
-    const published = !exam.published
+    const published = !exam.published;
     await prisma.exam.update({
         where: {
             id: examId
@@ -140,27 +140,27 @@ const toggleExamPublished = async (req: Request, res: Response) => {
                 }
             }
         }
-    })
-    res.status(200).send({ message: `Exam and questions are now ${published ? "published" : "unpublished"}` })
-}
+    });
+    res.status(200).send({ message: `Exam and questions are now ${published ? "published" : "unpublished"}` });
+};
 
 const deleteExam = async (req: Request, res: Response) => {
-    const { examId } = req.params
+    const { examId } = req.params;
     const exam = await prisma.exam.delete({
         where: {
             id: examId
         }
-    })
+    });
 
     if (!exam) {
-        throw new NotFoundError("Exam not found")
+        throw new NotFoundError("Exam not found");
     }
-    res.status(200).send(exam)
-}
+    res.status(200).send(exam);
+};
 
 export {
     createExam,
     updateExam,
     toggleExamPublished,
     deleteExam
-}
+};

@@ -1,7 +1,7 @@
 import prisma from "../../libs/prisma.js";
 import msToHMS from "../../utils/msToHMS.js";
 
-const minimumValidSubmissionTime = 0
+const minimumValidSubmissionTime = 0;
 
 const examStats = async (examId: string) => {
     const submissions = await prisma.submission.aggregate({
@@ -19,7 +19,7 @@ const examStats = async (examId: string) => {
             timeSpent: true,
             timeSpentVideo: true,
         }
-    })
+    });
 
     const correctSubmissions = await prisma.submission.count({
         where: {
@@ -32,18 +32,18 @@ const examStats = async (examId: string) => {
             },
             correct: true
         }
-    })
+    });
 
-    const totalTimeSpent = msToHMS(submissions._sum.timeSpent)
-    const totalVideoWatchTime = msToHMS(submissions._sum.timeSpentVideo)
+    const totalTimeSpent = msToHMS(submissions._sum.timeSpent);
+    const totalVideoWatchTime = msToHMS(submissions._sum.timeSpentVideo);
 
     const examStats = {
         totalTimeSpent: totalTimeSpent,
         totalVideoWatchTime: totalVideoWatchTime,
         totalSubmissions: submissions._count,
         totalCorrectSubmissions: correctSubmissions
-    }
-    return examStats
-}
+    };
+    return examStats;
+};
 
-export default examStats
+export default examStats;

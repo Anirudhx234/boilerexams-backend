@@ -1,13 +1,13 @@
 import express from "express";
 import {
     getCourse,
-    getCourseTopics,
-    getCourseSemesters,
     getCourseSemesterExams,
+    getCourseSemesters,
+    getCourseTopicQuestions,
+    getCourseTopics,
     getExam,
-    getExamQuestions,
-    getCourseTopicQuestions
-} from "../controllers/display/idController.js"
+    getExamQuestions
+} from "../controllers/display/idController.js";
 import asyncWrapper from "../middleware/wrappers/asyncWrapper.js";
 import authHandler from "../middleware/auth/authHandler.js";
 

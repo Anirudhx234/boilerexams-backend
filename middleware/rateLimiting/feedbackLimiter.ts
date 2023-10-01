@@ -10,6 +10,6 @@ const feedbackLimiter = rateLimit({
         if (!process.env.FEEDBACK_API_KEY) return false;
         return req.headers.authorization == process.env.FEEDBACK_API_KEY;
     }
-})
+});
 
-export default feedbackLimiter
+export default feedbackLimiter;

@@ -2,10 +2,10 @@ import prisma from "../../libs/prisma.js";
 import { NotFoundError } from "../../middleware/errors/index.js";
 import msToHMS from "../../utils/msToHMS.js";
 
-const minimumValidSubmissionTime = 0
+const minimumValidSubmissionTime = 0;
 
 const courseStats = async (courseId: string) => {
-    const promises: Promise<any>[] = []
+    const promises: Promise<any>[] = [];
 
     const course = await prisma.course.findFirst({
         where: {
@@ -28,9 +28,9 @@ const courseStats = async (courseId: string) => {
                 }
             }
         }
-    })
+    });
     if (!course) {
-        throw new NotFoundError("Course not found")
+        throw new NotFoundError("Course not found");
     }
 
     promises.push(prisma.submission.aggregate({
@@ -48,7 +48,7 @@ const courseStats = async (courseId: string) => {
             timeSpent: true,
             timeSpentVideo: true,
         }
-    }))
+    }));
 
     promises.push(prisma.submission.aggregate({
         where: {
@@ -62,14 +62,14 @@ const courseStats = async (courseId: string) => {
             correct: true
         },
         _count: true,
-    }))
+    }));
 
     const resolved = await Promise.all(promises);
-    const submissions = resolved[0]
-    const correctSubmissions = resolved[1]
+    const submissions = resolved[0];
+    const correctSubmissions = resolved[1];
 
-    const totalTimeSpent = msToHMS(submissions._sum.timeSpent)
-    const totalVideoWatchTime = msToHMS(submissions._sum.timeSpentVideo)
+    const totalTimeSpent = msToHMS(submissions._sum.timeSpent);
+    const totalVideoWatchTime = msToHMS(submissions._sum.timeSpentVideo);
 
     const courseStats = {
         courseName: course.name,
@@ -82,7 +82,7 @@ const courseStats = async (courseId: string) => {
         totalCorrectSubmissions: correctSubmissions._count
     };
 
-    return courseStats
-}
+    return courseStats;
+};
 
-export default courseStats
+export default courseStats;

@@ -1,5 +1,5 @@
 import prisma from "../libs/prisma.js";
-import { Request, Response } from 'express'
+import { Request, Response } from 'express';
 import parseQuestions from "../helpers/mathpix/questionParser.js";
 import getPDFResult from "../helpers/mathpix/retrievePDF.js";
 import FormData from 'form-data';
@@ -17,26 +17,26 @@ const checkExistingQuestions = async (examId: string) => {
             course: true,
             questions: true
         }
-    })
+    });
 
     if (!exam) {
-        throw new NotFoundError("Exam not found")
+        throw new NotFoundError("Exam not found");
     }
     if (exam.questions.length > 0) {
-        throw new Error("Exam already contains questions. Delete questions before scanning new PDF.")
+        throw new Error("Exam already contains questions. Delete questions before scanning new PDF.");
     }
     else {
-        return exam.course.id
+        return exam.course.id;
     }
-}
+};
 
 
 const parseFromFile = async (req: Request, res: Response) => {
-    const { examId, choices } = req.body
+    const { examId, choices } = req.body;
 
-    const courseId = await checkExistingQuestions(examId)
+    const courseId = await checkExistingQuestions(examId);
     if (!req.file) {
-        throw new Error("No file attached")
+        throw new Error("No file attached");
     }
 
     const data = new FormData();
@@ -51,7 +51,7 @@ const parseFromFile = async (req: Request, res: Response) => {
         },
         numbers_default_to_math: true,
     };
-    data.append('options_json', JSON.stringify(options_json))
+    data.append('options_json', JSON.stringify(options_json));
 
     const config = {
         method: "post",
@@ -63,27 +63,27 @@ const parseFromFile = async (req: Request, res: Response) => {
             ...data.getHeaders()
         },
         data: data
-    }
-    const pdf = await axios.request(config)
-    const id = pdf.data.pdf_id
+    };
+    const pdf = await axios.request(config);
+    const id = pdf.data.pdf_id;
 
-    await savePDFtoExam(examId, req.file.buffer, req.file.mimetype, id)
+    await savePDFtoExam(examId, req.file.buffer, req.file.mimetype, id);
 
     let content;
     try {
         content = await getPDFResult(id);
     } catch (error) {
-        return res.status(202).send({ id: id, message: "PDF not processed yet, please try again later using id" })
+        return res.status(202).send({ id: id, message: "PDF not processed yet, please try again later using id" });
     }
     const questions = parseQuestions(content, Number(choices));
-    const uploadedQuestions = await uploadQuestions(courseId, examId, questions)
-    return res.status(200).send({ id: id, questions: uploadedQuestions })
-}
+    const uploadedQuestions = await uploadQuestions(courseId, examId, questions);
+    return res.status(200).send({ id: id, questions: uploadedQuestions });
+};
 
 const parseFromLink = async (req: Request, res: Response) => {
-    const { examId, link, choices } = req.body
+    const { examId, link, choices } = req.body;
 
-    const courseId = await checkExistingQuestions(examId)
+    const courseId = await checkExistingQuestions(examId);
     if (!link) {
         throw new Error("No link provided");
     }
@@ -91,19 +91,19 @@ const parseFromLink = async (req: Request, res: Response) => {
     const file = await axios.get(link, {
         responseType: 'arraybuffer',
         maxContentLength: 5 * 1024 * 1024,
-    })
+    });
 
     const contentType = file.headers["content-type"];
 
     if (contentType !== "application/pdf") {
-        throw new APIError("Link must be pdf", 415)
+        throw new APIError("Link must be pdf", 415);
     }
 
     const headers = {
         'app_id': process.env.MATHPIX_ID,
         'app_key': process.env.MATHPIX_KEY,
         'Content-Type': 'application/json'
-    }
+    };
     const pdf = await axios.post("https://api.mathpix.com/v3/pdf", {
         url: link,
         conversion_formats: {
@@ -116,21 +116,21 @@ const parseFromLink = async (req: Request, res: Response) => {
         math_inline_delimiters: ["\$", "\$"],
     }, {
         headers: headers
-    })
-    const id = pdf.data.pdf_id
+    });
+    const id = pdf.data.pdf_id;
 
-    await savePDFtoExam(examId, file.data, contentType, id)
+    await savePDFtoExam(examId, file.data, contentType, id);
 
     let content;
     try {
         content = await getPDFResult(id);
     } catch (error) {
-        return res.status(202).send({ id: id, message: "PDF not processed yet, please try again later using id" })
+        return res.status(202).send({ id: id, message: "PDF not processed yet, please try again later using id" });
     }
     const questions = parseQuestions(content, choices);
-    const uploadedQuestions = await uploadQuestions(courseId, examId, questions)
-    return res.status(200).send({ id: id, questions: uploadedQuestions })
-}
+    const uploadedQuestions = await uploadQuestions(courseId, examId, questions);
+    return res.status(200).send({ id: id, questions: uploadedQuestions });
+};
 
 // SAMPLE IDS TO USE FOR TESTING (ALREADY PROCESSED)
 //2023_06_28_75fdd6edc01be3a36ec9g
@@ -148,33 +148,33 @@ const parseFromLink = async (req: Request, res: Response) => {
 //2023_06_25_d25c2986903bb495d7edg
 
 const getIdResults = async (req: Request, res: Response) => {
-    const { examId, pdfId, choices } = req.body
+    const { examId, pdfId, choices } = req.body;
 
-    const courseId = await checkExistingQuestions(examId)
+    const courseId = await checkExistingQuestions(examId);
     let content;
     try {
         content = await getPDFResult(pdfId);
     } catch (error) {
-        return res.status(202).send({ id: pdfId, message: "PDF not processed yet, please try again later using id" })
+        return res.status(202).send({ id: pdfId, message: "PDF not processed yet, please try again later using id" });
     }
     const questions = parseQuestions(content, choices);
-    const uploadedQuestions = await uploadQuestions(courseId, examId, questions)
-    res.status(200).send({ id: pdfId, questions: uploadedQuestions })
-}
+    const uploadedQuestions = await uploadQuestions(courseId, examId, questions);
+    res.status(200).send({ id: pdfId, questions: uploadedQuestions });
+};
 
 const attachPDFToExam = async (req: Request, res: Response) => {
-    const { examId } = req.params
+    const { examId } = req.params;
 
     if (!req.file) {
-        throw new Error("No file attached")
+        throw new Error("No file attached");
     }
-    const exam = await savePDFtoExam(examId, req.file.buffer, req.file.mimetype)
-    res.status(200).send(exam)
-}
+    const exam = await savePDFtoExam(examId, req.file.buffer, req.file.mimetype);
+    res.status(200).send(exam);
+};
 
 export {
     parseFromFile,
     parseFromLink,
     getIdResults,
     attachPDFToExam
-}
+};

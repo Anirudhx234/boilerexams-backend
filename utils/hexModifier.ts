@@ -2,11 +2,11 @@ import { APIError } from "../middleware/errors/index.js";
 
 const hexModifier = (color: string, decimal: number): string => {
     if (color === "") {
-        return ""
+        return "";
     }
     const validHexRegex = /^#[0-9A-F]{6}$/i;
     if (!validHexRegex.test(color)) {
-        throw new APIError("Invalid color", 400)
+        throw new APIError("Invalid color", 400);
     }
 
     let r = parseInt(color.substring(1, 3), 16);
@@ -26,6 +26,6 @@ const hexModifier = (color: string, decimal: number): string => {
     const bb = ((b.toString(16).length === 1)? `0${b.toString(16)}` : b.toString(16));
 
     return `#${rr}${gg}${bb}`;
-}
+};
 
-export default hexModifier
+export default hexModifier;

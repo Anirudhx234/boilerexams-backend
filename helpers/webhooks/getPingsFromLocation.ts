@@ -23,6 +23,6 @@ const getPingsFromLocation = (location: string) => {
         case "other": return Ping.Frontend;
         default: return Ping.Frontend;
     }
-}
+};
 
-export default getPingsFromLocation
+export default getPingsFromLocation;

@@ -1,5 +1,5 @@
 const msToDate = (milliseconds: number) => {
-    return new Date(milliseconds)
-}
+    return new Date(milliseconds);
+};
 
-export default msToDate
+export default msToDate;

@@ -16,10 +16,10 @@ const getCourse = async (req: Request, res: Response) => {
 				}
 			},
 		},
-	})
+	});
 
 	if (!course) {
-		throw new NotFoundError("Course not found")
+		throw new NotFoundError("Course not found");
 	}
 	return res.status(200).send(course);
 };
@@ -33,9 +33,9 @@ const getCourseTopics = async (req: Request, res: Response) => {
 		select: {
 			topics: true,
 		},
-	})
+	});
 	if (!course) {
-		throw new NotFoundError("Course not found")
+		throw new NotFoundError("Course not found");
 	}
 	return res.status(200).send(course.topics);
 };
@@ -53,10 +53,10 @@ const getCourseSemesters = async (req: Request, res: Response) => {
 				},
 			},
 		},
-	})
+	});
 
 	if (!course) {
-		throw new NotFoundError("Course not found")
+		throw new NotFoundError("Course not found");
 	}
 	return res.status(200).send(course.semesters);
 };
@@ -71,7 +71,7 @@ const getCourseSemesterExams = async (req: Request, res: Response) => {
 		orderBy: {
 			number: "asc",
 		},
-	})
+	});
 
 	return res.status(200).send(exams);
 };
@@ -112,10 +112,10 @@ const getExam = async (req: Request, res: Response) => {
 			},
 			semester: true,
 		},
-	})
+	});
 
 	if (!exam) {
-		throw new NotFoundError("Exam not found")
+		throw new NotFoundError("Exam not found");
 	}
 	return res.status(200).send(exam);
 };
@@ -133,10 +133,10 @@ const getExamQuestions = async (req: Request, res: Response) => {
 				},
 			},
 		},
-	})
+	});
 
 	if (!exam) {
-		throw new NotFoundError("Exam not found")
+		throw new NotFoundError("Exam not found");
 	}
 	return res.status(200).send(exam.questions);
 };
@@ -154,10 +154,10 @@ const getCourseTopicQuestions = async (req: Request, res: Response) => {
 				},
 			},
 		},
-	})
+	});
 
 	if (!topic) {
-		throw new NotFoundError("Topic not found")
+		throw new NotFoundError("Topic not found");
 	}
 	return res.status(200).send(topic.questions);
 };

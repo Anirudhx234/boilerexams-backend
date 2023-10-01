@@ -1,19 +1,19 @@
-import express from 'express'
+import express from 'express';
 import {
-    getCourses,
-    getAllTopics,
     getAllCourses,
+    getAllTopics,
     getCourse,
-    getCourseTopics,
-    getCourseTopicsWithBasicQuestionInfo,
+    getCourseExamWithBasicQuestionInfo,
+    getCourseExamWithFullQuestionInfo,
     getCourseExams,
     getCourseExamsWithBasicQuestionInfo,
     getCourseTopicWithFullQuestionInfo,
-    getCourseExamWithBasicQuestionInfo,
-    getCourseExamWithFullQuestionInfo
-} from '../controllers/display/nameController.js'
-import asyncWrapper from '../middleware/wrappers/asyncWrapper.js'
-import sendPublished from "../middleware/auth/sendPublished.js"
+    getCourseTopics,
+    getCourseTopicsWithBasicQuestionInfo,
+    getCourses
+} from '../controllers/display/nameController.js';
+import asyncWrapper from '../middleware/wrappers/asyncWrapper.js';
+import sendPublished from "../middleware/auth/sendPublished.js";
 import generalLimiter from '../middleware/rateLimiting/generalLimiter.js';
 // import cache from '../cache/caching';
 
@@ -41,15 +41,15 @@ app.get("/courses/:courseAbbrev/topics/questions", generalLimiter, sendPublished
 app.get("/courses/:courseAbbrev/exams", generalLimiter, sendPublished, asyncWrapper(getCourseExams));
 
 // All exams with question ids and numbers
-app.get("/courses/:courseAbbrev/exams/questions", generalLimiter, sendPublished, asyncWrapper(getCourseExamsWithBasicQuestionInfo))
+app.get("/courses/:courseAbbrev/exams/questions", generalLimiter, sendPublished, asyncWrapper(getCourseExamsWithBasicQuestionInfo));
 
 // Full question information for specific topic
 app.get("/courses/:courseAbbrev/topics/:topicName/questions", generalLimiter, sendPublished, asyncWrapper(getCourseTopicWithFullQuestionInfo));
 
 // All questions with id, number, and topics for an exam
-app.get("/courses/:courseAbbrev/exams/:season-:year-:examNumber", generalLimiter, sendPublished, asyncWrapper(getCourseExamWithBasicQuestionInfo))
+app.get("/courses/:courseAbbrev/exams/:season-:year-:examNumber", generalLimiter, sendPublished, asyncWrapper(getCourseExamWithBasicQuestionInfo));
 
 // All questions for a specific exam, includes topics within questions.
 app.get("/courses/:courseAbbrev/exams/:season-:year-:examNumber/questions", generalLimiter, sendPublished, asyncWrapper(getCourseExamWithFullQuestionInfo));
 
-export default app
+export default app;

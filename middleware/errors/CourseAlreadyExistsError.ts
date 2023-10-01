@@ -1,8 +1,8 @@
 export default class CourseAlreadyExistsError extends Error {
-    errorCode: number
+    errorCode: number;
 
     constructor(message) {
-        super(message)
-        this.errorCode = 400
+        super(message);
+        this.errorCode = 400;
     }
 }
