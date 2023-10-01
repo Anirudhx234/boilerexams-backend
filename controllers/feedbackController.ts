@@ -89,7 +89,7 @@ const createCourseRequest = async (req: Request, res: Response) => {
 };
 
 const createBugReport = async (req: Request, res: Response) => {
-    const { title, description, footer, location } = req.body
+    const { title, description, contact, footer, location } = req.body
     const user = req.user;
 
     const report = await prisma.report.create({
@@ -98,6 +98,7 @@ const createBugReport = async (req: Request, res: Response) => {
             title: title,
             status: "in-progress",
             content: description,
+            contact: contact,
             location: location,
             userAgent: footer,
             userId: user?.id
@@ -113,7 +114,7 @@ const createBugReport = async (req: Request, res: Response) => {
 
 const createQuestionBugReport = async (req: Request, res: Response) => {
     const { questionId } = req.params;
-    const { referer, description, footer } = req.body;
+    const { referer, description, contact, footer } = req.body;
 
     const question = await prisma.question.findUnique({
         where: {
@@ -150,6 +151,7 @@ const createQuestionBugReport = async (req: Request, res: Response) => {
             title: title,
             status: "in-progress",
             content: description,
+            contact: contact,
             url: referer,
             userAgent: footer,
             questionId: question?.id,
@@ -202,7 +204,7 @@ const createFeatureRequest = async (req: Request, res: Response) => {
     res.status(200).send(report);
 }
 
-const createFeedbackReport = async (req: Request, res: Response) => {
+const createVideoFeedbackReport = async (req: Request, res: Response) => {
     const { questionId } = req.params;
     const { explanationQuality, productionQuality, videoRecommendation, additionalFeedback } = req.body;
 
@@ -290,7 +292,7 @@ export {
     createBugReport,
     createQuestionBugReport,
     createFeatureRequest,
-    createFeedbackReport,
+    createVideoFeedbackReport,
     createReport,
     getReport,
     updateReport
