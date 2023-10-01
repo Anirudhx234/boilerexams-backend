@@ -5,22 +5,22 @@ const answerChoiceStats = async (questionId: string) => {
         where: {
             questionId: questionId
         }
-    })
+    });
 
     const totalAnswerChoices = await prisma.answerChoice.count({
         where: {
             questionId: questionId
         }
-    })
+    });
 
-    const answerStats: number[] = new Array(totalAnswerChoices).fill(0)
+    const answerStats: number[] = new Array(totalAnswerChoices).fill(0);
 
     submissions.forEach((submission) => {
         for (const index of submission.selectedChoiceIndices) {
-            answerStats[index] += 1
+            answerStats[index] += 1;
         }
-    })
-    return answerStats
-}
+    });
+    return answerStats;
+};
 
-export default answerChoiceStats
+export default answerChoiceStats;

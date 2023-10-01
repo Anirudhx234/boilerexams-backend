@@ -1,28 +1,28 @@
-import express from 'express'
+import express from 'express';
 import asyncWrapper from '../middleware/wrappers/asyncWrapper.js';
 import {
-    getGeneralStats,
     getCourseExamsStats,
-    getQuestionStats,
-    getExamStats,
     getCourseStats,
-    getSubmissionStats,
-    getCourseStatsAll
-} from '../controllers/statsController.js'
-const app = express()
+    getCourseStatsAll,
+    getExamStats,
+    getGeneralStats,
+    getQuestionStats,
+    getSubmissionStats
+} from '../controllers/statsController.js';
+const app = express();
 
-app.get("/", asyncWrapper(getGeneralStats))
+app.get("/", asyncWrapper(getGeneralStats));
 
-app.get("/courses/all", asyncWrapper(getCourseStatsAll))
+app.get("/courses/all", asyncWrapper(getCourseStatsAll));
 
-app.get("/courses/:courseId", asyncWrapper(getCourseStats))
+app.get("/courses/:courseId", asyncWrapper(getCourseStats));
 
-app.get("/courses/:courseId/exams/all", asyncWrapper(getCourseExamsStats))
+app.get("/courses/:courseId/exams/all", asyncWrapper(getCourseExamsStats));
 
-app.get("/exams/:examId", asyncWrapper(getExamStats))
+app.get("/exams/:examId", asyncWrapper(getExamStats));
 
-app.get("/questions/:questionId", asyncWrapper(getQuestionStats))
+app.get("/questions/:questionId", asyncWrapper(getQuestionStats));
 
-app.get("/submissions", asyncWrapper(getSubmissionStats))
+app.get("/submissions", asyncWrapper(getSubmissionStats));
 
-export default app
+export default app;

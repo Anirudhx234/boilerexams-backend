@@ -1,28 +1,28 @@
-import express from 'express'
+import express from 'express';
 import {
-    getAllUsers,
-    getUserMe,
-    getUser,
-    updateUserRole,
     assignUserCourses,
-    deleteUser
-} from "../controllers/userController.js"
-import asyncWrapper from "../middleware/wrappers/asyncWrapper.js"
+    deleteUser,
+    getAllUsers,
+    getUser,
+    getUserMe,
+    updateUserRole
+} from "../controllers/userController.js";
+import asyncWrapper from "../middleware/wrappers/asyncWrapper.js";
 import authHandler from '../middleware/auth/authHandler.js';
 import authTester from '../middleware/auth/authTester.js';
 
 const app = express();
 
-app.get("/all", authHandler, asyncWrapper(getAllUsers))
+app.get("/all", authHandler, asyncWrapper(getAllUsers));
 
-app.get("/me", authTester, asyncWrapper(getUserMe))
+app.get("/me", authTester, asyncWrapper(getUserMe));
 
-app.get("/:userId", authHandler, asyncWrapper(getUser))
+app.get("/:userId", authHandler, asyncWrapper(getUser));
 
-app.put("/:userId/updateRole", authHandler, asyncWrapper(updateUserRole))
+app.put("/:userId/updateRole", authHandler, asyncWrapper(updateUserRole));
 
-app.put("/:userId/assignCourses", authHandler, asyncWrapper(assignUserCourses))
+app.put("/:userId/assignCourses", authHandler, asyncWrapper(assignUserCourses));
 
-app.delete("/:userId", authHandler, asyncWrapper(deleteUser))
+app.delete("/:userId", authHandler, asyncWrapper(deleteUser));
 
-export default app
+export default app;

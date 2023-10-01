@@ -4,7 +4,7 @@ const msToHMS = (milliseconds: number | null) => {
             hours: 0,
             minutes: 0,
             seconds: 0
-        }
+        };
     }
     const hours = Math.floor(milliseconds / (1000 * 60 * 60));
     const minutes = Math.floor((milliseconds % (1000 * 60 * 60)) / (1000 * 60));
@@ -14,7 +14,7 @@ const msToHMS = (milliseconds: number | null) => {
         hours: hours,
         minutes: minutes,
         seconds: seconds
-    }
-}
+    };
+};
 
-export default msToHMS
+export default msToHMS;

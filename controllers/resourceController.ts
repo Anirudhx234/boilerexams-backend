@@ -1,12 +1,12 @@
 import prisma from "../libs/prisma.js";
-import { ResourceType, Language } from '@prisma/client'
-import { Request, Response } from 'express'
+import { Language, ResourceType } from '@prisma/client';
+import { Request, Response } from 'express';
 import axios from 'axios';
 import { APIError } from '../middleware/errors/index.js';
 import uploadFileToS3 from '../utils/uploadFileToS3.js';
 
 const getResource = async (req: Request, res: Response) => {
-    const { resourceId } = req.params
+    const { resourceId } = req.params;
     const resource = await prisma.resource.findUnique({
         where: {
             id: resourceId
@@ -15,12 +15,12 @@ const getResource = async (req: Request, res: Response) => {
             image: true,
             code: true
         }
-    })
-    res.status(200).send(resource)
-}
+    });
+    res.status(200).send(resource);
+};
 
 const createImageResource = async (req: Request, res: Response) => {
-    const { altText } = req.body
+    const { altText } = req.body;
 
     if (!req.file) {
         throw new APIError("No file attached", 400);
@@ -42,22 +42,22 @@ const createImageResource = async (req: Request, res: Response) => {
         include: {
             image: true
         }
-    })
-    res.status(200).send(resource)
-}
+    });
+    res.status(200).send(resource);
+};
 
 const createImageResourceFromLink = async (req: Request, res: Response) => {
-    const { link, altText } = req.body
+    const { link, altText } = req.body;
 
     const image = await axios.get(link, {
         responseType: 'arraybuffer',
         maxContentLength: 1000 * 1024
-    })
+    });
 
-    const contentType = image.headers['content-type']
+    const contentType = image.headers['content-type'];
 
     if (contentType !== "image/png" && contentType !== "image/jpeg") {
-        throw new APIError("Image upload failed, link must be JPEG or PNG", 415)
+        throw new APIError("Image upload failed, link must be JPEG or PNG", 415);
     }
 
     const data = await uploadFileToS3(image.data, contentType);
@@ -76,12 +76,12 @@ const createImageResourceFromLink = async (req: Request, res: Response) => {
         include: {
             image: true
         }
-    })
-    res.status(200).send(resource)
-}
+    });
+    res.status(200).send(resource);
+};
 
 const createCodeResource = async (req: Request, res: Response) => {
-    const { language, code } = req.body
+    const { language, code } = req.body;
     const resource = await prisma.resource.create({
         data: {
             type: ResourceType.CODE,
@@ -95,13 +95,13 @@ const createCodeResource = async (req: Request, res: Response) => {
         include: {
             code: true
         }
-    })
-    res.status(200).send(resource)
-}
+    });
+    res.status(200).send(resource);
+};
 
 const updateCodeResource = async (req: Request, res: Response) => {
-    const { resourceId } = req.params
-    const { language, code } = req.body
+    const { resourceId } = req.params;
+    const { language, code } = req.body;
     const resource = await prisma.resource.update({
         where: {
             id: resourceId
@@ -117,9 +117,9 @@ const updateCodeResource = async (req: Request, res: Response) => {
         include: {
             code: true
         }
-    })
-    res.status(200).send(resource)
-}
+    });
+    res.status(200).send(resource);
+};
 
 const deleteResource = async (req: Request, res: Response) => {
     const { resourceId } = req.params;
@@ -127,9 +127,9 @@ const deleteResource = async (req: Request, res: Response) => {
         where: {
             id: resourceId
         }
-    })
-    res.status(200).send(resource)
-}
+    });
+    res.status(200).send(resource);
+};
 
 export {
     getResource,
@@ -138,4 +138,4 @@ export {
     createCodeResource,
     updateCodeResource,
     deleteResource
-}
+};

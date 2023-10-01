@@ -3,7 +3,7 @@ import { InvalidSeasonError, NotFoundError } from "../../middleware/errors/index
 import { Season } from '@prisma/client';
 import { Request, Response } from "express";
 import _ from 'lodash';
-import validCourseRegex from '../../utils/validCourseRegex.js'
+import validCourseRegex from '../../utils/validCourseRegex.js';
 import answerChoiceStats from "../../helpers/stats/answerChoiceStats.js";
 
 const questionSort: any = [
@@ -29,7 +29,7 @@ const questionSort: any = [
     {
         number: 'asc'
     }
-]
+];
 
 // All courses metadata, with no relations
 const getCourses = async (req: Request, res: Response) => {
@@ -45,27 +45,27 @@ const getCourses = async (req: Request, res: Response) => {
                 number: 'asc'
             }
         ]
-    })
+    });
 
     if (!courses.length) {
-        throw new NotFoundError("No courses found")
+        throw new NotFoundError("No courses found");
     }
-    courses = _.groupBy(courses, 'subject')
+    courses = _.groupBy(courses, 'subject');
     let result: { subject: string, courses: Array<string> }[] = [];
     _.forEach(courses, function (value, key) {
-        result.push({ subject: key, courses: value })
+        result.push({ subject: key, courses: value });
     });
-    result = _.orderBy(result, 'courses', 'desc')
-    res.status(200).send(result)
+    result = _.orderBy(result, 'courses', 'desc');
+    res.status(200).send(result);
 };
 
 // All topics metadata, no relations
 const getAllTopics = async (req: Request, res: Response) => {
-    const topics = await prisma.topic.findMany()
+    const topics = await prisma.topic.findMany();
     if (!topics.length) {
-        throw new NotFoundError("No topics found")
+        throw new NotFoundError("No topics found");
     }
-    res.status(200).send(topics)
+    res.status(200).send(topics);
 };
 
 // All courses with relations
@@ -114,16 +114,16 @@ const getAllCourses = async (req: Request, res: Response) => {
             },
             users: true
         }
-    })
+    });
     if (!courses) {
-        throw new NotFoundError("Courses not found")
+        throw new NotFoundError("Courses not found");
     }
     res.status(200).send(courses);
 };
 
 // Metadata for specific course, no relations
 const getCourse = async (req: Request, res: Response) => {
-    const { courseAbbrev } = req.params
+    const { courseAbbrev } = req.params;
     const { abbreviation, number } = validCourseRegex(courseAbbrev);
 
     const course = await prisma.course.findFirst({
@@ -132,11 +132,11 @@ const getCourse = async (req: Request, res: Response) => {
             number: Number(number),
             OR: req.published
         }
-    })
+    });
     if (!course) {
-        throw new NotFoundError("No course found")
+        throw new NotFoundError("No course found");
     }
-    res.status(200).send(course)
+    res.status(200).send(course);
 };
 
 // All topics for a specific course, no other relations
@@ -156,12 +156,12 @@ const getCourseTopics = async (req: Request, res: Response) => {
         orderBy: {
             name: 'asc'
         }
-    })
+    });
 
     if (!course) {
-        throw new NotFoundError("Course not found")
+        throw new NotFoundError("Course not found");
     }
-    res.status(200).send(course.topics)
+    res.status(200).send(course.topics);
 };
 
 // All questions with topics included for a specific topic in a course.
@@ -230,10 +230,10 @@ const getCourseTopicsWithBasicQuestionInfo = async (req: Request, res: Response)
                 orderBy: questionSort,
             },
         },
-    })
+    });
 
     if (!course) {
-        throw new NotFoundError("Course not found")
+        throw new NotFoundError("Course not found");
     }
     res.status(200).send(course);
 };
@@ -259,12 +259,12 @@ const getCourseExams = async (req: Request, res: Response) => {
                 }
             }
         }
-    })
+    });
 
     if (!course) {
-        throw new NotFoundError("Course not found")
+        throw new NotFoundError("Course not found");
     }
-    const exams = course.exams
+    const exams = course.exams;
     const sortedExams = _.orderBy(exams, ["semester.year", "semester.season", (exam) => exam.number === 0 ? 10 : exam.number], ['desc', 'asc', 'asc']);
     res.status(200).send(sortedExams);
 };
@@ -302,12 +302,12 @@ const getCourseExamsWithBasicQuestionInfo = async (req: Request, res: Response) 
                 }
             },
         },
-    })
+    });
 
     if (!course) {
-        throw new NotFoundError("Course not found")
+        throw new NotFoundError("Course not found");
     }
-    const exams = course.exams
+    const exams = course.exams;
     const sortedExams = _.orderBy(exams, ["semester.year", "semester.season", (exam) => exam.number === 0 ? 10 : exam.number], ['desc', 'asc', 'asc']);
     res.status(200).send(sortedExams);
 };
@@ -361,22 +361,22 @@ const getCourseTopicWithFullQuestionInfo = async (req: Request, res: Response) =
                 orderBy: questionSort
             }
         }
-    })
+    });
     if (!topic) {
-        throw new NotFoundError("Topic not found")
+        throw new NotFoundError("Topic not found");
     }
 
-    const promises: Promise<any>[] = []
+    const promises: Promise<any>[] = [];
 
     for (const question of topic.questions) {
-        promises.push(answerChoiceStats(question.id))
+        promises.push(answerChoiceStats(question.id));
     }
 
-    const resolved = await Promise.all(promises)
+    const resolved = await Promise.all(promises);
     for (let i = 0; i < resolved.length; i++) {
         // @ts-ignore
         // Extend later
-        topic.questions[i].answerChoiceStats = resolved[i]
+        topic.questions[i].answerChoiceStats = resolved[i];
     }
 
     res.status(200).send(topic);
@@ -386,7 +386,7 @@ const getCourseTopicWithFullQuestionInfo = async (req: Request, res: Response) =
 const getCourseExamWithBasicQuestionInfo = async (req: Request, res: Response) => {
     const { courseAbbrev, season, year, examNumber } = req.params;
     const { abbreviation, number } = validCourseRegex(courseAbbrev);
-    const season_type = Season[season.toUpperCase() as keyof typeof Season]
+    const season_type = Season[season.toUpperCase() as keyof typeof Season];
 
     if (!season_type) {
         throw new InvalidSeasonError("Invalid season");
@@ -406,13 +406,13 @@ const getCourseExamWithBasicQuestionInfo = async (req: Request, res: Response) =
                 },
             }
         }
-    })
+    });
 
     if (!course) {
-        throw new NotFoundError("Course not found")
+        throw new NotFoundError("Course not found");
     }
     if (!course.semesters.length) {
-        throw new NotFoundError("Semester not found")
+        throw new NotFoundError("Semester not found");
     }
 
     const exam = await prisma.exam.findFirst({
@@ -437,19 +437,19 @@ const getCourseExamWithBasicQuestionInfo = async (req: Request, res: Response) =
                 }
             }
         }
-    })
+    });
 
     if (!exam) {
-        throw new NotFoundError("Exam not found")
+        throw new NotFoundError("Exam not found");
     }
-    res.status(200).send(exam)
+    res.status(200).send(exam);
 };
 
 // All questions for a specific exam, includes topics within questions.
 const getCourseExamWithFullQuestionInfo = async (req: Request, res: Response) => {
-    const { courseAbbrev, season, year, examNumber } = req.params
+    const { courseAbbrev, season, year, examNumber } = req.params;
     const { abbreviation, number } = validCourseRegex(courseAbbrev);
-    const season_type = Season[season.toUpperCase() as keyof typeof Season]
+    const season_type = Season[season.toUpperCase() as keyof typeof Season];
 
     if (!season_type) {
         throw new InvalidSeasonError("Invalid season");
@@ -462,7 +462,7 @@ const getCourseExamWithFullQuestionInfo = async (req: Request, res: Response) =>
                 year: Number(year)
             }
         }
-    })
+    });
     if (!semester) {
         throw new NotFoundError("Semester not found");
     }
@@ -473,7 +473,7 @@ const getCourseExamWithFullQuestionInfo = async (req: Request, res: Response) =>
             number: Number(number),
             OR: req.published
         }
-    })
+    });
     if (!course) {
         throw new NotFoundError("Course not found");
     }
@@ -517,25 +517,25 @@ const getCourseExamWithFullQuestionInfo = async (req: Request, res: Response) =>
                 }
             }
         }
-    })
+    });
     if (!exam) {
-        throw new NotFoundError("Exam not found")
+        throw new NotFoundError("Exam not found");
     }
 
-    const promises: Promise<any>[] = []
+    const promises: Promise<any>[] = [];
 
     for (const question of exam.questions) {
-        promises.push(answerChoiceStats(question.id))
+        promises.push(answerChoiceStats(question.id));
     }
 
-    const resolved = await Promise.all(promises)
+    const resolved = await Promise.all(promises);
     for (let i = 0; i < resolved.length; i++) {
         // @ts-ignore
         // Extend later
-        exam.questions[i].answerChoiceStats = resolved[i]
+        exam.questions[i].answerChoiceStats = resolved[i];
     }
 
-    res.status(200).send(exam)
+    res.status(200).send(exam);
 };
 
 export {
@@ -550,4 +550,4 @@ export {
     getCourseTopicWithFullQuestionInfo,
     getCourseExamWithBasicQuestionInfo,
     getCourseExamWithFullQuestionInfo
-}
+};

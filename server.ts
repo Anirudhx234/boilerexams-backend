@@ -27,9 +27,9 @@ const allowList = ["https://boilerexams-frontend.vercel.app", "https://boilerexa
 const corsOptions = {
   origin: (origin: any, cb: any) => {
     if (allowList.includes(origin) || !origin || vercelRegexp.test(origin) || prodRegexp.test(origin)) {
-      cb(null, true)
+      cb(null, true);
     } else {
-      cb(new APIError('Not allowed by CORS', 403))
+      cb(new APIError('Not allowed by CORS', 403));
     }
   },
   credentials: true,
@@ -53,23 +53,23 @@ const sessionOptions = {
   saveUninitialized: false,
   cookie: { httpOnly: true, sameSite: "strict", secure: false, maxAge: 7 * 24 * 60 * 60 * 1000 },
   name: 'sessionId'
-}
+};
 
 if (process.env.NODE_ENV === "production") {
   app.set('trust proxy', 1);
-  sessionOptions.cookie.secure = true
+  sessionOptions.cookie.secure = true;
 }
 
 //@ts-ignore
-app.use(session(sessionOptions))
-app.use(passport.initialize())
-app.use(passport.session())
+app.use(session(sessionOptions));
+app.use(passport.initialize());
+app.use(passport.session());
 
 app.get("/", (req: Request, res: Response) => {
-  res.send("Working")
+  res.send("Working");
 });
 
-app.use(routes)
+app.use(routes);
 
 app.use(errorHandler);
 
@@ -78,4 +78,4 @@ app.listen(PORT, () => {
   console.log(`Server is running at port ${PORT}`);
 });
 
-export default app
+export default app;

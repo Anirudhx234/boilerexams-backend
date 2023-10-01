@@ -13,7 +13,7 @@ const savePDFtoExam = async (examId: string, buffer: Buffer, contentType: string
             pdfKey: data.Key,
             pdfLink: data.Location
         }
-    })
-}
+    });
+};
 
-export default savePDFtoExam
+export default savePDFtoExam;

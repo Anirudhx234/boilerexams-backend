@@ -1,15 +1,15 @@
 import multer from 'multer';
 import { APIError } from '../errors/index.js';
 
-const storage = multer.memoryStorage()
+const storage = multer.memoryStorage();
 
 const fileFilter = (req, file, cb) => {
     if (file.mimetype === 'application/pdf') {
-        cb(null, true)
+        cb(null, true);
     } else {
-        cb(new APIError('File type must be PDF', 415))
+        cb(new APIError('File type must be PDF', 415));
     }
-}
+};
 
 const upload = multer({
     storage: storage,
@@ -19,4 +19,4 @@ const upload = multer({
     }
 });
 
-export default upload
+export default upload;

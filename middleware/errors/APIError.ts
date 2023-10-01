@@ -1,8 +1,8 @@
 export default class APIError extends Error {
-    errorCode: number
+    errorCode: number;
 
     constructor(message: string, errorCode: number) {
-        super(message)
-        this.errorCode = errorCode
+        super(message);
+        this.errorCode = errorCode;
     }
 }

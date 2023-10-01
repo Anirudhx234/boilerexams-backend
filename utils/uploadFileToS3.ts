@@ -9,7 +9,7 @@ const s3 = new S3({
         secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY ?? ""
     },
     region: 'us-east-2'
-})
+});
 
 const uploadFileToS3 = async (buffer: Buffer, contentType: string) => {
     if (!buffer) {
@@ -27,14 +27,14 @@ const uploadFileToS3 = async (buffer: Buffer, contentType: string) => {
     await new Upload({
         client: s3,
         params
-    }).done()
+    }).done();
 
     const data = {
         Location: `https://${params.Bucket}.s3.us-east-2.amazonaws.com/${params.Key}`,
         Key: params.Key
-    }
+    };
 
-    return data
-}
+    return data;
+};
 
-export default uploadFileToS3
+export default uploadFileToS3;

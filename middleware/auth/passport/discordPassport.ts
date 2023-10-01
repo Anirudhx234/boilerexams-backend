@@ -1,10 +1,10 @@
 import prisma from "../../../libs/prisma.js";
-import { AccountType, User } from '@prisma/client'
-import { Strategy } from 'passport-discord'
+import { AccountType, User } from '@prisma/client';
+import { Strategy } from 'passport-discord';
 
 const discordPassport = (passport) => {
     passport.serializeUser((user: User, done: any) => {
-        done(null, user.id)
+        done(null, user.id);
     });
 
     passport.deserializeUser(async (id: string, done: any) => {
@@ -13,13 +13,13 @@ const discordPassport = (passport) => {
                 where: {
                     id: id
                 }
-            })
+            });
             if (!user) {
-                throw new Error("User not found")
+                throw new Error("User not found");
             }
-            done(null, user)
+            done(null, user);
         } catch (error) {
-            done(error, null)
+            done(error, null);
         }
     });
 
@@ -36,14 +36,14 @@ const discordPassport = (passport) => {
                         accountType: AccountType.DISCORD,
                         accountId: profile.id
                     }
-                })
+                });
 
                 let profilePicture: string;
                 if (profile.avatar) {
-                    profilePicture = `https://cdn.discordapp.com/avatars/${profile.id}/${profile.avatar}`
+                    profilePicture = `https://cdn.discordapp.com/avatars/${profile.id}/${profile.avatar}`;
                 }
                 else {
-                    profilePicture = "https://upload.wikimedia.org/wikipedia/commons/2/2c/Default_pfp.svg"
+                    profilePicture = "https://upload.wikimedia.org/wikipedia/commons/2/2c/Default_pfp.svg";
                 }
 
                 if (!user) {
@@ -55,8 +55,8 @@ const discordPassport = (passport) => {
                             accountType: AccountType.DISCORD,
                             accountId: profile.id
                         }
-                    })
-                    done(null, newUser)
+                    });
+                    done(null, newUser);
                 }
                 else {
                     await prisma.user.updateMany({
@@ -69,14 +69,14 @@ const discordPassport = (passport) => {
                             email: profile.email,
                             profilePicture: profilePicture
                         }
-                    })
-                    done(null, user)
+                    });
+                    done(null, user);
                 }
             } catch (error) {
-                done(error, null)
+                done(error, null);
             }
         })
-    )
-}
+    );
+};
 
 export default discordPassport;

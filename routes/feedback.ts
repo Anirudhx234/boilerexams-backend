@@ -3,13 +3,13 @@ import {
     createBugReport,
     createCourseRequest,
     createFeatureRequest,
-    createVideoFeedbackReport,
     createQuestionBugReport,
     createReport,
+    createVideoFeedbackReport,
     getReport,
     updateReport,
 } from "../controllers/feedbackController.js";
-import asyncWrapper from "../middleware/wrappers/asyncWrapper.js"
+import asyncWrapper from "../middleware/wrappers/asyncWrapper.js";
 import express from 'express';
 import upload from "../middleware/multer/pdf.js";
 

@@ -1,10 +1,10 @@
-import express from 'express'
-import { Request, Response, NextFunction } from "express"
-import passport from 'passport'
-import { URL } from 'url'
-import authTester from './authTester.js'
+import express from 'express';
+import { NextFunction, Request, Response } from "express";
+import passport from 'passport';
+import { URL } from 'url';
+import authTester from './authTester.js';
 
-const app = express()
+const app = express();
 
 const redirectUrl = (req: Request) => {
     const urlString = req.headers.referer;
@@ -14,36 +14,36 @@ const redirectUrl = (req: Request) => {
         baseUrl = `${parsedUrl.protocol}//${parsedUrl.host}`;
     }
     else {
-        baseUrl = "/"
+        baseUrl = "/";
     }
 
-    return Buffer.from(JSON.stringify({ redirect: baseUrl })).toString('base64')
-}
+    return Buffer.from(JSON.stringify({ redirect: baseUrl })).toString('base64');
+};
 
 const redirect = (req: Request, res: Response) => {
     try {
-        const { state } = req.query
+        const { state } = req.query;
         //@ts-ignore
-        const { redirect } = JSON.parse(Buffer.from(state, 'base64').toString())
-        return res.redirect(redirect)
+        const { redirect } = JSON.parse(Buffer.from(state, 'base64').toString());
+        return res.redirect(redirect);
     } catch {
-        return res.redirect("https://boilerexams-frontend.vercel.app/")
+        return res.redirect("https://boilerexams-frontend.vercel.app/");
     }
-}
+};
 
 app.get('/discord/login', (req: Request, res: Response, next: NextFunction) => {
-    const state = redirectUrl(req)
-    const authenticator = passport.authenticate('discord', { state })
-    authenticator(req, res, next)
-})
+    const state = redirectUrl(req);
+    const authenticator = passport.authenticate('discord', { state });
+    authenticator(req, res, next);
+});
 
-app.get('/discord/redirect', passport.authenticate('discord'), redirect)
+app.get('/discord/redirect', passport.authenticate('discord'), redirect);
 
 app.get("/google/login", (req: Request, res: Response, next: NextFunction) => {
-    const state = redirectUrl(req)
-    const authenticator = passport.authenticate('google', { state })
-    authenticator(req, res, next)
-})
+    const state = redirectUrl(req);
+    const authenticator = passport.authenticate('google', { state });
+    authenticator(req, res, next);
+});
 
 app.get("/google/redirect", passport.authenticate('google'), redirect);
 
@@ -52,16 +52,16 @@ app.get('/logout', authTester, (req: Request, res: Response, next: NextFunction)
     //@ts-ignore
     req.logOut(error => {
         if (error) {
-            next(error)
+            next(error);
         }
-        const url = redirectUrl(req)
-        const { redirect } = JSON.parse(Buffer.from(url, 'base64').toString())
-        return res.json({ redirectUrl: redirect })
-    })
-})
+        const url = redirectUrl(req);
+        const { redirect } = JSON.parse(Buffer.from(url, 'base64').toString());
+        return res.json({ redirectUrl: redirect });
+    });
+});
 
 app.get("/test", authTester, (req: Request, res: Response) => {
-    return res.status(200).send("Successfully authenticated")
-})
+    return res.status(200).send("Successfully authenticated");
+});
 
-export default app
+export default app;

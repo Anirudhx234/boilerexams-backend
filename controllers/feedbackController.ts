@@ -18,7 +18,7 @@ const getReport = async (req: Request, res: Response) => {
     if (!report) throw new NotFoundError("Report Not Found");
 
     res.status(200).send(report);
-}
+};
 
 const createApplication = async (req: Request, res: Response) => {
     const { name, email, year, why } = req.body;
@@ -43,7 +43,7 @@ const createApplication = async (req: Request, res: Response) => {
 
     await DiscordAPI.createApplication(application);
     res.status(200).send(application);
-}
+};
 
 const createCourseRequest = async (req: Request, res: Response) => {
 
@@ -89,7 +89,7 @@ const createCourseRequest = async (req: Request, res: Response) => {
 };
 
 const createBugReport = async (req: Request, res: Response) => {
-    const { title, description, contact, footer, location } = req.body
+    const { title, description, contact, footer, location } = req.body;
     const user = req.user;
 
     const report = await prisma.report.create({
@@ -110,7 +110,7 @@ const createBugReport = async (req: Request, res: Response) => {
 
     await DiscordAPI.createReport(report);
     res.status(200).send("Success");
-}
+};
 
 const createQuestionBugReport = async (req: Request, res: Response) => {
     const { questionId } = req.params;
@@ -143,7 +143,7 @@ const createQuestionBugReport = async (req: Request, res: Response) => {
     const course = question.course;
     const exam = question.exam;
     const semester = exam.semester;
-    const title = `${course.abbreviation}${course.number} | ${semester.season} ${semester.year} | Exam ${exam.number} | Question ${question.number}`.replace("Exam 0", "Final Exam")
+    const title = `${course.abbreviation}${course.number} | ${semester.season} ${semester.year} | Exam ${exam.number} | Question ${question.number}`.replace("Exam 0", "Final Exam");
 
     const report = await prisma.report.create({
         data: {
@@ -181,7 +181,7 @@ const createQuestionBugReport = async (req: Request, res: Response) => {
 
     await DiscordAPI.createReport(report);
     res.status(200).send(report);
-}
+};
 
 const createFeatureRequest = async (req: Request, res: Response) => {
     const { title, description } = req.body;
@@ -202,7 +202,7 @@ const createFeatureRequest = async (req: Request, res: Response) => {
 
     await DiscordAPI.createReport(report);
     res.status(200).send(report);
-}
+};
 
 const createVideoFeedbackReport = async (req: Request, res: Response) => {
     const { questionId } = req.params;
@@ -264,14 +264,14 @@ const createVideoFeedbackReport = async (req: Request, res: Response) => {
 
     await DiscordAPI.createVideoFeedback(videoFeedback);
     res.status(200).send(feedback);
-}
+};
 
 const createReport = async (req: Request, res: Response) => {
     const report = await prisma.report.create({
         data: req.body
     });
     res.status(200).send(report);
-}
+};
 
 const updateReport = async (req: Request, res: Response) => {
     const reportId = req.params.reportId;
@@ -284,7 +284,7 @@ const updateReport = async (req: Request, res: Response) => {
     });
 
     res.status(200).send(report);
-}
+};
 
 export {
     createApplication,
