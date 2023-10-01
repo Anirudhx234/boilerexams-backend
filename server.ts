@@ -2,15 +2,17 @@ import express from 'express';
 import { Request, Response } from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
-import session from 'express-session'
-import connect from 'connect-pg-simple'
-import passport from 'passport'
-import routes from './routes/index.js'
+import session from 'express-session';
+import connect from 'connect-pg-simple';
+import dotenv from 'dotenv';
+import passport from 'passport';
+import routes from './routes/index.js';
 import errorHandler from './middleware/errorHandler.js';
 import { APIError } from './middleware/errors/index.js';
+import discordPassport from './middleware/auth/passport/discordPassport.js';
+import googlePassport from './middleware/auth/passport/googlePassport.js';
 
-import discordPassport from './middleware/auth/passport/discordPassport.js'
-import googlePassport from './middleware/auth/passport/googlePassport.js'
+dotenv.config();
 
 const app = express();
 
@@ -18,7 +20,7 @@ discordPassport(passport);
 googlePassport(passport);
 
 const vercelRegexp = new RegExp('https:\/\/boilerexams-frontend[^ ]*.vercel.app');
-const prodRegexp = new RegExp('https:\/\/[^ ]*.boilerexams.com')
+const prodRegexp = new RegExp('https:\/\/[^ ]*.boilerexams.com');
 
 const allowList = ["https://boilerexams-frontend.vercel.app", "https://boilerexams.com", "http://localhost:3000", "http://127.0.0.1:3000"];
 
