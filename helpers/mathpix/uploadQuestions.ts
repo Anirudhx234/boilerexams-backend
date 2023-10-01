@@ -70,7 +70,7 @@ const uploadQuestions = async (courseId: string, examId: string, questions: any[
 
 
 const uploadResources = (resources) => {
-    const resourceIds = [];
+    const resourceIds: string[] = [];
     resources.forEach(async (resource) => {
         const image = await axios.get(resource, {
             responseType: 'arraybuffer',
