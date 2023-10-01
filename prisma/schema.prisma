@@ -1,5 +1,6 @@
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
 }
 
 datasource db {
@@ -177,13 +178,13 @@ model VideoFeedback {
 }
 
 model Application {
-  id        String @id @default(uuid())
-  name      String
-  email     String
-  content   String
-  year      Year
-  pdfKey    String
-  pdfLink   String
+  id      String @id @default(uuid())
+  name    String
+  email   String
+  content String
+  year    Year
+  pdfKey  String
+  pdfLink String
 }
 
 model User {
