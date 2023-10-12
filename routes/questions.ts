@@ -1,5 +1,6 @@
 import express from 'express';
 import {
+    bulkQuestionSubmission,
     createQuestion,
     createQuestionSubmission,
     deleteQuestion,
@@ -25,6 +26,8 @@ app.put("/questions/:questionId/togglePublished", authHandler, asyncWrapper(togg
 app.delete("/courses/:courseId/exams/:examId/questions/:questionId", authHandler, asyncWrapper(deleteQuestion));
 
 app.post("/questions/:questionId/submit", generalLimiter, asyncWrapper(createQuestionSubmission));
+
+app.post("/questions/bulkSubmit", generalLimiter, asyncWrapper(bulkQuestionSubmission));
 
 app.put("/submissions/:submissionId", generalLimiter, asyncWrapper(updateSubmission));
 

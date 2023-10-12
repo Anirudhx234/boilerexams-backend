@@ -301,6 +301,46 @@ const createQuestionSubmission = async (req: Request, res: Response) => {
     res.status(200).send(submission);
 };
 
+const bulkQuestionSubmission = async (req: Request, res: Response) => {
+    const rawSubmissions = req.body;
+
+    const submissions = await prisma.$transaction(
+        rawSubmissions.map(({ 
+          questionId, selectedChoiceIndices, correct,
+          timeStarted, timeEnded, videoStartTime, videoEndTime,
+          videoTotalWatchTime, modalStartTime, modalEndTime, modalTotalTime, osFamily
+        }) => {
+            const startTime = msToDate(timeStarted);
+            const endTime = msToDate(timeEnded);
+            const videoStart = msToDate(videoStartTime);
+            const videoEnd = msToDate(videoEndTime);
+            const modalStart = msToDate(modalStartTime);
+            const modalEnd = msToDate(modalEndTime);
+            const timeSpent = (endTime.valueOf() - startTime.valueOf());
+            
+            return prisma.submission.create({
+                data: {
+                    questionId: questionId,
+                    correct: Boolean(correct),
+                    selectedChoiceIndices: selectedChoiceIndices,
+                    timeStarted: startTime,
+                    timeEnded: endTime,
+                    timeSpent: Math.floor(timeSpent),
+                    videoStartTime: videoStart,
+                    videoEndTime: videoEnd,
+                    timeSpentVideo: Math.floor(videoTotalWatchTime),
+                    modalStartTime: modalStart,
+                    modalEndTime: modalEnd,
+                    modalTotalTime: modalTotalTime,
+                    osFamily: osFamily
+                }
+            });
+        })
+    );
+
+    res.status(200).send(submissions);
+};
+
 const updateSubmission = async (req: Request, res: Response) => {
     const { submissionId } = req.params;
     const { videoStartTime,
@@ -335,5 +375,6 @@ export {
     toggleQuestionPublished,
     deleteQuestion,
     createQuestionSubmission,
+    bulkQuestionSubmission,
     updateSubmission
 };
