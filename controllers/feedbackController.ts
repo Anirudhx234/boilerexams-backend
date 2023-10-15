@@ -30,6 +30,7 @@ const getVideoFeedbackByCourse = async (req: Request, res: Response) => {
         include: {
             questions: {
                 include: {
+                    exam: true,
                     videoFeedback: true
                 }
             }
@@ -38,9 +39,13 @@ const getVideoFeedbackByCourse = async (req: Request, res: Response) => {
 
     if (!course) throw new NotFoundError("Course Not Found");
 
-    const feedback = course.questions.map(question => {
-        return question.videoFeedback;
-    }).flat();
+    const feedback = course.questions
+        .sort((a, b) => a.number - b.number)
+        .sort((a, b) => a.examId.localeCompare(b.examId))
+        .map(question => {
+            return question.videoFeedback;
+        })
+        .flat();
 
     res.status(200).send(feedback);
 };
@@ -63,9 +68,11 @@ const getVideoFeedbackByExam = async (req: Request, res: Response) => {
 
     if (!exam) throw new NotFoundError("Exam Not Found");
 
-    const feedback = exam.questions.map(question => {
-        return question.videoFeedback;
-    }).flat();
+    const feedback = exam.questions
+        .map(question => {
+            return question.videoFeedback;
+        })
+        .flat();
 
     res.status(200).send(feedback);
 };
