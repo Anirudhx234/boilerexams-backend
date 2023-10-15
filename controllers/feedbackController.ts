@@ -20,6 +20,56 @@ const getReport = async (req: Request, res: Response) => {
     res.status(200).send(report);
 };
 
+const getVideoFeedbackByCourse = async (req: Request, res: Response) => {
+    const { courseId } = req.params;
+
+    const course = await prisma.course.findUnique({
+        where: {
+            id: courseId
+        },
+        include: {
+            questions: {
+                include: {
+                    videoFeedback: true
+                }
+            }
+        }
+    });
+
+    if (!course) throw new NotFoundError("Course Not Found");
+
+    const feedback = course.questions.map(question => {
+        return question.videoFeedback;
+    }).flat();
+
+    res.status(200).send(feedback);
+};
+
+const getVideoFeedbackByExam = async (req: Request, res: Response) => {
+    const { examId } = req.params;
+
+    const exam = await prisma.exam.findUnique({
+        where: {
+            id: examId
+        },
+        include: {
+            questions: {
+                include: {
+                    videoFeedback: true
+                }
+            }
+        }
+    });
+
+    if (!exam) throw new NotFoundError("Exam Not Found");
+
+    const feedback = exam.questions.map(question => {
+        return question.videoFeedback;
+    }).flat();
+
+    res.status(200).send(feedback);
+};
+
 const createApplication = async (req: Request, res: Response) => {
     const { name, email, year, why } = req.body;
     const file = req.file;
@@ -286,6 +336,18 @@ const updateReport = async (req: Request, res: Response) => {
     res.status(200).send(report);
 };
 
+const deleteVideoFeedback = async (req: Request, res: Response) => {
+    const { reportId } = req.params;
+
+    const videoFeedback = await prisma.videoFeedback.delete({
+        where: {
+            id: reportId
+        }
+    });
+
+    res.status(200).send(videoFeedback);
+}
+
 export {
     createApplication,
     createCourseRequest,
@@ -294,6 +356,9 @@ export {
     createFeatureRequest,
     createVideoFeedbackReport,
     createReport,
+    deleteVideoFeedback,
     getReport,
+    getVideoFeedbackByCourse,
+    getVideoFeedbackByExam,
     updateReport
 };
