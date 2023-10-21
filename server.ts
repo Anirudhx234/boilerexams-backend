@@ -22,7 +22,7 @@ googlePassport(passport);
 const vercelRegexp = new RegExp('https:\/\/boilerexams-frontend[^ ]*.vercel.app');
 const prodRegexp = new RegExp('https:\/\/[^ ]*.boilerexams.com');
 
-const allowList = ["https://boilerexams-frontend.vercel.app", "https://boilerexams.com", "http://localhost:3000", "http://127.0.0.1:3000"];
+const allowList = ["https://boilerexams-frontend.vercel.app", "https://boilerexams.com", "http://localhost:3000", "https://localhost:3000", "http://127.0.0.1:3000"];
 
 const corsOptions = {
   origin: (origin: any, cb: any) => {
