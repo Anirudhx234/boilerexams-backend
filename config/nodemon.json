@@ -3,5 +3,8 @@
   "ext": "ts",
   "execMap": {
     "ts": "ts-node-esm"
+  },
+  "env": {
+    "NODE_ENV": "development"
   }
 }

@@ -353,7 +353,7 @@ const deleteVideoFeedback = async (req: Request, res: Response) => {
     });
 
     res.status(200).send(videoFeedback);
-}
+};
 
 export {
     createApplication,

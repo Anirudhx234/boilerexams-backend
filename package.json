@@ -10,9 +10,10 @@
     "reset": "dotenv -e .env npx prisma migrate reset",
     "seed": "node prisma/seed.ts",
     "build": "rimraf dist && tsc -p tsconfig.json",
-    "dev": "cross-env NODE_ENV=development nodemon --config config/nodemon.json server.ts",
+    "dev": "nodemon --config config/nodemon.json",
+    "dev:remote": "pm2 start config/ecosystem.config.cjs --only \"development\"",
     "start": "cross-env NODE_ENV=production ts-node-esm server.ts",
-    "prod": "cross-env NODE_ENV=production pm2 start config/ecosystem.config.cjs"
+    "prod": "pm2 start config/ecosystem.config.cjs --only \"production\""
   },
   "type": "module",
   "keywords": [],

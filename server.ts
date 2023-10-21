@@ -58,6 +58,10 @@ const sessionOptions = {
 if (process.env.NODE_ENV === "production") {
   app.set('trust proxy', 1);
   sessionOptions.cookie.secure = true;
+} else if (process.env.NODE_ENV === "remoteDevelopment") {
+  app.set('trust proxy', 1);
+  sessionOptions.cookie.secure = true;
+  sessionOptions.cookie.sameSite = "none";
 }
 
 //@ts-ignore
@@ -73,7 +77,15 @@ app.use(routes);
 
 app.use(errorHandler);
 
-const PORT = process.env.PORT || 8080;
+const getPORT = () => {
+  if (process.env.NODE_ENV === "production") {
+    return process.env.PORT || 8080;
+  } else {
+    return process.env.DEV_PORT || 8081;
+  }
+};
+const PORT = getPORT();
+
 app.listen(PORT, () => {
   console.log(`Server is running at port ${PORT}`);
 });
