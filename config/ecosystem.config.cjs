@@ -5,7 +5,8 @@ module.exports = {
       script: "./dist/server.js",
       watch: ["./dist"],
       env: {
-        NODE_ENV: "production"
+        NODE_ENV: "production",
+        REMOTE: "enabled"
       }
     },
     {
@@ -13,7 +14,8 @@ module.exports = {
       script: "./dist/server.js",
       watch: ["./dist"],
       env: {
-        NODE_ENV: "remoteDevelopment"
+        NODE_ENV: "development",
+        REMOTE: "enabled"
       }
     }
   ]

@@ -12,7 +12,7 @@ import { APIError } from './middleware/errors/index.js';
 import discordPassport from './middleware/auth/passport/discordPassport.js';
 import googlePassport from './middleware/auth/passport/googlePassport.js';
 
-dotenv.config();
+dotenv.config({ path: `./.env.${process.env.NODE_ENV}` });
 
 const app = express();
 
@@ -55,7 +55,7 @@ const sessionOptions = {
   name: 'sessionId'
 };
 
-if (process.env.NODE_ENV === "production" || process.env.NODE_ENV === "remoteDevelopment") {
+if (process.env.REMOTE === "enabled") {
   app.set('trust proxy', 1);
   sessionOptions.cookie.secure = true;
 }
