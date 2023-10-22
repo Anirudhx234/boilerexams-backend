@@ -58,6 +58,11 @@ const sessionOptions = {
 if (process.env.REMOTE === "enabled") {
   app.set('trust proxy', 1);
   sessionOptions.cookie.secure = true;
+} else {
+  sessionOptions.cookie.sameSite = 'strict';
+}
+if (process.env.NODE_ENV === "development") {
+  sessionOptions.name = "sessionIdDev";
 }
 
 //@ts-ignore
