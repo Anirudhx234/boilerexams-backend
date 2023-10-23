@@ -14,7 +14,7 @@ const uploadFileToS3 = async (buffer: Buffer, contentType: string) => {
             secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || ""
         },
         region: 'us-east-2'
-    }
+    };
 
     const s3 = new S3(config);
 

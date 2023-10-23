@@ -51,15 +51,16 @@ const sessionOptions = {
   secret: process.env.SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
-  cookie: { httpOnly: true, sameSite: "none", secure: false, maxAge: 7 * 24 * 60 * 60 * 1000 },
+  cookie: { httpOnly: true, sameSite: "strict", secure: false, maxAge: 7 * 24 * 60 * 60 * 1000 },
   name: 'sessionId'
 };
 
 if (process.env.REMOTE === "enabled") {
   app.set('trust proxy', 1);
   sessionOptions.cookie.secure = true;
-} else {
-  sessionOptions.cookie.sameSite = 'strict';
+  if (process.env.NODE_ENV === "development") {
+    sessionOptions.cookie.sameSite = "none";
+  }
 }
 if (process.env.NODE_ENV === "development") {
   sessionOptions.name = "sessionIdDev";
