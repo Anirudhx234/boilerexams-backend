@@ -9,8 +9,8 @@
     "moduleResolution": "node",
     "forceConsistentCasingInFileNames": true,
     "composite": true,
-    "module": "es6",
-    "target": "es6",
+    "module": "ES2022",
+    "target": "ES2022",
     "typeRoots": ["./types"]
   }
 }

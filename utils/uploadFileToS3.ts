@@ -3,21 +3,23 @@ import { APIError } from "../middleware/errors/index.js";
 import { Upload } from "@aws-sdk/lib-storage";
 import { S3 } from "@aws-sdk/client-s3";
 
-const s3 = new S3({
-    credentials: {
-        accessKeyId: process.env.AWS_ACCESS_KEY_ID ?? "",
-        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY ?? ""
-    },
-    region: 'us-east-2'
-});
-
 const uploadFileToS3 = async (buffer: Buffer, contentType: string) => {
     if (!buffer) {
         throw new APIError("No file attached", 400);
     }
 
+    const config = {
+        credentials: {
+            accessKeyId: process.env.AWS_ACCESS_KEY_ID || "",
+            secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || ""
+        },
+        region: 'us-east-2'
+    }
+
+    const s3 = new S3(config);
+
     const params = {
-        Bucket: process.env.AWS_BUCKET_NAME ?? "",
+        Bucket: process.env.AWS_BUCKET_NAME || "",
         Key: nanoid(),
         Body: buffer,
         ACL: "public-read-write",
