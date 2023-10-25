@@ -9,10 +9,10 @@ import {
     getQuestionStats,
     getSubmissionStats
 } from '../controllers/statsController.js';
-import cache from '../cache/caching.js'
+import cache from '../cache/caching.js';
 const app = express();
 
-app.get("/", asyncWrapper(getGeneralStats));
+app.get("/", cache(600), asyncWrapper(getGeneralStats));
 
 app.get("/courses/all", cache(600), asyncWrapper(getCourseStatsAll));
 
