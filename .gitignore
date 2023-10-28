@@ -1,10 +1,7 @@
 node_modules
 dist
 # Keep environment variables out of version control
-.env
-.env.development
-.env.production
-.gcloudignore
+.env*
 dev-account.pem
 
 # PhpStorm

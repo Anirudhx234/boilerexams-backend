@@ -4,7 +4,7 @@
   "description": "",
   "main": "server.ts",
   "scripts": {
-    "deploy": "cross-env NODE_ENV=production npx prisma migrate deploy",
+    "deploy": "npx prisma migrate deploy",
     "lint": "npx eslint .",
     "postinstall": "npx prisma generate",
     "reset": "dotenv -e .env npx prisma migrate reset",
