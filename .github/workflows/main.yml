@@ -16,18 +16,18 @@ jobs:
         node-version: [18.x]
 
     env:
-      DATABASE_URL: ${{ secrets.DATABASE_URL_DEV }}
-      DATABASE_URL_BOUNCER: ${{ secrets.DATABASE_URL_BOUNCER_DEV }}
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      DATABASE_URL_BOUNCER: ${{ secrets.DATABASE_URL_BOUNCER }}
 
     steps:
       - uses: actions/checkout@v3
 
       - run: npm ci
       - run: npm run deploy
-      - run:
-          echo "::set-env name=DATABASE_URL::${{ secrets.DATABASE_URL }}"
-          echo "::set-env name=DATABASE_URL_BOUNCER::${{ secrets.DATABASE_URL_BOUNCER }}"
-      - run: npm run deploy
+      # - run:
+      #     echo "::set-env name=DATABASE_URL::${{ secrets.DATABASE_URL_DEV }}"
+      #     echo "::set-env name=DATABASE_URL_BOUNCER::${{ secrets.DATABASE_URL_BOUNCER_DEV }}"
+      # - run: npm run deploy
       - run: npm run build
 
       - name: rsync deployments
