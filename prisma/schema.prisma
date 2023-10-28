@@ -10,20 +10,21 @@ datasource db {
 }
 
 model Course {
-  id              String     @id @default(uuid())
-  name            String     @unique
-  backgroundColor String     @default("")
-  secondaryColor  String     @default("")
-  graphicLink     String     @default("")
-  number          Int
-  published       Boolean    @default(false)
-  subject         String
+  id              String      @id @default(uuid())
+  name            String      @unique
   abbreviation    String
+  number          Int
+  subject         String
+  studyModes      StudyMode[]
+  backgroundColor String      @default("")
+  secondaryColor  String      @default("")
+  graphicLink     String      @default("")
+  published       Boolean     @default(false)
   exams           Exam[]
   questions       Question[]
-  semesters       Semester[] @relation("CourseToSemester")
-  topics          Topic[]    @relation("CourseToTopic")
-  users           User[]     @relation("CourseToUser")
+  semesters       Semester[]  @relation("CourseToSemester")
+  topics          Topic[]     @relation("CourseToTopic")
+  users           User[]      @relation("CourseToUser")
 
   @@unique([subject, number])
   @@unique([abbreviation, number])
@@ -241,6 +242,12 @@ enum Season {
   SPRING
   FALL
   SUMMER
+}
+
+enum StudyMode {
+  EXAM
+  TIMED_EXAM
+  TOPIC
 }
 
 enum Role {

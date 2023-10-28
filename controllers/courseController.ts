@@ -1,28 +1,47 @@
 import prisma from "../libs/prisma.js";
+import { StudyMode } from "@prisma/client";
 import { Request, Response } from 'express';
 import { NotFoundError } from "../middleware/errors/index.js";
 import { PurdueIoAPI } from "../services/purdue.io.js";
 import uploadFileToS3 from "../utils/uploadFileToS3.js";
 import hexModifier from "../utils/hexModifier.js";
 
-const createCourse = async (req: Request, res: Response) => {
-    const { abbreviation, number, backgroundColor, graphicLink, published } = req.body;
+const getCourseInfo = async (abbreviation: string, number: number) => {
+    const stringifiedNumber = String(number);
+    const courseNumber = stringifiedNumber + "0".repeat(5 - stringifiedNumber.length);
+    const purdueIoSubject = await PurdueIoAPI.getSubject(abbreviation.toUpperCase());
+    const purdueIoCourse = await PurdueIoAPI.getCourse(purdueIoSubject, courseNumber);
+    return { courseNumber, purdueIoCourse, purdueIoSubject }
+}
 
-    let graphic: string;
-    if (req.file) {
-        const data = await uploadFileToS3(req.file.buffer, req.file.mimetype);
+const getStudyModes = async (modes: string[]) => {
+    for (let i = 0; i < modes.length; i++) {
+        modes[i] = StudyMode[modes[i].toUpperCase() as keyof typeof StudyMode]
+    }
+}
+
+const uploadGraphic = async (file, graphicLink: string) => {
+    let graphic: string = "";
+    if (file) {
+        const data = await uploadFileToS3(file.buffer, file.mimetype);
         graphic = data.Location;
     }
     else {
         graphic = graphicLink;
     }
+    return graphic
+}
+
+const createCourse = async (req: Request, res: Response) => {
+    const { abbreviation, number, backgroundColor, graphicLink, studyModes } = req.body;
 
     const secondaryColor = hexModifier(backgroundColor, 1.4);
 
-    const stringifiedNumber = String(number);
-    const courseNumber = stringifiedNumber + "0".repeat(5 - stringifiedNumber.length);
-    const purdueIoSubject = await PurdueIoAPI.getSubject(abbreviation.toUpperCase());
-    const purdueIoCourse = await PurdueIoAPI.getCourse(purdueIoSubject, courseNumber);
+    getStudyModes(studyModes);
+
+    const { courseNumber, purdueIoCourse, purdueIoSubject } = await getCourseInfo(abbreviation, number);
+
+    let graphic = await uploadGraphic(req.file, graphicLink);
 
     const course = await prisma.course.create({
         data: {
@@ -33,7 +52,7 @@ const createCourse = async (req: Request, res: Response) => {
             backgroundColor: backgroundColor,
             secondaryColor: secondaryColor,
             graphicLink: graphic,
-            published: published
+            studyModes: studyModes
         },
         include: {
             exams: true,
@@ -47,23 +66,15 @@ const createCourse = async (req: Request, res: Response) => {
 
 const updateCourse = async (req: Request, res: Response) => {
     const { courseId } = req.params;
-    const { abbreviation, number, backgroundColor, graphicLink } = req.body;
-
-    let graphic: string;
-    if (req.file) {
-        const data = await uploadFileToS3(req.file.buffer, req.file.mimetype);
-        graphic = data.Location;
-    }
-    else {
-        graphic = graphicLink;
-    }
+    const { abbreviation, number, backgroundColor, graphicLink, studyModes } = req.body;
 
     const secondaryColor = hexModifier(backgroundColor, 1.4);
 
-    const stringifiedNumber = String(number);
-    const courseNumber = stringifiedNumber + "0".repeat(5 - stringifiedNumber.length);
-    const purdueIoSubject = await PurdueIoAPI.getSubject(abbreviation.toUpperCase());
-    const purdueIoCourse = await PurdueIoAPI.getCourse(purdueIoSubject, courseNumber);
+    getStudyModes(studyModes);
+
+    const { courseNumber, purdueIoCourse, purdueIoSubject } = await getCourseInfo(abbreviation, number);
+
+    let graphic = await uploadGraphic(req.file, graphicLink);
 
     const course = await prisma.course.update({
         where: {
@@ -77,6 +88,7 @@ const updateCourse = async (req: Request, res: Response) => {
             backgroundColor: backgroundColor,
             secondaryColor: secondaryColor,
             graphicLink: graphic,
+            studyModes: studyModes
         }
     });
     res.status(200).send(course);
