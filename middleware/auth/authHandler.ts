@@ -7,7 +7,7 @@ const authHandler = asyncWrapper(async (req: Request, res: Response, next: NextF
         //@ts-ignore
         req.session._garbage = Date();
         req.session.touch();
-        if (["ADMIN", "CONTENT"].includes(req.user.role)) {
+        if (["ADMIN", "CONTENT", "PROFESSOR"].includes(req.user.role)) {
             return next();
         }
     }
