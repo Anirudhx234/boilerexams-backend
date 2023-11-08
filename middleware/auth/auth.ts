@@ -23,7 +23,7 @@ const redirectUrl = (req: Request) => {
 const redirect = (req: Request, res: Response) => {
     try {
         const { state } = req.query;
-        //@ts-ignore
+        // @ts-expect-error state
         const { redirect } = JSON.parse(Buffer.from(state, 'base64').toString());
         return res.redirect(redirect);
     } catch {
@@ -49,7 +49,7 @@ app.get("/google/redirect", passport.authenticate('google'), redirect);
 
 app.get('/logout', authTester, (req: Request, res: Response, next: NextFunction) => {
     // Will extend req later
-    //@ts-ignore
+    // @ts-expect-error error typing
     req.logOut(error => {
         if (error) {
             next(error);
