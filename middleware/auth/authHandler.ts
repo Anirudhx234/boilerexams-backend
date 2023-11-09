@@ -8,7 +8,7 @@ const authHandler = asyncWrapper(async (req: Request, res: Response, next: NextF
         // @ts-expect-error _garbage is real
         req.session._garbage = Date();
         req.session.touch();
-        if (["ADMIN", "CONTENT", "PROFESSOR].includes(req.user.role) || isWhitelisted(req)) {
+        if (["ADMIN", "CONTENT", "PROFESSOR"].includes(req.user.role) || isWhitelisted(req)) {
             return next();
         }
     }
