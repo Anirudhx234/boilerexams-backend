@@ -23,12 +23,19 @@ const redirectUrl = (req: Request) => {
 const redirect = (req: Request, res: Response) => {
     try {
         const { state } = req.query;
-        //@ts-ignore
+        // @ts-expect-error state
         const { redirect } = JSON.parse(Buffer.from(state, 'base64').toString());
         return res.redirect(redirect);
     } catch {
         return res.redirect("https://boilerexams-frontend.vercel.app/");
     }
+};
+
+export const isWhitelisted = (req: Request) => {
+    if (!process.env.FEEDBACK_API_KEY) {
+        return false;
+    }
+    return req.headers.authorization === process.env.FEEDBACK_API_KEY;
 };
 
 app.get('/discord/login', (req: Request, res: Response, next: NextFunction) => {
@@ -49,7 +56,7 @@ app.get("/google/redirect", passport.authenticate('google'), redirect);
 
 app.get('/logout', authTester, (req: Request, res: Response, next: NextFunction) => {
     // Will extend req later
-    //@ts-ignore
+    // @ts-expect-error error typing
     req.logOut(error => {
         if (error) {
             next(error);

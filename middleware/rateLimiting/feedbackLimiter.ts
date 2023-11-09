@@ -1,14 +1,13 @@
 import { rateLimit } from 'express-rate-limit';
+import { isWhitelisted } from "../auth/auth.js";
 
 const feedbackLimiter = rateLimit({
     windowMs: 60 * 1000,
     max: 5,
     standardHeaders: 'draft-7',
     legacyHeaders: false,
-    skip: (req, res) => {
-        if (req.user) return true;
-        if (!process.env.FEEDBACK_API_KEY) return false;
-        return req.headers.authorization == process.env.FEEDBACK_API_KEY;
+    skip: (req) => {
+        return isWhitelisted(req);
     }
 });
 
