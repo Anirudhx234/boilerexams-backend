@@ -253,5 +253,6 @@ enum StudyMode {
 enum Role {
   USER
   CONTENT
+  PROFESSOR
   ADMIN
 }

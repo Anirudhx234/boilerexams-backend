@@ -71,7 +71,7 @@ const assignUserCourses = async (req: Request, res: Response) => {
     const { userId } = req.params;
     const { courseIds } = req.body;
 
-    const validRoles = [Role.CONTENT, Role.ADMIN];
+    const validRoles = [Role.CONTENT, Role.PROFESSOR, Role.ADMIN];
 
     const user = await prisma.user.findFirst({
         where: {
@@ -82,7 +82,7 @@ const assignUserCourses = async (req: Request, res: Response) => {
         }
     });
     if (!user) {
-        throw new APIError("User must have role CONTENT or ADMIN, or not found", 403);
+        throw new APIError("User must have role CONTENT or PROFESSOR or ADMIN, or not found", 403);
     }
 
     const resp = await prisma.user.update({
