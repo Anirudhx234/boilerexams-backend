@@ -32,8 +32,10 @@ const redirect = (req: Request, res: Response) => {
 };
 
 export const isWhitelisted = (req: Request) => {
-    if (!process.env.FEEDBACK_API_KEY) return false;
-    return req.headers.authorization == process.env.FEEDBACK_API_KEY;
+    if (!process.env.FEEDBACK_API_KEY) {
+        return false;
+    }
+    return req.headers.authorization === process.env.FEEDBACK_API_KEY;
 };
 
 app.get('/discord/login', (req: Request, res: Response, next: NextFunction) => {

@@ -11,17 +11,17 @@ const getCourseInfo = async (abbreviation: string, number: number) => {
     const courseNumber = stringifiedNumber + "0".repeat(5 - stringifiedNumber.length);
     const purdueIoSubject = await PurdueIoAPI.getSubject(abbreviation.toUpperCase());
     const purdueIoCourse = await PurdueIoAPI.getCourse(purdueIoSubject, courseNumber);
-    return { courseNumber, purdueIoCourse, purdueIoSubject }
-}
+    return { courseNumber, purdueIoCourse, purdueIoSubject };
+};
 
 const getStudyModes = async (modes: string[]) => {
     for (let i = 0; i < modes.length; i++) {
-        modes[i] = StudyMode[modes[i].toUpperCase() as keyof typeof StudyMode]
+        modes[i] = StudyMode[modes[i].toUpperCase() as keyof typeof StudyMode];
     }
-}
+};
 
 const uploadGraphic = async (file, graphicLink: string) => {
-    let graphic: string = "";
+    let graphic = "";
     if (file) {
         const data = await uploadFileToS3(file.buffer, file.mimetype);
         graphic = data.Location;
@@ -29,8 +29,8 @@ const uploadGraphic = async (file, graphicLink: string) => {
     else {
         graphic = graphicLink;
     }
-    return graphic
-}
+    return graphic;
+};
 
 const createCourse = async (req: Request, res: Response) => {
     const { abbreviation, number, backgroundColor, graphicLink, studyModes } = req.body;
@@ -41,7 +41,7 @@ const createCourse = async (req: Request, res: Response) => {
 
     const { courseNumber, purdueIoCourse, purdueIoSubject } = await getCourseInfo(abbreviation, number);
 
-    let graphic = await uploadGraphic(req.file, graphicLink);
+    const graphic = await uploadGraphic(req.file, graphicLink);
 
     const course = await prisma.course.create({
         data: {
@@ -74,7 +74,7 @@ const updateCourse = async (req: Request, res: Response) => {
 
     const { courseNumber, purdueIoCourse, purdueIoSubject } = await getCourseInfo(abbreviation, number);
 
-    let graphic = await uploadGraphic(req.file, graphicLink);
+    const graphic = await uploadGraphic(req.file, graphicLink);
 
     const course = await prisma.course.update({
         where: {
