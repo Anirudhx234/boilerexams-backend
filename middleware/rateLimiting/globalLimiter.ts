@@ -1,4 +1,5 @@
 import { rateLimit } from 'express-rate-limit';
+import {isWhitelisted} from "../auth/auth";
 
 const globalLimiter = rateLimit({
 	windowMs: 1000,
@@ -6,8 +7,7 @@ const globalLimiter = rateLimit({
 	standardHeaders: 'draft-7',
 	legacyHeaders: false,
 	skip: (req) => {
-		if (!process.env.FEEDBACK_API_KEY) return false;
-		return req.headers.authorization == process.env.FEEDBACK_API_KEY;
+		return isWhitelisted(req);
 	}
 });
 
