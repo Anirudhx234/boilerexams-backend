@@ -12,6 +12,17 @@ const getReport = async (req: Request, res: Response) => {
     const report = await prisma.report.findUnique({
         where: {
             id: reportId
+        },
+        include: {
+            question: {
+                include: {
+                    course: {
+                        include: {
+                            users: true
+                        }
+                    }
+                }
+            }
         }
     });
 
