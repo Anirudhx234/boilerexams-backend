@@ -308,8 +308,9 @@ const getCourseExamsWithBasicQuestionInfo = async (req: Request, res: Response) 
         throw new NotFoundError("Course not found");
     }
     const exams = course.exams;
-    const sortedExams = _.orderBy(exams, ["semester.year", "semester.season", (exam) => exam.number === 0 ? 10 : exam.number], ['desc', 'asc', 'asc']);
-    res.status(200).send(sortedExams);
+    const sortedExams = _.orderBy(exams, ["semester.year", "semester.season"], ['desc', 'asc']);
+    const groupedExams = _.groupBy(sortedExams, (exam) => exam.number);
+    res.status(200).send(groupedExams);
 };
 
 // Full question information for specific topic
