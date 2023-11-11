@@ -1,0 +1,99 @@
+import prisma from "../libs/prisma.js";
+import { Request, Response } from 'express';
+import {Event} from "@prisma/client";
+
+const getEvent = async (req: Request, res: Response) => {
+    const { eventId } = req.params;
+
+    const event = await prisma.event.findUnique({
+        where: {
+            id: eventId
+        }
+    });
+
+    res.status(200).send(event);
+};
+
+const getAllEvents = async (req: Request, res: Response) => {
+    const events = await prisma.event.findMany({
+        where: {  }
+    });
+
+    res.status(200).send(events);
+};
+
+const getUpcomingEvents = async (req: Request, res: Response) => {
+    const upcomingEvents = await prisma.event.findMany({
+        where: {
+            date: {
+                gte: new Date()
+            }
+        }
+    });
+
+    res.status(200).send(upcomingEvents);
+};
+
+const createEvents = async (req: Request, res: Response) => {
+    const { events } = req.body;
+
+    const createdEvents = new Array<Event>();
+
+    for (const event of events) {
+        const { type, subject, number, date } = event;
+        const course = await prisma.course.findFirst({
+            where: {
+                abbreviation: subject.toUpperCase(),
+                number: number
+            }
+        });
+
+        if (course) {
+            const event = await prisma.event.create({
+                data: {
+                    type: type,
+                    courseId: course.id,
+                    date: date
+                }
+            });
+
+            createdEvents.push(event);
+        }
+    }
+
+    res.status(200).send(createdEvents);
+};
+
+const updateEvent = async (req: Request, res: Response) => {
+    const { id } = req.body;
+
+    const event = await prisma.event.update({
+        where: {
+            id: id
+        },
+        data: req.body
+    });
+
+    res.status(200).send(event);
+};
+
+const deleteEvent = async (req: Request, res: Response) => {
+    const { eventId } = req.params;
+
+    const event = await prisma.event.delete({
+        where: {
+            id: eventId
+        }
+    });
+
+    res.status(200).send(event);
+};
+
+export {
+    createEvents,
+    getEvent,
+    getAllEvents,
+    getUpcomingEvents,
+    updateEvent,
+    deleteEvent
+};
