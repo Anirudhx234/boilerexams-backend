@@ -7,7 +7,7 @@ import {
     getEvent,
     getUpcomingEvents,
     updateEvent
-} from "../controllers/eventController";
+} from "../controllers/eventController.js";
 
 const app = express();
 
