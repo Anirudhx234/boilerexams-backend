@@ -15,7 +15,7 @@ app.post("/", asyncWrapper(createEvents));
 
 app.get("/", asyncWrapper(getAllEvents));
 
-app.get("//:eventId", asyncWrapper(getEvent));
+app.get("/:eventId", asyncWrapper(getEvent));
 
 app.get("/after/:date", asyncWrapper(getUpcomingEvents));
 
