@@ -265,7 +265,7 @@ const getCourseExams = async (req: Request, res: Response) => {
         throw new NotFoundError("Course not found");
     }
     const exams = course.exams;
-    const sortedExams = _.orderBy(exams, ["semester.year", "semester.season", (exam) => exam.number === 0 ? 10 : exam.number], ['desc', 'asc', 'asc']);
+    const sortedExams = _.orderBy(exams, [(exam) => exam.number === 0 ? 10 : exam.number, "semester.year", "semester.season"], ['asc', 'desc', 'asc']);
     res.status(200).send(sortedExams);
 };
 
@@ -308,9 +308,8 @@ const getCourseExamsWithBasicQuestionInfo = async (req: Request, res: Response) 
         throw new NotFoundError("Course not found");
     }
     const exams = course.exams;
-    const sortedExams = _.orderBy(exams, ["semester.year", "semester.season"], ['desc', 'asc']);
-    const groupedExams = _.groupBy(sortedExams, (exam) => exam.number);
-    res.status(200).send(groupedExams);
+    const sortedExams = _.orderBy(exams, [(exam) => exam.number === 0 ? 10 : exam.number, "semester.year", "semester.season"], ['asc', 'desc', 'asc']);
+    res.status(200).send(sortedExams);
 };
 
 // Full question information for specific topic
