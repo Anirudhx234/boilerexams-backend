@@ -1,6 +1,5 @@
 import prisma from "../libs/prisma.js";
 import { Request, Response } from 'express';
-import _ from 'lodash';
 import { NotFoundError } from '../middleware/errors/index.js';
 import questionStats from '../helpers/stats/questionStats.js';
 import examStats from '../helpers/stats/examStats.js';

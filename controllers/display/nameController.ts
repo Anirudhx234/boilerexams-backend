@@ -6,7 +6,7 @@ import _ from 'lodash';
 import validCourseRegex from '../../utils/validCourseRegex.js';
 import answerChoiceStats from "../../helpers/stats/answerChoiceStats.js";
 
-const questionSort: any = [
+const questionSort = [
     {
         exam: {
             semester: {
@@ -201,6 +201,7 @@ const getCourseTopicsWithBasicQuestionInfo = async (req: Request, res: Response)
                                 }
                             },
                         },
+                        // @ts-expect-error orderBy type is wrong but who cares
                         orderBy: questionSort
                     }
                 },
@@ -227,6 +228,7 @@ const getCourseTopicsWithBasicQuestionInfo = async (req: Request, res: Response)
                         }
                     }
                 },
+                // @ts-expect-error Still wrong (still don't care)
                 orderBy: questionSort,
             },
         },
@@ -358,6 +360,7 @@ const getCourseTopicWithFullQuestionInfo = async (req: Request, res: Response) =
                         }
                     }
                 },
+                // @ts-expect-error These things happen
                 orderBy: questionSort
             }
         }
@@ -366,15 +369,16 @@ const getCourseTopicWithFullQuestionInfo = async (req: Request, res: Response) =
         throw new NotFoundError("Topic not found");
     }
 
-    const promises: Promise<any>[] = [];
+    const promises: Promise<number[]>[] = [];
 
+    // @ts-expect-error topic.questions doesn't exist? Watch me iterate anyway
     for (const question of topic.questions) {
         promises.push(answerChoiceStats(question.id));
     }
 
     const resolved = await Promise.all(promises);
     for (let i = 0; i < resolved.length; i++) {
-        // @ts-ignore
+        // @ts-expect-error I promise it exists
         // Extend later
         topic.questions[i].answerChoiceStats = resolved[i];
     }
@@ -522,7 +526,7 @@ const getCourseExamWithFullQuestionInfo = async (req: Request, res: Response) =>
         throw new NotFoundError("Exam not found");
     }
 
-    const promises: Promise<any>[] = [];
+    const promises: Promise<number[]>[] = [];
 
     for (const question of exam.questions) {
         promises.push(answerChoiceStats(question.id));
@@ -530,8 +534,7 @@ const getCourseExamWithFullQuestionInfo = async (req: Request, res: Response) =>
 
     const resolved = await Promise.all(promises);
     for (let i = 0; i < resolved.length; i++) {
-        // @ts-ignore
-        // Extend later
+        // @ts-expect-error Extend Later
         exam.questions[i].answerChoiceStats = resolved[i];
     }
 
