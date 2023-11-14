@@ -53,7 +53,7 @@ const createEvents = async (req: Request, res: Response) => {
                 data: {
                     type: type,
                     courseId: course.id,
-                    date: date
+                    date: new Date(date)
                 }
             });
 
