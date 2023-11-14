@@ -13,12 +13,6 @@ const app = express();
 
 app.post("/", asyncWrapper(createEvents));
 
-app.get("/", asyncWrapper(getAllEvents));
-
-app.get("/:eventId", asyncWrapper(getEvent));
-
-app.get("/after/:date", asyncWrapper(getUpcomingEvents));
-
 app.put("/", asyncWrapper(updateEvent));
 
 app.delete("/:eventId", asyncWrapper(deleteEvent));
