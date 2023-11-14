@@ -1,6 +1,7 @@
 import prisma from "../../libs/prisma.js";
 import { NotFoundError } from "../../middleware/errors/index.js";
 import msToHMS from "../../utils/msToHMS.js";
+import questionStats from "./questionStats.js";
 
 const minimumValidSubmissionTime = 0;
 
@@ -71,6 +72,21 @@ const courseStats = async (courseId: string) => {
     const totalTimeSpent = msToHMS(submissions._sum.timeSpent);
     const totalVideoWatchTime = msToHMS(submissions._sum.timeSpentVideo);
 
+    const courseQuestions = await prisma.question.findMany({
+        where: {
+            courseId: courseId,
+            published: true
+        },
+        select: {
+            id: true
+        }
+    });
+
+    const courseQuestionStats = await Promise.all(courseQuestions.map(async (question) => {
+        return questionStats(question.id);
+    }));
+
+
     const courseStats = {
         courseName: course.name,
         courseId: courseId,
@@ -79,7 +95,8 @@ const courseStats = async (courseId: string) => {
         totalTimeSpent: totalTimeSpent,
         totalVideoWatchTime: totalVideoWatchTime,
         totalSubmissions: submissions._count,
-        totalCorrectSubmissions: correctSubmissions._count
+        totalCorrectSubmissions: correctSubmissions._count,
+        questionStats: courseQuestionStats
     };
 
     return courseStats;
