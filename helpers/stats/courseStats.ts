@@ -2,7 +2,7 @@ import prisma from "../../libs/prisma.js";
 import {NotFoundError} from "../../middleware/errors/index.js";
 import msToHMS from "../../utils/msToHMS.js";
 
-const minimumValidSubmissionTime = 0
+const minimumValidSubmissionTime = 0;
 
 const getCourseQuestionStats = async (courseId: string)=>  {
     const questions = await prisma.question.findMany({
@@ -40,8 +40,6 @@ const getCourseQuestionStats = async (courseId: string)=>  {
 };
 
 const courseStats = async (courseId: string) => {
-    const promises: Promise<any>[] = [];
-
     const course = await prisma.course.findFirst({
         where: {
             id: courseId,
@@ -64,49 +62,38 @@ const courseStats = async (courseId: string) => {
             }
         }
     });
+
     if (!course) {
         throw new NotFoundError("Course not found");
     }
 
-    promises.push(prisma.submission.aggregate({
-        where: {
-            question: {
-                courseId: courseId,
-                published: true
-            },
-            timeSpent: {
-                gte: minimumValidSubmissionTime
-            }
-        },
-        _count: true,
-        _sum: {
-            timeSpent: true,
-            timeSpentVideo: true,
-        }
-    }));
-
-    promises.push(prisma.submission.aggregate({
-        where: {
-            question: {
-                courseId: courseId,
-                published: true
-            },
-            timeSpent: {
-                gte: minimumValidSubmissionTime
-            },
-            correct: true
-        },
-        _count: true,
-    }));
-
-    const resolved = await Promise.all(promises);
-    const submissions = resolved[0];
-    const correctSubmissions = resolved[1];
-
-    const totalTimeSpent = msToHMS(submissions._sum.timeSpent);
-    const totalVideoWatchTime = msToHMS(submissions._sum.timeSpentVideo);
-
     const courseQuestionStats = await getCourseQuestionStats(course.id);
+    const totalTimeSpent = courseQuestionStats.map(a => a.totalTimeSpent).reduce((a, b) => {
+        const seconds = a.seconds + b.seconds;
+        const addedMinutes = Math.floor(seconds / 60);
+        const minutes = a.minutes + b.minutes + addedMinutes;
+        const addedHours = Math.floor(minutes / 60);
+        const hours = a.hours + b.hours + addedHours;
+        return {
+            hours: hours,
+            minutes: minutes % 60,
+            seconds: seconds % 60,
+        };
+    });
+    const totalVideoWatchTime = courseQuestionStats.map(a => a.totalVideoWatchTime).reduce((a, b) => {
+        const seconds = a.seconds + b.seconds;
+        const addedMinutes = Math.floor(seconds / 60);
+        const minutes = a.minutes + b.minutes + addedMinutes;
+        const addedHours = Math.floor(minutes / 60);
+        const hours = a.hours + b.hours + addedHours;
+        return {
+            hours: hours,
+            minutes: minutes % 60,
+            seconds: seconds % 60,
+        };
+    });
+    const totalSubmissions = courseQuestionStats.map(a => a.totalSubmissions).reduce((a, b) => a + b);
+    const totalCorrectSubmissions = courseQuestionStats.map(a => a.totalCorrectSubmissions).reduce((a, b) => a + b);
 
     return {
         courseName: course.name,
@@ -115,8 +102,8 @@ const courseStats = async (courseId: string) => {
         totalQuestions: course._count.questions,
         totalTimeSpent: totalTimeSpent,
         totalVideoWatchTime: totalVideoWatchTime,
-        totalSubmissions: submissions._count,
-        totalCorrectSubmissions: correctSubmissions._count,
+        totalSubmissions: totalSubmissions,
+        totalCorrectSubmissions: totalCorrectSubmissions,
         questionStats: courseQuestionStats
     };
 };
