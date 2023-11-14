@@ -95,7 +95,7 @@ const getGeneralStats = async (req: Request, res: Response) => {
 const getCourseStats = async (req: Request, res: Response) => {
     const { courseId } = req.params;
 
-    const stats = await courseStats(courseId);
+    const stats = await courseStats(courseId, true);
 
     res.status(200).json(stats);
 };
@@ -110,7 +110,7 @@ const getCourseStatsAll = async (req: Request, res: Response) => {
     const promises: Promise<any>[] = [];
 
     for (const course of courses) {
-        promises.push(courseStats(course.id));
+        promises.push(courseStats(course.id, false));
     }
 
     const coursesStats = await Promise.all(promises);

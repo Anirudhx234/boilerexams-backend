@@ -5,7 +5,7 @@ import questionStats from "./questionStats.js";
 
 const minimumValidSubmissionTime = 0;
 
-const courseStats = async (courseId: string) => {
+const courseStats = async (courseId: string, includeQuestionStats: boolean) => {
     const promises: Promise<any>[] = [];
 
     const course = await prisma.course.findFirst({
@@ -80,23 +80,34 @@ const courseStats = async (courseId: string) => {
     const totalTimeSpent = msToHMS(submissions._sum.timeSpent);
     const totalVideoWatchTime = msToHMS(submissions._sum.timeSpentVideo);
 
-    const courseQuestionStats = await Promise.all(course.questions.map(async (question) => {
-        return questionStats(question.id);
-    }));
+    if (includeQuestionStats) {
+        const courseQuestionStats = await Promise.all(course.questions.map(async (question) => {
+            return questionStats(question.id);
+        }));
 
-    const courseStats = {
-        courseName: course.name,
-        courseId: courseId,
-        totalExams: course._count.exams,
-        totalQuestions: course._count.questions,
-        totalTimeSpent: totalTimeSpent,
-        totalVideoWatchTime: totalVideoWatchTime,
-        totalSubmissions: submissions._count,
-        totalCorrectSubmissions: correctSubmissions._count,
-        questionStats: courseQuestionStats
-    };
-
-    return courseStats;
+        return {
+            courseName: course.name,
+            courseId: courseId,
+            totalExams: course._count.exams,
+            totalQuestions: course._count.questions,
+            totalTimeSpent: totalTimeSpent,
+            totalVideoWatchTime: totalVideoWatchTime,
+            totalSubmissions: submissions._count,
+            totalCorrectSubmissions: correctSubmissions._count,
+            questionStats: courseQuestionStats
+        };
+    } else {
+        return {
+            courseName: course.name,
+            courseId: courseId,
+            totalExams: course._count.exams,
+            totalQuestions: course._count.questions,
+            totalTimeSpent: totalTimeSpent,
+            totalVideoWatchTime: totalVideoWatchTime,
+            totalSubmissions: submissions._count,
+            totalCorrectSubmissions: correctSubmissions._count,
+        };
+    }
 };
 
 export default courseStats;
