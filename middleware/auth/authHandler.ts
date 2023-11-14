@@ -3,7 +3,7 @@ import asyncWrapper from '../wrappers/asyncWrapper.js';
 import { APIError } from '../errors/index.js';
 import { isWhitelisted } from "./auth.js";
 
-const authHandler = asyncWrapper(async (req: Request, res: Response, next: NextFunction) => {
+const authHandler = asyncWrapper(async (req: Request, _res: Response, next: NextFunction) => {
     if (isWhitelisted(req)) return next();
     if (req.user) {
         // @ts-expect-error _garbage is real
