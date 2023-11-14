@@ -40,11 +40,10 @@ const createEvents = async (req: Request, res: Response) => {
     const createdEvents = new Array<Event>();
 
     for (const event of events) {
-        const { type, subject, number, date } = event;
+        const { courseId, type, date } = event;
         const course = await prisma.course.findFirst({
             where: {
-                abbreviation: subject.toUpperCase(),
-                number: number
+                id: courseId
             }
         });
 
