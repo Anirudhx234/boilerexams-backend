@@ -15,7 +15,7 @@ import {
 import asyncWrapper from '../middleware/wrappers/asyncWrapper.js';
 import sendPublished from "../middleware/auth/sendPublished.js";
 import generalLimiter from '../middleware/rateLimiting/generalLimiter.js';
-import {getAllEvents, getEvent, getUpcomingEvents} from "../controllers/eventController";
+import {getAllEvents, getEvent, getUpcomingEvents} from "../controllers/eventController.js";
 // import cache from '../cache/caching';
 
 const app = express();

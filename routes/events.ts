@@ -3,9 +3,6 @@ import asyncWrapper from "../middleware/wrappers/asyncWrapper.js";
 import {
     createEvents,
     deleteEvent,
-    getAllEvents,
-    getEvent,
-    getUpcomingEvents,
     updateEvent
 } from "../controllers/eventController.js";
 
