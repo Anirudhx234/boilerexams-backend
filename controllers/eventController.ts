@@ -86,7 +86,7 @@ const deleteEvent = async (req: Request, res: Response) => {
 
             }
         });
-        res.status(200).send(events.count);
+        res.status(200).send(events);
     } else {
         const event = await prisma.event.delete({
             where: {
