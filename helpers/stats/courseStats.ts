@@ -1,50 +1,42 @@
 import prisma from "../../libs/prisma.js";
-import { NotFoundError } from "../../middleware/errors/index.js";
+import {NotFoundError} from "../../middleware/errors/index.js";
 import msToHMS from "../../utils/msToHMS.js";
-import questionStats from "./questionStats.js";
 
 const minimumValidSubmissionTime = 0
 
 const getCourseQuestionStats = async (courseId: string)=>  {
-    const submissions = await prisma.submission.aggregate({
+    const questions = await prisma.question.findMany({
         where: {
-            question: {
-                courseId: courseId,
-                published: true
-            },
-            timeSpent: {
-                gte: minimumValidSubmissionTime
-            }
+            courseId: courseId,
+            published: true
         },
-        _sum: {
-            timeSpent: true,
-            timeSpentVideo: true,
-        },
-        _count: true,
-    });
-
-    const correctSubmissions = await prisma.submission.count({
-        where: {
-            question: {
-                id: courseId,
-                published: true
+        include: {
+            submissions: {
+                where: {
+                    timeSpent: {
+                        gte: minimumValidSubmissionTime
+                    }
+                }
             },
-            timeSpent: {
-                gte: minimumValidSubmissionTime
-            },
-            correct: true
+            topics: true
         }
     });
 
-    const totalTimeSpent = msToHMS(submissions._sum.timeSpent);
-    const totalVideoWatchTime = msToHMS(submissions._sum.timeSpentVideo);
-
-    return  {
-        totalTimeSpent: totalTimeSpent,
-        totalVideoWatchTime: totalVideoWatchTime,
-        totalSubmissions: submissions._count,
-        totalCorrectSubmissions: correctSubmissions
-    };
+    return questions.map(question => {
+        const submissions = question.submissions;
+        const totalTimeSpent = msToHMS(submissions.map(submission => submission.timeSpent).reduce((a, b) => a + b));
+        const totalVideoWatchTime = msToHMS(submissions.map(submission => submission.timeSpentVideo).reduce((a, b) => a + b));
+        const totalSubmissions = submissions.length;
+        const totalCorrectSubmissions = submissions.filter(submission => submission.correct).length;
+        return {
+            id: question.id,
+            topics: question.topics,
+            totalTimeSpent: totalTimeSpent,
+            totalVideoWatchTime: totalVideoWatchTime,
+            totalSubmissions: totalSubmissions,
+            totalCorrectSubmissions: totalCorrectSubmissions
+        };
+    });
 };
 
 const courseStats = async (courseId: string) => {
