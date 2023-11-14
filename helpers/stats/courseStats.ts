@@ -24,8 +24,8 @@ const getCourseQuestionStats = async (courseId: string)=>  {
 
     return questions.map(question => {
         const submissions = question.submissions;
-        const totalTimeSpent = msToHMS(submissions.map(submission => submission.timeSpent).reduce((a, b) => a + b));
-        const totalVideoWatchTime = msToHMS(submissions.map(submission => submission.timeSpentVideo).reduce((a, b) => a + b));
+        const totalTimeSpent = msToHMS(submissions.map(submission => submission.timeSpent).reduce((a, b) => a + b, 0));
+        const totalVideoWatchTime = msToHMS(submissions.map(submission => submission.timeSpentVideo).reduce((a, b) => a + b, 0));
         const totalSubmissions = submissions.length;
         const totalCorrectSubmissions = submissions.filter(submission => submission.correct).length;
         return {
@@ -92,8 +92,8 @@ const courseStats = async (courseId: string) => {
             seconds: seconds % 60,
         };
     });
-    const totalSubmissions = courseQuestionStats.map(a => a.totalSubmissions).reduce((a, b) => a + b);
-    const totalCorrectSubmissions = courseQuestionStats.map(a => a.totalCorrectSubmissions).reduce((a, b) => a + b);
+    const totalSubmissions = courseQuestionStats.map(a => a.totalSubmissions).reduce((a, b) => a + b, 0);
+    const totalCorrectSubmissions = courseQuestionStats.map(a => a.totalCorrectSubmissions).reduce((a, b) => a + b, 0);
 
     return {
         courseName: course.name,
