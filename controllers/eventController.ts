@@ -80,13 +80,24 @@ const updateEvent = async (req: Request, res: Response) => {
 const deleteEvent = async (req: Request, res: Response) => {
     const { eventId } = req.params;
 
-    const event = await prisma.event.delete({
-        where: {
-            id: eventId
-        }
-    });
+    if (eventId == "all") {
+        const events = await prisma.event.deleteMany({
+            where: {
 
-    res.status(200).send(event);
+            }
+        });
+        res.status(200).send(events.count);
+    } else {
+        const event = await prisma.event.delete({
+            where: {
+                id: eventId
+            }
+        });
+
+        res.status(200).send(event);
+    }
+
+
 };
 
 export {
