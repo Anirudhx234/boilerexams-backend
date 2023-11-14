@@ -16,7 +16,12 @@ const getEvent = async (req: Request, res: Response) => {
 
 const getAllEvents = async (req: Request, res: Response) => {
     const events = await prisma.event.findMany({
-        where: {  }
+        where: {  },
+        orderBy: [
+            {
+                date: "asc"
+            }
+        ]
     });
 
     res.status(200).send(events);
@@ -28,7 +33,12 @@ const getUpcomingEvents = async (req: Request, res: Response) => {
             date: {
                 gte: new Date()
             }
-        }
+        },
+        orderBy: [
+            {
+                date: "asc"
+            }
+        ]
     });
 
     res.status(200).send(upcomingEvents);
