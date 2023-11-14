@@ -67,7 +67,7 @@ const errorHandler = (error, req: Request, res: Response, next: NextFunction) =>
     }
 
     console.log(error);
-    return res.status(500).json(error);
+    return res.status(500).json("An error occurred");
 };
 
 export default errorHandler;

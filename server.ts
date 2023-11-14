@@ -66,7 +66,7 @@ if (process.env.NODE_ENV === "development") {
   sessionOptions.name = "sessionIdDev";
 }
 
-//@ts-ignore
+// @ts-expect-error sessionOptions don't match type
 app.use(session(sessionOptions));
 app.use(passport.initialize());
 app.use(passport.session());
