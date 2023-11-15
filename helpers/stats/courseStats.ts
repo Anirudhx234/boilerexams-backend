@@ -1,5 +1,4 @@
 import prisma from "../../libs/prisma.js";
-import {NotFoundError} from "../../middleware/errors/index.js";
 import msToHMS from "../../utils/msToHMS.js";
 
 const minimumValidSubmissionTime = 0;
@@ -40,6 +39,18 @@ const getCourseQuestionStats = async (courseId: string)=>  {
 };
 
 const courseStats = async (courseId: string) => {
+    return prisma.$queryRaw`SELECT Q.ID        AS question_id,
+                                   S.timeSpent,
+                                   S.timeSpentVideo,
+                                   COUNT(S.id) AS submission_count,
+                                   T.name
+                            FROM Question Q
+                                     INNER JOIN Submission S ON Q.ID = S.question
+                                     INNER JOIN _QuestionToTopic QT ON Q.ID = QT.A
+                                     INNER JOIN Topic T ON QT.B = T.id
+                            WHERE Q.course = ${courseId}
+                            GROUP BY Q.ID;`;
+    /*
     const course = await prisma.course.findFirst({
         where: {
             id: courseId,
@@ -106,6 +117,7 @@ const courseStats = async (courseId: string) => {
         totalCorrectSubmissions: totalCorrectSubmissions,
         questionStats: courseQuestionStats
     };
+     */
 };
 
 export default courseStats;
