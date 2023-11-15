@@ -19,7 +19,7 @@ const getAllEvents = async (req: Request, res: Response) => {
         where: {  },
         orderBy: [
             {
-                date: "asc"
+                start: "asc"
             }
         ]
     });
@@ -30,13 +30,13 @@ const getAllEvents = async (req: Request, res: Response) => {
 const getUpcomingEvents = async (req: Request, res: Response) => {
     const upcomingEvents = await prisma.event.findMany({
         where: {
-            date: {
+            start: {
                 gte: new Date()
             }
         },
         orderBy: [
             {
-                date: "asc"
+                start: "asc"
             }
         ]
     });
@@ -50,7 +50,7 @@ const createEvents = async (req: Request, res: Response) => {
     const createdEvents = new Array<Event>();
 
     for (const event of events) {
-        const { courseId, type, date } = event;
+        const { courseId, title, description, type, start, end, location } = event;
         const course = await prisma.course.findFirst({
             where: {
                 id: courseId
@@ -61,8 +61,12 @@ const createEvents = async (req: Request, res: Response) => {
             const event = await prisma.event.create({
                 data: {
                     type: type,
+                    title: title,
+                    description: description,
                     courseId: course.id,
-                    date: new Date(date)
+                    start: new Date(start),
+                    end: new Date(end),
+                    location: location
                 }
             });
 
