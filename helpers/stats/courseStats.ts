@@ -1,42 +1,28 @@
 import prisma from "../../libs/prisma.js";
-import msToHMS from "../../utils/msToHMS.js";
+import {NotFoundError} from "../../middleware/errors/index.js";
 
-const minimumValidSubmissionTime = 0;
+type QuestionQueryData = {
+    id: string,
+    timeSpent: number,
+    timeSpentVideo: number,
+    submissions: number,
+    submissionsCorrect: number
+    topicNames: string[],
+    topicIds: string[]
+}
 
-const getCourseQuestionStats = async (courseId: string)=>  {
-    const questions = await prisma.question.findMany({
-        where: {
-            courseId: courseId,
-            published: true
-        },
-        include: {
-            submissions: {
-                where: {
-                    timeSpent: {
-                        gte: minimumValidSubmissionTime
-                    }
-                }
-            },
-            topics: true
-        }
-    });
+type CourseQueryData = {
+    id: string
+    name: string,
+    totalExams: number,
+    totalQuestions: number,
+    totalTimeSpent: number,
+    totalTimeSpentVideo: number,
+    totalSubmissions: number,
+    totalSubmissionsCorrect: number
+}
 
-    return questions.map(question => {
-        const submissions = question.submissions;
-        const totalTimeSpent = msToHMS(submissions.map(submission => submission.timeSpent).reduce((a, b) => a + b, 0));
-        const totalVideoWatchTime = msToHMS(submissions.map(submission => submission.timeSpentVideo).reduce((a, b) => a + b, 0));
-        const totalSubmissions = submissions.length;
-        const totalCorrectSubmissions = submissions.filter(submission => submission.correct).length;
-        return {
-            id: question.id,
-            topics: question.topics,
-            totalTimeSpent: totalTimeSpent,
-            totalVideoWatchTime: totalVideoWatchTime,
-            totalSubmissions: totalSubmissions,
-            totalCorrectSubmissions: totalCorrectSubmissions
-        };
-    });
-};
+
 
 const courseStats = async (courseId: string) => {
     // @ts-expect-error Fix Prisma BigInt Serialize
@@ -45,87 +31,55 @@ const courseStats = async (courseId: string) => {
         return int ?? this.toString();
     };
 
-    return prisma.$queryRaw`SELECT Q.ID        AS question_id,
-                                   SUM(S."timeSpent") AS total_time_spent,
-                                   SUM(S."timeSpentVideo") AS total_time_spent_video,
-                                   COUNT(S.id) AS submission_count,
-                                   SUM(CASE WHEN S.correct = TRUE THEN 1 ELSE 0 END) AS submissions_correct,
-                                   string_agg(DISTINCT T.name, ',') AS topic_names,
-                                   string_agg(DISTINCT T."id", ',') AS topic_ids
-                            FROM "Question" Q
-                                     JOIN "Submission" S ON Q.ID = S."questionId"
-                                     JOIN "_QuestionToTopic" QT ON Q.ID = QT."A"
-                                     JOIN "Topic" T ON QT."B" = T."id"
-                            WHERE Q."courseId" = ${courseId}
-                            GROUP BY Q.ID;`;
-    /*
-    const course = await prisma.course.findFirst({
-        where: {
-            id: courseId,
-            published: true
-        },
-        include: {
-            _count: {
-                select: {
-                    exams: {
-                        where: {
-                            published: true
-                        }
-                    },
-                    questions: {
-                        where: {
-                            published: true
-                        }
-                    }
-                }
-            }
-        }
-    });
+    const courses: CourseQueryData[] = await prisma.$queryRaw`
+        SELECT 
+            c.name AS "name",
+            c.id AS "id",
+            (SELECT COUNT(*) FROM "Question" q WHERE q."courseId" = c.id AND q.published = true) AS "totalQuestions",
+            (SELECT COUNT(*) FROM "Exam" e WHERE e."courseId" = c.id AND e.published = true) AS "totalExams",
+            SUM(s."timeSpent") AS "totalTimeSpent",
+            SUM(s."timeSpentVideo") AS "totalTimeSpentVideo",
+            COUNT(s.id) AS "totalSubmissions",
+            SUM(CASE WHEN s.correct = TRUE THEN 1 ELSE 0 END) AS "totalSubmissionsCorrect"
+        FROM "Course" c
+                 JOIN "Question" q ON c.id = q."courseId"
+                 JOIN "Submission" s ON q.ID = s."questionId"
+        WHERE c.id = ${courseId} AND c.published = true
+        group by c.id;
+    `;
+
+    const course = courses[0];
 
     if (!course) {
         throw new NotFoundError("Course not found");
     }
 
-    const courseQuestionStats = await getCourseQuestionStats(course.id);
-    const totalTimeSpent = courseQuestionStats.map(a => a.totalTimeSpent).reduce((a, b) => {
-        const seconds = a.seconds + b.seconds;
-        const addedMinutes = Math.floor(seconds / 60);
-        const minutes = a.minutes + b.minutes + addedMinutes;
-        const addedHours = Math.floor(minutes / 60);
-        const hours = a.hours + b.hours + addedHours;
-        return {
-            hours: hours,
-            minutes: minutes % 60,
-            seconds: seconds % 60,
-        };
-    });
-    const totalVideoWatchTime = courseQuestionStats.map(a => a.totalVideoWatchTime).reduce((a, b) => {
-        const seconds = a.seconds + b.seconds;
-        const addedMinutes = Math.floor(seconds / 60);
-        const minutes = a.minutes + b.minutes + addedMinutes;
-        const addedHours = Math.floor(minutes / 60);
-        const hours = a.hours + b.hours + addedHours;
-        return {
-            hours: hours,
-            minutes: minutes % 60,
-            seconds: seconds % 60,
-        };
-    });
-    const totalSubmissions = courseQuestionStats.map(a => a.totalSubmissions).reduce((a, b) => a + b, 0);
-    const totalCorrectSubmissions = courseQuestionStats.map(a => a.totalCorrectSubmissions).reduce((a, b) => a + b, 0);
+    const questions: QuestionQueryData[] = await prisma.$queryRaw`
+        SELECT Q.ID AS "questionId",
+               SUM(S."timeSpent") AS "timeSpent",
+               SUM(S."timeSpentVideo") AS "timeSpentVideo",
+               COUNT(S.id) AS "submissions",
+               SUM(CASE WHEN S.correct = TRUE THEN 1 ELSE 0 END) AS "submissionsCorrect",
+               (SELECT array_agg(DISTINCT T.name) AS "topicNames" FROM "Topic" T INNER JOIN "_QuestionToTopic" QT ON QT."B" = T.ID  WHERE QT."A" = Q.ID) AS "topicNames",
+               (SELECT array_agg(DISTINCT T."id") AS "topicIds" FROM "Topic" T INNER JOIN "_QuestionToTopic" QT ON QT."B" = T.ID  WHERE QT."A" = Q.ID) AS "topicIds"
+        FROM "Question" Q
+                 INNER JOIN "Submission" S ON Q.ID = S."questionId"
+        WHERE Q."courseId" = ${course.id}
+        GROUP BY Q.ID;
+    `;
 
     return {
         courseName: course.name,
-        courseId: courseId,
-        totalExams: course._count.exams,
-        totalQuestions: course._count.questions,
-        totalTimeSpent: totalTimeSpent,
-        totalVideoWatchTime: totalVideoWatchTime,
-        totalSubmissions: totalSubmissions,
-        totalCorrectSubmissions: totalCorrectSubmissions,
-        questionStats: courseQuestionStats
+        courseId: course.id,
+        totalExams: course.totalExams,
+        totalQuestions: course.totalQuestions,
+        totalTimeSpent: course.totalTimeSpent,
+        totalTimeSpentVideo: course.totalTimeSpentVideo,
+        totalSubmissions: course.totalSubmissions,
+        totalCorrectSubmissions: course.totalSubmissionsCorrect,
+        questionStats: questions,
+        //topicStats: topics
     };
-     */
 };
 
 export default courseStats;
