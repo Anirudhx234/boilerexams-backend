@@ -3,12 +3,12 @@ import {NotFoundError} from "../../middleware/errors/index.js";
 
 type QuestionQueryData = {
     id: string,
-    totalTimeSpent: number,
-    totalTimeSpentVideo: number,
-    totalSubmissions: number,
-    totalSubmissionsCorrect: number
-    topicIds: string[]
+    timeSpent: number,
+    timeSpentVideo: number,
+    submissions: number,
+    submissionsCorrect: number
     topicNames: string[],
+    topicIds: string[]
 }
 
 type CourseQueryData = {
@@ -21,6 +21,7 @@ type CourseQueryData = {
     totalSubmissions: number,
     totalSubmissionsCorrect: number
 }
+
 
 
 const courseStats = async (courseId: string) => {
@@ -54,13 +55,13 @@ const courseStats = async (courseId: string) => {
     }
 
     const questions: QuestionQueryData[] = await prisma.$queryRaw`
-        SELECT Q.ID AS "id",
-               SUM(S."timeSpent") AS "totalTimeSpent",
-               SUM(S."timeSpentVideo") AS "totalTimeSpentVideo",
-               COUNT(S.id) AS "totalSubmissions",
-               SUM(CASE WHEN S.correct = TRUE THEN 1 ELSE 0 END) AS "totalSubmissionsCorrect",
-               (SELECT array_agg(DISTINCT T."id") AS "topicIds" FROM "Topic" T INNER JOIN "_QuestionToTopic" QT ON QT."B" = T.ID  WHERE QT."A" = Q.ID) AS "topicIds",
-               (SELECT array_agg(DISTINCT T.name) AS "topicNames" FROM "Topic" T INNER JOIN "_QuestionToTopic" QT ON QT."B" = T.ID  WHERE QT."A" = Q.ID) AS "topicNames"
+        SELECT Q.ID AS "questionId",
+               SUM(S."timeSpent") AS "timeSpent",
+               SUM(S."timeSpentVideo") AS "timeSpentVideo",
+               COUNT(S.id) AS "submissions",
+               SUM(CASE WHEN S.correct = TRUE THEN 1 ELSE 0 END) AS "submissionsCorrect",
+               (SELECT array_agg(DISTINCT T.name) AS "topicNames" FROM "Topic" T INNER JOIN "_QuestionToTopic" QT ON QT."B" = T.ID  WHERE QT."A" = Q.ID) AS "topicNames",
+               (SELECT array_agg(DISTINCT T."id") AS "topicIds" FROM "Topic" T INNER JOIN "_QuestionToTopic" QT ON QT."B" = T.ID  WHERE QT."A" = Q.ID) AS "topicIds"
         FROM "Question" Q
                  INNER JOIN "Submission" S ON Q.ID = S."questionId"
         WHERE Q."courseId" = ${course.id}
@@ -68,8 +69,8 @@ const courseStats = async (courseId: string) => {
     `;
 
     return {
-        id: course.id,
-        name: course.name,
+        courseName: course.name,
+        courseId: course.id,
         totalExams: course.totalExams,
         totalQuestions: course.totalQuestions,
         totalTimeSpent: course.totalTimeSpent,
@@ -77,6 +78,7 @@ const courseStats = async (courseId: string) => {
         totalSubmissions: course.totalSubmissions,
         totalCorrectSubmissions: course.totalSubmissionsCorrect,
         questionStats: questions,
+        //topicStats: topics
     };
 };
 

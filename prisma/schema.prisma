@@ -214,9 +214,7 @@ model Event {
   title       String?
   description String?
   type        EventType
-  start       DateTime
-  end         DateTime
-  location    String?
+  date        DateTime
   courseId    String?
   course      Course?   @relation(fields: [courseId], references: [id], onDelete: Cascade)
 }
