@@ -45,10 +45,10 @@ const courseStats = async (courseId: string) => {
                                    COUNT(S.id) AS submission_count,
                                    T.name
                             FROM Question Q
-                                     INNER JOIN Submission S ON Q.ID = S.question
+                                     INNER JOIN Submission S ON Q.ID = S.questionId
                                      INNER JOIN _QuestionToTopic QT ON Q.ID = QT.A
                                      INNER JOIN Topic T ON QT.B = T.id
-                            WHERE Q.course = ${courseId}
+                            WHERE Q.courseId = ${courseId}
                             GROUP BY Q.ID;`;
     /*
     const course = await prisma.course.findFirst({
