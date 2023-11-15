@@ -39,17 +39,25 @@ const getCourseQuestionStats = async (courseId: string)=>  {
 };
 
 const courseStats = async (courseId: string) => {
+    // @ts-expect-error Fix Prisma BigInt Serialize
+    BigInt.prototype.toJSON = function () {
+        const int = Number.parseInt(this.toString());
+        return int ?? this.toString();
+    };
+
     return prisma.$queryRaw`SELECT Q.ID        AS question_id,
-                                   SUM(S."timeSpent") :: text AS total_time_spent,
-                                    SUM(S."timeSpentVideo") :: text AS total_time_spent_video,
-                                    COUNT(S.id) AS submission_count,
-                                   T.name
+                                   SUM(S."timeSpent") AS total_time_spent,
+                                   SUM(S."timeSpentVideo") AS total_time_spent_video,
+                                   COUNT(S.id) AS submission_count,
+                                   SUM(CASE WHEN S.correct = TRUE THEN 1 ELSE 0 END) AS submissions_correct,
+                                   string_agg(DISTINCT T.name, ',') AS topic_names,
+                                   string_agg(DISTINCT T."id", ',') AS topic_ids
                             FROM "Question" Q
-                                     INNER JOIN "Submission" S ON Q.ID = S."questionId"
-                                     INNER JOIN "_QuestionToTopic" QT ON Q.ID = QT."A"
-                                     INNER JOIN "Topic" T ON QT."B" = T."id"
+                                     JOIN "Submission" S ON Q.ID = S."questionId"
+                                     JOIN "_QuestionToTopic" QT ON Q.ID = QT."A"
+                                     JOIN "Topic" T ON QT."B" = T."id"
                             WHERE Q."courseId" = ${courseId}
-                            GROUP BY Q.ID, S."timeSpent", Q.ID, S."timeSpentVideo", T.name;`;
+                            GROUP BY Q.ID;`;
     /*
     const course = await prisma.course.findFirst({
         where: {
