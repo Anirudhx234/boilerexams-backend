@@ -40,16 +40,16 @@ const getCourseQuestionStats = async (courseId: string)=>  {
 
 const courseStats = async (courseId: string) => {
     return prisma.$queryRaw`SELECT Q.ID        AS question_id,
-                                   S.timeSpent,
-                                   S.timeSpentVideo,
+                                   S."timeSpent",
+                                   S."timeSpentVideo",
                                    COUNT(S.id) AS submission_count,
                                    T.name
-                            FROM Question as Q
-                                     INNER JOIN Submission AS S ON Q.ID = S.questionId
-                                     INNER JOIN _QuestionToTopic AS QT ON Q.ID = QT.A
-                                     INNER JOIN Topic AS T ON QT.B = T.id
-                            WHERE Q.courseId = ${courseId}
-                            GROUP BY Q.ID;`;
+                            FROM "Question" Q
+                                     INNER JOIN "Submission" S ON Q.ID = S."questionId"
+                                     INNER JOIN "_QuestionToTopic" QT ON Q.ID = QT."A"
+                                     INNER JOIN "Topic" T ON QT."B" = T."id"
+                            WHERE Q."courseId" = ${courseId}
+                            GROUP BY Q.ID, S."timeSpent", Q.ID, S."timeSpentVideo", T.name;`;
     /*
     const course = await prisma.course.findFirst({
         where: {
