@@ -28,7 +28,7 @@ const getEvents = async (req: Request, res: Response) => {
     // Add start condition if after exists
     if (after) {
         where["start"] = {
-            gte: new Date(after as string)
+            gte: new Date(Number.parseInt(after as string))
         };
     }
 
