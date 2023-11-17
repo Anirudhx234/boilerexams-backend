@@ -14,9 +14,26 @@ const getEvent = async (req: Request, res: Response) => {
     res.status(200).send(event);
 };
 
-const getAllEvents = async (req: Request, res: Response) => {
+const getEvents = async (req: Request, res: Response) => {
+    const { courseId, after } = req.body;
+
+    // Define an empty where object
+    const where = {};
+
+    // Add courseId condition if it exists
+    if (courseId) {
+        where["courseId"] = courseId;
+    }
+
+    // Add start condition if after exists
+    if (after) {
+        where["start"] = {
+            gte: new Date()
+        };
+    }
+
     const events = await prisma.event.findMany({
-        where: {  },
+        where: where,
         orderBy: [
             {
                 start: "asc"
@@ -25,23 +42,6 @@ const getAllEvents = async (req: Request, res: Response) => {
     });
 
     res.status(200).send(events);
-};
-
-const getUpcomingEvents = async (req: Request, res: Response) => {
-    const upcomingEvents = await prisma.event.findMany({
-        where: {
-            start: {
-                gte: new Date()
-            }
-        },
-        orderBy: [
-            {
-                start: "asc"
-            }
-        ]
-    });
-
-    res.status(200).send(upcomingEvents);
 };
 
 const createEvents = async (req: Request, res: Response) => {
@@ -116,8 +116,7 @@ const deleteEvent = async (req: Request, res: Response) => {
 export {
     createEvents,
     getEvent,
-    getAllEvents,
-    getUpcomingEvents,
+    getEvents,
     updateEvent,
     deleteEvent
 };

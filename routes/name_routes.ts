@@ -15,16 +15,14 @@ import {
 import asyncWrapper from '../middleware/wrappers/asyncWrapper.js';
 import sendPublished from "../middleware/auth/sendPublished.js";
 import generalLimiter from '../middleware/rateLimiting/generalLimiter.js';
-import {getAllEvents, getEvent, getUpcomingEvents} from "../controllers/eventController.js";
+import {getEvent, getEvents} from "../controllers/eventController.js";
 // import cache from '../cache/caching';
 
 const app = express();
 
-app.get("/events", asyncWrapper(getAllEvents));
+app.get("/events", asyncWrapper(getEvents));
 
 app.get("/events/:eventId", asyncWrapper(getEvent));
-
-app.get("/events/after/:date", asyncWrapper(getUpcomingEvents));
 
 app.get("/courses", generalLimiter, sendPublished, asyncWrapper(getCourses));
 

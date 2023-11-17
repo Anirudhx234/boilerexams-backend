@@ -23,6 +23,11 @@ type CourseQueryData = {
     totalSubmissionsCorrect: number
 }
 
+type CourseMapData = {
+    id: string,
+    questionStats: QuestionQueryData[]
+}
+
 export const allCoursesStats = async () => {
     // @ts-expect-error Fix Prisma BigInt Serialize
     BigInt.prototype.toJSON = function () {
@@ -62,7 +67,7 @@ export const allCoursesStats = async () => {
         GROUP BY Q."courseId", Q.ID;
     `;
 
-    const courseDataMap: { [key: string]: any } = {};
+    const courseDataMap: { [key: string]: CourseMapData } = {};
 
     questionResults.forEach((question) => {
         const courseId = question.courseId;
@@ -75,6 +80,7 @@ export const allCoursesStats = async () => {
 
         courseDataMap[courseId].questionStats.push({
             id: question.id,
+            courseId: courseId,
             totalTimeSpent: question.totalTimeSpent,
             totalTimeSpentVideo: question.totalTimeSpentVideo,
             totalSubmissions: question.totalSubmissions,
