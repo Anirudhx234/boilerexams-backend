@@ -131,6 +131,9 @@ const getCourse = async (req: Request, res: Response) => {
             abbreviation: abbreviation.toUpperCase(),
             number: Number(number),
             OR: req.published
+        },
+        include: {
+            events: true
         }
     });
     if (!course) {
