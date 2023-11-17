@@ -133,7 +133,11 @@ const getCourse = async (req: Request, res: Response) => {
             OR: req.published
         },
         include: {
-            events: true
+            events: {
+                orderBy: {
+                    start: "asc"
+                }
+            }
         }
     });
     if (!course) {
