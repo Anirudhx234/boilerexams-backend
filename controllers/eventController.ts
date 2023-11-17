@@ -15,7 +15,7 @@ const getEvent = async (req: Request, res: Response) => {
 };
 
 const getEvents = async (req: Request, res: Response) => {
-    const { courseId, after } = req.body;
+    const { courseId, after } = req.query;
 
     // Define an empty where object
     const where = {};
@@ -28,7 +28,7 @@ const getEvents = async (req: Request, res: Response) => {
     // Add start condition if after exists
     if (after) {
         where["start"] = {
-            gte: new Date()
+            gte: new Date(after as string)
         };
     }
 
