@@ -100,7 +100,7 @@ export const allCoursesStats = async () => {
             totalTimeSpent: course.totalTimeSpent,
             totalTimeSpentVideo: course.totalTimeSpentVideo,
             totalSubmissions: course.totalSubmissions,
-            totalCorrectSubmissions: course.totalSubmissionsCorrect,
+            totalSubmissionsCorrect: course.totalSubmissionsCorrect,
             questionStats: courseDataMap[courseId]?.questionStats || [],
         };
     });
@@ -160,7 +160,7 @@ export const courseStats = async (courseId: string) => {
         totalTimeSpent: course.totalTimeSpent,
         totalTimeSpentVideo: course.totalTimeSpentVideo,
         totalSubmissions: course.totalSubmissions,
-        totalCorrectSubmissions: course.totalSubmissionsCorrect,
+        totalSubmissionsCorrect: course.totalSubmissionsCorrect,
         questionStats: questions,
     };
 };
