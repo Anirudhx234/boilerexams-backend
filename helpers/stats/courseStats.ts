@@ -15,6 +15,7 @@ type QuestionQueryData = {
 type CourseQueryData = {
     id: string
     name: string,
+    abbreviation: string,
     totalExams: number,
     totalQuestions: number,
     totalTimeSpent: number,
@@ -36,9 +37,10 @@ export const allCoursesStats = async () => {
     };
 
     const courses: CourseQueryData[] = await prisma.$queryRaw`
-        SELECT 
-            c.name AS "name",
+        SELECT
             c.id AS "id",
+            c.name AS "name",
+            CONCAT(c."abbreviation", CAST(c."number" as VARCHAR)) AS "abbreviation",
             (SELECT COUNT(*) FROM "Question" q WHERE q."courseId" = c.id AND q.published = true) AS "totalQuestions",
             (SELECT COUNT(*) FROM "Exam" e WHERE e."courseId" = c.id AND e.published = true) AS "totalExams",
             SUM(s."timeSpent") AS "totalTimeSpent",
@@ -95,6 +97,7 @@ export const allCoursesStats = async () => {
         return {
             id: courseId,
             name: course.name,
+            courseAbbreviation: course.abbreviation,
             totalExams: course.totalExams,
             totalQuestions: course.totalQuestions,
             totalTimeSpent: course.totalTimeSpent,
@@ -116,9 +119,10 @@ export const courseStats = async (courseId: string) => {
     };
 
     const courses: CourseQueryData[] = await prisma.$queryRaw`
-        SELECT 
-            c.name AS "name",
+        SELECT
             c.id AS "id",
+            c.name AS "name",
+            CONCAT(c."abbreviation", CAST(c."number" as VARCHAR)) AS "abbreviation",
             (SELECT COUNT(*) FROM "Question" q WHERE q."courseId" = c.id AND q.published = true) AS "totalQuestions",
             (SELECT COUNT(*) FROM "Exam" e WHERE e."courseId" = c.id AND e.published = true) AS "totalExams",
             SUM(s."timeSpent") AS "totalTimeSpent",
@@ -155,6 +159,7 @@ export const courseStats = async (courseId: string) => {
     return {
         id: course.id,
         name: course.name,
+        courseAbbreviation: course.abbreviation,
         totalExams: course.totalExams,
         totalQuestions: course.totalQuestions,
         totalTimeSpent: course.totalTimeSpent,
