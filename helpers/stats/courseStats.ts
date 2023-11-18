@@ -95,8 +95,8 @@ export const allCoursesStats = async () => {
     return courses.map((course) => {
         const courseId = course.id;
         return {
-            id: courseId,
-            name: course.name,
+            courseId: courseId,
+            courseName: course.name,
             courseAbbreviation: course.abbreviation,
             totalExams: course.totalExams,
             totalQuestions: course.totalQuestions,
@@ -157,8 +157,8 @@ export const courseStats = async (courseId: string) => {
     `;
 
     return {
-        id: course.id,
-        name: course.name,
+        courseId: course.id,
+        courseName: course.name,
         courseAbbreviation: course.abbreviation,
         totalExams: course.totalExams,
         totalQuestions: course.totalQuestions,
