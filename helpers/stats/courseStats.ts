@@ -1,35 +1,7 @@
 import prisma from "../../libs/prisma.js";
-import {NotFoundError} from "../../middleware/errors/index.js";
+import { NotFoundError } from "../../middleware/errors/index.js";
 
-type QuestionQueryData = {
-    id: string,
-    courseId: string,
-    totalTimeSpent: number,
-    totalTimeSpentVideo: number,
-    totalSubmissions: number,
-    totalSubmissionsCorrect: number
-    topicIds: string[]
-    topicNames: string[],
-}
-
-type CourseQueryData = {
-    id: string
-    name: string,
-    abbreviation: string,
-    totalExams: number,
-    totalQuestions: number,
-    totalTimeSpent: number,
-    totalTimeSpentVideo: number,
-    totalSubmissions: number,
-    totalSubmissionsCorrect: number
-}
-
-type CourseMapData = {
-    id: string,
-    questionStats: QuestionQueryData[]
-}
-
-export const allCoursesStats = async () => {
+const allCoursesStats = async () => {
     // @ts-expect-error Fix Prisma BigInt Serialize
     BigInt.prototype.toJSON = function () {
         const int = Number.parseInt(this.toString());
@@ -110,8 +82,7 @@ export const allCoursesStats = async () => {
 };
 
 
-
-export const courseStats = async (courseId: string) => {
+const courseStats = async (courseId: string) => {
     // @ts-expect-error Fix Prisma BigInt Serialize
     BigInt.prototype.toJSON = function () {
         const int = Number.parseInt(this.toString());
@@ -168,4 +139,9 @@ export const courseStats = async (courseId: string) => {
         totalSubmissionsCorrect: course.totalSubmissionsCorrect,
         questionStats: questions,
     };
+};
+
+export {
+    allCoursesStats,
+    courseStats
 };

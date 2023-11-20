@@ -20,10 +20,6 @@ import {getEvent, getEvents} from "../controllers/eventController.js";
 
 const app = express();
 
-app.get("/events", asyncWrapper(getEvents));
-
-app.get("/events/:eventId", asyncWrapper(getEvent));
-
 app.get("/courses", generalLimiter, sendPublished, asyncWrapper(getCourses));
 
 // All topics metadata, no relations
@@ -56,5 +52,11 @@ app.get("/courses/:courseAbbrev/exams/:season-:year-:examNumber", generalLimiter
 
 // All questions for a specific exam, includes topics within questions.
 app.get("/courses/:courseAbbrev/exams/:season-:year-:examNumber/questions", generalLimiter, sendPublished, asyncWrapper(getCourseExamWithFullQuestionInfo));
+
+// Get events. Has courseId and after as query params
+app.get("/events", asyncWrapper(getEvents));
+
+// Get a specific event
+app.get("/events/:eventId", asyncWrapper(getEvent));
 
 export default app;

@@ -5,7 +5,7 @@ import questionStats from '../helpers/stats/questionStats.js';
 import examStats from '../helpers/stats/examStats.js';
 import msToHMS from "../utils/msToHMS.js";
 import answerChoiceStats from "../helpers/stats/answerChoiceStats.js";
-import {allCoursesStats, courseStats} from "../helpers/stats/courseStats.js";
+import { allCoursesStats, courseStats } from "../helpers/stats/courseStats.js";
 
 const OLD_SUBMISSIONS = 1920571;
 const OLD_TIME_SPENT_HRS = 95074.53;
@@ -143,7 +143,7 @@ const getCourseExamsStats = async (req: Request, res: Response) => {
 
     let i = 0;
     for (const exam of course.exams) {
-        examsStats.push({ 
+        examsStats.push({
             id: exam.id,
             number: exam.number,
             semester: exam.semester,

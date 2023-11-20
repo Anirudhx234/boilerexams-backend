@@ -1,4 +1,4 @@
-export type ErrorResponse = {
+type ErrorResponse = {
     message: string,
     fullError: any
 }

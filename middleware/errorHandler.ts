@@ -2,20 +2,15 @@ import { Prisma } from '@prisma/client';
 import { NextFunction, Request, Response } from "express";
 import { APIError, InvalidCourseError, InvalidSeasonError, NotFoundError } from "./errors/index.js";
 import multer from 'multer';
-import { ErrorResponse } from '../types/errors/index.js';
 
 const errorHandler = (error, req: Request, res: Response, next: NextFunction) => {
-    let fullError = {};
+    const errorResponse: ErrorResponse = { message: error.message, fullError: {} };
+
     if (req.user) {
         if (["ADMIN", "CONTENT"].includes(req.user.role)) {
-            fullError = error;
+            errorResponse.fullError = error;
         }
     }
-
-    if (!error.message) {
-        error.message = "";
-    }
-    const errorResponse: ErrorResponse = {message: error.message, fullError: fullError};
 
     if (error instanceof NotFoundError) {
         return res.status(error.errorCode).json(errorResponse);
@@ -67,6 +62,7 @@ const errorHandler = (error, req: Request, res: Response, next: NextFunction) =>
     }
 
     console.log(error);
+    errorResponse.message = "An error occured";
     return res.status(500).json(errorResponse);
 };
 
