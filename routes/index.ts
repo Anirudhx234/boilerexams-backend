@@ -1,5 +1,6 @@
 import auth from '../middleware/auth/auth.js';
 import authHandler from '../middleware/auth/authHandler.js';
+import analytics from "./analytics.js";
 import courses from "./courses.js";
 import exams from "./exams.js";
 import events from "./events.js";
@@ -26,6 +27,8 @@ app.use(globalLimiter);
 app.use("/auth", generalLimiter, auth);
 
 app.use("/stats", generalLimiter, stats);
+
+app.use("/analytics", generalLimiter, analytics);
 
 app.use(name_routes);
 
