@@ -1,12 +1,11 @@
 import prisma from "../libs/prisma.js";
 import { Request, Response } from 'express';
-import _ from 'lodash';
 import { NotFoundError } from '../middleware/errors/index.js';
 import questionStats from '../helpers/stats/questionStats.js';
 import examStats from '../helpers/stats/examStats.js';
 import msToHMS from "../utils/msToHMS.js";
 import answerChoiceStats from "../helpers/stats/answerChoiceStats.js";
-import courseStats from "../helpers/stats/courseStats.js";
+import { allCoursesStats, courseStats } from "../helpers/stats/courseStats.js";
 
 const OLD_SUBMISSIONS = 1920571;
 const OLD_TIME_SPENT_HRS = 95074.53;
@@ -102,21 +101,9 @@ const getCourseStats = async (req: Request, res: Response) => {
 };
 
 const getCourseStatsAll = async (req: Request, res: Response) => {
-    const courses = await prisma.course.findMany({
-        where: {
-            published: true
-        }
-    });
+    const stats = await allCoursesStats();
 
-    const promises: Promise<any>[] = [];
-
-    for (const course of courses) {
-        promises.push(courseStats(course.id));
-    }
-
-    const coursesStats = await Promise.all(promises);
-
-    res.status(200).json(coursesStats);
+    res.status(200).json(stats);
 };
 
 const getCourseExamsStats = async (req: Request, res: Response) => {
@@ -156,7 +143,7 @@ const getCourseExamsStats = async (req: Request, res: Response) => {
 
     let i = 0;
     for (const exam of course.exams) {
-        examsStats.push({ 
+        examsStats.push({
             id: exam.id,
             number: exam.number,
             semester: exam.semester,

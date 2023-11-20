@@ -37,8 +37,7 @@ const getQuestion = async (req: Request, res: Response) => {
         throw new NotFoundError("Question not found");
     }
 
-    // @ts-ignore
-    // Extend later
+    // @ts-expect-error Extend Later
     question.answerChoiceStats = await answerChoiceStats(questionId);
 
     res.status(200).send(question);

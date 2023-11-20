@@ -1,0 +1,37 @@
+name: Deploy API to EC2 - Development
+
+on:
+  push:
+    branches: [ dev ]
+
+  workflow_dispatch:
+
+jobs:
+  deploy:
+
+    runs-on: self-hosted
+
+    strategy:
+      matrix:
+        node-version: [18.x]
+
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL_DEV }}
+      DATABASE_URL_BOUNCER: ${{ secrets.DATABASE_URL_BOUNCER_DEV }}
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - run: npm ci
+      - run: npm run deploy
+      - run: npm run build
+
+      - name: rsync deployments
+        uses: burnett01/rsync-deployments@6.0.0
+        with:
+          switches: -avzr --delete
+          path: ./*
+          remote_path: /home/ec2-user/boilerexams-backend-dev
+          remote_host: ${{ secrets.HOST }}
+          remote_user: ${{ secrets.USER }}
+          remote_key: ${{ secrets.SSH_KEY }}

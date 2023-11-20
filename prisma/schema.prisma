@@ -25,6 +25,7 @@ model Course {
   semesters       Semester[]  @relation("CourseToSemester")
   topics          Topic[]     @relation("CourseToTopic")
   users           User[]      @relation("CourseToUser")
+  events          Event[]
 
   @@unique([subject, number])
   @@unique([abbreviation, number])
@@ -208,6 +209,18 @@ model Session {
   @@index([expire], map: "IDX_session_expire")
 }
 
+model Event {
+  id          String    @id @default(uuid())
+  title       String?
+  description String?
+  type        EventType
+  start       DateTime
+  end         DateTime
+  location    String?
+  courseId    String?
+  course      Course?   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+}
+
 enum AccountType {
   DISCORD
   GOOGLE
@@ -255,4 +268,9 @@ enum Role {
   CONTENT
   PROFESSOR
   ADMIN
+}
+
+enum EventType {
+  EXAM
+  FINAL
 }

@@ -2,6 +2,7 @@ import auth from '../middleware/auth/auth.js';
 import authHandler from '../middleware/auth/authHandler.js';
 import courses from "./courses.js";
 import exams from "./exams.js";
+import events from "./events.js";
 import express from 'express';
 import feedback from "./feedback.js";
 import feedbackLimiter from "../middleware/rateLimiting/feedbackLimiter.js";
@@ -38,6 +39,8 @@ app.use("/users", users);
 app.use(authHandler);
 
 app.use("/id", id_routes);
+
+app.use("/events", events);
 
 app.use("/resources", resources);
 

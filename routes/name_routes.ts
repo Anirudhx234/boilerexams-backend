@@ -15,6 +15,7 @@ import {
 import asyncWrapper from '../middleware/wrappers/asyncWrapper.js';
 import sendPublished from "../middleware/auth/sendPublished.js";
 import generalLimiter from '../middleware/rateLimiting/generalLimiter.js';
+import {getEvent, getEvents} from "../controllers/eventController.js";
 // import cache from '../cache/caching';
 
 const app = express();
@@ -51,5 +52,11 @@ app.get("/courses/:courseAbbrev/exams/:season-:year-:examNumber", generalLimiter
 
 // All questions for a specific exam, includes topics within questions.
 app.get("/courses/:courseAbbrev/exams/:season-:year-:examNumber/questions", generalLimiter, sendPublished, asyncWrapper(getCourseExamWithFullQuestionInfo));
+
+// Get events. Has courseId and after as query params
+app.get("/events", asyncWrapper(getEvents));
+
+// Get a specific event
+app.get("/events/:eventId", asyncWrapper(getEvent));
 
 export default app;
