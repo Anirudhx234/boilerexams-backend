@@ -1,84 +1,82 @@
-type AnalyticTime = "year" | "month" | "day" | "hour";
-type AnalyticType = "url" | "referrer" | "browser" | "os" | "device" | "country" | "event";
+type AnalyticsTime = "year" | "month" | "day" | "hour";
 
-type EventParams = {
-    startAt: number,
-    endAt: number,
-    unit: AnalyticTime,
-    url?: string,
-    eventName?: string,
+type AnalyticsType = "url" | "referrer" | "browser" | "os" | "device" | "country" | "event";
+
+interface BaseParams {
+    startAt: number;
+    endAt: number;
+    url?: string;
 }
 
-type PageviewParams = {
-    startAt: number,
-    endAt: number,
-    unit: AnalyticTime,
-    url?: string,
-    referrer?: string,
-    pageTitle?: string,
-    os?: string,
-    browser?: string,
-    device?: string,
-    country?: string,
-    region?: string,
-    city?: string,
+interface EventParams extends BaseParams {
+    unit: string;
+    timezone: string;
+    eventName?: string;
 }
 
-type StatsParams = {
-    startAt: number,
-    endAt: number,
-    url?: string,
-    referrer?: string,
-    title?: string,
-    os?: string,
-    browser?: string,
-    device?: string,
-    country?: string,
-    region?: string,
-    city?: string,
+interface StatParams extends BaseParams {
+    referrer?: string;
+    pageTitle?: string;
+    os?: string;
+    browser?: string;
+    device?: string;
+    country?: string;
+    region?: string;
+    city?: string;
 }
 
-type MetricParams = {
-    startAt: number,
-    endAt: number,
-    type: AnalyticType,
-    unit?: AnalyticTime,
-    url?: string,
-    referrer?: string,
-    pageTitle?: string,
-    os?: string,
-    browser?: string,
-    device?: string,
-    country?: string,
-    region?: string,
-    city?: string,
+interface PageviewParams extends StatParams {
+    unit: AnalyticsTime;
+    timezone: string;
 }
 
-type AnalyticEvents = {
-    "name": string,
-    "date": string,
-    "count": number,
+interface MetricParams extends StatParams {
+    type: AnalyticsType;
+    unit?: AnalyticsTime,
+    timezone?: string;
 }
 
-type AnalyticsPageviews = {
+type ActiveResponse = {
+    x: number
+}[];
+
+type EventResponse = {
+    x: string,
+    t: string,
+    y: number
+}[];
+
+type PageviewsResponse = {
     pageviews: {
-        date: string,
-        count: number,
+        x: string,
+        y: number
     }[],
     sessions: {
-        date: string,
-        count: number,
-    }[]
-}
+        x: string,
+        y: number
+    }[];
+};
 
-type AnalyticStats = {
-    pageviews: { value: number, change: number },
-    uniques: { value: number, change: number },
-    bounces: { value: number, change: number },
-    totalTime: { value: number, change: number },
-}
+type MetricsResponse = {
+    x: string,
+    y: number
+}[];
 
-type AnalyticMetrics = {
-    value: string,
-    count: number,
-}[]
+type StatsResponse = {
+    pageviews: {
+        value: number,
+        change: number
+    },
+    uniques: {
+        value: number,
+        change: number
+    },
+    bounces: {
+        value: number,
+        change: number
+    },
+    totaltime: {
+        value: number,
+        change: number
+    }
+}
