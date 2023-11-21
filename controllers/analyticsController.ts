@@ -40,19 +40,26 @@ const getPageviews = async (req: Request, res: Response) => {
 };
 
 const getMetrics = async (req: Request, res: Response) => {
-    const metrics = await AnalyticsApi.getMetrics({
+    const metricsResponse = await AnalyticsApi.getMetrics({
         ...parseMetricsParams(req)
+    });
+
+    const metrics = metricsResponse.map(metric => {
+        return {
+            value: metric.x,
+            total: metric.y
+        };
     });
 
     res.status(200).send(metrics);
 };
 
 const getStats = async (req: Request, res: Response) => {
-    const stats = await AnalyticsApi.getStats({
+    const statsResponse = await AnalyticsApi.getStats({
         ...parseStatsParams(req)
     });
 
-    res.status(200).send(stats);
+    res.status(200).send(statsResponse);
 };
 
 const parseBaseParams = (req: Request): BaseParams => {
