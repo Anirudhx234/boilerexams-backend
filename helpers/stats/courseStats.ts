@@ -1,7 +1,7 @@
 import prisma from "../../libs/prisma.js";
 import { NotFoundError } from "../../middleware/errors/index.js";
 
-const allCoursesStats = async () => {
+const allCoursesStats = async (before: Date, after: Date) => {
     // @ts-expect-error Fix Prisma BigInt Serialize
     BigInt.prototype.toJSON = function () {
         const int = Number.parseInt(this.toString());
@@ -82,7 +82,7 @@ const allCoursesStats = async () => {
 };
 
 
-const courseStats = async (courseId: string) => {
+const courseStats = async (courseId: string, before: Date, after: Date) => {
     // @ts-expect-error Fix Prisma BigInt Serialize
     BigInt.prototype.toJSON = function () {
         const int = Number.parseInt(this.toString());
