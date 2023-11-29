@@ -1,7 +1,13 @@
-type SessionOptions = import('express-session').SessionOptions
+import { SessionOptions } from "express-session";
 
-type SessionOptionsExtended = SessionOptions & {
-    cookie: {
-        sameSite: "strict" | "none"
-    };
+declare module 'express-session' {
+    export type SessionOptionsExtended = SessionOptions & {
+        cookie: {
+            sameSite: "strict" | "none"
+        }
+    }
+
+   export interface Session {
+    _garbage: string;
+  }
 }

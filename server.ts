@@ -2,7 +2,7 @@ import express from 'express';
 import { Request, Response } from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
-import session from 'express-session';
+import session, { SessionOptionsExtended } from 'express-session';
 import connect from 'connect-pg-simple';
 import dotenv from 'dotenv';
 import passport from 'passport';
