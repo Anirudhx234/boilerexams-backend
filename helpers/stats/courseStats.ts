@@ -27,7 +27,7 @@ const allCoursesStats = async (before: Date, after: Date) => {
         FROM "Course" c
                  JOIN "Question" q ON c.id = q."courseId"
                  JOIN "Submission" s ON q.ID = s."questionId"
-        WHERE c.published = true AND s."timeStarted" BETWEEN '${formatDatabaseDate(before)}' AND '${formatDatabaseDate(after)}'
+        WHERE c.published = true AND s."timeStarted" BETWEEN ${formatDatabaseDate(before)} AND ${formatDatabaseDate(after)}
         GROUP BY c.id;
     `;
 
@@ -108,7 +108,7 @@ const courseStats = async (courseId: string, before: Date, after: Date) => {
         FROM "Course" c
                  JOIN "Question" q ON c.id = q."courseId"
                  JOIN "Submission" s ON q.ID = s."questionId"
-        WHERE c.id = ${courseId} AND c.published = true AND s."timeStarted" BETWEEN '${formatDatabaseDate(before)}' AND '${formatDatabaseDate(after)}'
+        WHERE c.id = ${courseId} AND c.published = true AND s."timeStarted" BETWEEN ${formatDatabaseDate(before)} AND ${formatDatabaseDate(after)}
         group by c.id;
     `;
 
