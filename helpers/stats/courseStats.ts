@@ -1,6 +1,11 @@
 import prisma from "../../libs/prisma.js";
 import { NotFoundError } from "../../middleware/errors/index.js";
 
+const formatDatabaseDate = (date) => {
+    const formattedDate = date.toISOString().replace('T', ' ').replace('Z', '');
+    return formattedDate.slice(0, formattedDate.length - 1); // Remove the 'Z' character
+};
+
 const allCoursesStats = async (before: Date, after: Date) => {
     // @ts-expect-error Fix Prisma BigInt Serialize
     BigInt.prototype.toJSON = function () {
@@ -22,7 +27,7 @@ const allCoursesStats = async (before: Date, after: Date) => {
         FROM "Course" c
                  JOIN "Question" q ON c.id = q."courseId"
                  JOIN "Submission" s ON q.ID = s."questionId"
-        WHERE c.published = true AND s."timeStarted" BETWEEN '${before.toISOString()}' AND '${after.toISOString()}'
+        WHERE c.published = true AND s."timeStarted" BETWEEN '${formatDatabaseDate(before)}' AND '${formatDatabaseDate(after)}'
         GROUP BY c.id;
     `;
 
@@ -103,7 +108,7 @@ const courseStats = async (courseId: string, before: Date, after: Date) => {
         FROM "Course" c
                  JOIN "Question" q ON c.id = q."courseId"
                  JOIN "Submission" s ON q.ID = s."questionId"
-        WHERE c.id = ${courseId} AND c.published = true AND s."timeStarted" BETWEEN '${before.toISOString()}' AND '${after.toISOString()}'
+        WHERE c.id = ${courseId} AND c.published = true AND s."timeStarted" BETWEEN '${formatDatabaseDate(before)}' AND '${formatDatabaseDate(after)}'
         group by c.id;
     `;
 
