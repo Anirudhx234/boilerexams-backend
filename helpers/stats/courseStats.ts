@@ -22,7 +22,7 @@ const allCoursesStats = async (before: Date, after: Date) => {
         FROM "Course" c
                  JOIN "Question" q ON c.id = q."courseId"
                  JOIN "Submission" s ON q.ID = s."questionId"
-        WHERE c.published = true
+        WHERE c.published = true AND s."timeStarted" BETWEEN ${before.toISOString()} AND ${after.toISOString()}
         GROUP BY c.id;
     `;
 
@@ -37,7 +37,7 @@ const allCoursesStats = async (before: Date, after: Date) => {
                (SELECT array_agg(DISTINCT T.name) AS "topicNames" FROM "Topic" T INNER JOIN "_QuestionToTopic" QT ON QT."B" = T.ID  WHERE QT."A" = Q.ID) AS "topicNames"
         FROM "Question" Q
                  INNER JOIN "Submission" S ON Q.ID = S."questionId"
-        WHERE Q.published = true
+        WHERE Q.published = true AND s."timeStarted" BETWEEN ${before.toISOString()} AND ${after.toISOString()}
         GROUP BY Q."courseId", Q.ID;
     `;
 
@@ -103,7 +103,7 @@ const courseStats = async (courseId: string, before: Date, after: Date) => {
         FROM "Course" c
                  JOIN "Question" q ON c.id = q."courseId"
                  JOIN "Submission" s ON q.ID = s."questionId"
-        WHERE c.id = ${courseId} AND c.published = true
+        WHERE c.id = ${courseId} AND c.published = true AND s."timeStarted" BETWEEN ${before.toISOString()} AND ${after.toISOString()}
         group by c.id;
     `;
 
@@ -123,7 +123,7 @@ const courseStats = async (courseId: string, before: Date, after: Date) => {
                (SELECT array_agg(DISTINCT T.name) AS "topicNames" FROM "Topic" T INNER JOIN "_QuestionToTopic" QT ON QT."B" = T.ID  WHERE QT."A" = Q.ID) AS "topicNames"
         FROM "Question" Q
                  INNER JOIN "Submission" S ON Q.ID = S."questionId"
-        WHERE Q."courseId" = ${course.id}
+        WHERE Q."courseId" = ${course.id} AND s."timeStarted" BETWEEN ${before.toISOString()} AND ${after.toISOString()}
         GROUP BY Q.ID;
     `;
 
