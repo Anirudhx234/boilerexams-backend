@@ -6,7 +6,6 @@ import { isWhitelisted } from "./auth.js";
 const authHandler = asyncWrapper(async (req: Request, _res: Response, next: NextFunction) => {
     if (isWhitelisted(req)) return next();
     if (req.user) {
-        // @ts-expect-error _garbage is real
         req.session._garbage = Date();
         req.session.touch();
         if (["ADMIN", "CONTENT", "PROFESSOR"].includes(req.user.role)) {
