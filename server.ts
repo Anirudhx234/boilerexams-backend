@@ -42,13 +42,13 @@ app.use(cors(corsOptions));
 app.use(cookieParser());
 app.use(express.json());
 
-const sessionOptions = {
+const sessionOptions: SessionOptionsExtended = {
   store: new (connect(session))({
     conString: process.env.DATABASE_URL,
     tableName: 'Session',
     createTableIfMissing: true
   }),
-  secret: process.env.SESSION_SECRET,
+  secret: process.env.SESSION_SECRET || "",
   resave: false,
   saveUninitialized: false,
   cookie: { httpOnly: true, sameSite: "strict", secure: false, maxAge: 7 * 24 * 60 * 60 * 1000 },
@@ -66,7 +66,6 @@ if (process.env.NODE_ENV === "development") {
   sessionOptions.name = "sessionIdDev";
 }
 
-// @ts-expect-error sessionOptions don't match type
 app.use(session(sessionOptions));
 app.use(passport.initialize());
 app.use(passport.session());
