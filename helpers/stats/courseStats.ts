@@ -12,8 +12,9 @@ const allCoursesStats = async (before: Date, after: Date) => {
         const int = Number.parseInt(this.toString());
         return int ?? this.toString();
     };
-
-    const courses: CourseQueryData[] = await prisma.$queryRaw`
+    const bString = formatDatabaseDate(before);
+    const bdate = new Date(bString);
+    const courses: CourseQueryData[] = await prisma.$queryRawUnsafe(`
         SELECT
             c.id AS "id",
             c.name AS "name",
@@ -27,9 +28,9 @@ const allCoursesStats = async (before: Date, after: Date) => {
         FROM "Course" c
                  JOIN "Question" q ON c.id = q."courseId"
                  JOIN "Submission" s ON q.ID = s."questionId"
-        WHERE c.published = true AND s."timeStarted" BETWEEN ${formatDatabaseDate(before)}::timestamp AND ${formatDatabaseDate(after)}::timestamp
+        WHERE CAST((s."timeStarted" >= $1) AS BOOLEAN)
         GROUP BY c.id;
-    `;
+    `, bdate);
 
     const questionResults: QuestionQueryData[] = await prisma.$queryRaw`
         SELECT Q."courseId" AS "courseId",
@@ -42,7 +43,7 @@ const allCoursesStats = async (before: Date, after: Date) => {
                (SELECT array_agg(DISTINCT T.name) AS "topicNames" FROM "Topic" T INNER JOIN "_QuestionToTopic" QT ON QT."B" = T.ID  WHERE QT."A" = Q.ID) AS "topicNames"
         FROM "Question" Q
                  INNER JOIN "Submission" S ON Q.ID = S."questionId"
-        WHERE Q.published = true AND s."timeStarted"
+        WHERE Q.published = true
         GROUP BY Q."courseId", Q.ID;
     `;
 
@@ -108,7 +109,7 @@ const courseStats = async (courseId: string, before: Date, after: Date) => {
         FROM "Course" c
                  JOIN "Question" q ON c.id = q."courseId"
                  JOIN "Submission" s ON q.ID = s."questionId"
-        WHERE c.id = ${courseId} AND c.published = true AND s."timeStarted" BETWEEN ${formatDatabaseDate(before)}::timestamp AND ${formatDatabaseDate(after)}::timestamp
+        WHERE c.id = ${courseId} AND c.published = true AND (s."timeStarted" >= ${before})
         group by c.id;
     `;
 
@@ -128,7 +129,7 @@ const courseStats = async (courseId: string, before: Date, after: Date) => {
                (SELECT array_agg(DISTINCT T.name) AS "topicNames" FROM "Topic" T INNER JOIN "_QuestionToTopic" QT ON QT."B" = T.ID  WHERE QT."A" = Q.ID) AS "topicNames"
         FROM "Question" Q
                  INNER JOIN "Submission" S ON Q.ID = S."questionId"
-        WHERE Q."courseId" = ${course.id} AND s."timeStarted"
+        WHERE Q."courseId" = ${course.id} 
         GROUP BY Q.ID;
     `;
 
