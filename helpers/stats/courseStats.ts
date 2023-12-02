@@ -31,7 +31,9 @@ const allCoursesStats = async (before: Date, after: Date) => {
         WHERE c."published" = true
         GROUP BY c.id;
     `;
-
+    if(before.getTime() == 0) {
+        before.setTime(Date.now());
+    }
     const questionResults: QuestionQueryData[] = await prisma.$queryRaw`
         SELECT Q."courseId" AS "courseId",
                Q.ID AS "id",

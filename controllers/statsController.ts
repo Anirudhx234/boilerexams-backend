@@ -103,8 +103,8 @@ const getCourseStats = async (req: Request, res: Response) => {
 };
 
 const getCourseStatsAll = async (req: Request, res: Response) => {
-    const before = req.query.startAt ? Number.parseInt(<string>req.query.startAt) : Date.now();
-    const after = req.query.endAt ? Number.parseInt(<string>req.query.endAt) : 0;
+    const before = req.query.before ? Number.parseInt(<string>req.query.before) : Date.now();
+    const after = req.query.after ? Number.parseInt(<string>req.query.after) : 0;
     const stats = await allCoursesStats(new Date(before), new Date(after));
 
     res.status(200).json(stats);
