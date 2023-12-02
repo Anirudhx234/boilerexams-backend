@@ -128,8 +128,8 @@ const courseStats = async (courseId: string, before: Date, after: Date) => {
                (SELECT array_agg(DISTINCT T."id") AS "topicIds" FROM "Topic" T INNER JOIN "_QuestionToTopic" QT ON QT."B" = T.ID  WHERE QT."A" = Q.ID) AS "topicIds",
                (SELECT array_agg(DISTINCT T.name) AS "topicNames" FROM "Topic" T INNER JOIN "_QuestionToTopic" QT ON QT."B" = T.ID  WHERE QT."A" = Q.ID) AS "topicNames"
         FROM "Question" Q
-                 INNER JOIN "Submission" S ON Q.ID = S."questionId" AND (s."timeStarted" >= ${after}) AND (s."timeStarted" >= ${before})
-        WHERE Q."courseId" = ${course.id} 
+                 INNER JOIN "Submission" S ON Q.ID = S."questionId" 
+        WHERE Q."courseId" = ${course.id} AND (s."timeStarted" >= ${after}) AND (s."timeStarted" >= ${before})
         GROUP BY Q.ID;
     `;
 
