@@ -109,7 +109,7 @@ const courseStats = async (courseId: string, before: Date, after: Date) => {
         FROM "Course" c
                  JOIN "Question" q ON c.id = q."courseId"
                  JOIN "Submission" s ON q.ID = s."questionId"
-        WHERE c.id = ${courseId} AND c.published = true 
+        WHERE CONCAT(c."abbreviation", CAST(c."number" as VARCHAR)) = ${courseId} AND c.published = true 
         group by c.id;
     `;
     console.log(before + " | " + after);
