@@ -28,7 +28,7 @@ const allCoursesStats = async (before: Date, after: Date) => {
         FROM "Course" c
                  JOIN "Question" q ON c.id = q."courseId"
                  JOIN "Submission" s ON q.ID = s."questionId"
-        WHERE (s."timeStarted" >= ${after}) AND (s."timeStarted" >= ${before})
+        WHERE c."published" = true
         GROUP BY c.id;
     `;
 
@@ -43,7 +43,7 @@ const allCoursesStats = async (before: Date, after: Date) => {
                (SELECT array_agg(DISTINCT T.name) AS "topicNames" FROM "Topic" T INNER JOIN "_QuestionToTopic" QT ON QT."B" = T.ID  WHERE QT."A" = Q.ID) AS "topicNames"
         FROM "Question" Q
                  INNER JOIN "Submission" S ON Q.ID = S."questionId"
-        WHERE Q.published = true
+        WHERE Q.published = true AND (s."timeStarted" BETWEEN SYMMETRIC ${after} AND ${before})
         GROUP BY Q."courseId", Q.ID;
     `;
 
