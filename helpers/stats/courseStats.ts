@@ -14,7 +14,7 @@ const allCoursesStats = async (before: Date, after: Date) => {
     };
     const bString = formatDatabaseDate(before);
     const bdate = new Date(bString);
-    const courses: CourseQueryData[] = await prisma.$queryRawUnsafe(`
+    const courses: CourseQueryData[] = await prisma.$queryRaw`
         SELECT
             c.id AS "id",
             c.name AS "name",
@@ -28,9 +28,9 @@ const allCoursesStats = async (before: Date, after: Date) => {
         FROM "Course" c
                  JOIN "Question" q ON c.id = q."courseId"
                  JOIN "Submission" s ON q.ID = s."questionId"
-        WHERE CAST((s."timeStarted" >= $1) AS BOOLEAN)
+        WHERE (s."timeStarted" >= ${after}) AND (s."timeStarted" >= ${before})
         GROUP BY c.id;
-    `, bdate);
+    `;
 
     const questionResults: QuestionQueryData[] = await prisma.$queryRaw`
         SELECT Q."courseId" AS "courseId",
@@ -109,7 +109,7 @@ const courseStats = async (courseId: string, before: Date, after: Date) => {
         FROM "Course" c
                  JOIN "Question" q ON c.id = q."courseId"
                  JOIN "Submission" s ON q.ID = s."questionId"
-        WHERE c.id = ${courseId} AND c.published = true AND (s."timeStarted" >= ${before})
+        WHERE c.id = ${courseId} AND c.published = true AND (s."timeStarted" >= ${after}) AND (s."timeStarted" >= ${before})
         group by c.id;
     `;
 
