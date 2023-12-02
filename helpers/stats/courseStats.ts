@@ -112,7 +112,7 @@ const courseStats = async (courseId: string, before: Date, after: Date) => {
         WHERE CONCAT(c."abbreviation", CAST(c."number" as VARCHAR)) = ${courseId} AND c.published = true 
         group by c.id;
     `;
-    console.log(before + " | " + after);
+    console.log("after " + after + " | before " + before + "\n");
     const course = courses[0];
 
     if (!course) {
@@ -134,7 +134,6 @@ const courseStats = async (courseId: string, before: Date, after: Date) => {
         WHERE Q."courseId" = ${course.id} AND (s."timeStarted" BETWEEN SYMMETRIC ${after} AND ${before})
         GROUP BY Q.ID;
     `;
-    console.log("q : " + questions);
     return {
         courseId: course.id,
         courseName: course.name,

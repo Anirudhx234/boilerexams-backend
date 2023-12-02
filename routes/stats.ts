@@ -16,6 +16,10 @@ app.get("/", cache(600), asyncWrapper(getGeneralStats));
 
 app.get("/courses/all", cache(600), asyncWrapper(getCourseStatsAll));
 
+//app.get("/courses/:courseId/after/:after/before/:before", cache(600), asyncWrapper(getCourseStats));
+
+//app.get("/courses/:courseId/after/:after/", cache(600), asyncWrapper(getCourseStats));
+
 app.get("/courses/:courseId", cache(600), asyncWrapper(getCourseStats));
 
 app.get("/courses/:courseId/exams/all", cache(600), asyncWrapper(getCourseExamsStats));
