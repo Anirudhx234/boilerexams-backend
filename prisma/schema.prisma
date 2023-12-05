@@ -73,6 +73,7 @@ model Question {
   submissions          Submission[]
   reports              Report[]
   videoFeedback        VideoFeedback[]
+  disableRandomAnswers Boolean         @default(false)
 }
 
 model AnswerChoice {
