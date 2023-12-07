@@ -6,10 +6,9 @@
     "lib": ["esnext"],
     "allowSyntheticDefaultImports": true,
     "noImplicitAny": false,
-    "moduleResolution": "node",
     "forceConsistentCasingInFileNames": true,
     "composite": true,
-    "module": "ES2022",
+    "module": "NodeNext",
     "target": "ES2022",
     "typeRoots": ["./types"]
   }

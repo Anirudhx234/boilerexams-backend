@@ -1,7 +1,7 @@
 import prisma from "../libs/prisma.js";
 import { StudyMode } from "@prisma/client";
 import { Request, Response } from 'express';
-import { NotFoundError } from "../middleware/errors/index.js";
+import { APIError, NotFoundError } from "../middleware/errors/index.js";
 import { PurdueIoAPI } from "../services/purdue.io.js";
 import uploadFileToS3 from "../utils/uploadFileToS3.js";
 import hexModifier from "../utils/hexModifier.js";
@@ -15,8 +15,12 @@ const getCourseInfo = async (abbreviation: string, number: number) => {
 };
 
 const getStudyModes = async (modes: string[]) => {
-    for (let i = 0; i < modes.length; i++) {
-        modes[i] = StudyMode[modes[i].toUpperCase() as keyof typeof StudyMode];
+    try {
+        for (let i = 0; i < modes.length; i++) {
+            modes[i] = StudyMode[modes[i].toUpperCase() as keyof typeof StudyMode];
+        }
+    } catch (error) {
+        throw new APIError("Invalid study modes", 400);
     }
 };
 
