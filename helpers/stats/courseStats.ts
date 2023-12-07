@@ -14,6 +14,7 @@ const allCoursesStats = async (before: Date, after: Date) => {
     };
     const bString = formatDatabaseDate(before);
     const bdate = new Date(bString);
+
     const courses: CourseQueryData[] = await prisma.$queryRaw`
         SELECT
             c.id AS "id",
@@ -34,6 +35,7 @@ const allCoursesStats = async (before: Date, after: Date) => {
     if(before.getTime() == 0) {
         before.setTime(Date.now());
     }
+  
     const questionResults: QuestionQueryData[] = await prisma.$queryRaw`
         SELECT Q."courseId" AS "courseId",
                Q.ID AS "id",
@@ -89,7 +91,6 @@ const allCoursesStats = async (before: Date, after: Date) => {
     });
 };
 
-
 const courseStats = async (courseId: string, before: Date, after: Date) => {
     // @ts-expect-error Fix Prisma BigInt Serialize
     BigInt.prototype.toJSON = function () {
@@ -123,6 +124,7 @@ const courseStats = async (courseId: string, before: Date, after: Date) => {
     if(before.getTime() == 0) {
         before.setTime(Date.now());
     }
+
     const questions: QuestionQueryData[] = await prisma.$queryRaw`
         SELECT Q.ID AS "id",
                SUM(S."timeSpent") AS "totalTimeSpent",
@@ -136,6 +138,7 @@ const courseStats = async (courseId: string, before: Date, after: Date) => {
         WHERE Q."courseId" = ${course.id} AND (s."timeStarted" BETWEEN SYMMETRIC ${after} AND ${before})
         GROUP BY Q.ID;
     `;
+
     return {
         courseId: course.id,
         courseName: course.name,
