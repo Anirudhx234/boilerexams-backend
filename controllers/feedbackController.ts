@@ -9,26 +9,45 @@ import uploadFileToS3 from "../utils/uploadFileToS3.js";
 const getReport = async (req: Request, res: Response) => {
     const reportId = req.params.reportId;
 
-    const report = await prisma.report.findUnique({
-        where: {
-            id: reportId
-        },
-        include: {
-            question: {
-                include: {
-                    course: {
-                        include: {
-                            users: true
+    if (reportId == "all") {
+        const reports = await prisma.report.findMany({
+            include: {
+                question: {
+                    include: {
+                        course: {
+                            include: {
+                                users: true
+                            }
                         }
                     }
                 }
             }
-        }
-    });
+        });
 
-    if (!report) throw new NotFoundError("Report Not Found");
+        res.status(200).send(reports);
+    }
+    else {
+        const report = await prisma.report.findUnique({
+            where: {
+                id: reportId
+            },
+            include: {
+                question: {
+                    include: {
+                        course: {
+                            include: {
+                                users: true
+                            }
+                        }
+                    }
+                }
+            }
+        });
 
-    res.status(200).send(report);
+        if (!report) throw new NotFoundError("Report Not Found");
+
+        res.status(200).send(report);
+    }
 };
 
 const getVideoFeedbackByCourse = async (req: Request, res: Response) => {
