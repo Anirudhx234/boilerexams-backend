@@ -12,6 +12,12 @@ const getQuestion = async (req: Request, res: Response) => {
         },
         include: {
             topics: true,
+            exam: {
+                include: {
+                    semester: true,
+                }
+            },
+            course: true,
             answerChoices: {
                 orderBy: {
                     choiceIndex: 'asc'
@@ -30,7 +36,8 @@ const getQuestion = async (req: Request, res: Response) => {
                     image: true,
                     code: true
                 }
-            }
+            },
+            submissions: true
         }
     });
     if (!question) {
