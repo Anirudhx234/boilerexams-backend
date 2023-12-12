@@ -347,9 +347,6 @@ const createVideoFeedbackReport = async (req: Request, res: Response) => {
         }
     });
 
-    const videoFeedback = await prisma.videoFeedback.findMany({});
-
-    await DiscordAPI.createVideoFeedback(videoFeedback);
     res.status(200).send(feedback);
 };
 
