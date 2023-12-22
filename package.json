@@ -15,7 +15,8 @@
     "dev:remote": "pm2 start config/ecosystem.config.cjs --only \"development\"",
     "starthotfix": "cross-env NODE_ENV=development node --loader ts-node/esm server.ts",
     "start": "cross-env NODE_ENV=production ts-node-esm server.ts",
-    "prod": "pm2 start config/ecosystem.config.cjs --only \"production\""
+    "prod": "pm2 start config/ecosystem.config.cjs --only \"production\"",
+    "bun": "bun server.ts"
   },
   "type": "module",
   "keywords": [],

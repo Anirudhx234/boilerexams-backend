@@ -121,19 +121,30 @@ const createQuestion = async (req: Request, res: Response) => {
 
 const updateQuestion = async (req: Request, res: Response) => {
     const { courseId, examId, questionId } = req.params;
-    const { topics, number, body, answerChoices, correctChoiceIndices, solutionVideoLink, explanationText, resourceIds } = req.body;
+    const {
+        topics,
+        number,
+        body,
+        answerChoices,
+        correctChoiceIndices,
+        solutionVideoLink,
+        explanationText,
+        resources,
+        resourceIds,
+    } = req.body;
 
     await prisma.course.update({
         where: {
-            id: courseId
+            id: courseId,
         },
         data: {
             topics: {
                 connectOrCreate: topics.map((topic) => ({
-                    where: { name: topic }, create: { name: topic }
-                }))
-            }
-        }
+                    where: { name: topic },
+                    create: { name: topic },
+                })),
+            },
+        },
     });
 
     const existingAnswerChoices = answerChoices.filter((answerChoice) => {
@@ -142,25 +153,25 @@ const updateQuestion = async (req: Request, res: Response) => {
 
     const question = await prisma.question.update({
         where: {
-            id: questionId
+            id: questionId,
         },
         data: {
             courseId: courseId,
             examId: examId,
             topics: {
-                set: topics.map((topic: string) => ({ name: topic }))
+                set: topics.map((topic: string) => ({ name: topic })),
             },
             number: Number(number),
             body: body,
             answerChoices: {
                 deleteMany: {
                     id: {
-                        notIn: existingAnswerChoices.map((answerChoice) => answerChoice.id)
-                    }
+                        notIn: existingAnswerChoices.map((answerChoice) => answerChoice.id),
+                    },
                 },
                 upsert: answerChoices.map((answerChoice) => ({
                     where: {
-                        id: answerChoice.id || ""
+                        id: answerChoice.id || "",
                     },
                     update: {
                         choiceIndex: Number(answerChoice.choiceIndex),
@@ -168,20 +179,24 @@ const updateQuestion = async (req: Request, res: Response) => {
                         resources: {
                             deleteMany: {
                                 id: {
-                                    notIn: answerChoice.resourceIds
-                                }
+                                    notIn: answerChoice.resourceIds,
+                                },
                             },
-                            connect: answerChoice.resourceIds.map((resourceId) => ({ id: resourceId }))
-                        }
+                            connect: answerChoice.resourceIds.map((resourceId) => ({
+                                id: resourceId,
+                            })),
+                        },
                     },
                     create: {
                         choiceIndex: Number(answerChoice.choiceIndex),
                         body: answerChoice.body,
                         resources: {
-                            connect: answerChoice.resourceIds.map((resourceId) => ({ id: resourceId }))
-                        }
-                    }
-                }))
+                            connect: answerChoice.resourceIds.map((resourceId) => ({
+                                id: resourceId,
+                            })),
+                        },
+                    },
+                })),
             },
             correctChoiceIndices: correctChoiceIndices,
             solutionVideoLink: solutionVideoLink,
@@ -189,34 +204,41 @@ const updateQuestion = async (req: Request, res: Response) => {
             resources: {
                 deleteMany: {
                     id: {
-                        notIn: resourceIds
-                    }
+                        notIn: resourceIds,
+                    },
                 },
-                connect: resourceIds.map((resourceId) => ({ id: resourceId }))
-            }
+                // connect: resourceIds.map((resourceId) => ({ id: resourceId }))
+                upsert: resources.map((resource) => ({
+                    where: {
+                        id: resource.id ?? "",
+                    },
+                    update: resource,
+                    create: resource,
+                })),
+            },
         },
         include: {
             topics: true,
             answerChoices: {
                 orderBy: {
-                    choiceIndex: 'asc'
+                    choiceIndex: "asc",
                 },
                 include: {
                     resources: {
                         include: {
                             image: true,
-                            code: true
-                        }
-                    }
-                }
+                            code: true,
+                        },
+                    },
+                },
             },
             resources: {
                 include: {
                     image: true,
-                    code: true
-                }
-            }
-        }
+                    code: true,
+                },
+            },
+        },
     });
     res.status(200).send(question);
 };
