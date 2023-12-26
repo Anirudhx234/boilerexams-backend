@@ -1,0 +1,6 @@
+version: "3.8"
+
+include:
+  - ./config/judge0/docker-compose.yml
+  - ./config/umami/docker-compose.yml
+  - ./config/nginx/docker-compose.yml
