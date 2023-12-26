@@ -14,12 +14,12 @@ services:
       - ./certbot/www:/var/www/certbot
     extra_hosts:
       - "host.docker.internal:host-gateway"
-  
-  certbot:
-    container_name: certbot
-    image: certbot/certbot:latest
-    volumes:
-      - ./certbot/conf/:/etc/letsencrypt
-      - ./certbot/www/:/var/www/certbot
-    command: certonly --webroot -w /var/www/certbot --force-renewal --email boilerexams@gmail.com -d api.boilerexams.com -d analytics.boilerexams.com --agree-tos
+  # TODO: Fix certificate location
+  # certbot:
+  #   container_name: certbot
+  #   image: certbot/certbot:latest
+  #   volumes:
+  #     - ./certbot/conf/:/etc/letsencrypt
+  #     - ./certbot/www/:/var/www/certbot
+  #   command: certonly --webroot -w /var/www/certbot --force-renewal --email boilerexams@gmail.com -d api.boilerexams.com -d analytics.boilerexams.com --agree-tos
     
