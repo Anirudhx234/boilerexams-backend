@@ -6,7 +6,7 @@ on:
       - "dev"
 
 jobs:
-  build:
+  deploy:
     runs-on: self-hosted
     steps:
       - name: Checkout
@@ -25,10 +25,6 @@ jobs:
           file: ./Dockerfile.development
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/boilerexams-backend:development
-
-  deploy:
-    runs-on: self-hosted
-    steps:
       - name: Pull Image and Start Container
         working-directory: /home/ec2-user/docker
         run: |
