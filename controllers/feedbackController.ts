@@ -8,7 +8,7 @@ import uploadFileToS3 from "../utils/uploadFileToS3.js";
 
 const getReport = async (req: Request, res: Response) => {
     const reportId = req.params.reportId;
-    
+
     if (reportId == "all") {
         const reports = await prisma.report.findMany({
             include: {
@@ -43,9 +43,8 @@ const getReport = async (req: Request, res: Response) => {
                 }
             }
         });
-
         if (!report) throw new NotFoundError("Report Not Found");
-
+  
         res.status(200).send(report);
     }
 };
@@ -347,9 +346,6 @@ const createVideoFeedbackReport = async (req: Request, res: Response) => {
         }
     });
 
-    const videoFeedback = await prisma.videoFeedback.findMany({});
-
-    await DiscordAPI.createVideoFeedback(videoFeedback);
     res.status(200).send(feedback);
 };
 

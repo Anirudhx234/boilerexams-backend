@@ -12,7 +12,7 @@ import { APIError } from './middleware/errors/index.js';
 import discordPassport from './middleware/auth/passport/discordPassport.js';
 import googlePassport from './middleware/auth/passport/googlePassport.js';
 
-dotenv.config({ path: `./.env.${process.env.NODE_ENV}` });
+// dotenv.config({ path: `./.env.${process.env.NODE_ENV}` });
 
 const app = express();
 
