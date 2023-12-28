@@ -2,13 +2,12 @@ name: Deploy API to EC2 - Production
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
 
   workflow_dispatch:
 
 jobs:
   deploy:
-
     runs-on: self-hosted
 
     strategy:

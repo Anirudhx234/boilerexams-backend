@@ -6,10 +6,8 @@ services:
     image: ghcr.io/umami-software/umami:postgresql-latest
     ports:
       - "3000:3000"
-    environment:
-      DATABASE_URL: ${ANALYTICS_DATABASE_URL}
-      DATABASE_TYPE: postgresql
-      APP_SECRET: ${ANALYTICS_SECRET}
+    env_file:
+      - ../../.env.analytics
   # depends_on:
   #   umami-db:
   #     condition: service_healthy
