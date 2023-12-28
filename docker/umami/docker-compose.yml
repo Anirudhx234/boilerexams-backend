@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   umami:
@@ -8,9 +8,9 @@ services:
       - "3000:3000"
     env_file:
       - ../../.env.analytics
-  # depends_on:
-  #   umami-db:
-  #     condition: service_healthy
+    # depends_on:
+    #   umami-db:
+    #     condition: service_healthy
     restart: always
     healthcheck:
       test: ["CMD-SHELL", "curl http://localhost:3000/api/heartbeat"]
