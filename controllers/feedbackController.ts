@@ -8,21 +8,6 @@ import uploadFileToS3 from "../utils/uploadFileToS3.js";
 
 const getReport = async (req: Request, res: Response) => {
     const reportId = req.params.reportId;
-    
-    if (reportId == "all") {
-        const reports = await prisma.report.findMany({
-            include: {
-                question: {
-                    include: {
-                        course: {
-                            include: {
-                                users: true
-                            }
-                        }
-                    }
-                }
-            }
-        });
 
     if (reportId == "all") {
         const reports = await prisma.report.findMany({
