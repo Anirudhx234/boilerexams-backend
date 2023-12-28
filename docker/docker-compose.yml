@@ -14,6 +14,8 @@ services:
   #  restart: always
   #  ports:
   #   - "8080:8080"
+  #  extra_hosts:
+  #    - "host.docker.internal:host-gateway"
   development:
     container_name: development
     image: anirudhx234/boilerexams-backend:development
@@ -21,4 +23,6 @@ services:
       - ../.env.development
     restart: always
     ports:
-     - "8081:8081"
+      - "8081:8081"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
