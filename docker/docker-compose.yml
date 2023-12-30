@@ -14,7 +14,6 @@ services:
     restart: always
     ports:
       - "8080:8080"
-    network_mode: host
 
   development:
     container_name: development
@@ -24,4 +23,3 @@ services:
     restart: always
     ports:
       - "8081:8081"
-    network_mode: host
