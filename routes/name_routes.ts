@@ -39,7 +39,12 @@ app.get("/courses/:courseAbbrev/topics", generalLimiter, sendPublished, asyncWra
 app.get("/courses/:courseAbbrev/topics/questions", generalLimiter, sendPublished, asyncWrapper(getCourseTopicsWithBasicQuestionInfo));
 
 // All exams with semester (no questions)
-app.get("/courses/:courseAbbrev/exams", generalLimiter, sendPublished, asyncWrapper(getCourseExams));
+app.get(
+  "/courses/:courseAbbrev/exams",
+  generalLimiter,
+  sendPublished,
+  asyncWrapper(getCourseExamsWithBasicQuestionInfo)
+);
 
 // All exams with question ids and numbers
 app.get("/courses/:courseAbbrev/exams/questions", generalLimiter, sendPublished, asyncWrapper(getCourseExamsWithBasicQuestionInfo));
