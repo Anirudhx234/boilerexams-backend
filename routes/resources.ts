@@ -8,7 +8,6 @@ import {
     updateCodeResource
 } from "../controllers/resourceController.js";
 import asyncWrapper from "../middleware/wrappers/asyncWrapper.js";
-import authHandler from '../middleware/auth/authHandler.js';
 import upload from "../middleware/multer/image.js";
 
 const app = express();

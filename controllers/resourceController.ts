@@ -81,14 +81,14 @@ const createImageResourceFromLink = async (req: Request, res: Response) => {
 };
 
 const createCodeResource = async (req: Request, res: Response) => {
-    const { language, code } = req.body;
+    const { language, content } = req.body;
     const resource = await prisma.resource.create({
         data: {
             type: ResourceType.CODE,
             code: {
                 create: {
                     language: Language[language.toUpperCase() as keyof typeof Language],
-                    code: code
+                    content: content
                 }
             }
         },
@@ -101,7 +101,7 @@ const createCodeResource = async (req: Request, res: Response) => {
 
 const updateCodeResource = async (req: Request, res: Response) => {
     const { resourceId } = req.params;
-    const { language, code } = req.body;
+    const { language, content } = req.body;
     const resource = await prisma.resource.update({
         where: {
             id: resourceId
@@ -110,7 +110,7 @@ const updateCodeResource = async (req: Request, res: Response) => {
             code: {
                 update: {
                     language: Language[language.toUpperCase() as keyof typeof Language],
-                    code: code
+                    content: content
                 }
             }
         },

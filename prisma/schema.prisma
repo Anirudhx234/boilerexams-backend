@@ -110,7 +110,7 @@ model Image {
 model Code {
   id         String   @id @default(uuid())
   language   Language
-  code       String
+  content    String
   resourceId String   @unique
   resource   Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
 }
