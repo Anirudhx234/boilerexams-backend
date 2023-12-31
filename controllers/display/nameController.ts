@@ -444,7 +444,8 @@ const getCourseExamWithBasicQuestionInfo = async (req: Request, res: Response) =
                 select: {
                     id: true,
                     number: true,
-                    topics: true
+                    topics: true,
+                    published: true
                 }
             }
         }
