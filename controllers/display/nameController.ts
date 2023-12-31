@@ -393,6 +393,53 @@ const getCourseTopicWithFullQuestionInfo = async (req: Request, res: Response) =
     res.status(200).send(topic);
 };
 
+// Full question information for specific topic
+const getCourseTopicWithBasicQuestionInfo = async (req: Request, res: Response) => {
+    const { courseAbbrev, topicName } = req.params;
+    const { abbreviation, number } = validCourseRegex(courseAbbrev);
+
+    const topic = await prisma.topic.findUnique({
+      where: {
+        name: topicName,
+      },
+      include: {
+        questions: {
+          where: {
+            OR: req.published,
+          },
+          orderBy: {
+            number: "asc",
+          },
+          select: {
+            id: true,
+            number: true,
+            topics: true,
+            published: true,
+          },
+        },
+      },
+    });
+    if (!topic) {
+        throw new NotFoundError("Topic not found");
+    }
+
+    const promises: Promise<number[]>[] = [];
+
+    for (const question of topic.questions) {
+        promises.push(answerChoiceStats(question.id));
+    }
+
+    const resolved = await Promise.all(promises);
+    for (let i = 0; i < resolved.length; i++) {
+        // @ts-expect-error I promise it exists
+        // Extend later
+        topic.questions[i].answerChoiceStats = resolved[i];
+    }
+
+    res.status(200).send(topic);
+};
+
+
 // All questions with id, number, and topics for an exam
 const getCourseExamWithBasicQuestionInfo = async (req: Request, res: Response) => {
     const { courseAbbrev, season, year, examNumber } = req.params;
@@ -559,6 +606,7 @@ export {
     getCourseExams,
     getCourseExamsWithBasicQuestionInfo,
     getCourseTopicWithFullQuestionInfo,
+    getCourseTopicWithBasicQuestionInfo,
     getCourseExamWithBasicQuestionInfo,
-    getCourseExamWithFullQuestionInfo
+    getCourseExamWithFullQuestionInfo,
 };

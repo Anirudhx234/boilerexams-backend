@@ -47,6 +47,9 @@ app.get("/courses/:courseAbbrev/exams/questions", generalLimiter, sendPublished,
 // Full question information for specific topic
 app.get("/courses/:courseAbbrev/topics/:topicName/questions", generalLimiter, sendPublished, asyncWrapper(getCourseTopicWithFullQuestionInfo));
 
+// All questions with id, number, and topics for a topic
+app.get("/courses/:courseAbbrev/topics/:topicName", generalLimiter, sendPublished, asyncWrapper(getCourseTopicsWithBasicQuestionInfo));
+
 // All questions with id, number, and topics for an exam
 app.get("/courses/:courseAbbrev/exams/:season-:year-:examNumber", generalLimiter, sendPublished, asyncWrapper(getCourseExamWithBasicQuestionInfo));
 
