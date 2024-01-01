@@ -321,6 +321,46 @@ const getCourseExamsWithBasicQuestionInfo = async (req: Request, res: Response) 
     res.status(200).send(sortedExams);
 };
 
+// Basic question information for specific topic
+const getCourseTopicWithBasicQuestionInfo = async (req: Request, res: Response) => {
+    const { courseAbbrev, topicName } = req.params;
+    const { abbreviation, number } = validCourseRegex(courseAbbrev);
+
+    const topic = await prisma.topic.findUnique({
+        where: {
+            name: topicName,
+        },
+        include: {
+            questions: {
+                where: {
+                    OR: req.published,
+                },
+                orderBy: {
+                    number: "asc",
+                },
+                select: {
+                    id: true,
+                    number: true,
+                    topics: true,
+                    published: true,
+                },
+            },
+        },
+    });
+    if (!topic) {
+        throw new NotFoundError("Topic not found");
+    }
+
+    const stats = await answerChoiceStats(topic.questions.map((question) => question.id));
+    for (let i = 0; i < stats.length; i++) {
+        // @ts-expect-error I promise it exists
+        // Extend later
+        topic.questions[i].answerChoiceStats = stats[i];
+    }
+
+    res.status(200).send(topic);
+};
+
 // Full question information for specific topic
 const getCourseTopicWithFullQuestionInfo = async (req: Request, res: Response) => {
     const { courseAbbrev, topicName } = req.params;
@@ -376,6 +416,7 @@ const getCourseTopicWithFullQuestionInfo = async (req: Request, res: Response) =
         throw new NotFoundError("Topic not found");
     }
 
+    /* OLD METHOD USING PRISMA ONLY
     const promises: Promise<number[]>[] = [];
 
     // @ts-expect-error topic.questions doesn't exist? Watch me iterate anyway
@@ -384,61 +425,16 @@ const getCourseTopicWithFullQuestionInfo = async (req: Request, res: Response) =
     }
 
     const resolved = await Promise.all(promises);
-    for (let i = 0; i < resolved.length; i++) {
-        // @ts-expect-error I promise it exists
-        // Extend later
-        topic.questions[i].answerChoiceStats = resolved[i];
-    }
+    */
+    // @ts-expect-error
 
+    const stats = await answerChoiceStats(topic.questions.map((question) => question.id));
+    for (let i = 0; i < stats.length; i++) {
+        // @ts-expect-error Extend Later
+        topic.questions[i].answerChoiceStats = stats[i];
+    }
     res.status(200).send(topic);
 };
-
-// Full question information for specific topic
-const getCourseTopicWithBasicQuestionInfo = async (req: Request, res: Response) => {
-    const { courseAbbrev, topicName } = req.params;
-    const { abbreviation, number } = validCourseRegex(courseAbbrev);
-
-    const topic = await prisma.topic.findUnique({
-      where: {
-        name: topicName,
-      },
-      include: {
-        questions: {
-          where: {
-            OR: req.published,
-          },
-          orderBy: {
-            number: "asc",
-          },
-          select: {
-            id: true,
-            number: true,
-            topics: true,
-            published: true,
-          },
-        },
-      },
-    });
-    if (!topic) {
-        throw new NotFoundError("Topic not found");
-    }
-
-    const promises: Promise<number[]>[] = [];
-
-    for (const question of topic.questions) {
-        promises.push(answerChoiceStats(question.id));
-    }
-
-    const resolved = await Promise.all(promises);
-    for (let i = 0; i < resolved.length; i++) {
-        // @ts-expect-error I promise it exists
-        // Extend later
-        topic.questions[i].answerChoiceStats = resolved[i];
-    }
-
-    res.status(200).send(topic);
-};
-
 
 // All questions with id, number, and topics for an exam
 const getCourseExamWithBasicQuestionInfo = async (req: Request, res: Response) => {
@@ -581,16 +577,20 @@ const getCourseExamWithFullQuestionInfo = async (req: Request, res: Response) =>
         throw new NotFoundError("Exam not found");
     }
 
+    /* OLD METHOD USING PRISMA ONLY
     const promises: Promise<number[]>[] = [];
 
     for (const question of exam.questions) {
         promises.push(answerChoiceStats(question.id));
+        //promises.push(newStats(question.id, question.answerChoices.map((choice) => choice.choiceIndex)));
     }
 
     const resolved = await Promise.all(promises);
-    for (let i = 0; i < resolved.length; i++) {
+    */
+    const stats = await answerChoiceStats(exam.questions.map((question) => question.id));
+    for (let i = 0; i < stats.length; i++) {
         // @ts-expect-error Extend Later
-        exam.questions[i].answerChoiceStats = resolved[i];
+        exam.questions[i].answerChoiceStats = stats[i];
     }
 
     res.status(200).send(exam);
@@ -605,8 +605,8 @@ export {
     getCourseTopicsWithBasicQuestionInfo,
     getCourseExams,
     getCourseExamsWithBasicQuestionInfo,
-    getCourseTopicWithFullQuestionInfo,
     getCourseTopicWithBasicQuestionInfo,
+    getCourseTopicWithFullQuestionInfo,
     getCourseExamWithBasicQuestionInfo,
     getCourseExamWithFullQuestionInfo,
 };

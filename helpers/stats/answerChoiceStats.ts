@@ -1,5 +1,37 @@
 import prisma from "../../libs/prisma.js";
+import _ from 'lodash';
+import { Prisma } from '@prisma/client';
 
+const answerChoiceStats = async (questionIds: string[]) => {
+    const stats: any = await prisma.$queryRaw`
+        SELECT
+            q.id AS "questionId",
+            COUNT(s.id) AS "submissionCount"
+        FROM
+            "Question" q
+        LEFT JOIN
+            "AnswerChoice" ac ON q.id = ac."questionId"
+        LEFT JOIN
+            "Submission" s ON q.id = s."questionId" AND ac."choiceIndex" = ANY(s."selectedChoiceIndices")
+        WHERE
+            q.id IN (${Prisma.join(questionIds)})
+        GROUP BY
+            q.id, ac.id
+        ORDER BY
+            ARRAY_POSITION(ARRAY[${Prisma.join(questionIds)}]::text[], q."id"), ac."choiceIndex" ASC;
+    `;
+
+    const rawStats = _.chain(stats)
+        .groupBy('questionId')
+        .map(groupedItems => _.map(groupedItems, 'submissionCount').map(submissionCount => Number(submissionCount)))
+        .value();
+
+    return rawStats;
+};
+
+export default answerChoiceStats;
+
+/* OLD METHOD USING PRISMA ONLY
 const answerChoiceStats = async (questionId: string) => {
     const submissions = await prisma.submission.findMany({
         where: {
@@ -22,5 +54,4 @@ const answerChoiceStats = async (questionId: string) => {
     });
     return answerStats;
 };
-
-export default answerChoiceStats;
+*/

@@ -173,7 +173,7 @@ const getQuestionStats = async (req: Request, res: Response) => {
 
     const mainStats = await questionStats(questionId);
 
-    const answerStats = await answerChoiceStats(questionId);
+    const answerStats = await answerChoiceStats([questionId]);
 
     const stats = {
         questionStats: mainStats,
