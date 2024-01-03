@@ -2,22 +2,24 @@ import prisma from "../libs/prisma.js";
 import { Request, Response } from 'express';
 import { APIError, NotFoundError } from "../middleware/errors/index.js";
 import msToDate from "../utils/msToDate.js";
-import answerChoiceStats from "../helpers/stats/answerChoiceStats.js";
+import answerChoiceStats from "../helpers/stats/single.answerChoiceStats.js";
 
 const getQuestion = async (req: Request, res: Response) => {
     const { questionId } = req.params;
+
     const question = await prisma.question.findFirst({
         where: {
-            id: questionId
+            id: questionId,
+            OR: req.published
         },
         include: {
+            course: true,
             topics: true,
             exam: {
                 include: {
                     semester: true,
                 }
             },
-            course: true,
             answerChoices: {
                 orderBy: {
                     choiceIndex: 'asc'
@@ -36,8 +38,7 @@ const getQuestion = async (req: Request, res: Response) => {
                     image: true,
                     code: true
                 }
-            },
-            submissions: true
+            }
         }
     });
     if (!question) {

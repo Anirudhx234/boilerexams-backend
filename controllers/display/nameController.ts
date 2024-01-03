@@ -4,7 +4,7 @@ import { Season } from '@prisma/client';
 import { Request, Response } from "express";
 import _ from 'lodash';
 import validCourseRegex from '../../utils/validCourseRegex.js';
-import answerChoiceStats from "../../helpers/stats/answerChoiceStats.js";
+import answerChoiceStats from "../../helpers/stats/multiple.answerChoiceStats.js";
 
 const questionSort = [
     {
@@ -197,16 +197,7 @@ const getCourseTopicsWithBasicQuestionInfo = async (req: Request, res: Response)
                         select: {
                             id: true,
                             number: true,
-                            exam: {
-                                include: {
-                                    semester: true,
-                                }
-                            },
-                            topics: {
-                                orderBy: {
-                                    name: 'asc'
-                                }
-                            },
+                            published: true
                         },
                         // @ts-expect-error orderBy type is wrong but who cares
                         orderBy: questionSort
@@ -222,6 +213,7 @@ const getCourseTopicsWithBasicQuestionInfo = async (req: Request, res: Response)
                         abbreviation: abbreviation.toUpperCase(),
                         number: Number(number)
                     },
+                    OR: req.published,
                     topics: {
                         none: {}
                     }
@@ -229,21 +221,17 @@ const getCourseTopicsWithBasicQuestionInfo = async (req: Request, res: Response)
                 select: {
                     id: true,
                     number: true,
-                    exam: {
-                        include: {
-                            semester: true,
-                        }
-                    }
+                    published: true
                 },
                 // @ts-expect-error Still wrong (still don't care)
                 orderBy: questionSort,
             },
         },
     });
-
     if (!course) {
         throw new NotFoundError("Course not found");
     }
+
     res.status(200).send(course);
 };
 
@@ -299,23 +287,24 @@ const getCourseExamsWithBasicQuestionInfo = async (req: Request, res: Response) 
                         where: {
                             OR: req.published
                         },
-                        orderBy: {
-                            number: 'asc'
-                        },
                         select: {
                             id: true,
-                            number: true
+                            number: true,
+                            published: true
                         },
+                        orderBy: {
+                            number: 'asc'
+                        }
                     },
                     semester: true
                 }
             },
         },
     });
-
     if (!course) {
         throw new NotFoundError("Course not found");
     }
+
     const exams = course.exams;
     const sortedExams = _.orderBy(exams, [(exam) => exam.number === 0 ? 10 : exam.number, "semester.year", "semester.season"], ['asc', 'desc', 'asc']);
     res.status(200).send(sortedExams);
@@ -333,17 +322,22 @@ const getCourseTopicWithBasicQuestionInfo = async (req: Request, res: Response) 
         include: {
             questions: {
                 where: {
-                    OR: req.published,
-                },
-                orderBy: {
-                    number: "asc",
+                    course: {
+                        abbreviation: abbreviation.toUpperCase(),
+                        number: Number(number),
+                        OR: req.published
+                    },
+                    OR: req.published
                 },
                 select: {
                     id: true,
                     number: true,
+                    correctChoiceIndices: true,
                     topics: true,
                     published: true,
                 },
+                // @ts-expect-error These things happen
+                orderBy: questionSort
             },
         },
     });
@@ -351,11 +345,16 @@ const getCourseTopicWithBasicQuestionInfo = async (req: Request, res: Response) 
         throw new NotFoundError("Topic not found");
     }
 
-    const stats = await answerChoiceStats(topic.questions.map((question) => question.id));
-    for (let i = 0; i < stats.length; i++) {
+    // @ts-expect-error questionSort things
+    const answerStats = await answerChoiceStats(topic.questions.map((question) => question.id));
+    for (let i = 0; i < answerStats.length; i++) {
         // @ts-expect-error I promise it exists
         // Extend later
-        topic.questions[i].answerChoiceStats = stats[i];
+        topic.questions[i].answerChoiceStats = answerStats[i];
+        // @ts-expect-error I promise it exists
+        topic.questions[i].percentCorrect = answerStats[i][topic.questions[i].correctChoiceIndices[0]] * 100 / answerStats[i].reduce((sum: number, a: number) => sum + a, 0);
+        // @ts-expect-error I promise it exists
+        delete topic.questions[i].correctChoiceIndices;
     }
 
     res.status(200).send(topic);
@@ -428,10 +427,10 @@ const getCourseTopicWithFullQuestionInfo = async (req: Request, res: Response) =
     */
     // @ts-expect-error
 
-    const stats = await answerChoiceStats(topic.questions.map((question) => question.id));
-    for (let i = 0; i < stats.length; i++) {
+    const answerStats = await answerChoiceStats(topic.questions.map((question) => question.id));
+    for (let i = 0; i < answerStats.length; i++) {
         // @ts-expect-error Extend Later
-        topic.questions[i].answerChoiceStats = stats[i];
+        topic.questions[i].answerChoiceStats = answerStats[i];
     }
     res.status(200).send(topic);
 };
@@ -481,14 +480,14 @@ const getCourseExamWithBasicQuestionInfo = async (req: Request, res: Response) =
                 where: {
                     OR: req.published
                 },
-                orderBy: {
-                    number: 'asc'
-                },
                 select: {
                     id: true,
                     number: true,
                     topics: true,
                     published: true
+                },
+                orderBy: {
+                    number: 'asc'
                 }
             }
         }
@@ -587,10 +586,10 @@ const getCourseExamWithFullQuestionInfo = async (req: Request, res: Response) =>
 
     const resolved = await Promise.all(promises);
     */
-    const stats = await answerChoiceStats(exam.questions.map((question) => question.id));
-    for (let i = 0; i < stats.length; i++) {
+    const answerStats = await answerChoiceStats(exam.questions.map((question) => question.id));
+    for (let i = 0; i < answerStats.length; i++) {
         // @ts-expect-error Extend Later
-        exam.questions[i].answerChoiceStats = stats[i];
+        exam.questions[i].answerChoiceStats = answerStats[i];
     }
 
     res.status(200).send(exam);

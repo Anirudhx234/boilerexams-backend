@@ -21,7 +21,7 @@ const answerChoiceStats = async (questionIds: string[]) => {
             ARRAY_POSITION(ARRAY[${Prisma.join(questionIds)}]::text[], q."id"), ac."choiceIndex" ASC;
     `;
 
-    const rawStats = _.chain(stats)
+    const rawStats: number[][] = _.chain(stats)
         .groupBy('questionId')
         .map(groupedItems => _.map(groupedItems, 'submissionCount').map(submissionCount => Number(submissionCount)))
         .value();

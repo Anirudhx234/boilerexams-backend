@@ -12,10 +12,11 @@ import {
 import asyncWrapper from "../middleware/wrappers/asyncWrapper.js";
 import authHandler from '../middleware/auth/authHandler.js';
 import generalLimiter from '../middleware/rateLimiting/generalLimiter.js';
+import sendPublished from '../middleware/auth/sendPublished.js';
 
 const app = express();
 
-app.get("/id/questions/:questionId", authHandler, asyncWrapper(getQuestion));
+app.get("/id/questions/:questionId", sendPublished, asyncWrapper(getQuestion));
 
 app.post("/courses/:courseId/exams/:examId/questions", authHandler, asyncWrapper(createQuestion));
 
