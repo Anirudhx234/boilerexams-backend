@@ -191,15 +191,24 @@ model Application {
 }
 
 model User {
-  id             String      @id @default(uuid())
+  id             String        @id @default(uuid())
   name           String?
-  email          String?     @unique
+  email          String?       @unique
   profilePicture String?
-  role           Role        @default(USER)
+  role           Role          @default(USER)
+  accountId      String?       @unique
   accountType    AccountType
-  accountId      String?     @unique
-  courses        Course[]    @relation("CourseToUser")
+  localAccount   LocalAccount?
+  courses        Course[]      @relation("CourseToUser")
   reports        Report[]
+}
+
+model LocalAccount {
+  id       String @id @default(uuid())
+  userId   String @unique
+  password Bytes
+  salt     Bytes
+  User     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Session {
@@ -225,6 +234,7 @@ model Event {
 enum AccountType {
   DISCORD
   GOOGLE
+  LOCAL
 }
 
 enum ResourceType {

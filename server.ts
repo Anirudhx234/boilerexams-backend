@@ -4,20 +4,18 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import session, { SessionOptionsExtended } from 'express-session';
 import connect from 'connect-pg-simple';
-import dotenv from 'dotenv';
+// import dotenv from 'dotenv';
 import passport from 'passport';
+import initializePassport from './middleware/auth/passport/index.js';
 import routes from './routes/index.js';
 import errorHandler from './middleware/errorHandler.js';
 import { APIError } from './middleware/errors/index.js';
-import discordPassport from './middleware/auth/passport/discordPassport.js';
-import googlePassport from './middleware/auth/passport/googlePassport.js';
 
 // dotenv.config({ path: `./.env.${process.env.NODE_ENV}` });
 
 const app = express();
 
-discordPassport(passport);
-googlePassport(passport);
+initializePassport(passport);
 
 const vercelRegexp = new RegExp('https:\/\/boilerexams-frontend[^ ]*.vercel.app');
 const prodRegexp = new RegExp('https:\/\/[^ ]*.boilerexams.com');
@@ -87,8 +85,14 @@ const getPORT = () => {
 };
 const PORT = getPORT();
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`Server is running at port ${PORT}`);
 });
+
+process.on('SIGTERM', () => {
+  server.close(() => {
+    console.log('Server closed')
+  })
+})
 
 export default app;

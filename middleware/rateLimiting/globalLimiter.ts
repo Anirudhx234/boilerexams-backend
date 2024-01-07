@@ -1,5 +1,5 @@
 import { rateLimit } from 'express-rate-limit';
-import { isWhitelisted } from "../auth/auth.js";
+import isWhitelisted from "../../helpers/auth/isWhiteListed.js";
 
 const globalLimiter = rateLimit({
 	windowMs: 1000,
