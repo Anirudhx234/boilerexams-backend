@@ -207,14 +207,14 @@ const updateQuestion = async (req: Request, res: Response) => {
                         notIn: resourceIds,
                     },
                 },
-                // connect: resourceIds.map((resourceId) => ({ id: resourceId }))
-                upsert: resources.map((resource) => ({
-                    where: {
-                        id: resource.id ?? "",
-                    },
-                    update: resource,
-                    create: resource,
-                })),
+                connect: resourceIds.map((resourceId) => ({ id: resourceId }))
+                // upsert: resources.map((resource) => ({
+                //    where: {
+                //        id: resource.id ?? "",
+                //    },
+                //    update: resource,
+                //    create: resource,
+                //})),
             },
         },
         include: {
