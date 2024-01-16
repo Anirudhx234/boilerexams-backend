@@ -108,7 +108,7 @@ const courseStats = async (courseId: string, before: Date, after: Date) => {
         WHERE CONCAT(c."abbreviation", CAST(c."number" as VARCHAR)) = ${courseId} AND c.published = true AND q.published = true
         group by c.id;
     `;
-    console.log("after " + after + " | before " + before + "\n");
+    // console.log("after " + after + " | before " + before + "\n");
     const course = courses[0];
 
     if (!course) {

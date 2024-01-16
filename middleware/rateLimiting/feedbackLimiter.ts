@@ -1,5 +1,5 @@
 import { rateLimit } from 'express-rate-limit';
-import { isWhitelisted } from "../auth/auth.js";
+import isWhitelisted from "../../helpers/auth/isWhiteListed.js";
 
 const feedbackLimiter = rateLimit({
     windowMs: 60 * 1000,
