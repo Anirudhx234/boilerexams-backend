@@ -2,66 +2,27 @@ import express from 'express';
 import { Request, Response } from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
-import session, { SessionOptionsExtended } from 'express-session';
-import connect from 'connect-pg-simple';
-// import dotenv from 'dotenv';
+import session from 'express-session';
 import passport from 'passport';
+import corsOptions from './utils/corsOptions.js';
+import sessionOptions from './utils/sessionOptions.js';
 import initializePassport from './middleware/auth/passport/index.js';
 import routes from './routes/index.js';
 import errorHandler from './middleware/errorHandler.js';
-import { APIError } from './middleware/errors/index.js';
-
-// dotenv.config({ path: `./.env.${process.env.NODE_ENV}` });
 
 const app = express();
 
+app.use(cors(corsOptions));
+
 initializePassport(passport);
-
-const vercelRegexp = new RegExp('https:\/\/boilerexams-frontend[^ ]*.vercel.app');
-const prodRegexp = new RegExp('https:\/\/[^ ]*.boilerexams.com');
-
-const allowList = ["https://boilerexams-frontend.vercel.app", "https://boilerexams.com", "http://localhost:3000", "https://localhost:3000", "http://127.0.0.1:3000"];
-
-const corsOptions = {
-  origin: (origin: any, cb: any) => {
-    if (allowList.includes(origin) || !origin || vercelRegexp.test(origin) || prodRegexp.test(origin)) {
-      cb(null, true);
-    } else {
-      cb(new APIError('Not allowed by CORS', 403));
-    }
-  },
-  credentials: true,
-  exposedHeaders: ["set-cookie"]
-};
 
 app.use('/favicon.ico', express.static('images/favicon.ico'));
 
-app.use(cors(corsOptions));
 app.use(cookieParser());
 app.use(express.json());
 
-const sessionOptions: SessionOptionsExtended = {
-  store: new (connect(session))({
-    conString: process.env.DATABASE_URL,
-    tableName: 'Session',
-    createTableIfMissing: true
-  }),
-  secret: process.env.SESSION_SECRET || "",
-  resave: false,
-  saveUninitialized: false,
-  cookie: { httpOnly: true, sameSite: "strict", secure: false, maxAge: 7 * 24 * 60 * 60 * 1000 },
-  name: 'sessionId'
-};
-
 if (process.env.REMOTE === "enabled") {
   app.set('trust proxy', 1);
-  sessionOptions.cookie.secure = true;
-  if (process.env.NODE_ENV === "development") {
-    sessionOptions.cookie.sameSite = "none";
-  }
-}
-if (process.env.NODE_ENV === "development") {
-  sessionOptions.name = "sessionIdDev";
 }
 
 app.use(session(sessionOptions));
@@ -85,14 +46,8 @@ const getPORT = () => {
 };
 const PORT = getPORT();
 
-const server = app.listen(PORT, () => {
+app.listen(PORT, () => {
   console.log(`Server is running at port ${PORT}`);
 });
-
-process.on('SIGTERM', () => {
-  server.close(() => {
-    console.log('Server closed')
-  })
-})
 
 export default app;
