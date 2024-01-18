@@ -68,19 +68,19 @@ const localLogin = (req: Request, res: Response, next: NextFunction) => {
         failureMessage: true
     });
     authenticator(req, res, next);
-}
+};
 
 const discordLogin = (req: Request, res: Response, next: NextFunction) => {
     const state = redirectUrl(req);
     const authenticator = passport.authenticate('discord', { state });
     authenticator(req, res, next);
-}
+};
 
 const googleLogin = (req: Request, res: Response, next: NextFunction) => {
     const state = redirectUrl(req);
     const authenticator = passport.authenticate('google', { state });
     authenticator(req, res, next);
-}
+};
 
 const resetPassword = async (req: Request, res: Response) => {
     const { email } = req.body;
@@ -195,7 +195,7 @@ const logout = (req: Request, res: Response, next: NextFunction) => {
         const { redirect } = JSON.parse(Buffer.from(url, 'base64').toString());
         return res.json({ redirectUrl: redirect });
     });
-}
+};
 
 export {
     signup,

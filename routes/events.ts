@@ -7,14 +7,14 @@ import {
     deleteAllEvents
 } from "../controllers/eventController.js";
 
-const app = express();
+const router = express.Router();
 
-app.post("/", asyncWrapper(createEvents));
+router.post("/", asyncWrapper(createEvents));
 
-app.put("/", asyncWrapper(updateEvent));
+router.put("/", asyncWrapper(updateEvent));
 
-app.delete("/all", asyncWrapper(deleteAllEvents));
+router.delete("/all", asyncWrapper(deleteAllEvents));
 
-app.delete("/:eventId", asyncWrapper(deleteEvent));
+router.delete("/:eventId", asyncWrapper(deleteEvent));
 
-export default app;
+export default router;
