@@ -1,4 +1,4 @@
-import {NextFunction, Request, Response} from "express";
+import { NextFunction, Request, Response } from "express";
 import NodeCache from 'node-cache';
 const serverCache = new NodeCache();
 
@@ -13,13 +13,14 @@ const cache = (duration: number) => (req: Request, res: Response, next: NextFunc
     const cachedBody = serverCache.get(key);
     if (cachedBody) {
         res.json(JSON.parse(cachedBody.toString()));
-    } else {
-        // @ts-expect-error sendResponse does not exist (sure)
+    }
+    else {
+        // @ts-ignore
         res.sendResponse = res.send;
-        // @ts-expect-error res.send can't do this (watch me)
-        res.send = body => {
+        // @ts-ignore
+        res.send = (body: any) => {
             serverCache.set(key, body, duration);
-            // @ts-expect-error it still doesn't exist??
+            // @ts-ignore
             res.sendResponse(body);
         };
         next();

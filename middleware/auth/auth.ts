@@ -18,7 +18,7 @@ const router = express.Router();
 const redirect = (req: Request, res: Response) => {
     try {
         const { state } = req.query;
-        // @ts-expect-error state
+        // @ts-ignore
         const { redirect } = JSON.parse(Buffer.from(state, 'base64').toString());
         return res.redirect(redirect);
     } catch {

@@ -185,8 +185,6 @@ const changePassword = async (req, res) => {
 };
 
 const logout = (req: Request, res: Response, next: NextFunction) => {
-    // Will extend req later
-    // @ts-expect-error error typing
     req.logOut((error: any) => {
         if (error) {
             next(error);

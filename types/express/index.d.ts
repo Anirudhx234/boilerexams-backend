@@ -4,5 +4,6 @@ declare namespace Express {
     export interface Request {
         published: { published: boolean }[];
         user: User;
+        logOut: any;
     }
 }

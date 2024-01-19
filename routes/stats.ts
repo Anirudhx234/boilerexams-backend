@@ -10,6 +10,7 @@ import {
     getSubmissionStats
 } from '../controllers/statsController.js';
 import cache from '../cache/caching.js';
+
 const router = express.Router();
 
 router.get("/", cache(600), asyncWrapper(getGeneralStats));
