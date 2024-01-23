@@ -6,17 +6,16 @@ import {
     updateCourse
 } from "../controllers/courseController.js";
 import asyncWrapper from "../middleware/wrappers/asyncWrapper.js";
-import authHandler from '../middleware/auth/authHandler.js';
 import upload from "../middleware/multer/image.js";
 
-const app = express();
+const router = express.Router();
 
-app.post("/courses", upload.single('image'), asyncWrapper(createCourse));
+router.post("/courses", upload.single('image'), asyncWrapper(createCourse));
 
-app.put("/courses/:courseId", upload.single('image'), asyncWrapper(updateCourse));
+router.put("/courses/:courseId", upload.single('image'), asyncWrapper(updateCourse));
 
-app.put("/courses/:courseId/togglePublished", asyncWrapper(toggleCoursePublished));
+router.put("/courses/:courseId/togglePublished", asyncWrapper(toggleCoursePublished));
 
-app.delete("/courses/:courseId/hardDelete", asyncWrapper(deleteCourse));
+router.delete("/courses/:courseId/hardDelete", asyncWrapper(deleteCourse));
 
-export default app;
+export default router;

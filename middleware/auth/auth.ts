@@ -1,74 +1,51 @@
 import express from 'express';
-import { NextFunction, Request, Response } from "express";
+import { Request, Response } from "express";
 import passport from 'passport';
-import { URL } from 'url';
 import authTester from './authTester.js';
+import asyncWrapper from '../wrappers/asyncWrapper.js';
+import {
+    signup,
+    localLogin,
+    discordLogin,
+    googleLogin,
+    resetPassword,
+    changePassword,
+    logout
+} from "./authController.js";
 
-const app = express();
-
-const redirectUrl = (req: Request) => {
-    const urlString = req.headers.referer;
-    let baseUrl: string;
-    if (urlString) {
-        const parsedUrl = new URL(urlString);
-        baseUrl = `${parsedUrl.protocol}//${parsedUrl.host}`;
-    }
-    else {
-        baseUrl = "/";
-    }
-
-    return Buffer.from(JSON.stringify({ redirect: baseUrl })).toString('base64');
-};
+const router = express.Router();
 
 const redirect = (req: Request, res: Response) => {
     try {
         const { state } = req.query;
-        // @ts-expect-error state
+        // @ts-ignore
         const { redirect } = JSON.parse(Buffer.from(state, 'base64').toString());
         return res.redirect(redirect);
     } catch {
-        return res.redirect("https://boilerexams-frontend.vercel.app/");
+        return res.redirect("https://boilerexams.com");
     }
 };
 
-export const isWhitelisted = (req: Request) => {
-    if (!process.env.FEEDBACK_API_KEY) {
-        return false;
-    }
-    return req.headers.authorization === process.env.FEEDBACK_API_KEY;
-};
+router.post("/signup", asyncWrapper(signup));
 
-app.get('/discord/login', (req: Request, res: Response, next: NextFunction) => {
-    const state = redirectUrl(req);
-    const authenticator = passport.authenticate('discord', { state });
-    authenticator(req, res, next);
-});
+router.post('/login', localLogin);
 
-app.get('/discord/redirect', passport.authenticate('discord'), redirect);
+router.get('/discord/login', discordLogin);
 
-app.get("/google/login", (req: Request, res: Response, next: NextFunction) => {
-    const state = redirectUrl(req);
-    const authenticator = passport.authenticate('google', { state });
-    authenticator(req, res, next);
-});
+router.get("/google/login", googleLogin);
 
-app.get("/google/redirect", passport.authenticate('google'), redirect);
+router.get('/discord/redirect', passport.authenticate('discord'), redirect);
 
-app.get('/logout', authTester, (req: Request, res: Response, next: NextFunction) => {
-    // Will extend req later
-    // @ts-expect-error error typing
-    req.logOut(error => {
-        if (error) {
-            next(error);
-        }
-        const url = redirectUrl(req);
-        const { redirect } = JSON.parse(Buffer.from(url, 'base64').toString());
-        return res.json({ redirectUrl: redirect });
-    });
-});
+router.get("/google/redirect", passport.authenticate('google'), redirect);
 
-app.get("/test", authTester, (req: Request, res: Response) => {
+router.post('/reset-password', asyncWrapper(resetPassword));
+
+router.get('/change-password', asyncWrapper(changePassword));
+
+router.get('/logout', authTester, logout);
+
+router.get("/test", authTester, (req: Request, res: Response) => {
     return res.status(200).send("Successfully authenticated");
 });
 
-export default app;
+export default router;

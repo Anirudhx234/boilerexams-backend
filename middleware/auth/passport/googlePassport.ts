@@ -7,7 +7,7 @@ const googlePassport = (passport) => {
         done(null, user.id);
     });
     
-    passport.deserializeUser(async (id: string, done:any) => {
+    passport.deserializeUser(async (id: string, done: any) => {
         try {
             const user = await prisma.user.findUnique({
                 where: {

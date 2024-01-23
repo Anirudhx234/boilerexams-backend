@@ -4,8 +4,8 @@ import { NotFoundError } from '../middleware/errors/index.js';
 import questionStats from '../helpers/stats/questionStats.js';
 import examStats from '../helpers/stats/examStats.js';
 import msToHMS from "../utils/msToHMS.js";
-import answerChoiceStats from "../helpers/stats/answerChoiceStats.js";
 import { allCoursesStats, courseStats } from "../helpers/stats/courseStats.js";
+import answerChoiceStats from "../helpers/stats/single.answerChoiceStats.js";
 
 const OLD_SUBMISSIONS = 1920571;
 const OLD_TIME_SPENT_HRS = 95074.53;

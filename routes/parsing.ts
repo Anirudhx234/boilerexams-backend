@@ -3,14 +3,14 @@ import asyncWrapper from "../middleware/wrappers/asyncWrapper.js";
 import { attachPDFToExam, getIdResults, parseFromFile, parseFromLink } from '../controllers/parsingController.js';
 import upload from '../middleware/multer/pdf.js';
 
-const app = express();
+const router = express.Router();
 
-app.post("/convert-link", asyncWrapper(parseFromLink));
+router.post("/convert-link", asyncWrapper(parseFromLink));
 
-app.post("/convert-file", upload.single("pdf"), asyncWrapper(parseFromFile));
+router.post("/convert-file", upload.single("pdf"), asyncWrapper(parseFromFile));
 
-app.post("/convert-id", asyncWrapper(getIdResults));
+router.post("/convert-id", asyncWrapper(getIdResults));
 
-app.post("/exams/:examId/attachPDF", upload.single("pdf"), asyncWrapper(attachPDFToExam));
+router.post("/exams/:examId/attachPDF", upload.single("pdf"), asyncWrapper(attachPDFToExam));
 
-export default app;
+export default router;

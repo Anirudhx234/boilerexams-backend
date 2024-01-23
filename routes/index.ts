@@ -18,41 +18,41 @@ import stats from "./stats.js";
 import topics from "./topics.js";
 import users from "./users.js";
 
-const app = express();
+const router = express.Router();
 
 // Global rate limit for all routes
-app.use(globalLimiter);
+router.use(globalLimiter);
 
 // Standard user routes (has stricter rate limit)
-app.use("/auth", generalLimiter, auth);
+router.use("/auth", generalLimiter, auth);
 
-app.use("/stats", generalLimiter, stats);
+router.use("/stats", generalLimiter, stats);
 
-app.use("/analytics", generalLimiter, analytics);
+router.use("/analytics", generalLimiter, analytics);
 
-app.use(name_routes);
+router.use(name_routes);
 
-app.use("/feedback", feedbackLimiter, feedback);
+router.use("/feedback", feedbackLimiter, feedback);
 
 // Content routes (uses global rate limit)
-app.use(questions);
+router.use(questions);
 
-app.use("/users", users);
+router.use("/users", users);
 
-app.use(authHandler);
+router.use(authHandler);
 
-app.use("/id", id_routes);
+router.use("/id", id_routes);
 
-app.use("/events", events);
+router.use("/events", events);
 
-app.use("/resources", resources);
+router.use("/resources", resources);
 
-app.use(parsing);
+router.use(parsing);
 
-app.use(courses);
+router.use(courses);
 
-app.use(exams);
+router.use(exams);
 
-app.use(topics);
+router.use(topics);
 
-export default app;
+export default router;
