@@ -52,7 +52,8 @@ const getQuestion = async (req: Request, res: Response) => {
 
 const createQuestion = async (req: Request, res: Response) => {
     const { courseId, examId } = req.params;
-    const { topics, number, body, answerChoices, correctChoiceIndices, solutionVideoLink, explanationText, resourceIds, disableRandomAnswers } = req.body;
+    const { topics, number, body, answerChoices, correctChoiceIndices, solutionVideoLink, explanationText, resourceIds,
+        disableRandomAnswers, answersStartHidden } = req.body;
 
     await prisma.course.update({
         where: {
@@ -91,7 +92,8 @@ const createQuestion = async (req: Request, res: Response) => {
             resources: {
                 connect: resourceIds.map((resourceId) => ({ id: resourceId }))
             },
-            disableRandomAnswers: disableRandomAnswers
+            disableRandomAnswers: disableRandomAnswers,
+            answersStartHidden: answersStartHidden
         },
         include: {
             topics: true,
@@ -131,6 +133,7 @@ const updateQuestion = async (req: Request, res: Response) => {
         explanationText,
         resources,
         resourceIds,
+        answersStartHidden
     } = req.body;
 
     await prisma.course.update({
@@ -216,6 +219,7 @@ const updateQuestion = async (req: Request, res: Response) => {
                     create: resource,
                 })),
             },
+            answersStartHidden: answersStartHidden
         },
         include: {
             topics: true,

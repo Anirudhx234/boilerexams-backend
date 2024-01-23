@@ -74,6 +74,7 @@ model Question {
   reports              Report[]
   videoFeedback        VideoFeedback[]
   disableRandomAnswers Boolean         @default(false)
+  answersStartHidden   Boolean         @default(false)
 }
 
 model AnswerChoice {
@@ -220,6 +221,8 @@ model Event {
   location    String?
   courseId    String?
   course      Course?   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([location, start])
 }
 
 enum AccountType {
