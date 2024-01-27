@@ -3,6 +3,7 @@ import { Request, Response } from "express";
 import { APIError, NotFoundError } from "../middleware/errors/index.js";
 import msToDate from "../utils/msToDate.js";
 import answerChoiceStats from "../helpers/stats/single.answerChoiceStats.js";
+import axios from "axios";
 
 const getQuestion = async (req: Request, res: Response) => {
   const { questionId } = req.params;
@@ -128,147 +129,151 @@ const createQuestion = async (req: Request, res: Response) => {
 };
 
 const updateQuestion = async (req: Request, res: Response) => {
+  try {
+    const { courseId, examId, questionId } = req.params;
+    const {
+      topics,
+      number,
+      body,
+      answerChoices,
+      correctChoiceIndices,
+      solutionVideoLink,
+      explanationText,
+      resources,
+      resourceIds,
+      answersStartHidden,
+      disableRandomAnswers,
+      disclaimer
+    } = req.body;
 
-  const { courseId, examId, questionId } = req.params;
-  const {
-    topics,
-    number,
-    body,
-    answerChoices,
-    correctChoiceIndices,
-    solutionVideoLink,
-    explanationText,
-    resources,
-    resourceIds,
-    answersStartHidden,
-    disableRandomAnswers,
-    disclaimer
-  } = req.body;
-
-  await prisma.course.update({
-    where: {
-      id: courseId,
-    },
-    data: {
-      topics: {
-        connectOrCreate: topics.map((topic: string) => ({
-          where: { name: topic },
-          create: { name: topic },
-        })),
+    await prisma.course.update({
+      where: {
+        id: courseId,
       },
-    },
-  });
-
-  const existingAnswerChoices = answerChoices.filter((answerChoice: { id: string; }) => {
-    return answerChoice.id !== undefined;
-  });
-
-  const question = await prisma.question.update({
-    where: {
-      id: questionId,
-    },
-    data: {
-      courseId: courseId,
-      examId: examId,
-      topics: {
-        set: topics.map((topic: string) => ({ name: topic })),
-      },
-      number: Number(number),
-      body: body,
-      answerChoices: {
-        deleteMany: {
-          id: {
-            notIn: existingAnswerChoices.map((answerChoice: { id: string }) => answerChoice.id),
-          },
+      data: {
+        topics: {
+          connectOrCreate: topics.map((topic: string) => ({
+            where: { name: topic },
+            create: { name: topic },
+          })),
         },
-        upsert: answerChoices.map((answerChoice: { resourceIds: string[]; resources: { id: string }[]; id: string; choiceIndex: number; body: string; }) => {
-          const resourcesQuery = {
-            // deleteMany: {
-            //     id: {
-            //         notIn: answerChoice.resourceIds,
-            //     },
-            // },
-            // connect: answerChoice.resourceIds.map((resourceId) => ({
-            //     id: resourceId,
-            // })),
-            deleteMany: {
-              id: {
-                notIn: answerChoice.resourceIds,
-              },
+      },
+    });
+
+    const existingAnswerChoices = answerChoices.filter((answerChoice: { id: string; }) => {
+      return answerChoice.id !== undefined;
+    });
+
+    const question = await prisma.question.update({
+      where: {
+        id: questionId,
+      },
+      data: {
+        courseId: courseId,
+        examId: examId,
+        topics: {
+          set: topics.map((topic: string) => ({ name: topic })),
+        },
+        number: Number(number),
+        body: body,
+        answerChoices: {
+          deleteMany: {
+            id: {
+              notIn: existingAnswerChoices.map((answerChoice: { id: string }) => answerChoice.id),
             },
-            // connect: resourceIds.map((resourceId) => ({ id: resourceId }))
-            upsert: answerChoice.resources.map((resource) => ({
+          },
+          upsert: answerChoices.map((answerChoice: { resourceIds: string[]; resources: { id: string }[]; id: string; choiceIndex: number; body: string; }) => {
+            const resourcesQuery = {
+              // deleteMany: {
+              //     id: {
+              //         notIn: answerChoice.resourceIds,
+              //     },
+              // },
+              // connect: answerChoice.resourceIds.map((resourceId) => ({
+              //     id: resourceId,
+              // })),
+              deleteMany: {
+                id: {
+                  notIn: answerChoice.resourceIds,
+                },
+              },
+              // connect: resourceIds.map((resourceId) => ({ id: resourceId }))
+              upsert: answerChoice.resources.map((resource) => ({
+                where: {
+                  id: resource.id ?? "",
+                },
+                update: resource,
+                create: resource,
+              })),
+            };
+
+            return {
               where: {
-                id: resource.id ?? "",
+                id: answerChoice.id || "",
               },
-              update: resource,
-              create: resource,
-            })),
-          };
-
-          return {
+              update: {
+                choiceIndex: Number(answerChoice.choiceIndex),
+                body: answerChoice.body,
+                resources: resourcesQuery,
+              },
+              create: {
+                choiceIndex: Number(answerChoice.choiceIndex),
+                body: answerChoice.body,
+                resources: resourcesQuery,
+              },
+            };
+          }),
+        },
+        correctChoiceIndices: correctChoiceIndices,
+        solutionVideoLink: solutionVideoLink,
+        explanationText: explanationText,
+        disableRandomAnswers: disableRandomAnswers,
+        answersStartHidden: answersStartHidden,
+        disclaimer: disclaimer,
+        resources: {
+          deleteMany: {
+            id: {
+              notIn: resourceIds,
+            },
+          },
+          // connect: resourceIds.map((resourceId) => ({ id: resourceId }))
+          upsert: resources.map((resource: { id: string }) => ({
             where: {
-              id: answerChoice.id || "",
+              id: resource.id ?? "",
             },
-            update: {
-              choiceIndex: Number(answerChoice.choiceIndex),
-              body: answerChoice.body,
-              resources: resourcesQuery,
-            },
-            create: {
-              choiceIndex: Number(answerChoice.choiceIndex),
-              body: answerChoice.body,
-              resources: resourcesQuery,
-            },
-          };
-        }),
-      },
-      correctChoiceIndices: correctChoiceIndices,
-      solutionVideoLink: solutionVideoLink,
-      explanationText: explanationText,
-      disableRandomAnswers: disableRandomAnswers,
-      answersStartHidden: answersStartHidden,
-      disclaimer: disclaimer,
-      resources: {
-        deleteMany: {
-          id: {
-            notIn: resourceIds,
-          },
+            update: resource,
+            create: resource,
+          })),
         },
-        // connect: resourceIds.map((resourceId) => ({ id: resourceId }))
-        upsert: resources.map((resource: { id: string }) => ({
-          where: {
-            id: resource.id ?? "",
-          },
-          update: resource,
-          create: resource,
-        })),
       },
-    },
-    include: {
-      topics: true,
-      answerChoices: {
-        orderBy: {
-          choiceIndex: "asc",
-        },
-        include: {
-          resources: {
-            include: {
-              image: true,
-              code: true,
+      include: {
+        topics: true,
+        answerChoices: {
+          orderBy: {
+            choiceIndex: "asc",
+          },
+          include: {
+            resources: {
+              include: {
+                image: true,
+                code: true,
+              },
             },
           },
         },
-      },
-      resources: {
-        include: {
-          image: true,
-          code: true,
+        resources: {
+          include: {
+            image: true,
+            code: true,
+          },
         },
       },
-    },
-  });
-  res.status(200).send(question);
+    });
+    res.status(200).send(question);
+  } catch (e) {
+    axios.post(`${process.env.DISCORD_URL}/error`, e).catch(console.log);
+    res.status(270);
+  }
 };
 
 const toggleQuestionPublished = async (req: Request, res: Response) => {
