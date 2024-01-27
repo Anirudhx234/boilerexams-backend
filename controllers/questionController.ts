@@ -129,151 +129,147 @@ const createQuestion = async (req: Request, res: Response) => {
 };
 
 const updateQuestion = async (req: Request, res: Response) => {
-  try {
-    const { courseId, examId, questionId } = req.params;
-    const {
-      topics,
-      number,
-      body,
-      answerChoices,
-      correctChoiceIndices,
-      solutionVideoLink,
-      explanationText,
-      resources,
-      resourceIds,
-      answersStartHidden,
-      disableRandomAnswers,
-      disclaimer
-    } = req.body;
+  const { courseId, examId, questionId } = req.params;
+  const {
+    topics,
+    number,
+    body,
+    answerChoices,
+    correctChoiceIndices,
+    solutionVideoLink,
+    explanationText,
+    resources,
+    resourceIds,
+    answersStartHidden,
+    disableRandomAnswers,
+    disclaimer
+  } = req.body;
 
-    await prisma.course.update({
-      where: {
-        id: courseId,
+  await prisma.course.update({
+    where: {
+      id: courseId,
+    },
+    data: {
+      topics: {
+        connectOrCreate: topics.map((topic: string) => ({
+          where: { name: topic },
+          create: { name: topic },
+        })),
       },
-      data: {
-        topics: {
-          connectOrCreate: topics.map((topic: string) => ({
-            where: { name: topic },
-            create: { name: topic },
-          })),
-        },
-      },
-    });
+    },
+  });
 
-    const existingAnswerChoices = answerChoices.filter((answerChoice: { id: string; }) => {
-      return answerChoice.id !== undefined;
-    });
+  const existingAnswerChoices = answerChoices.filter((answerChoice: { id: string; }) => {
+    return answerChoice.id !== undefined;
+  });
 
-    const question = await prisma.question.update({
-      where: {
-        id: questionId,
+  const question = await prisma.question.update({
+    where: {
+      id: questionId,
+    },
+    data: {
+      courseId: courseId,
+      examId: examId,
+      topics: {
+        set: topics.map((topic: string) => ({ name: topic })),
       },
-      data: {
-        courseId: courseId,
-        examId: examId,
-        topics: {
-          set: topics.map((topic: string) => ({ name: topic })),
-        },
-        number: Number(number),
-        body: body,
-        answerChoices: {
-          deleteMany: {
-            id: {
-              notIn: existingAnswerChoices.map((answerChoice: { id: string }) => answerChoice.id),
-            },
+      number: Number(number),
+      body: body,
+      answerChoices: {
+        deleteMany: {
+          id: {
+            notIn: existingAnswerChoices.map((answerChoice: { id: string }) => answerChoice.id),
           },
-          upsert: answerChoices.map((answerChoice: { resourceIds: string[]; resources: { id: string }[]; id: string; choiceIndex: number; body: string; }) => {
-            const resourcesQuery = {
-              // deleteMany: {
-              //     id: {
-              //         notIn: answerChoice.resourceIds,
-              //     },
-              // },
-              // connect: answerChoice.resourceIds.map((resourceId) => ({
-              //     id: resourceId,
-              // })),
-              deleteMany: {
-                id: {
-                  notIn: answerChoice.resourceIds,
-                },
+        },
+        upsert: answerChoices.map((answerChoice: { resourceIds: string[]; resources: { id: string }[]; id: string; choiceIndex: number; body: string; }) => {
+          const resourcesQuery = {
+            // deleteMany: {
+            //     id: {
+            //         notIn: answerChoice.resourceIds,
+            //     },
+            // },
+            // connect: answerChoice.resourceIds.map((resourceId) => ({
+            //     id: resourceId,
+            // })),
+            deleteMany: {
+              id: {
+                notIn: answerChoice.resourceIds,
               },
-              // connect: resourceIds.map((resourceId) => ({ id: resourceId }))
-              upsert: answerChoice.resources.map((resource) => ({
-                where: {
-                  id: resource.id ?? "",
-                },
-                update: resource,
-                create: resource,
-              })),
-            };
-
-            return {
+            },
+            // connect: resourceIds.map((resourceId) => ({ id: resourceId }))
+            upsert: answerChoice.resources.map((resource) => ({
               where: {
-                id: answerChoice.id || "",
+                id: resource.id ?? "",
               },
-              update: {
-                choiceIndex: Number(answerChoice.choiceIndex),
-                body: answerChoice.body,
-                resources: resourcesQuery,
-              },
-              create: {
-                choiceIndex: Number(answerChoice.choiceIndex),
-                body: answerChoice.body,
-                resources: resourcesQuery,
-              },
-            };
-          }),
-        },
-        correctChoiceIndices: correctChoiceIndices,
-        solutionVideoLink: solutionVideoLink,
-        explanationText: explanationText,
-        disableRandomAnswers: disableRandomAnswers,
-        answersStartHidden: answersStartHidden,
-        disclaimer: disclaimer,
-        resources: {
-          deleteMany: {
-            id: {
-              notIn: resourceIds,
-            },
-          },
-          // connect: resourceIds.map((resourceId) => ({ id: resourceId }))
-          upsert: resources.map((resource: { id: string }) => ({
+              update: resource,
+              create: resource,
+            })),
+          };
+
+          return {
             where: {
-              id: resource.id ?? "",
+              id: answerChoice.id || "",
             },
-            update: resource,
-            create: resource,
-          })),
+            update: {
+              choiceIndex: Number(answerChoice.choiceIndex),
+              body: answerChoice.body,
+              resources: resourcesQuery,
+            },
+            create: {
+              choiceIndex: Number(answerChoice.choiceIndex),
+              body: answerChoice.body,
+              resources: resourcesQuery,
+            },
+          };
+        }),
+      },
+      correctChoiceIndices: correctChoiceIndices,
+      solutionVideoLink: solutionVideoLink,
+      explanationText: explanationText,
+      disableRandomAnswers: disableRandomAnswers,
+      answersStartHidden: answersStartHidden,
+      disclaimer: disclaimer,
+      resources: {
+        deleteMany: {
+          id: {
+            notIn: resourceIds,
+          },
+        },
+        // connect: resourceIds.map((resourceId) => ({ id: resourceId }))
+        upsert: resources.map((resource: { id: string }) => ({
+          where: {
+            id: resource.id ?? "",
+          },
+          update: resource,
+          create: resource,
+        })),
+      },
+    },
+    include: {
+      topics: true,
+      answerChoices: {
+        orderBy: {
+          choiceIndex: "asc",
+        },
+        include: {
+          resources: {
+            include: {
+              image: true,
+              code: true,
+            },
+          },
         },
       },
-      include: {
-        topics: true,
-        answerChoices: {
-          orderBy: {
-            choiceIndex: "asc",
-          },
-          include: {
-            resources: {
-              include: {
-                image: true,
-                code: true,
-              },
-            },
-          },
-        },
-        resources: {
-          include: {
-            image: true,
-            code: true,
-          },
+      resources: {
+        include: {
+          image: true,
+          code: true,
         },
       },
-    });
-    res.status(200).send(question);
-  } catch (e) {
-    axios.post(`${process.env.DISCORD_URL}/error`, e).catch(console.log);
-    res.status(270);
-  }
+    },
+  });
+  res.status(200).send(question);
+
 };
 
 const toggleQuestionPublished = async (req: Request, res: Response) => {
