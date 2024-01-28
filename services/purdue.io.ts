@@ -1,9 +1,26 @@
 import { InvalidCourseError, NotFoundError } from "../middleware/errors/index.js";
 import axios from "axios";
 
-export type PurdueIoCourse = { Id: string, Number: string, SubjectId: string, Title: string, CreditHours: number, Description: string };
-export type PurdueIoSubject = { Id: string, Name: string, Abbreviation: string };
-export type PurdueIoTerm = { Id: string, Code: string, Name: string, StartDate: string, EndDate: string };
+export type PurdueIoCourse = {
+    Id: string;
+    Number: string;
+    SubjectId: string;
+    Title: string;
+    CreditHours: number;
+    Description: string;
+};
+export type PurdueIoSubject = {
+    Id: string;
+    Name: string;
+    Abbreviation: string;
+};
+export type PurdueIoTerm = {
+    Id: string;
+    Code: string;
+    Name: string;
+    StartDate: string;
+    EndDate: string;
+};
 
 export class PurdueIoAPI {
     public static async getCourse(subject: PurdueIoSubject, number: string) {
@@ -26,7 +43,7 @@ export class PurdueIoAPI {
         const query = `https://api.purdue.io/odata/Terms?$orderby=EndDate asc`;
         const request = await axios.get(query);
         const terms = request.data.value as PurdueIoTerm[];
-        const term = terms.find(element => {
+        const term = terms.find((element) => {
             const now = Date.now();
             const date = Date.parse(element.EndDate);
             return now < date;

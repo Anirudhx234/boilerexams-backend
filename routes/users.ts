@@ -1,15 +1,8 @@
-import express from 'express';
-import {
-    assignUserCourses,
-    deleteUser,
-    getAllUsers,
-    getUser,
-    getUserMe,
-    updateUserRole
-} from "../controllers/userController.js";
+import express from "express";
+import { assignUserCourses, deleteUser, getAllUsers, getUser, getUserMe, updateUserRole } from "../controllers/userController.js";
 import asyncWrapper from "../middleware/wrappers/asyncWrapper.js";
-import authHandler from '../middleware/auth/authHandler.js';
-import authTester from '../middleware/auth/authTester.js';
+import authHandler from "../middleware/auth/authHandler.js";
+import authTester from "../middleware/auth/authTester.js";
 
 const router = express.Router();
 

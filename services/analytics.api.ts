@@ -27,7 +27,7 @@ export class AnalyticsApi {
 
         const response = await AnalyticsApi.axios.get(`/websites/${process.env.ANALYTICS_ID}/events`, {
             params: {
-                ...options
+                ...options,
             },
         });
 
@@ -39,7 +39,7 @@ export class AnalyticsApi {
 
         const response = await AnalyticsApi.axios.get(`/websites/${process.env.ANALYTICS_ID}/pageviews`, {
             params: {
-                ...options
+                ...options,
             },
         });
 
@@ -50,7 +50,7 @@ export class AnalyticsApi {
         await AnalyticsApi.refreshToken();
         const response = await AnalyticsApi.axios.get(`/websites/${process.env.ANALYTICS_ID}/metrics`, {
             params: {
-                ...options
+                ...options,
             },
         });
         return response.data as MetricsResponse;
@@ -60,7 +60,7 @@ export class AnalyticsApi {
         await AnalyticsApi.refreshToken();
         const response = await AnalyticsApi.axios.get(`/websites/${process.env.ANALYTICS_ID}/stats`, {
             params: {
-                ...options
+                ...options,
             },
         });
         return response.data as StatsResponse;

@@ -1,6 +1,6 @@
 import prisma from "../../libs/prisma.js";
-import _ from 'lodash';
-import { Prisma } from '@prisma/client';
+import _ from "lodash";
+import { Prisma } from "@prisma/client";
 
 const answerChoiceStats = async (questionIds: string[]) => {
     const stats: any = await prisma.$queryRaw`
@@ -22,8 +22,8 @@ const answerChoiceStats = async (questionIds: string[]) => {
     `;
 
     const rawStats: number[][] = _.chain(stats)
-        .groupBy('questionId')
-        .map(groupedItems => _.map(groupedItems, 'submissionCount').map(submissionCount => Number(submissionCount)))
+        .groupBy("questionId")
+        .map((groupedItems) => _.map(groupedItems, "submissionCount").map((submissionCount) => Number(submissionCount)))
         .value();
 
     return rawStats;

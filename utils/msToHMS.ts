@@ -3,7 +3,7 @@ const msToHMS = (milliseconds: number | null) => {
         return {
             hours: 0,
             minutes: 0,
-            seconds: 0
+            seconds: 0,
         };
     }
     const hours = Math.floor(milliseconds / (1000 * 60 * 60));
@@ -13,7 +13,7 @@ const msToHMS = (milliseconds: number | null) => {
     return {
         hours: hours,
         minutes: minutes,
-        seconds: seconds
+        seconds: seconds,
     };
 };
 

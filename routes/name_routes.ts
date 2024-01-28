@@ -1,21 +1,21 @@
-import express from 'express';
+import express from "express";
 import {
-  getCourses,
-  getAllTopics,
-  getAllCourses,
-  getCourse,
-  getCourseTopics,
-  getCourseTopicsWithBasicQuestionInfo,
-  getCourseExams,
-  getCourseExamsWithBasicQuestionInfo,
-  getCourseTopicWithBasicQuestionInfo,
-  getCourseTopicWithFullQuestionInfo,
-  getCourseExamWithBasicQuestionInfo,
-  getCourseExamWithFullQuestionInfo,
-} from '../controllers/display/nameController.js';
-import asyncWrapper from '../middleware/wrappers/asyncWrapper.js';
+    getCourses,
+    getAllTopics,
+    getAllCourses,
+    getCourse,
+    getCourseTopics,
+    getCourseTopicsWithBasicQuestionInfo,
+    getCourseExams,
+    getCourseExamsWithBasicQuestionInfo,
+    getCourseTopicWithBasicQuestionInfo,
+    getCourseTopicWithFullQuestionInfo,
+    getCourseExamWithBasicQuestionInfo,
+    getCourseExamWithFullQuestionInfo,
+} from "../controllers/display/nameController.js";
+import asyncWrapper from "../middleware/wrappers/asyncWrapper.js";
 import sendPublished from "../middleware/auth/sendPublished.js";
-import generalLimiter from '../middleware/rateLimiting/generalLimiter.js';
+import generalLimiter from "../middleware/rateLimiting/generalLimiter.js";
 import { getEvent, getEvents } from "../controllers/eventController.js";
 // import cache from '../cache/caching';
 
@@ -55,14 +55,29 @@ router.get("/courses/:courseAbbrev/exams/questions", generalLimiter, sendPublish
 router.get("/courses/:courseAbbrev/topics/:topicName", generalLimiter, sendPublished, asyncWrapper(getCourseTopicWithBasicQuestionInfo));
 
 // Full question information for specific topic
-router.get("/courses/:courseAbbrev/topics/:topicName/questions", generalLimiter, sendPublished, asyncWrapper(getCourseTopicWithFullQuestionInfo));
+router.get(
+    "/courses/:courseAbbrev/topics/:topicName/questions",
+    generalLimiter,
+    sendPublished,
+    asyncWrapper(getCourseTopicWithFullQuestionInfo),
+);
 
 // CURRENTLY USED
 // All questions with id, number, and topics for an exam
-router.get("/courses/:courseAbbrev/exams/:season-:year-:examNumber", generalLimiter, sendPublished, asyncWrapper(getCourseExamWithBasicQuestionInfo));
+router.get(
+    "/courses/:courseAbbrev/exams/:season-:year-:examNumber",
+    generalLimiter,
+    sendPublished,
+    asyncWrapper(getCourseExamWithBasicQuestionInfo),
+);
 
 // All questions for a specific exam, includes topics within questions.
-router.get("/courses/:courseAbbrev/exams/:season-:year-:examNumber/questions", generalLimiter, sendPublished, asyncWrapper(getCourseExamWithFullQuestionInfo));
+router.get(
+    "/courses/:courseAbbrev/exams/:season-:year-:examNumber/questions",
+    generalLimiter,
+    sendPublished,
+    asyncWrapper(getCourseExamWithFullQuestionInfo),
+);
 
 // CURRENTLY USED
 // Get events. Has courseId and after as query params

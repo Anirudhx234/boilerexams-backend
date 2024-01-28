@@ -1,10 +1,5 @@
-import express from 'express';
-import {
-    createTopic,
-    deleteTopic,
-    setTopicQuestions,
-    updateTopic
-} from "../controllers/topicController.js";
+import express from "express";
+import { createTopic, deleteTopic, setTopicQuestions, updateTopic } from "../controllers/topicController.js";
 import asyncWrapper from "../middleware/wrappers/asyncWrapper.js";
 
 const router = express.Router();

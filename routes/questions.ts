@@ -1,4 +1,4 @@
-import express from 'express';
+import express from "express";
 import {
     bulkQuestionSubmission,
     createQuestion,
@@ -10,15 +10,15 @@ import {
     updateSubmission,
 } from "../controllers/questionController.js";
 import asyncWrapper from "../middleware/wrappers/asyncWrapper.js";
-import authHandler from '../middleware/auth/authHandler.js';
-import generalLimiter from '../middleware/rateLimiting/generalLimiter.js';
-import sendPublished from '../middleware/auth/sendPublished.js';
+import authHandler from "../middleware/auth/authHandler.js";
+import generalLimiter from "../middleware/rateLimiting/generalLimiter.js";
+import sendPublished from "../middleware/auth/sendPublished.js";
 
 const router = express.Router();
 
 router.get("/id/questions/:questionId", sendPublished, asyncWrapper(getQuestion));
 
-router.post("/courses/:courseId/exams/:examId/questions", authHandler, asyncWrapper(createQuestion));
+router.post("/courses/:courseId/exams/:examId/questions", asyncWrapper(createQuestion));
 
 router.put("/courses/:courseId/exams/:examId/questions/:questionId", authHandler, asyncWrapper(updateQuestion));
 

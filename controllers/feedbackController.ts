@@ -16,35 +16,34 @@ const getReport = async (req: Request, res: Response) => {
                     include: {
                         course: {
                             include: {
-                                users: true
-                            }
-                        }
-                    }
-                }
-            }
+                                users: true,
+                            },
+                        },
+                    },
+                },
+            },
         });
 
         res.status(200).send(reports);
-    }
-    else {
+    } else {
         const report = await prisma.report.findUnique({
             where: {
-                id: reportId
+                id: reportId,
             },
             include: {
                 question: {
                     include: {
                         course: {
                             include: {
-                                users: true
-                            }
-                        }
-                    }
-                }
-            }
+                                users: true,
+                            },
+                        },
+                    },
+                },
+            },
         });
         if (!report) throw new NotFoundError("Report Not Found");
-  
+
         res.status(200).send(report);
     }
 };
@@ -54,16 +53,16 @@ const getVideoFeedbackByCourse = async (req: Request, res: Response) => {
 
     const course = await prisma.course.findUnique({
         where: {
-            id: courseId
+            id: courseId,
         },
         include: {
             questions: {
                 include: {
                     exam: true,
-                    videoFeedback: true
-                }
-            }
-        }
+                    videoFeedback: true,
+                },
+            },
+        },
     });
 
     if (!course) throw new NotFoundError("Course Not Found");
@@ -71,7 +70,7 @@ const getVideoFeedbackByCourse = async (req: Request, res: Response) => {
     const feedback = course.questions
         .sort((a, b) => a.number - b.number)
         .sort((a, b) => a.examId.localeCompare(b.examId))
-        .map(question => {
+        .map((question) => {
             return question.videoFeedback;
         })
         .flat();
@@ -84,21 +83,21 @@ const getVideoFeedbackByExam = async (req: Request, res: Response) => {
 
     const exam = await prisma.exam.findUnique({
         where: {
-            id: examId
+            id: examId,
         },
         include: {
             questions: {
                 include: {
-                    videoFeedback: true
-                }
-            }
-        }
+                    videoFeedback: true,
+                },
+            },
+        },
     });
 
     if (!exam) throw new NotFoundError("Exam Not Found");
 
     const feedback = exam.questions
-        .map(question => {
+        .map((question) => {
             return question.videoFeedback;
         })
         .flat();
@@ -123,8 +122,8 @@ const createApplication = async (req: Request, res: Response) => {
             content: why,
             year: year.toUpperCase() as Year,
             pdfKey: pdfData.Key,
-            pdfLink: pdfData.Location
-        }
+            pdfLink: pdfData.Location,
+        },
     });
 
     await DiscordAPI.createApplication(application);
@@ -132,7 +131,6 @@ const createApplication = async (req: Request, res: Response) => {
 };
 
 const createCourseRequest = async (req: Request, res: Response) => {
-
     const { abbreviation, number } = req.body;
 
     const stringifiedNumber = String(number);
@@ -142,18 +140,15 @@ const createCourseRequest = async (req: Request, res: Response) => {
 
     const existingCourse = await prisma.course.findFirst({
         where: {
-            AND: [
-                { abbreviation: purdueIoSubject.Abbreviation },
-                { number: Number(purdueIoCourse.Number) }
-            ]
-        }
+            AND: [{ abbreviation: purdueIoSubject.Abbreviation }, { number: Number(purdueIoCourse.Number) }],
+        },
     });
 
     if (existingCourse) throw new CourseAlreadyExistsError(`Existing Course Requested`);
 
     const courseRequest = await prisma.courseRequest.upsert({
         where: {
-            id: purdueIoCourse.Id
+            id: purdueIoCourse.Id,
         },
         create: {
             id: purdueIoCourse.Id,
@@ -164,9 +159,9 @@ const createCourseRequest = async (req: Request, res: Response) => {
         },
         update: {
             requests: {
-                increment: 1    // Increment Request Count if CourseRequest exists
-            }
-        }
+                increment: 1, // Increment Request Count if CourseRequest exists
+            },
+        },
     });
 
     const courseRequests = await prisma.courseRequest.findMany({});
@@ -187,11 +182,11 @@ const createBugReport = async (req: Request, res: Response) => {
             contact: contact,
             location: location,
             userAgent: footer,
-            userId: user?.id
+            userId: user?.id,
         },
         include: {
-            user: true
-        }
+            user: true,
+        },
     });
 
     await DiscordAPI.createReport(report);
@@ -204,7 +199,7 @@ const createQuestionBugReport = async (req: Request, res: Response) => {
 
     const question = await prisma.question.findUnique({
         where: {
-            id: questionId
+            id: questionId,
         },
         include: {
             course: {
@@ -212,15 +207,15 @@ const createQuestionBugReport = async (req: Request, res: Response) => {
                     abbreviation: true,
                     number: true,
                     users: true,
-                }
+                },
             },
             exam: {
                 select: {
                     number: true,
-                    semester: true
-                }
-            }
-        }
+                    semester: true,
+                },
+            },
+        },
     });
 
     if (!question) throw new NotFoundError("Question does not exist");
@@ -229,7 +224,11 @@ const createQuestionBugReport = async (req: Request, res: Response) => {
     const course = question.course;
     const exam = question.exam;
     const semester = exam.semester;
-    const title = `${course.abbreviation}${course.number} | ${semester.season} ${semester.year} | Exam ${exam.number} | Question ${question.number}`.replace("Exam 0", "Final Exam");
+    const title =
+        `${course.abbreviation}${course.number} | ${semester.season} ${semester.year} | Exam ${exam.number} | Question ${question.number}`.replace(
+            "Exam 0",
+            "Final Exam",
+        );
 
     const report = await prisma.report.create({
         data: {
@@ -241,7 +240,7 @@ const createQuestionBugReport = async (req: Request, res: Response) => {
             url: referer,
             userAgent: footer,
             questionId: question?.id,
-            userId: user?.id
+            userId: user?.id,
         },
         include: {
             question: {
@@ -251,18 +250,18 @@ const createQuestionBugReport = async (req: Request, res: Response) => {
                             abbreviation: true,
                             number: true,
                             users: true,
-                        }
+                        },
                     },
                     exam: {
                         select: {
                             number: true,
-                            semester: true
-                        }
-                    }
-                }
+                            semester: true,
+                        },
+                    },
+                },
             },
-            user: true
-        }
+            user: true,
+        },
     });
 
     await DiscordAPI.createReport(report);
@@ -279,11 +278,11 @@ const createFeatureRequest = async (req: Request, res: Response) => {
             title: title,
             content: description,
             status: "in-progress",
-            userId: user?.id
+            userId: user?.id,
         },
         include: {
-            user: true
-        }
+            user: true,
+        },
     });
 
     await DiscordAPI.createReport(report);
@@ -296,7 +295,7 @@ const createVideoFeedbackReport = async (req: Request, res: Response) => {
 
     const question = await prisma.question.findUnique({
         where: {
-            id: questionId
+            id: questionId,
         },
         include: {
             course: {
@@ -304,15 +303,15 @@ const createVideoFeedbackReport = async (req: Request, res: Response) => {
                     abbreviation: true,
                     number: true,
                     users: true,
-                }
+                },
             },
             exam: {
                 select: {
                     number: true,
-                    semester: true
-                }
-            }
-        }
+                    semester: true,
+                },
+            },
+        },
     });
 
     if (!question) throw new NotFoundError("Question does not exist");
@@ -323,7 +322,7 @@ const createVideoFeedbackReport = async (req: Request, res: Response) => {
             productionQuality: productionQuality,
             videoRecommendation: videoRecommendation,
             additionalFeedback: additionalFeedback,
-            questionId: question.id
+            questionId: question.id,
         },
         include: {
             question: {
@@ -333,17 +332,17 @@ const createVideoFeedbackReport = async (req: Request, res: Response) => {
                             abbreviation: true,
                             number: true,
                             users: true,
-                        }
+                        },
                     },
                     exam: {
                         select: {
                             number: true,
-                            semester: true
-                        }
-                    }
-                }
-            }
-        }
+                            semester: true,
+                        },
+                    },
+                },
+            },
+        },
     });
 
     res.status(200).send(feedback);
@@ -351,7 +350,7 @@ const createVideoFeedbackReport = async (req: Request, res: Response) => {
 
 const createReport = async (req: Request, res: Response) => {
     const report = await prisma.report.create({
-        data: req.body
+        data: req.body,
     });
     res.status(200).send(report);
 };
@@ -361,9 +360,9 @@ const updateReport = async (req: Request, res: Response) => {
 
     const report = await prisma.report.update({
         where: {
-            id: reportId
+            id: reportId,
         },
-        data: req.body
+        data: req.body,
     });
 
     res.status(200).send(report);
@@ -374,8 +373,8 @@ const deleteVideoFeedback = async (req: Request, res: Response) => {
 
     const videoFeedback = await prisma.videoFeedback.delete({
         where: {
-            id: reportId
-        }
+            id: reportId,
+        },
     });
 
     res.status(200).send(videoFeedback);
@@ -393,5 +392,5 @@ export {
     getReport,
     getVideoFeedbackByCourse,
     getVideoFeedbackByExam,
-    updateReport
+    updateReport,
 };

@@ -1,7 +1,7 @@
 import prisma from "../../libs/prisma.js";
-import { ResourceType } from '@prisma/client';
+import { ResourceType } from "@prisma/client";
 import axios from "axios";
-import uploadFileToS3 from '../../utils/uploadFileToS3.js';
+import uploadFileToS3 from "../../utils/uploadFileToS3.js";
 
 const uploadQuestions = async (courseId: string, examId: string, questions: any[]) => {
     const promises: Promise<any>[] = [];
@@ -10,7 +10,7 @@ const uploadQuestions = async (courseId: string, examId: string, questions: any[
             number: index + 1,
             body: question[0].content,
         };
-        const tempResources = (question[0].hasImage) ? (question[0].imageLinks) : ([]);
+        const tempResources = question[0].hasImage ? question[0].imageLinks : [];
         const questionResources = await uploadResources(tempResources);
         question.shift();
         const answerChoices: any[] = [];
@@ -25,58 +25,59 @@ const uploadQuestions = async (courseId: string, examId: string, questions: any[
             answerChoices.push(ac);
         });
 
-        promises.push(prisma.question.create({
-            data: {
-                courseId: courseId,
-                examId: examId,
-                number: newQuestion.number,
-                body: newQuestion.body,
-                answerChoices: {
-                    createMany: {
-                        data: answerChoices
-                    }
-                },
-                resources: {
-                    connect: questionResources?.map((id) => ({ id: id }))
-                }
-            },
-            include: {
-                submissions: true,
-                topics: true,
-                answerChoices: {
-                    orderBy: {
-                        choiceIndex: 'asc'
+        promises.push(
+            prisma.question.create({
+                data: {
+                    courseId: courseId,
+                    examId: examId,
+                    number: newQuestion.number,
+                    body: newQuestion.body,
+                    answerChoices: {
+                        createMany: {
+                            data: answerChoices,
+                        },
                     },
-                    include: {
-                        resources: {
-                            include: {
-                                image: true,
-                                code: true
-                            }
-                        }
-                    }
+                    resources: {
+                        connect: questionResources?.map((id) => ({ id: id })),
+                    },
                 },
-                resources: {
-                    include: {
-                        image: true,
-                        code: true
-                    }
-                }
-            }
-        }));
+                include: {
+                    submissions: true,
+                    topics: true,
+                    answerChoices: {
+                        orderBy: {
+                            choiceIndex: "asc",
+                        },
+                        include: {
+                            resources: {
+                                include: {
+                                    image: true,
+                                    code: true,
+                                },
+                            },
+                        },
+                    },
+                    resources: {
+                        include: {
+                            image: true,
+                            code: true,
+                        },
+                    },
+                },
+            }),
+        );
     });
     return await Promise.all(promises);
 };
-
 
 const uploadResources = (resources) => {
     const resourceIds: string[] = [];
     resources.forEach(async (resource) => {
         const image = await axios.get(resource, {
-            responseType: 'arraybuffer',
+            responseType: "arraybuffer",
         });
 
-        const contentType = image.headers['content-type'];
+        const contentType = image.headers["content-type"];
 
         const data = await uploadFileToS3(image.data, contentType);
 
@@ -87,9 +88,9 @@ const uploadResources = (resources) => {
                     create: {
                         key: data.Key,
                         url: data.Location,
-                    }
-                }
-            }
+                    },
+                },
+            },
         });
         resourceIds.push(resp.id);
     });

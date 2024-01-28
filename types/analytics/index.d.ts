@@ -32,51 +32,51 @@ interface PageviewParams extends StatParams {
 
 interface MetricParams extends StatParams {
     type: AnalyticsType;
-    unit?: AnalyticsTime,
+    unit?: AnalyticsTime;
     timezone?: string;
 }
 
 type ActiveResponse = {
-    x: number
+    x: number;
 }[];
 
 type EventResponse = {
-    x: string,
-    t: string,
-    y: number
+    x: string;
+    t: string;
+    y: number;
 }[];
 
 type PageviewsResponse = {
     pageviews: {
-        x: string,
-        y: number
-    }[],
+        x: string;
+        y: number;
+    }[];
     sessions: {
-        x: string,
-        y: number
+        x: string;
+        y: number;
     }[];
 };
 
 type MetricsResponse = {
-    x: string,
-    y: number
+    x: string;
+    y: number;
 }[];
 
 type StatsResponse = {
     pageviews: {
-        value: number,
-        change: number
-    },
+        value: number;
+        change: number;
+    };
     uniques: {
-        value: number,
-        change: number
-    },
+        value: number;
+        change: number;
+    };
     bounces: {
-        value: number,
-        change: number
-    },
+        value: number;
+        change: number;
+    };
     totaltime: {
-        value: number,
-        change: number
-    }
-}
+        value: number;
+        change: number;
+    };
+};

@@ -6,7 +6,7 @@ import {
     getCourseTopicQuestions,
     getCourseTopics,
     getExam,
-    getExamQuestions
+    getExamQuestions,
 } from "../controllers/display/idController.js";
 import asyncWrapper from "../middleware/wrappers/asyncWrapper.js";
 

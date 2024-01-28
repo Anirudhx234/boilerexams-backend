@@ -1,10 +1,5 @@
-import express from 'express';
-import {
-    createExam,
-    deleteExam,
-    toggleExamPublished,
-    updateExam
-} from "../controllers/examController.js";
+import express from "express";
+import { createExam, deleteExam, toggleExamPublished, updateExam } from "../controllers/examController.js";
 import asyncWrapper from "../middleware/wrappers/asyncWrapper.js";
 
 const router = express.Router();

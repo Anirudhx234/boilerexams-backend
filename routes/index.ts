@@ -1,14 +1,14 @@
-import auth from '../middleware/auth/auth.js';
-import authHandler from '../middleware/auth/authHandler.js';
+import auth from "../middleware/auth/auth.js";
+import authHandler from "../middleware/auth/authHandler.js";
 import analytics from "./analytics.js";
 import courses from "./courses.js";
 import exams from "./exams.js";
 import events from "./events.js";
-import express from 'express';
+import express from "express";
 import feedback from "./feedback.js";
 import feedbackLimiter from "../middleware/rateLimiting/feedbackLimiter.js";
-import generalLimiter from"../middleware/rateLimiting/generalLimiter.js";
-import globalLimiter from '../middleware/rateLimiting/globalLimiter.js';
+import generalLimiter from "../middleware/rateLimiting/generalLimiter.js";
+import globalLimiter from "../middleware/rateLimiting/globalLimiter.js";
 import id_routes from "./id_routes.js";
 import name_routes from "./name_routes.js";
 import parsing from "./parsing.js";
@@ -39,7 +39,7 @@ router.use(questions);
 
 router.use("/users", users);
 
-router.use(authHandler);
+//router.use(authHandler);
 
 router.use("/id", id_routes);
 

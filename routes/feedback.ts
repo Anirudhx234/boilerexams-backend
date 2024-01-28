@@ -5,13 +5,16 @@ import {
     createFeatureRequest,
     createQuestionBugReport,
     createReport,
-    createVideoFeedbackReport, deleteVideoFeedback,
-    getReport, getVideoFeedbackByCourse, getVideoFeedbackByExam,
+    createVideoFeedbackReport,
+    deleteVideoFeedback,
+    getReport,
+    getVideoFeedbackByCourse,
+    getVideoFeedbackByExam,
     updateReport,
 } from "../controllers/feedbackController.js";
 import asyncWrapper from "../middleware/wrappers/asyncWrapper.js";
 import upload from "../middleware/multer/pdf.js";
-import express from 'express';
+import express from "express";
 
 const router = express.Router();
 

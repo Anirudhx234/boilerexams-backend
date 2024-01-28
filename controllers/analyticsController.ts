@@ -1,5 +1,5 @@
-import {Request, Response} from "express";
-import {AnalyticsApi} from "../services/analytics.api.js";
+import { Request, Response } from "express";
+import { AnalyticsApi } from "../services/analytics.api.js";
 
 const getActiveVisitors = async (req: Request, res: Response) => {
     const activeResponse = await AnalyticsApi.getActiveVisitors();
@@ -8,7 +8,7 @@ const getActiveVisitors = async (req: Request, res: Response) => {
 
 const getEvents = async (req: Request, res: Response) => {
     const events = await AnalyticsApi.getEvents({
-        ...parseEventParams(req)
+        ...parseEventParams(req),
     });
 
     res.status(200).send(events);
@@ -16,38 +16,38 @@ const getEvents = async (req: Request, res: Response) => {
 
 const getPageviews = async (req: Request, res: Response) => {
     const pageviewsResponse = await AnalyticsApi.getPageviews({
-        ...parsePageviewParams(req)
+        ...parsePageviewParams(req),
     });
 
-    const pageviews = pageviewsResponse.pageviews.map(pageview => {
+    const pageviews = pageviewsResponse.pageviews.map((pageview) => {
         return {
             since: pageview.x,
-            total: pageview.y
+            total: pageview.y,
         };
     });
 
-    const sessions = pageviewsResponse.sessions.map(session => {
+    const sessions = pageviewsResponse.sessions.map((session) => {
         return {
             since: session.x,
-            total: session.y
+            total: session.y,
         };
     });
 
     res.status(200).send({
         pageviews: pageviews,
-        sessions: sessions
+        sessions: sessions,
     });
 };
 
 const getMetrics = async (req: Request, res: Response) => {
     const metricsResponse = await AnalyticsApi.getMetrics({
-        ...parseMetricsParams(req)
+        ...parseMetricsParams(req),
     });
 
-    const metrics = metricsResponse.map(metric => {
+    const metrics = metricsResponse.map((metric) => {
         return {
             value: metric.x,
-            total: metric.y
+            total: metric.y,
         };
     });
 
@@ -56,7 +56,7 @@ const getMetrics = async (req: Request, res: Response) => {
 
 const getStats = async (req: Request, res: Response) => {
     const statsResponse = await AnalyticsApi.getStats({
-        ...parseStatsParams(req)
+        ...parseStatsParams(req),
     });
 
     res.status(200).send(statsResponse);
@@ -80,7 +80,7 @@ const parseEventParams = (req: Request): EventParams => {
         ...parseBaseParams(req),
         unit: unit,
         timezone: "America/Indiana/Indianapolis",
-        eventName: <string | undefined>req.query.eventName
+        eventName: <string | undefined>req.query.eventName,
     };
 };
 
@@ -93,7 +93,7 @@ const parseStatsParams = (req: Request): StatParams => {
         browser: <string | undefined>req.query.browser,
         device: <string | undefined>req.query.device,
         country: <string | undefined>req.query.country,
-        city: <string | undefined>req.query.city
+        city: <string | undefined>req.query.city,
     };
 };
 
@@ -114,14 +114,8 @@ const parseMetricsParams = (req: Request): MetricParams => {
         ...parseStatsParams(req),
         type: type,
         unit: <AnalyticsTime | undefined>req.query.unit,
-        timezone: "America/Indiana/Indianapolis"
+        timezone: "America/Indiana/Indianapolis",
     };
 };
 
-export {
-    getActiveVisitors,
-    getEvents,
-    getPageviews,
-    getMetrics,
-    getStats
-};
+export { getActiveVisitors, getEvents, getPageviews, getMetrics, getStats };

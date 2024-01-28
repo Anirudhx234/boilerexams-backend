@@ -1,5 +1,5 @@
 import prisma from "../../libs/prisma.js";
-import _ from 'lodash';
+import _ from "lodash";
 
 const answerChoiceStats = async (questionId: string) => {
     const stats: any = await prisma.$queryRaw`

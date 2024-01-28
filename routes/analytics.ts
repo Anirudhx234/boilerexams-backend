@@ -1,7 +1,7 @@
-import express from 'express';
-import {getActiveVisitors, getEvents, getMetrics, getPageviews, getStats} from "../controllers/analyticsController.js";
-import asyncWrapper from '../middleware/wrappers/asyncWrapper.js';
-import cache from '../cache/caching.js';
+import express from "express";
+import { getActiveVisitors, getEvents, getMetrics, getPageviews, getStats } from "../controllers/analyticsController.js";
+import asyncWrapper from "../middleware/wrappers/asyncWrapper.js";
+import cache from "../cache/caching.js";
 
 const router = express.Router();
 

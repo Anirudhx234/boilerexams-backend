@@ -1,11 +1,6 @@
-import express from 'express';
+import express from "express";
 import asyncWrapper from "../middleware/wrappers/asyncWrapper.js";
-import {
-    createEvents,
-    updateEvent,
-    deleteEvent,
-    deleteAllEvents
-} from "../controllers/eventController.js";
+import { createEvents, updateEvent, deleteEvent, deleteAllEvents } from "../controllers/eventController.js";
 
 const router = express.Router();
 

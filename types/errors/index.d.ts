@@ -1,4 +1,4 @@
 type ErrorResponse = {
-    message: string,
-    fullError: any
-}
+    message: string;
+    fullError: any;
+};

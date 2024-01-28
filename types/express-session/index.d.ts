@@ -1,14 +1,14 @@
 import { SessionOptions } from "express-session";
 
 // @ts-ignore
-declare module 'express-session' {
+declare module "express-session" {
     export type SessionOptionsExtended = SessionOptions & {
         cookie: {
-            sameSite: "strict" | "none"
-        }
-    }
+            sameSite: "strict" | "none";
+        };
+    };
 
-   export interface Session {
-    _garbage: string;
-  }
+    export interface Session {
+        _garbage: string;
+    }
 }

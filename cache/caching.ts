@@ -1,9 +1,9 @@
 import { NextFunction, Request, Response } from "express";
-import NodeCache from 'node-cache';
+import NodeCache from "node-cache";
 const serverCache = new NodeCache();
 
 const cache = (duration: number) => (req: Request, res: Response, next: NextFunction) => {
-    if (req.method !== 'GET') {
+    if (req.method !== "GET") {
         if (serverCache.has(req.originalUrl)) {
             serverCache.del(req.originalUrl);
         }
@@ -13,8 +13,7 @@ const cache = (duration: number) => (req: Request, res: Response, next: NextFunc
     const cachedBody = serverCache.get(key);
     if (cachedBody) {
         res.json(JSON.parse(cachedBody.toString()));
-    }
-    else {
+    } else {
         // @ts-ignore
         res.sendResponse = res.send;
         // @ts-ignore

@@ -1,61 +1,61 @@
 import prisma from "../../libs/prisma.js";
 import { InvalidSeasonError, NotFoundError } from "../../middleware/errors/index.js";
-import { Season } from '@prisma/client';
+import { Season } from "@prisma/client";
 import { Request, Response } from "express";
-import _ from 'lodash';
-import validCourseRegex from '../../utils/validCourseRegex.js';
+import _ from "lodash";
+import validCourseRegex from "../../utils/validCourseRegex.js";
 import answerChoiceStats from "../../helpers/stats/multiple.answerChoiceStats.js";
 
 const questionSort = [
     {
         exam: {
             semester: {
-                year: 'desc',
+                year: "desc",
             },
-        }
+        },
     },
     {
         exam: {
             semester: {
-                season: 'asc'
+                season: "asc",
             },
-        }
+        },
     },
     {
         exam: {
-            number: 'asc',
-        }
+            number: "asc",
+        },
     },
     {
-        number: 'asc'
-    }
+        number: "asc",
+    },
 ];
 
 // All courses metadata, with no relations
 const getCourses = async (req: Request, res: Response) => {
     let courses = await prisma.course.findMany({
         where: {
-            OR: req.published
+            OR: req.published,
         },
         orderBy: [
             {
-                subject: 'asc'
+                subject: "asc",
             },
             {
-                number: 'asc'
-            }
-        ]
+                number: "asc",
+            },
+        ],
     });
 
     if (!courses.length) {
         throw new NotFoundError("No courses found");
     }
-    courses = _.groupBy(courses, 'subject');
-    let result: { subject: string, courses: Array<string> }[] = [];
-    _.forEach(courses, function (value, key) {
+    courses = _.groupBy(courses, "subject");
+    let result: { subject: string; courses: Array<string> }[] = [];
+    _.forEach(courses, (value, key) => {
         result.push({ subject: key, courses: value });
     });
-    result = _.orderBy(result, 'courses', 'desc');
+    result = _.orderBy(result, "courses", "desc");
     res.status(200).send(result);
 };
 
@@ -72,48 +72,48 @@ const getAllTopics = async (req: Request, res: Response) => {
 const getAllCourses = async (req: Request, res: Response) => {
     const courses = await prisma.course.findMany({
         where: {
-            OR: req.published
+            OR: req.published,
         },
         include: {
             topics: true,
             semesters: true,
             exams: {
                 where: {
-                    OR: req.published
+                    OR: req.published,
                 },
                 include: {
                     questions: {
                         where: {
-                            OR: req.published
+                            OR: req.published,
                         },
                         include: {
                             topics: true,
                             answerChoices: {
                                 orderBy: {
-                                    choiceIndex: 'asc'
+                                    choiceIndex: "asc",
                                 },
                                 include: {
                                     resources: {
                                         include: {
                                             image: true,
-                                            code: true
-                                        }
-                                    }
-                                }
+                                            code: true,
+                                        },
+                                    },
+                                },
                             },
                             resources: {
                                 include: {
                                     image: true,
-                                    code: true
-                                }
-                            }
-                        }
+                                    code: true,
+                                },
+                            },
+                        },
                     },
                     semester: true,
-                }
+                },
             },
-            users: true
-        }
+            users: true,
+        },
     });
     if (!courses) {
         throw new NotFoundError("Courses not found");
@@ -130,15 +130,15 @@ const getCourse = async (req: Request, res: Response) => {
         where: {
             abbreviation: abbreviation.toUpperCase(),
             number: Number(number),
-            OR: req.published
+            OR: req.published,
         },
         include: {
             events: {
                 orderBy: {
-                    start: "asc"
-                }
-            }
-        }
+                    start: "asc",
+                },
+            },
+        },
     });
     if (!course) {
         throw new NotFoundError("No course found");
@@ -155,14 +155,14 @@ const getCourseTopics = async (req: Request, res: Response) => {
         where: {
             abbreviation: abbreviation.toUpperCase(),
             number: Number(number),
-            OR: req.published
+            OR: req.published,
         },
         select: {
-            topics: true
+            topics: true,
         },
         orderBy: {
-            name: 'asc'
-        }
+            name: "asc",
+        },
     });
 
     if (!course) {
@@ -181,7 +181,7 @@ const getCourseTopicsWithBasicQuestionInfo = async (req: Request, res: Response)
         where: {
             abbreviation: abbreviation.toUpperCase(),
             number: Number(number),
-            OR: req.published
+            OR: req.published,
         },
         select: {
             topics: {
@@ -190,38 +190,38 @@ const getCourseTopicsWithBasicQuestionInfo = async (req: Request, res: Response)
                         where: {
                             course: {
                                 abbreviation: abbreviation.toUpperCase(),
-                                number: Number(number)
+                                number: Number(number),
                             },
-                            OR: req.published
+                            OR: req.published,
                         },
                         select: {
                             id: true,
                             number: true,
-                            published: true
+                            published: true,
                         },
                         // @ts-expect-error orderBy type is wrong but who cares
-                        orderBy: questionSort
-                    }
+                        orderBy: questionSort,
+                    },
                 },
                 orderBy: {
-                    name: 'asc'
-                }
+                    name: "asc",
+                },
             },
             questions: {
                 where: {
                     course: {
                         abbreviation: abbreviation.toUpperCase(),
-                        number: Number(number)
+                        number: Number(number),
                     },
                     OR: req.published,
                     topics: {
-                        none: {}
-                    }
+                        none: {},
+                    },
                 },
                 select: {
                     id: true,
                     number: true,
-                    published: true
+                    published: true,
                 },
                 // @ts-expect-error Still wrong (still don't care)
                 orderBy: questionSort,
@@ -244,25 +244,29 @@ const getCourseExams = async (req: Request, res: Response) => {
         where: {
             abbreviation: abbreviation.toUpperCase(),
             number: Number(number),
-            OR: req.published
+            OR: req.published,
         },
         select: {
             exams: {
                 where: {
-                    OR: req.published
+                    OR: req.published,
                 },
                 include: {
-                    semester: true
-                }
-            }
-        }
+                    semester: true,
+                },
+            },
+        },
     });
 
     if (!course) {
         throw new NotFoundError("Course not found");
     }
     const exams = course.exams;
-    const sortedExams = _.orderBy(exams, [(exam) => exam.number === 0 ? 10 : exam.number, "semester.year", "semester.season"], ['asc', 'desc', 'asc']);
+    const sortedExams = _.orderBy(
+        exams,
+        [(exam) => (exam.number === 0 ? 10 : exam.number), "semester.year", "semester.season"],
+        ["asc", "desc", "asc"],
+    );
     res.status(200).send(sortedExams);
 };
 
@@ -275,29 +279,29 @@ const getCourseExamsWithBasicQuestionInfo = async (req: Request, res: Response) 
         where: {
             abbreviation: abbreviation.toUpperCase(),
             number: Number(number),
-            OR: req.published
+            OR: req.published,
         },
         select: {
             exams: {
                 where: {
-                    OR: req.published
+                    OR: req.published,
                 },
                 include: {
                     questions: {
                         where: {
-                            OR: req.published
+                            OR: req.published,
                         },
                         select: {
                             id: true,
                             number: true,
-                            published: true
+                            published: true,
                         },
                         orderBy: {
-                            number: 'asc'
-                        }
+                            number: "asc",
+                        },
                     },
-                    semester: true
-                }
+                    semester: true,
+                },
             },
         },
     });
@@ -306,7 +310,11 @@ const getCourseExamsWithBasicQuestionInfo = async (req: Request, res: Response) 
     }
 
     const exams = course.exams;
-    const sortedExams = _.orderBy(exams, [(exam) => exam.number === 0 ? 10 : exam.number, "semester.year", "semester.season"], ['asc', 'desc', 'asc']);
+    const sortedExams = _.orderBy(
+        exams,
+        [(exam) => (exam.number === 0 ? 10 : exam.number), "semester.year", "semester.season"],
+        ["asc", "desc", "asc"],
+    );
     res.status(200).send(sortedExams);
 };
 
@@ -325,9 +333,9 @@ const getCourseTopicWithBasicQuestionInfo = async (req: Request, res: Response) 
                     course: {
                         abbreviation: abbreviation.toUpperCase(),
                         number: Number(number),
-                        OR: req.published
+                        OR: req.published,
                     },
-                    OR: req.published
+                    OR: req.published,
                 },
                 select: {
                     id: true,
@@ -337,7 +345,7 @@ const getCourseTopicWithBasicQuestionInfo = async (req: Request, res: Response) 
                     published: true,
                 },
                 // @ts-expect-error These things happen
-                orderBy: questionSort
+                orderBy: questionSort,
             },
         },
     });
@@ -352,7 +360,10 @@ const getCourseTopicWithBasicQuestionInfo = async (req: Request, res: Response) 
         // Extend later
         topic.questions[i].answerChoiceStats = answerStats[i];
         // @ts-expect-error I promise it exists
-        topic.questions[i].percentCorrect = answerStats[i][topic.questions[i].correctChoiceIndices[0]] * 100 / answerStats[i].reduce((sum: number, a: number) => sum + a, 0);
+        topic.questions[i].percentCorrect =
+            // @ts-expect-error I promise it exists
+            (answerStats[i][topic.questions[i].correctChoiceIndices[0]] * 100) /
+            answerStats[i].reduce((sum: number, a: number) => sum + a, 0);
         // @ts-expect-error I promise it exists
         delete topic.questions[i].correctChoiceIndices;
     }
@@ -367,7 +378,7 @@ const getCourseTopicWithFullQuestionInfo = async (req: Request, res: Response) =
 
     const topic = await prisma.topic.findUnique({
         where: {
-            name: topicName
+            name: topicName,
         },
         include: {
             questions: {
@@ -375,41 +386,41 @@ const getCourseTopicWithFullQuestionInfo = async (req: Request, res: Response) =
                     course: {
                         abbreviation: abbreviation.toUpperCase(),
                         number: Number(number),
-                        OR: req.published
+                        OR: req.published,
                     },
-                    OR: req.published
+                    OR: req.published,
                 },
                 include: {
                     topics: true,
                     exam: {
                         include: {
                             semester: true,
-                        }
+                        },
                     },
                     answerChoices: {
                         orderBy: {
-                            choiceIndex: 'asc'
+                            choiceIndex: "asc",
                         },
                         include: {
                             resources: {
                                 include: {
                                     image: true,
-                                    code: true
-                                }
-                            }
-                        }
+                                    code: true,
+                                },
+                            },
+                        },
                     },
                     resources: {
                         include: {
                             image: true,
-                            code: true
-                        }
-                    }
+                            code: true,
+                        },
+                    },
                 },
                 // @ts-expect-error These things happen
-                orderBy: questionSort
-            }
-        }
+                orderBy: questionSort,
+            },
+        },
     });
     if (!topic) {
         throw new NotFoundError("Topic not found");
@@ -449,16 +460,16 @@ const getCourseExamWithBasicQuestionInfo = async (req: Request, res: Response) =
         where: {
             abbreviation: abbreviation.toUpperCase(),
             number: Number(number),
-            OR: req.published
+            OR: req.published,
         },
         include: {
             semesters: {
                 where: {
                     season: season_type,
-                    year: Number(year)
+                    year: Number(year),
                 },
-            }
-        }
+            },
+        },
     });
 
     if (!course) {
@@ -473,24 +484,24 @@ const getCourseExamWithBasicQuestionInfo = async (req: Request, res: Response) =
             number: Number(examNumber),
             courseId: course.id,
             semesterId: course.semesters[0].id,
-            OR: req.published
+            OR: req.published,
         },
         include: {
             questions: {
                 where: {
-                    OR: req.published
+                    OR: req.published,
                 },
                 select: {
                     id: true,
                     number: true,
                     topics: true,
-                    published: true
+                    published: true,
                 },
                 orderBy: {
-                    number: 'asc'
-                }
-            }
-        }
+                    number: "asc",
+                },
+            },
+        },
     });
 
     if (!exam) {
@@ -513,9 +524,9 @@ const getCourseExamWithFullQuestionInfo = async (req: Request, res: Response) =>
         where: {
             season_year: {
                 season: season_type,
-                year: Number(year)
-            }
-        }
+                year: Number(year),
+            },
+        },
     });
     if (!semester) {
         throw new NotFoundError("Semester not found");
@@ -525,8 +536,8 @@ const getCourseExamWithFullQuestionInfo = async (req: Request, res: Response) =>
         where: {
             abbreviation: abbreviation.toUpperCase(),
             number: Number(number),
-            OR: req.published
-        }
+            OR: req.published,
+        },
     });
     if (!course) {
         throw new NotFoundError("Course not found");
@@ -537,40 +548,40 @@ const getCourseExamWithFullQuestionInfo = async (req: Request, res: Response) =>
             number: Number(examNumber),
             courseId: course.id,
             semesterId: semester.id,
-            OR: req.published
+            OR: req.published,
         },
         include: {
             questions: {
                 where: {
-                    OR: req.published
+                    OR: req.published,
                 },
                 orderBy: {
-                    number: 'asc'
+                    number: "asc",
                 },
                 include: {
                     topics: true,
                     answerChoices: {
                         orderBy: {
-                            choiceIndex: 'asc'
+                            choiceIndex: "asc",
                         },
                         include: {
                             resources: {
                                 include: {
                                     image: true,
-                                    code: true
-                                }
-                            }
-                        }
+                                    code: true,
+                                },
+                            },
+                        },
                     },
                     resources: {
                         include: {
                             image: true,
-                            code: true
-                        }
-                    }
-                }
-            }
-        }
+                            code: true,
+                        },
+                    },
+                },
+            },
+        },
     });
     if (!exam) {
         throw new NotFoundError("Exam not found");

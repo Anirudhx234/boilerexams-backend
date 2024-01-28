@@ -52,10 +52,32 @@ const getQuestion = async (req: Request, res: Response) => {
 };
 
 const createQuestion = async (req: Request, res: Response) => {
-
     const { courseId, examId } = req.params;
-    const {topics, number, body, answerChoices, correctChoiceIndices, solutionVideoLink, explanationText, resourceIds,
-        disableRandomAnswers, answersStartHidden, disclaimer } = req.body;
+    let {
+        topics,
+        number,
+        body,
+        answerChoices,
+        correctChoiceIndices,
+        solutionVideoLink,
+        explanationText,
+        resourceIds,
+        disableRandomAnswers,
+        answersStartHidden,
+        disclaimer,
+    } = req.body;
+
+    if (!topics) {
+        topics = [];
+    }
+
+    if (!resourceIds) {
+        resourceIds = [];
+    }
+
+    if (!answerChoices) {
+        answerChoices = [];
+    }
 
     await prisma.course.update({
         where: {
@@ -79,7 +101,7 @@ const createQuestion = async (req: Request, res: Response) => {
                 connect: topics.map((topic) => ({ name: topic })),
             },
             number: Number(number),
-            body: body,
+            body: body ?? "",
             answerChoices: {
                 create: answerChoices.map((answerChoice) => ({
                     choiceIndex: Number(answerChoice.choiceIndex),
@@ -99,7 +121,7 @@ const createQuestion = async (req: Request, res: Response) => {
                 connect: resourceIds.map((resourceId) => ({ id: resourceId })),
             },
             disableRandomAnswers: disableRandomAnswers,
-            answersStartHidden: answersStartHidden
+            answersStartHidden: answersStartHidden,
         },
         include: {
             topics: true,
@@ -129,7 +151,7 @@ const createQuestion = async (req: Request, res: Response) => {
 
 const updateQuestion = async (req: Request, res: Response) => {
     const { courseId, examId, questionId } = req.params;
-    const {
+    let {
         topics,
         number,
         body,
@@ -137,11 +159,10 @@ const updateQuestion = async (req: Request, res: Response) => {
         correctChoiceIndices,
         solutionVideoLink,
         explanationText,
-        resources,
         resourceIds,
         answersStartHidden,
         disableRandomAnswers,
-        disclaimer
+        disclaimer,
     } = req.body;
 
     await prisma.course.update({
@@ -158,7 +179,7 @@ const updateQuestion = async (req: Request, res: Response) => {
         },
     });
 
-    const existingAnswerChoices = answerChoices.filter((answerChoice: { id: string; }) => {
+    const existingAnswerChoices = answerChoices.filter((answerChoice: { id: string }) => {
         return answerChoice.id !== undefined;
     });
 
@@ -221,7 +242,7 @@ const updateQuestion = async (req: Request, res: Response) => {
                         notIn: resourceIds,
                     },
                 },
-                connect: resourceIds.map((resourceId) => ({ id: resourceId }))
+                connect: resourceIds.map((resourceId) => ({ id: resourceId })),
                 // upsert: resources.map((resource) => ({
                 //    where: {
                 //        id: resource.id ?? "",
@@ -255,7 +276,6 @@ const updateQuestion = async (req: Request, res: Response) => {
         },
     });
     res.status(200).send(question);
-
 };
 
 const toggleQuestionPublished = async (req: Request, res: Response) => {
@@ -358,19 +378,19 @@ const bulkQuestionSubmission = async (req: Request, res: Response) => {
     const submissions = await prisma.$transaction(
         rawSubmissions.map(
             ({
-                 questionId,
-                 selectedChoiceIndices,
-                 correct,
-                 timeStarted,
-                 timeEnded,
-                 videoStartTime,
-                 videoEndTime,
-                 videoTotalWatchTime,
-                 modalStartTime,
-                 modalEndTime,
-                 modalTotalTime,
-                 osFamily,
-             }) => {
+                questionId,
+                selectedChoiceIndices,
+                correct,
+                timeStarted,
+                timeEnded,
+                videoStartTime,
+                videoEndTime,
+                videoTotalWatchTime,
+                modalStartTime,
+                modalEndTime,
+                modalTotalTime,
+                osFamily,
+            }) => {
                 const startTime = msToDate(timeStarted);
                 const endTime = msToDate(timeEnded);
                 const videoStart = msToDate(videoStartTime);
@@ -396,8 +416,8 @@ const bulkQuestionSubmission = async (req: Request, res: Response) => {
                         osFamily: osFamily,
                     },
                 });
-            }
-        )
+            },
+        ),
     );
 
     res.status(200).send(submissions);
@@ -405,14 +425,7 @@ const bulkQuestionSubmission = async (req: Request, res: Response) => {
 
 const updateSubmission = async (req: Request, res: Response) => {
     const { submissionId } = req.params;
-    const {
-        videoStartTime,
-        videoEndTime,
-        videoTotalWatchTime,
-        modalStartTime,
-        modalEndTime,
-        modalTotalTime,
-    } = req.body;
+    const { videoStartTime, videoEndTime, videoTotalWatchTime, modalStartTime, modalEndTime, modalTotalTime } = req.body;
 
     const videoStart = msToDate(videoStartTime);
     const videoEnd = msToDate(videoEndTime);

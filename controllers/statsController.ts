@@ -1,8 +1,8 @@
 import prisma from "../libs/prisma.js";
-import { Request, Response } from 'express';
-import { NotFoundError } from '../middleware/errors/index.js';
-import questionStats from '../helpers/stats/questionStats.js';
-import examStats from '../helpers/stats/examStats.js';
+import { Request, Response } from "express";
+import { NotFoundError } from "../middleware/errors/index.js";
+import questionStats from "../helpers/stats/questionStats.js";
+import examStats from "../helpers/stats/examStats.js";
 import msToHMS from "../utils/msToHMS.js";
 import { allCoursesStats, courseStats } from "../helpers/stats/courseStats.js";
 import answerChoiceStats from "../helpers/stats/single.answerChoiceStats.js";
@@ -15,53 +15,63 @@ const minimumValidSubmissionTime = 0;
 const getGeneralStats = async (req: Request, res: Response) => {
     const promises: Promise<any>[] = [];
 
-    promises.push(prisma.course.aggregate({
-        where: {
-            published: true
-        },
-        _count: true
-    }));
-
-    promises.push(prisma.exam.aggregate({
-        where: {
-            published: true
-        },
-        _count: true
-    }));
-
-    promises.push(prisma.question.aggregate({
-        where: {
-            published: true
-        },
-        _count: true
-    }));
-
-    promises.push(prisma.submission.aggregate({
-        where: {
-            question: {
-                published: true
+    promises.push(
+        prisma.course.aggregate({
+            where: {
+                published: true,
             },
-            timeSpent: {
-                gte: minimumValidSubmissionTime
-            }
-        },
-        _count: true,
-        _sum: {
-            timeSpent: true
-        }
-    }));
+            _count: true,
+        }),
+    );
 
-    promises.push(prisma.submission.count({
-        where: {
-            correct: true,
-            question: {
-                published: true
+    promises.push(
+        prisma.exam.aggregate({
+            where: {
+                published: true,
             },
-            timeSpent: {
-                gte: minimumValidSubmissionTime
-            }
-        }
-    }));
+            _count: true,
+        }),
+    );
+
+    promises.push(
+        prisma.question.aggregate({
+            where: {
+                published: true,
+            },
+            _count: true,
+        }),
+    );
+
+    promises.push(
+        prisma.submission.aggregate({
+            where: {
+                question: {
+                    published: true,
+                },
+                timeSpent: {
+                    gte: minimumValidSubmissionTime,
+                },
+            },
+            _count: true,
+            _sum: {
+                timeSpent: true,
+            },
+        }),
+    );
+
+    promises.push(
+        prisma.submission.count({
+            where: {
+                correct: true,
+                question: {
+                    published: true,
+                },
+                timeSpent: {
+                    gte: minimumValidSubmissionTime,
+                },
+            },
+        }),
+    );
 
     const resolved = await Promise.all(promises);
     const courses = resolved[0];
@@ -86,7 +96,7 @@ const getGeneralStats = async (req: Request, res: Response) => {
         totalQuestions: questions._count,
         totalSubmissions: submissions._count + OLD_SUBMISSIONS,
         totalTimeSpent: totalTimeSpent,
-        percentCorrect: percentCorrect
+        percentCorrect: percentCorrect,
     };
 
     res.status(200).json(stats);
@@ -118,20 +128,20 @@ const getCourseExamsStats = async (req: Request, res: Response) => {
     const course = await prisma.course.findFirst({
         where: {
             id: courseId,
-            published: true
+            published: true,
         },
         select: {
             exams: {
                 where: {
-                    published: true
+                    published: true,
                 },
                 select: {
                     id: true,
                     number: true,
-                    semester: true
-                }
-            }
-        }
+                    semester: true,
+                },
+            },
+        },
     });
     if (!course) {
         throw new NotFoundError("Course not found");
@@ -151,7 +161,7 @@ const getCourseExamsStats = async (req: Request, res: Response) => {
             id: exam.id,
             number: exam.number,
             semester: exam.semester,
-            ...resolved[i]
+            ...resolved[i],
         });
         i++;
     }
@@ -167,7 +177,6 @@ const getExamStats = async (req: Request, res: Response) => {
     res.status(200).json(stats);
 };
 
-
 const getQuestionStats = async (req: Request, res: Response) => {
     const { questionId } = req.params;
 
@@ -177,7 +186,7 @@ const getQuestionStats = async (req: Request, res: Response) => {
 
     const stats = {
         questionStats: mainStats,
-        answerChoiceStats: answerStats
+        answerChoiceStats: answerStats,
     };
 
     res.status(200).json(stats);
@@ -187,31 +196,31 @@ const getSubmissionStats = async (req: Request, res: Response) => {
     const submissions = await prisma.submission.aggregate({
         where: {
             question: {
-                published: true
+                published: true,
             },
             timeSpent: {
-                gte: minimumValidSubmissionTime
-            }
+                gte: minimumValidSubmissionTime,
+            },
         },
         _sum: {
             timeSpent: true,
         },
         _avg: {
-            timeSpent: true
+            timeSpent: true,
         },
-        _count: true
+        _count: true,
     });
 
     const correctSubmissions = await prisma.submission.count({
         where: {
             correct: true,
             question: {
-                published: true
+                published: true,
             },
             timeSpent: {
-                gte: minimumValidSubmissionTime
-            }
-        }
+                gte: minimumValidSubmissionTime,
+            },
+        },
     });
 
     const totalSubmissions = submissions._count + OLD_SUBMISSIONS;
@@ -229,17 +238,9 @@ const getSubmissionStats = async (req: Request, res: Response) => {
         totalSubmissions: submissions._count + OLD_SUBMISSIONS,
         totalTimeSpent: totalTimeSpent,
         averageTimeSpent: averageTimeSpent,
-        percentCorrect: percentCorrect
+        percentCorrect: percentCorrect,
     };
     res.status(200).json(submissionsStats);
 };
 
-export {
-    getGeneralStats,
-    getCourseExamsStats,
-    getQuestionStats,
-    getExamStats,
-    getCourseStats,
-    getCourseStatsAll,
-    getSubmissionStats
-};
+export { getGeneralStats, getCourseExamsStats, getQuestionStats, getExamStats, getCourseStats, getCourseStatsAll, getSubmissionStats };
