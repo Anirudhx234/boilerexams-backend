@@ -18,7 +18,7 @@ const router = express.Router();
 
 router.get("/id/questions/:questionId", sendPublished, asyncWrapper(getQuestion));
 
-router.post("/courses/:courseId/exams/:examId/questions", asyncWrapper(createQuestion));
+router.post("/courses/:courseId/exams/:examId/questions", authHandler, asyncWrapper(createQuestion));
 
 router.put("/courses/:courseId/exams/:examId/questions/:questionId", authHandler, asyncWrapper(updateQuestion));
 

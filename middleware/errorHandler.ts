@@ -7,7 +7,6 @@ import axios from "axios";
 const errorHandler = (error, req: Request, res: Response, next: NextFunction) => {
     axios.post(`${process.env.DISCORD_URL}/error`, error).catch(console.log);
 
-    console.log(error)
     const errorResponse: ErrorResponse = {
         message: error.message,
         fullError: {},

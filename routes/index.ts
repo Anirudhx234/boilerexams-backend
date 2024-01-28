@@ -39,7 +39,7 @@ router.use(questions);
 
 router.use("/users", users);
 
-//router.use(authHandler);
+router.use(authHandler);
 
 router.use("/id", id_routes);
 

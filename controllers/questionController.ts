@@ -86,8 +86,8 @@ const createQuestion = async (req: Request, res: Response) => {
         data: {
             topics: {
                 connectOrCreate: topics.map((topic) => ({
-                    where: { name: topic },
-                    create: { name: topic },
+                    where: topic,
+                    create: topic,
                 })),
             },
         },
@@ -98,7 +98,7 @@ const createQuestion = async (req: Request, res: Response) => {
             courseId: courseId,
             examId: examId,
             topics: {
-                connect: topics.map((topic) => ({ name: topic })),
+                connect: topics,
             },
             number: Number(number),
             body: body ?? "",
@@ -172,8 +172,8 @@ const updateQuestion = async (req: Request, res: Response) => {
         data: {
             topics: {
                 connectOrCreate: topics.map((topic: string) => ({
-                    where: { name: topic },
-                    create: { name: topic },
+                    where: topic,
+                    create: topic,
                 })),
             },
         },
@@ -191,7 +191,7 @@ const updateQuestion = async (req: Request, res: Response) => {
             courseId: courseId,
             examId: examId,
             topics: {
-                set: topics.map((topic: string) => ({ name: topic })),
+                set: topics,
             },
             number: Number(number),
             body: body,
