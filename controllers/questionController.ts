@@ -177,50 +177,37 @@ const updateQuestion = async (req: Request, res: Response) => {
       answerChoices: {
         deleteMany: {
           id: {
-            notIn: existingAnswerChoices.map((answerChoice: { id: string }) => answerChoice.id),
+            notIn: existingAnswerChoices.map((answerChoice) => answerChoice.id),
           },
         },
-        upsert: answerChoices.map((answerChoice: { resourceIds: string[]; resources: { id: string }[]; id: string; choiceIndex: number; body: string; }) => {
-          const resourcesQuery = {
-            // deleteMany: {
-            //     id: {
-            //         notIn: answerChoice.resourceIds,
-            //     },
-            // },
-            // connect: answerChoice.resourceIds.map((resourceId) => ({
-            //     id: resourceId,
-            // })),
-            deleteMany: {
-              id: {
-                notIn: answerChoice.resourceIds,
+        upsert: answerChoices.map((answerChoice) => ({
+          where: {
+            id: answerChoice.id || "",
+          },
+          update: {
+            choiceIndex: Number(answerChoice.choiceIndex),
+            body: answerChoice.body,
+            resources: {
+              deleteMany: {
+                id: {
+                  notIn: answerChoice.resourceIds,
+                },
               },
+              connect: answerChoice.resourceIds.map((resourceId) => ({
+                id: resourceId,
+              })),
             },
-            // connect: resourceIds.map((resourceId) => ({ id: resourceId }))
-            upsert: answerChoice.resources.map((resource) => ({
-              where: {
-                id: resource.id ?? "",
-              },
-              update: resource,
-              create: resource,
-            })),
-          };
-
-          return {
-            where: {
-              id: answerChoice.id || "",
+          },
+          create: {
+            choiceIndex: Number(answerChoice.choiceIndex),
+            body: answerChoice.body,
+            resources: {
+              connect: answerChoice.resourceIds.map((resourceId) => ({
+                id: resourceId,
+              })),
             },
-            update: {
-              choiceIndex: Number(answerChoice.choiceIndex),
-              body: answerChoice.body,
-              resources: resourcesQuery,
-            },
-            create: {
-              choiceIndex: Number(answerChoice.choiceIndex),
-              body: answerChoice.body,
-              resources: resourcesQuery,
-            },
-          };
-        }),
+          },
+        })),
       },
       correctChoiceIndices: correctChoiceIndices,
       solutionVideoLink: solutionVideoLink,
