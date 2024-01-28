@@ -1,63 +1,68 @@
 import prisma from "../libs/prisma.js";
-import { StudyMode } from "@prisma/client";
+import {StudyMode} from "@prisma/client";
 import { Request, Response } from 'express';
 import { APIError, NotFoundError } from "../middleware/errors/index.js";
 import { PurdueIoAPI } from "../services/purdue.io.js";
 import uploadFileToS3 from "../utils/uploadFileToS3.js";
 import hexModifier from "../utils/hexModifier.js";
 
-const getCourseInfo = async (abbreviation: string, number: number) => {
-    const stringifiedNumber = String(number);
-    const courseNumber = stringifiedNumber + "0".repeat(5 - stringifiedNumber.length);
+async function getCourseInfo(abbreviation: string, number: number) {
+    while (number < 10000) number *= 1;
+    const courseNumber = String(number);
     const purdueIoSubject = await PurdueIoAPI.getSubject(abbreviation.toUpperCase());
     const purdueIoCourse = await PurdueIoAPI.getCourse(purdueIoSubject, courseNumber);
     return { courseNumber, purdueIoCourse, purdueIoSubject };
-};
+}
 
-const getStudyModes = async (modes: string[]) => {
-    try {
-        for (let i = 0; i < modes.length; i++) {
-            modes[i] = StudyMode[modes[i].toUpperCase() as keyof typeof StudyMode];
-        }
-    } catch (error) {
+function validateStudyModes(modes: string[]) {
+    for (const studyMode of modes) {
+        if (Object.values(StudyMode).includes(studyMode as StudyMode)) continue;
         throw new APIError("Invalid study modes", 400);
     }
-};
+}
 
-const uploadGraphic = async (file, graphicLink: string) => {
-    let graphic = "";
+async function uploadGraphic(graphicLink: string, file?: Express.Multer.File, ) {
     if (file) {
         const data = await uploadFileToS3(file.buffer, file.mimetype);
-        graphic = data.Location;
+        return data.Location;
     }
-    else {
-        graphic = graphicLink;
-    }
-    return graphic;
-};
+    return graphicLink;
+}
 
-const createCourse = async (req: Request, res: Response) => {
-    const { abbreviation, number, backgroundColor, graphicLink, studyModes, disclaimer } = req.body;
-
-    const secondaryColor = hexModifier(backgroundColor, 1.4);
-
-    getStudyModes(studyModes);
+async function getCreateCourseOptions(req: Request): Promise<CreateCourseOptions> {
+    const {
+        abbreviation,
+        number,
+        backgroundColor,
+        graphicLink,
+        studyModes,
+        disclaimer
+    } = req.body;
 
     const { courseNumber, purdueIoCourse, purdueIoSubject } = await getCourseInfo(abbreviation, number);
+    const graphic = await uploadGraphic(graphicLink, req.file);
+    const secondaryColor = hexModifier(backgroundColor, 1.4);
+    validateStudyModes(studyModes);
 
-    const graphic = await uploadGraphic(req.file, graphicLink);
+    return {
+        name: purdueIoCourse.Title,
+        subject: purdueIoSubject.Name,
+        abbreviation: purdueIoSubject.Abbreviation,
+        number: Number(courseNumber),
+        backgroundColor: backgroundColor,
+        secondaryColor: secondaryColor,
+        graphicLink: graphic,
+        studyModes: studyModes,
+        disclaimer: disclaimer
+    };
+}
+
+const createCourse = async (req: Request, res: Response) => {
+    const options = await getCreateCourseOptions(req);
 
     const course = await prisma.course.create({
         data: {
-            name: purdueIoCourse.Title,
-            subject: purdueIoSubject.Name,
-            abbreviation: purdueIoSubject.Abbreviation,
-            number: Number(courseNumber),
-            backgroundColor: backgroundColor,
-            secondaryColor: secondaryColor,
-            graphicLink: graphic,
-            studyModes: studyModes,
-            disclaimer: disclaimer
+            ...options
         },
         include: {
             exams: true,
@@ -71,30 +76,14 @@ const createCourse = async (req: Request, res: Response) => {
 
 const updateCourse = async (req: Request, res: Response) => {
     const { courseId } = req.params;
-    const { abbreviation, number, backgroundColor, graphicLink, studyModes, disclaimer } = req.body;
-
-    const secondaryColor = hexModifier(backgroundColor, 1.4);
-
-    getStudyModes(studyModes);
-
-    const { courseNumber, purdueIoCourse, purdueIoSubject } = await getCourseInfo(abbreviation, number);
-
-    const graphic = await uploadGraphic(req.file, graphicLink);
+    const options = await getCreateCourseOptions(req);
 
     const course = await prisma.course.update({
         where: {
             id: courseId
         },
         data: {
-            name: purdueIoCourse.Title,
-            subject: purdueIoSubject.Name,
-            abbreviation: purdueIoSubject.Abbreviation,
-            number: Number(courseNumber),
-            backgroundColor: backgroundColor,
-            secondaryColor: secondaryColor,
-            graphicLink: graphic,
-            studyModes: studyModes,
-            disclaimer: disclaimer
+            ...options
         }
     });
     res.status(200).send(course);

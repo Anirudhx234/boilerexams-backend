@@ -3,7 +3,6 @@ import { Request, Response } from "express";
 import { APIError, NotFoundError } from "../middleware/errors/index.js";
 import msToDate from "../utils/msToDate.js";
 import answerChoiceStats from "../helpers/stats/single.answerChoiceStats.js";
-import axios from "axios";
 
 const getQuestion = async (req: Request, res: Response) => {
   const { questionId } = req.params;
