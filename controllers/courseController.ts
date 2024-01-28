@@ -21,7 +21,7 @@ function validateStudyModes(modes: string[]) {
     }
 }
 
-async function uploadGraphic(graphicLink: string, file?: Express.Multer.File, ) {
+async function uploadGraphic(graphicLink: string, file?: any) {
     if (file) {
         const data = await uploadFileToS3(file.buffer, file.mimetype);
         return data.Location;
