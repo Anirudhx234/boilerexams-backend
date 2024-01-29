@@ -13,14 +13,15 @@ model Course {
   id              String      @id @default(uuid())
   name            String      @unique
   abbreviation    String
-  number          Int
   subject         String
-  studyModes      StudyMode[]
   backgroundColor String      @default("")
   secondaryColor  String      @default("")
   graphicLink     String      @default("")
+  disclaimer      String      @default("")
+  number          Int
   published       Boolean     @default(false)
   exams           Exam[]
+  studyModes      StudyMode[]
   questions       Question[]
   semesters       Semester[]  @relation("CourseToSemester")
   topics          Topic[]     @relation("CourseToTopic")
@@ -33,14 +34,15 @@ model Course {
 
 model Exam {
   id         String     @id @default(uuid())
-  number     Int
   courseId   String
   semesterId String
-  published  Boolean    @default(false)
-  practice   Boolean    @default(false)
   pdfId      String     @default("")
   pdfKey     String     @default("")
   pdfLink    String     @default("")
+  disclaimer String     @default("")
+  number     Int
+  published  Boolean    @default(false)
+  practice   Boolean    @default(false)
   course     Course     @relation(fields: [courseId], references: [id], onDelete: Cascade)
   semester   Semester   @relation(fields: [semesterId], references: [id], onDelete: Cascade)
   questions  Question[]
@@ -58,13 +60,16 @@ model Topic {
 model Question {
   id                   String          @id @default(uuid())
   examId               String
-  number               Int
   body                 String
   courseId             String
   solutionVideoLink    String          @default("")
   explanationText      String          @default("")
+  disclaimer           String          @default("")
+  number               Int
   correctChoiceIndices Int[]
   published            Boolean         @default(false)
+  disableRandomAnswers Boolean         @default(false)
+  answersStartHidden   Boolean         @default(false)
   answerChoices        AnswerChoice[]
   course               Course          @relation(fields: [courseId], references: [id], onDelete: Cascade)
   exam                 Exam            @relation(fields: [examId], references: [id], onDelete: Cascade)
@@ -73,7 +78,6 @@ model Question {
   submissions          Submission[]
   reports              Report[]
   videoFeedback        VideoFeedback[]
-  disableRandomAnswers Boolean         @default(false)
 }
 
 model AnswerChoice {
@@ -110,7 +114,7 @@ model Image {
 model Code {
   id         String   @id @default(uuid())
   language   Language
-  code       String
+  content    String
   resourceId String   @unique
   resource   Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
 }
@@ -191,15 +195,24 @@ model Application {
 }
 
 model User {
-  id             String      @id @default(uuid())
+  id             String        @id @default(uuid())
   name           String?
-  email          String?     @unique
+  email          String?       @unique
   profilePicture String?
-  role           Role        @default(USER)
+  role           Role          @default(USER)
+  accountId      String?       @unique
   accountType    AccountType
-  accountId      String?     @unique
-  courses        Course[]    @relation("CourseToUser")
+  localAccount   LocalAccount?
+  courses        Course[]      @relation("CourseToUser")
   reports        Report[]
+}
+
+model LocalAccount {
+  id       String @id @default(uuid())
+  userId   String @unique
+  password Bytes
+  salt     Bytes
+  User     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Session {
@@ -220,11 +233,14 @@ model Event {
   location    String?
   courseId    String?
   course      Course?   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([location, start])
 }
 
 enum AccountType {
   DISCORD
   GOOGLE
+  LOCAL
 }
 
 enum ResourceType {

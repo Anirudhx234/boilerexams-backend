@@ -1,5 +1,5 @@
 import prisma from "../libs/prisma.js";
-import { Request, Response } from 'express';
+import { Request, Response } from "express";
 import { APIError, NotFoundError } from "../middleware/errors/index.js";
 
 const createTopic = async (req: Request, res: Response) => {
@@ -14,13 +14,13 @@ const createTopic = async (req: Request, res: Response) => {
         data: {
             name: name,
             courses: {
-                connect: { id: courseId }
-            }
+                connect: { id: courseId },
+            },
         },
         include: {
             courses: true,
-            questions: true
-        }
+            questions: true,
+        },
     });
     res.status(200).send(topic);
 };
@@ -35,19 +35,19 @@ const updateTopic = async (req: Request, res: Response) => {
 
     const existingTopic = await prisma.topic.findUnique({
         where: {
-            name: name
-        }
+            name: name,
+        },
     });
 
     let result;
     if (existingTopic) {
         const originalTopic = await prisma.topic.findUnique({
             where: {
-                id: topicId
+                id: topicId,
             },
             include: {
-                questions: true
-            }
+                questions: true,
+            },
         });
         if (!originalTopic) {
             throw new NotFoundError("Invalid topic id");
@@ -55,29 +55,30 @@ const updateTopic = async (req: Request, res: Response) => {
 
         result = await prisma.topic.update({
             where: {
-                name: name
+                name: name,
             },
             data: {
                 questions: {
-                    connect: originalTopic.questions.map((question) => ({ id: question.id }))
-                }
-            }
+                    connect: originalTopic.questions.map((question) => ({
+                        id: question.id,
+                    })),
+                },
+            },
         });
 
         await prisma.topic.delete({
             where: {
-                id: topicId
-            }
+                id: topicId,
+            },
         });
-    }
-    else {
+    } else {
         result = await prisma.topic.update({
             where: {
-                id: topicId
+                id: topicId,
             },
             data: {
-                name: name
-            }
+                name: name,
+            },
         });
     }
     res.status(200).send(result);
@@ -88,13 +89,13 @@ const setTopicQuestions = async (req: Request, res: Response) => {
     const { questionIds } = req.body;
     const topic = await prisma.topic.update({
         where: {
-            id: topicId
+            id: topicId,
         },
         data: {
             questions: {
-                set: questionIds.map((id: string) => ({ id: id }))
-            }
-        }
+                set: questionIds.map((id: string) => ({ id: id })),
+            },
+        },
     });
     res.status(200).send(topic);
 };
@@ -103,8 +104,8 @@ const deleteTopic = async (req: Request, res: Response) => {
     const { topicId } = req.params;
     const topic = await prisma.topic.delete({
         where: {
-            id: topicId
-        }
+            id: topicId,
+        },
     });
 
     if (!topic) {
@@ -113,9 +114,4 @@ const deleteTopic = async (req: Request, res: Response) => {
     res.status(200).send(topic);
 };
 
-export {
-    createTopic,
-    updateTopic,
-    setTopicQuestions,
-    deleteTopic
-};
+export { createTopic, updateTopic, setTopicQuestions, deleteTopic };

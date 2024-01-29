@@ -1,16 +1,28 @@
-FROM node:18
+FROM node:18.18.2 AS builder
 
 WORKDIR /app
 
 COPY package*.json ./
-COPY prisma ./prisma/
+COPY prisma ./prisma
 
-RUN npm install
+RUN npm ci --omit=dev
 
 COPY . .
 
-RUN npm install rimraf
 RUN npm run build
 
+FROM node:18.18.2-slim
+
+ENV NODE_ENV=production
+ENV REMOTE=enabled
+
+RUN apt-get update -y
+RUN apt-get install -y openssl
+
+COPY --from=builder /app/package.json ./
+COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/dist ./dist
+
 EXPOSE 8080
-CMD [ "npm", "run", "prod"]
+CMD [ "npm", "start"]

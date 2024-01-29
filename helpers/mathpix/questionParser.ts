@@ -1,19 +1,23 @@
 interface QuestionPart {
-    content: string,
-    hasImage: boolean,
-    imageLinks?: string[]
+    content: string;
+    hasImage: boolean;
+    imageLinks?: string[];
 }
 
 const parseQuestions = (content: any, choices: number) => {
     const regex1 = /\\[a-z]+\{enumerate\}/g;
     const regex2 = /\\setcounter\{enumi\}\{[0-9]*\}/g;
-    const questions = content.substring(content.search('begin\{document\}') + 15, content.search('\\end\{document\}')).replaceAll(regex1, '').replaceAll(regex2, '').split(/\\item|\\section/);
-    const images = content.substring(content.search('\\end\{document\}')).match(/(.+)(https:\/\/cdn.mathpix.com\/.+)PK/g);
+    const questions = content
+        .substring(content.search("begin{document}") + 15, content.search("\\end{document}"))
+        .replaceAll(regex1, "")
+        .replaceAll(regex2, "")
+        .split(/\\item|\\section/);
+    const images = content.substring(content.search("\\end{document}")).match(/(.+)(https:\/\/cdn.mathpix.com\/.+)PK/g);
 
     let modifiedQuestion = new Array<QuestionPart[]>();
     let qs = 0;
 
-    questions.forEach(question => {
+    questions.forEach((question) => {
         let multiQ;
         let singleQ;
         let q = question;
@@ -29,7 +33,8 @@ const parseQuestions = (content: any, choices: number) => {
                 sQR = /(.+)\(*[Aa][\.\)](.+)\(*[Bb][\.\)](.+)\(*[Cc][\.\)](.+)\(*[Dd][\.\)](.+)\(*[Ee][\.\)](.+)/s;
                 break;
             case 6:
-                mQR = /(.+)\(*[Aa][\.\)](.+)\(*[Bb][\.\)](.+)\(*[Cc][\.\)](.+)\(*[Dd][\.\)](.+)\(*[Ee][\.\)](.+)\(*[Ff][\.\)](.+)[0-9]+[\.\)]/s;
+                mQR =
+                    /(.+)\(*[Aa][\.\)](.+)\(*[Bb][\.\)](.+)\(*[Cc][\.\)](.+)\(*[Dd][\.\)](.+)\(*[Ee][\.\)](.+)\(*[Ff][\.\)](.+)[0-9]+[\.\)]/s;
                 sQR = /(.+)\(*[Aa][\.\)](.+)\(*[Bb][\.\)](.+)\(*[Cc][\.\)](.+)\(*[Dd][\.\)](.+)\(*[Ee][\.\)](.+)\(*[Ff][\.\)](.+)/s;
                 break;
             default:
@@ -37,19 +42,18 @@ const parseQuestions = (content: any, choices: number) => {
         }
 
         const section = new Array<QuestionPart[]>();
-        while (multiQ = q.match(mQR)) {
-            if (singleQ = q.substring(multiQ[0].length).match(sQR)) {
+        while ((multiQ = q.match(mQR))) {
+            if ((singleQ = q.substring(multiQ[0].length).match(sQR))) {
                 section.push(checkImage(singleQ, images));
                 qs += 1;
             }
             if (qs >= 10) {
                 q = q.substring(0, multiQ[0].length - 3);
-            }
-            else {
+            } else {
                 q = q.substring(0, multiQ[0].length - 2);
             }
         }
-        if (singleQ = q.match(sQR)) {
+        if ((singleQ = q.match(sQR))) {
             section.push(checkImage(singleQ, images));
             qs += 1;
         }
@@ -61,7 +65,7 @@ const parseQuestions = (content: any, choices: number) => {
 const checkImage = (arr, images) => {
     const question = new Array<QuestionPart>();
     arr.shift();
-    arr.forEach(element => {
+    arr.forEach((element) => {
         const part: QuestionPart = {
             content: element.trim(),
             hasImage: false,
@@ -69,13 +73,13 @@ const checkImage = (arr, images) => {
         const imageReg = /includegraphics.+\{([^\{\}]+)\}/g;
         let image;
         const imagelinks = new Array<string>();
-        while (image = imageReg.exec(element)) {
+        while ((image = imageReg.exec(element))) {
             // console.log(`image=${image}`)
-            const imageid = image[1].substring(0, image[1].length).replaceAll(/\(/g, '\\\(').replaceAll(/\)/g, '\\\)');
+            const imageid = image[1].substring(0, image[1].length).replaceAll(/\(/g, "\\(").replaceAll(/\)/g, "\\)");
             // console.log(`imageid=${imageid}`)
-            const i = images.find(i => i.replaceAll(/\(/g, '\\\(').replaceAll(/\)/g, '\\\)').includes(imageid));
+            const i = images.find((i) => i.replaceAll(/\(/g, "\\(").replaceAll(/\)/g, "\\)").includes(imageid));
             if (i) {
-                const imageURL = i.substring(i.search("https\:"), i.length - 2);
+                const imageURL = i.substring(i.search("https:"), i.length - 2);
                 imagelinks.push(imageURL);
             }
         }

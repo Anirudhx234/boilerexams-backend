@@ -1,17 +1,18 @@
-import express from 'express';
-import {getActiveVisitors, getEvents, getMetrics, getPageviews, getStats} from "../controllers/analyticsController.js";
-import asyncWrapper from '../middleware/wrappers/asyncWrapper.js';
-import cache from '../cache/caching.js';
-const app = express();
+import express from "express";
+import { getActiveVisitors, getEvents, getMetrics, getPageviews, getStats } from "../controllers/analyticsController.js";
+import asyncWrapper from "../middleware/wrappers/asyncWrapper.js";
+import cache from "../cache/caching.js";
 
-app.get("/active", cache(60), asyncWrapper(getActiveVisitors));
+const router = express.Router();
 
-app.get("/events", cache(60), asyncWrapper(getEvents));
+router.get("/active", cache(60), asyncWrapper(getActiveVisitors));
 
-app.get("/pageviews", cache(60), asyncWrapper(getPageviews));
+router.get("/events", cache(60), asyncWrapper(getEvents));
 
-app.get("/metrics", cache(60), asyncWrapper(getMetrics));
+router.get("/pageviews", cache(60), asyncWrapper(getPageviews));
 
-app.get("/stats", cache(60), asyncWrapper(getStats));
+router.get("/metrics", cache(60), asyncWrapper(getMetrics));
 
-export default app;
+router.get("/stats", cache(60), asyncWrapper(getStats));
+
+export default router;

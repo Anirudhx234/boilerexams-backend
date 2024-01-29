@@ -25,10 +25,10 @@ const allCoursesStats = async (before: Date, after: Date) => {
         WHERE c."published" = true AND q.published = true
         GROUP BY c.id;
     `;
-    if(before.getTime() == 0) {
+    if (before.getTime() == 0) {
         before.setTime(Date.now());
     }
-  
+
     const questionResults: QuestionQueryData[] = await prisma.$queryRaw`
         SELECT Q."courseId" AS "courseId",
                Q.ID AS "id",
@@ -108,13 +108,13 @@ const courseStats = async (courseId: string, before: Date, after: Date) => {
         WHERE CONCAT(c."abbreviation", CAST(c."number" as VARCHAR)) = ${courseId} AND c.published = true AND q.published = true
         group by c.id;
     `;
-    console.log("after " + after + " | before " + before + "\n");
+    // console.log("after " + after + " | before " + before + "\n");
     const course = courses[0];
 
     if (!course) {
         throw new NotFoundError("Course not found");
     }
-    if(before.getTime() == 0) {
+    if (before.getTime() == 0) {
         before.setTime(Date.now());
     }
 
@@ -146,7 +146,4 @@ const courseStats = async (courseId: string, before: Date, after: Date) => {
     };
 };
 
-export {
-    allCoursesStats,
-    courseStats
-};
+export { allCoursesStats, courseStats };

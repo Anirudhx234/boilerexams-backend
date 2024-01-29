@@ -11,9 +11,9 @@ const uploadFileToS3 = async (buffer: Buffer, contentType: string) => {
     const config = {
         credentials: {
             accessKeyId: process.env.AWS_ACCESS_KEY_ID || "",
-            secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || ""
+            secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || "",
         },
-        region: 'us-east-2'
+        region: "us-east-2",
     };
 
     const s3 = new S3(config);
@@ -23,17 +23,17 @@ const uploadFileToS3 = async (buffer: Buffer, contentType: string) => {
         Key: nanoid(),
         Body: buffer,
         ACL: "public-read-write",
-        ContentType: contentType
+        ContentType: contentType,
     };
 
     await new Upload({
         client: s3,
-        params
+        params,
     }).done();
 
     const data = {
         Location: `https://${params.Bucket}.s3.us-east-2.amazonaws.com/${params.Key}`,
-        Key: params.Key
+        Key: params.Key,
     };
 
     return data;

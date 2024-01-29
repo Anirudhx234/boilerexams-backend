@@ -1,11 +1,16 @@
 import prisma from "../libs/prisma.js";
 import { Season } from "@prisma/client";
-import { Request, Response } from 'express';
+import { Request, Response } from "express";
 import { APIError, NotFoundError } from "../middleware/errors/index.js";
 
 const createExam = async (req: Request, res: Response) => {
     const { courseId } = req.params;
-    const { semester: { season, year }, number, practice } = req.body;
+    const {
+        semester: { season, year },
+        number,
+        practice,
+        disclaimer,
+    } = req.body;
 
     if (!season || !year) {
         throw new APIError("Season and year required", 400);
@@ -16,40 +21,41 @@ const createExam = async (req: Request, res: Response) => {
             where: {
                 season_year: {
                     season: Season[season.toUpperCase() as keyof typeof Season],
-                    year: Number(year)
-                }
+                    year: Number(year),
+                },
             },
             update: {},
             create: {
                 season: Season[season.toUpperCase() as keyof typeof Season],
-                year: Number(year)
-            }
+                year: Number(year),
+            },
         });
 
         await tx.course.update({
             where: {
-                id: courseId
+                id: courseId,
             },
             data: {
                 semesters: {
                     connect: {
-                        id: semester.id
-                    }
-                }
-            }
+                        id: semester.id,
+                    },
+                },
+            },
         });
 
-        return await tx.exam.create({
+        return tx.exam.create({
             data: {
                 courseId: courseId,
                 number: Number(number),
                 semesterId: semester.id,
-                practice: practice
+                practice: practice,
+                disclaimer: disclaimer,
             },
             include: {
                 semester: true,
-                questions: true
-            }
+                questions: true,
+            },
         });
     });
     res.status(200).send(exam);
@@ -57,7 +63,12 @@ const createExam = async (req: Request, res: Response) => {
 
 const updateExam = async (req: Request, res: Response) => {
     const { courseId, examId } = req.params;
-    const { semester: { season, year }, number, practice } = req.body;
+    const {
+        semester: { season, year },
+        number,
+        practice,
+        disclaimer,
+    } = req.body;
 
     if (!season || !year) {
         throw new APIError("Season and year required", 400);
@@ -68,41 +79,42 @@ const updateExam = async (req: Request, res: Response) => {
             where: {
                 season_year: {
                     season: Season[season.toUpperCase() as keyof typeof Season],
-                    year: Number(year)
-                }
+                    year: Number(year),
+                },
             },
             update: {},
             create: {
                 season: Season[season.toUpperCase() as keyof typeof Season],
-                year: Number(year)
-            }
+                year: Number(year),
+            },
         });
 
         await tx.course.update({
             where: {
-                id: courseId
+                id: courseId,
             },
             data: {
                 semesters: {
                     connect: {
-                        id: semester.id
-                    }
-                }
-            }
+                        id: semester.id,
+                    },
+                },
+            },
         });
 
-        return await tx.exam.update({
+        return tx.exam.update({
             where: {
-                id: examId
+                id: examId,
             },
             data: {
                 semesterId: semester.id,
                 number: number,
-                practice: practice
+                practice: practice,
+                disclaimer: disclaimer,
             },
             include: {
-                semester: true
-            }
+                semester: true,
+            },
         });
     });
     res.status(200).send(exam);
@@ -112,11 +124,11 @@ const toggleExamPublished = async (req: Request, res: Response) => {
     const { examId } = req.params;
     const exam = await prisma.exam.findUnique({
         where: {
-            id: examId
+            id: examId,
         },
         select: {
-            published: true
-        }
+            published: true,
+        },
     });
     if (!exam) {
         throw new NotFoundError("Exam not found");
@@ -125,31 +137,33 @@ const toggleExamPublished = async (req: Request, res: Response) => {
     const published = !exam.published;
     await prisma.exam.update({
         where: {
-            id: examId
+            id: examId,
         },
         data: {
             published: published,
             questions: {
                 updateMany: {
                     where: {
-                        published: !published
+                        published: !published,
                     },
                     data: {
-                        published: published
-                    }
-                }
-            }
-        }
+                        published: published,
+                    },
+                },
+            },
+        },
     });
-    res.status(200).send({ message: `Exam and questions are now ${published ? "published" : "unpublished"}` });
+    res.status(200).send({
+        message: `Exam and questions are now ${published ? "published" : "unpublished"}`,
+    });
 };
 
 const deleteExam = async (req: Request, res: Response) => {
     const { examId } = req.params;
     const exam = await prisma.exam.delete({
         where: {
-            id: examId
-        }
+            id: examId,
+        },
     });
 
     if (!exam) {
@@ -158,9 +172,4 @@ const deleteExam = async (req: Request, res: Response) => {
     res.status(200).send(exam);
 };
 
-export {
-    createExam,
-    updateExam,
-    toggleExamPublished,
-    deleteExam
-};
+export { createExam, updateExam, toggleExamPublished, deleteExam };

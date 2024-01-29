@@ -6,4 +6,4 @@ type NewEvent = {
     end: Date;
     location: string | null;
     courseId: string | null;
-}
+};

@@ -1,28 +1,30 @@
-import express from 'express';
+import express from "express";
 import {
     createCodeResource,
     createImageResource,
     createImageResourceFromLink,
     deleteResource,
     getResource,
-    updateCodeResource
+    updateImageResource,
+    updateCodeResource,
 } from "../controllers/resourceController.js";
 import asyncWrapper from "../middleware/wrappers/asyncWrapper.js";
-import authHandler from '../middleware/auth/authHandler.js';
 import upload from "../middleware/multer/image.js";
 
-const app = express();
+const router = express.Router();
 
-app.get("/:resourceId", asyncWrapper(getResource));
+router.get("/:resourceId", asyncWrapper(getResource));
 
-app.post("/images", upload.single('image'), asyncWrapper(createImageResource));
+router.post("/images", upload.single("image"), asyncWrapper(createImageResource));
 
-app.post("/images/link", asyncWrapper(createImageResourceFromLink));
+router.post("/images/link", asyncWrapper(createImageResourceFromLink));
 
-app.post("/codes", asyncWrapper(createCodeResource));
+router.post("/codes", asyncWrapper(createCodeResource));
 
-app.put("/:resourceId/code", asyncWrapper(updateCodeResource));
+router.put("/:resourceId/image", asyncWrapper(updateImageResource));
 
-app.delete("/:resourceId", asyncWrapper(deleteResource));
+router.put("/:resourceId/code", asyncWrapper(updateCodeResource));
 
-export default app;
+router.delete("/:resourceId", asyncWrapper(deleteResource));
+
+export default router;

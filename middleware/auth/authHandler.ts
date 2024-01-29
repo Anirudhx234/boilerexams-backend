@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
-import asyncWrapper from '../wrappers/asyncWrapper.js';
-import { APIError } from '../errors/index.js';
-import { isWhitelisted } from "./auth.js";
+import asyncWrapper from "../wrappers/asyncWrapper.js";
+import { APIError } from "../errors/index.js";
+import isWhitelisted from "../../helpers/auth/isWhiteListed.js";
 
 const authHandler = asyncWrapper(async (req: Request, _res: Response, next: NextFunction) => {
     if (isWhitelisted(req)) return next();

@@ -1,22 +1,22 @@
 import prisma from "../libs/prisma.js";
-import { Request, Response } from 'express';
+import { Request, Response } from "express";
 import parseQuestions from "../helpers/mathpix/questionParser.js";
 import getPDFResult from "../helpers/mathpix/retrievePDF.js";
-import FormData from 'form-data';
-import axios from 'axios';
+import FormData from "form-data";
+import axios from "axios";
 import { APIError, NotFoundError } from "../middleware/errors/index.js";
 import uploadQuestions from "../helpers/mathpix/uploadQuestions.js";
-import savePDFtoExam from '../helpers/mathpix/savePDFtoExam.js';
+import savePDFtoExam from "../helpers/mathpix/savePDFtoExam.js";
 
 const checkExistingQuestions = async (examId: string) => {
     const exam = await prisma.exam.findFirst({
         where: {
-            id: examId
+            id: examId,
         },
         include: {
             course: true,
-            questions: true
-        }
+            questions: true,
+        },
     });
 
     if (!exam) {
@@ -24,12 +24,10 @@ const checkExistingQuestions = async (examId: string) => {
     }
     if (exam.questions.length > 0) {
         throw new Error("Exam already contains questions. Delete questions before scanning new PDF.");
-    }
-    else {
+    } else {
         return exam.course.id;
     }
 };
-
 
 const parseFromFile = async (req: Request, res: Response) => {
     const { examId, choices } = req.body;
@@ -42,27 +40,27 @@ const parseFromFile = async (req: Request, res: Response) => {
     const data = new FormData();
     data.append("file", req.file.buffer, {
         filename: req.file.originalname,
-        contentType: req.file.mimetype
+        contentType: req.file.mimetype,
     });
     const options_json = {
-        math_inline_delimiters: ["\$", "\$"],
+        math_inline_delimiters: ["$", "$"],
         conversion_formats: {
             "tex.zip": true,
         },
         numbers_default_to_math: true,
     };
-    data.append('options_json', JSON.stringify(options_json));
+    data.append("options_json", JSON.stringify(options_json));
 
     const config = {
         method: "post",
         maxBodyLength: Infinity,
         url: "https://api.mathpix.com/v3/pdf",
         headers: {
-            'app_key': process.env.MATHPIX_KEY,
-            'Content-Type': 'multipart/form-data',
-            ...data.getHeaders()
+            app_key: process.env.MATHPIX_KEY,
+            "Content-Type": "multipart/form-data",
+            ...data.getHeaders(),
         },
-        data: data
+        data: data,
     };
     const pdf = await axios.request(config);
     const id = pdf.data.pdf_id;
@@ -73,7 +71,10 @@ const parseFromFile = async (req: Request, res: Response) => {
     try {
         content = await getPDFResult(id);
     } catch (error) {
-        return res.status(202).send({ id: id, message: "PDF not processed yet, please try again later using id" });
+        return res.status(202).send({
+            id: id,
+            message: "PDF not processed yet, please try again later using id",
+        });
     }
     const questions = parseQuestions(content, Number(choices));
     const uploadedQuestions = await uploadQuestions(courseId, examId, questions);
@@ -89,7 +90,7 @@ const parseFromLink = async (req: Request, res: Response) => {
     }
 
     const file = await axios.get(link, {
-        responseType: 'arraybuffer',
+        responseType: "arraybuffer",
         maxContentLength: 5 * 1024 * 1024,
     });
 
@@ -100,23 +101,27 @@ const parseFromLink = async (req: Request, res: Response) => {
     }
 
     const headers = {
-        'app_id': process.env.MATHPIX_ID,
-        'app_key': process.env.MATHPIX_KEY,
-        'Content-Type': 'application/json'
+        app_id: process.env.MATHPIX_ID,
+        app_key: process.env.MATHPIX_KEY,
+        "Content-Type": "application/json",
     };
-    const pdf = await axios.post("https://api.mathpix.com/v3/pdf", {
-        url: link,
-        conversion_formats: {
-            "tex.zip": true,
+    const pdf = await axios.post(
+        "https://api.mathpix.com/v3/pdf",
+        {
+            url: link,
+            conversion_formats: {
+                "tex.zip": true,
+            },
+            enable_spell_check: false,
+            enable_tables_fallback: false,
+            auto_number_sections: false,
+            numbers_default_to_math: true,
+            math_inline_delimiters: ["$", "$"],
         },
-        enable_spell_check: false,
-        enable_tables_fallback: false,
-        auto_number_sections: false,
-        numbers_default_to_math: true,
-        math_inline_delimiters: ["\$", "\$"],
-    }, {
-        headers: headers
-    });
+        {
+            headers: headers,
+        },
+    );
     const id = pdf.data.pdf_id;
 
     await savePDFtoExam(examId, file.data, contentType, id);
@@ -125,7 +130,10 @@ const parseFromLink = async (req: Request, res: Response) => {
     try {
         content = await getPDFResult(id);
     } catch (error) {
-        return res.status(202).send({ id: id, message: "PDF not processed yet, please try again later using id" });
+        return res.status(202).send({
+            id: id,
+            message: "PDF not processed yet, please try again later using id",
+        });
     }
     const questions = parseQuestions(content, choices);
     const uploadedQuestions = await uploadQuestions(courseId, examId, questions);
@@ -155,7 +163,10 @@ const getIdResults = async (req: Request, res: Response) => {
     try {
         content = await getPDFResult(pdfId);
     } catch (error) {
-        return res.status(202).send({ id: pdfId, message: "PDF not processed yet, please try again later using id" });
+        return res.status(202).send({
+            id: pdfId,
+            message: "PDF not processed yet, please try again later using id",
+        });
     }
     const questions = parseQuestions(content, choices);
     const uploadedQuestions = await uploadQuestions(courseId, examId, questions);
@@ -172,9 +183,4 @@ const attachPDFToExam = async (req: Request, res: Response) => {
     res.status(200).send(exam);
 };
 
-export {
-    parseFromFile,
-    parseFromLink,
-    getIdResults,
-    attachPDFToExam
-};
+export { parseFromFile, parseFromLink, getIdResults, attachPDFToExam };

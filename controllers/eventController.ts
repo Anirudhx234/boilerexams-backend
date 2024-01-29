@@ -1,5 +1,5 @@
 import prisma from "../libs/prisma.js";
-import { Request, Response } from 'express';
+import { Request, Response } from "express";
 import { NotFoundError } from "../middleware/errors/index.js";
 
 const getEvent = async (req: Request, res: Response) => {
@@ -7,8 +7,8 @@ const getEvent = async (req: Request, res: Response) => {
 
     const event = await prisma.event.findUnique({
         where: {
-            id: eventId
-        }
+            id: eventId,
+        },
     });
     if (!event) {
         throw new NotFoundError("Event not found");
@@ -31,7 +31,7 @@ const getEvents = async (req: Request, res: Response) => {
     // Add start condition if after exists
     if (after) {
         where["start"] = {
-            gte: new Date(Number.parseInt(after as string))
+            gte: new Date(Number.parseInt(after as string)),
         };
     }
 
@@ -39,9 +39,9 @@ const getEvents = async (req: Request, res: Response) => {
         where: where,
         orderBy: [
             {
-                start: "asc"
-            }
-        ]
+                start: "asc",
+            },
+        ],
     });
 
     res.status(200).send(events);
@@ -60,14 +60,14 @@ const createEvents = async (req: Request, res: Response) => {
             description: description,
             start: new Date(start),
             end: new Date(end),
-            location: location
+            location: location,
         };
 
         newEvents.push(newEvent);
     }
 
     const createdEvents = await prisma.event.createMany({
-        data: newEvents
+        data: newEvents,
     });
 
     res.status(200).send(createdEvents);
@@ -78,9 +78,9 @@ const updateEvent = async (req: Request, res: Response) => {
 
     const event = await prisma.event.update({
         where: {
-            id: eventId
+            id: eventId,
         },
-        data: req.body
+        data: req.body,
     });
     if (!event) {
         throw new NotFoundError("Event not found");
@@ -94,8 +94,8 @@ const deleteEvent = async (req: Request, res: Response) => {
 
     const event = await prisma.event.delete({
         where: {
-            id: eventId
-        }
+            id: eventId,
+        },
     });
     if (!event) {
         throw new NotFoundError("Event not found");
@@ -110,11 +110,4 @@ const deleteAllEvents = async (req: Request, res: Response) => {
     return res.status(200).send(events);
 };
 
-export {
-    createEvents,
-    getEvent,
-    getEvents,
-    updateEvent,
-    deleteEvent,
-    deleteAllEvents
-};
+export { createEvents, getEvent, getEvents, updateEvent, deleteEvent, deleteAllEvents };

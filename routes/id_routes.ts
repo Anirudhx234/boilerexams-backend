@@ -6,25 +6,24 @@ import {
     getCourseTopicQuestions,
     getCourseTopics,
     getExam,
-    getExamQuestions
+    getExamQuestions,
 } from "../controllers/display/idController.js";
 import asyncWrapper from "../middleware/wrappers/asyncWrapper.js";
-import authHandler from "../middleware/auth/authHandler.js";
 
-const app = express();
+const router = express.Router();
 
-app.get("/courses/:courseId", asyncWrapper(getCourse));
+router.get("/courses/:courseId", asyncWrapper(getCourse));
 
-app.get("/courses/:courseId/topics", asyncWrapper(getCourseTopics));
+router.get("/courses/:courseId/topics", asyncWrapper(getCourseTopics));
 
-app.get("/courses/:courseId/semesters", asyncWrapper(getCourseSemesters));
+router.get("/courses/:courseId/semesters", asyncWrapper(getCourseSemesters));
 
-app.get("/courses/:courseId/:semesterId/exams", asyncWrapper(getCourseSemesterExams));
+router.get("/courses/:courseId/:semesterId/exams", asyncWrapper(getCourseSemesterExams));
 
-app.get("/exams/:examId", asyncWrapper(getExam));
+router.get("/exams/:examId", asyncWrapper(getExam));
 
-app.get("/exams/:examId/questions", asyncWrapper(getExamQuestions));
+router.get("/exams/:examId/questions", asyncWrapper(getExamQuestions));
 
-app.get("/courses/:courseId/:topicId/questions", asyncWrapper(getCourseTopicQuestions));
+router.get("/courses/:courseId/:topicId/questions", asyncWrapper(getCourseTopicQuestions));
 
-export default app;
+export default router;

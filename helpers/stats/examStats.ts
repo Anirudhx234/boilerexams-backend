@@ -8,30 +8,30 @@ const examStats = async (examId: string) => {
         where: {
             question: {
                 examId: examId,
-                published: true
+                published: true,
             },
             timeSpent: {
-                gte: minimumValidSubmissionTime
-            }
+                gte: minimumValidSubmissionTime,
+            },
         },
         _count: true,
         _sum: {
             timeSpent: true,
             timeSpentVideo: true,
-        }
+        },
     });
 
     const correctSubmissions = await prisma.submission.count({
         where: {
             question: {
                 examId: examId,
-                published: true
+                published: true,
             },
             timeSpent: {
-                gte: minimumValidSubmissionTime
+                gte: minimumValidSubmissionTime,
             },
-            correct: true
-        }
+            correct: true,
+        },
     });
 
     const totalTimeSpent = msToHMS(submissions._sum.timeSpent);
@@ -41,7 +41,7 @@ const examStats = async (examId: string) => {
         totalTimeSpent: totalTimeSpent,
         totalVideoWatchTime: totalVideoWatchTime,
         totalSubmissions: submissions._count,
-        totalCorrectSubmissions: correctSubmissions
+        totalCorrectSubmissions: correctSubmissions,
     };
     return examStats;
 };

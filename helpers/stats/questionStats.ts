@@ -8,11 +8,11 @@ const questionStats = async (questionId: string) => {
         where: {
             question: {
                 id: questionId,
-                published: true
+                published: true,
             },
             timeSpent: {
-                gte: minimumValidSubmissionTime
-            }
+                gte: minimumValidSubmissionTime,
+            },
         },
         _sum: {
             timeSpent: true,
@@ -25,13 +25,13 @@ const questionStats = async (questionId: string) => {
         where: {
             question: {
                 id: questionId,
-                published: true
+                published: true,
             },
             timeSpent: {
-                gte: minimumValidSubmissionTime
+                gte: minimumValidSubmissionTime,
             },
-            correct: true
-        }
+            correct: true,
+        },
     });
 
     const totalTimeSpent = msToHMS(submissions._sum.timeSpent);
@@ -41,7 +41,7 @@ const questionStats = async (questionId: string) => {
         totalTimeSpent: totalTimeSpent,
         totalVideoWatchTime: totalVideoWatchTime,
         totalSubmissions: submissions._count,
-        totalCorrectSubmissions: correctSubmissions
+        totalCorrectSubmissions: correctSubmissions,
     };
 };
 
