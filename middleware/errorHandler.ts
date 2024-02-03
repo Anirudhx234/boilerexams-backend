@@ -4,8 +4,12 @@ import { APIError, InvalidCourseError, InvalidSeasonError, NotFoundError } from 
 import multer from "multer";
 import axios from "axios";
 
-const errorHandler = (error, req: Request, res: Response, next: NextFunction) => {
-    axios.post(`${process.env.DISCORD_URL}/error`, error).catch(console.log);
+const errorHandler = async (error, req: Request, res: Response, next: NextFunction) => {
+    try {
+        await axios.post(`${process.env.DISCORD_URL}/error`, error);
+    } catch (error) {
+        console.log(error);
+    }
 
     const errorResponse: ErrorResponse = {
         message: error.message,
