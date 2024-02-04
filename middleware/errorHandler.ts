@@ -6,7 +6,7 @@ import axios from "axios";
 
 const errorHandler = async (error, req: Request, res: Response, next: NextFunction) => {
     try {
-        await axios.post(`${process.env.DISCORD_URL}/error`, error);
+        await axios.post(`${process.env.DISCORD_URL}/error`, { stackTrace: error.stack });
     } catch (error) {
         console.log(error);
     }
