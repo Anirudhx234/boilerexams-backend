@@ -5,11 +5,6 @@ import multer from "multer";
 import axios from "axios";
 
 const errorHandler = async (error, req: Request, res: Response, next: NextFunction) => {
-    try {
-        await axios.post(`${process.env.DISCORD_URL}/error`, { stackTrace: error.stack });
-    } catch (error) {
-        console.log(error);
-    }
 
     const errorResponse: ErrorResponse = {
         message: error.message,
@@ -66,6 +61,10 @@ const errorHandler = async (error, req: Request, res: Response, next: NextFuncti
     if (error instanceof APIError) {
         return res.status(error.errorCode).json(errorResponse);
     }
+
+    try {
+        await axios.post(`${process.env.DISCORD_URL}/error`, { stackTrace: error.stack });
+    } catch { }
 
     console.log(error);
     errorResponse.message = "An error occured";
