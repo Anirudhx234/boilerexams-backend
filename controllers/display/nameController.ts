@@ -6,7 +6,7 @@ import _ from "lodash";
 import validCourseRegex from "../../utils/validCourseRegex.js";
 import answerChoiceStats from "../../helpers/stats/multiple.answerChoiceStats.js";
 
-const questionSort = [
+const questionSort: QuestionSortCategory[] = [
     {
         exam: {
             semester: {
@@ -199,7 +199,6 @@ const getCourseTopicsWithBasicQuestionInfo = async (req: Request, res: Response)
                             number: true,
                             published: true,
                         },
-                        // @ts-expect-error orderBy type is wrong but who cares
                         orderBy: questionSort,
                     },
                 },
@@ -223,7 +222,6 @@ const getCourseTopicsWithBasicQuestionInfo = async (req: Request, res: Response)
                     number: true,
                     published: true,
                 },
-                // @ts-expect-error Still wrong (still don't care)
                 orderBy: questionSort,
             },
         },
@@ -344,8 +342,7 @@ const getCourseTopicWithBasicQuestionInfo = async (req: Request, res: Response) 
                     topics: true,
                     published: true,
                 },
-                // @ts-expect-error These things happen
-                orderBy: questionSort,
+                orderBy: questionSort
             },
         },
     });
@@ -353,18 +350,15 @@ const getCourseTopicWithBasicQuestionInfo = async (req: Request, res: Response) 
         throw new NotFoundError("Topic not found");
     }
 
-    // @ts-expect-error questionSort things
     const answerStats = await answerChoiceStats(topic.questions.map((question) => question.id));
     for (let i = 0; i < answerStats.length; i++) {
-        // @ts-expect-error I promise it exists
-        // Extend later
+        // @ts-expect-error Extend later
         topic.questions[i].answerChoiceStats = answerStats[i];
-        // @ts-expect-error I promise it exists
+        // @ts-expect-error Extend later
         topic.questions[i].percentCorrect =
-            // @ts-expect-error I promise it exists
             (answerStats[i][topic.questions[i].correctChoiceIndices[0]] * 100) /
             answerStats[i].reduce((sum: number, a: number) => sum + a, 0);
-        // @ts-expect-error I promise it exists
+        // @ts-expect-error Extend later
         delete topic.questions[i].correctChoiceIndices;
     }
 
@@ -417,7 +411,6 @@ const getCourseTopicWithFullQuestionInfo = async (req: Request, res: Response) =
                         },
                     },
                 },
-                // @ts-expect-error These things happen
                 orderBy: questionSort,
             },
         },
@@ -429,14 +422,12 @@ const getCourseTopicWithFullQuestionInfo = async (req: Request, res: Response) =
     /* OLD METHOD USING PRISMA ONLY
     const promises: Promise<number[]>[] = [];
 
-    // @ts-expect-error topic.questions doesn't exist? Watch me iterate anyway
     for (const question of topic.questions) {
         promises.push(answerChoiceStats(question.id));
     }
 
     const resolved = await Promise.all(promises);
     */
-    // @ts-expect-error
 
     const answerStats = await answerChoiceStats(topic.questions.map((question) => question.id));
     for (let i = 0; i < answerStats.length; i++) {

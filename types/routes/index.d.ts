@@ -11,3 +11,14 @@ interface CreateCourseOptions {
     studyModes: StudyMode[];
     disclaimer: string;
 }
+
+type QuestionSortCategory = {
+    exam?: {
+        semester?: {
+            year?: "asc" | "desc";
+            season?: "asc" | "desc";
+        };
+        number?: "asc" | "desc";
+    };
+    number?: "asc" | "desc";
+};
