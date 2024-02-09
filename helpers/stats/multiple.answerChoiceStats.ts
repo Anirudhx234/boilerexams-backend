@@ -3,6 +3,10 @@ import _ from "lodash";
 import { Prisma } from "@prisma/client";
 
 const answerChoiceStats = async (questionIds: string[]) => {
+    if (questionIds.length == 0) {
+        return []
+    }
+
     const stats: any = await prisma.$queryRaw`
         SELECT
             q.id AS "questionId",
