@@ -7,7 +7,8 @@ const feedbackLimiter = rateLimit({
     standardHeaders: "draft-7",
     legacyHeaders: false,
     skip: (req) => {
-        return isWhitelisted(req);
+        if (isWhitelisted(req)) return true;
+        return (["ADMIN", "CONTENT", "PROFESSOR"].includes(req.user.role));
     },
 });
 
