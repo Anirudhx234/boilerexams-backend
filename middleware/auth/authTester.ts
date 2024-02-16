@@ -6,7 +6,7 @@ const authTester = asyncWrapper(async (req: Request, res: Response, next: NextFu
     if (req.user) {
         req.session._garbage = Date();
         req.session.touch();
-    
+
         return next();
     }
     throw new APIError("Unauthenticated", 401);

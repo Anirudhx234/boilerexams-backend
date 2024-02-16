@@ -4,7 +4,7 @@ import { Prisma } from "@prisma/client";
 
 const answerChoiceStats = async (questionIds: string[]) => {
     if (questionIds.length == 0) {
-        return []
+        return [];
     }
 
     const stats: any = await prisma.$queryRaw`
