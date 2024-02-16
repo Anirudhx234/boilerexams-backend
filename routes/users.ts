@@ -1,5 +1,5 @@
 import express from "express";
-import { Role } from "@prisma/client"
+import { Role } from "@prisma/client";
 import { assignUserCourses, deleteUser, getAllUsers, getUser, getUserMe, updateUserRole } from "../controllers/userController.js";
 import asyncWrapper from "../middleware/wrappers/asyncWrapper.js";
 import authHandler from "../middleware/auth/authHandler.js";

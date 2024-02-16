@@ -54,22 +54,10 @@ const getQuestion = async (req: Request, res: Response) => {
 const createQuestion = async (req: Request, res: Response) => {
     const { courseId, examId } = req.params;
 
-    const {
-        number,
-        body,
-        correctChoiceIndices,
-        solutionVideoLink,
-        explanationText,
-        disableRandomAnswers,
-        answersStartHidden,
-        disclaimer,
-    } = req.body;
+    const { number, body, correctChoiceIndices, solutionVideoLink, explanationText, disableRandomAnswers, answersStartHidden, disclaimer } =
+        req.body;
 
-    let {
-        topics,
-        answerChoices,
-        resourceIds,
-    } = req.body;
+    let { topics, answerChoices, resourceIds } = req.body;
 
     if (!topics) {
         topics = [];
@@ -89,7 +77,7 @@ const createQuestion = async (req: Request, res: Response) => {
         },
         data: {
             topics: {
-                connectOrCreate: topics.map((topic: { id: string, name: string }) => ({
+                connectOrCreate: topics.map((topic: { id: string; name: string }) => ({
                     where: topic,
                     create: topic,
                 })),
@@ -175,7 +163,7 @@ const updateQuestion = async (req: Request, res: Response) => {
         },
         data: {
             topics: {
-                connectOrCreate: topics.map((topic: { id: string, name: string }) => ({
+                connectOrCreate: topics.map((topic: { id: string; name: string }) => ({
                     where: topic,
                     create: topic,
                 })),

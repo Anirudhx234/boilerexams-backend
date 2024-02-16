@@ -342,7 +342,7 @@ const getCourseTopicWithBasicQuestionInfo = async (req: Request, res: Response) 
                     topics: true,
                     published: true,
                 },
-                orderBy: questionSort
+                orderBy: questionSort,
             },
         },
     });
