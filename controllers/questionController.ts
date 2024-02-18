@@ -110,6 +110,9 @@ const createQuestion = async (req: Request, res: Response) => {
                 create: answerChoices.map((answerChoice) => ({
                     choiceIndex: Number(answerChoice.choiceIndex),
                     body: answerChoice.body,
+                    type: answerChoice.type,
+                    dataType: answerChoice.dataType,
+                    operator: answerChoice.operator,
                     resources: {
                         connect: answerChoice.resourceIds.map((resourceId) => ({
                             id: resourceId,
@@ -212,6 +215,9 @@ const updateQuestion = async (req: Request, res: Response) => {
                     update: {
                         choiceIndex: Number(answerChoice.choiceIndex),
                         body: answerChoice.body,
+                        type: answerChoice.type,
+                        dataType: answerChoice.dataType,
+                        operator: answerChoice.operator,
                         resources: {
                             deleteMany: {
                                 id: {
@@ -226,6 +232,9 @@ const updateQuestion = async (req: Request, res: Response) => {
                     create: {
                         choiceIndex: Number(answerChoice.choiceIndex),
                         body: answerChoice.body,
+                        type: answerChoice.type,
+                        dataType: answerChoice.dataType,
+                        operator: answerChoice.operator,
                         resources: {
                             connect: answerChoice.resourceIds.map((resourceId) => ({
                                 id: resourceId,
