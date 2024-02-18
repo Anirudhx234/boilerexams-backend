@@ -81,15 +81,11 @@ model Question {
 }
 
 model AnswerChoice {
-  id          String                @id @default(uuid())
-  type        AnswerChoiceType      @default(BASIC)
-  dataType    AnswerChoiceDataType?
-  operator    AnswerChoiceOperator?
-  answer      String?
+  id          String     @id @default(uuid())
   choiceIndex Int
   body        String
   questionId  String
-  question    Question              @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  question    Question   @relation(fields: [questionId], references: [id], onDelete: Cascade)
   resources   Resource[]
 
   @@unique([questionId, choiceIndex])
@@ -239,26 +235,6 @@ model Event {
   course      Course?   @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
   @@unique([location, start])
-}
-
-enum AnswerChoiceType {
-  BASIC
-  ADVANCED
-}
-
-enum AnswerChoiceDataType {
-  INT
-  FLOAT
-  STRING
-}
-
-enum AnswerChoiceOperator {
-  EQ
-  NE
-  GT
-  LT
-  GTE
-  LTE
 }
 
 enum AccountType {
