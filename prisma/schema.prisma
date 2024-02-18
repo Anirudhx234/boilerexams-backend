@@ -85,6 +85,7 @@ model AnswerChoice {
   type        AnswerChoiceType      @default(BASIC)
   dataType    AnswerChoiceDataType?
   operator    AnswerChoiceOperator?
+  answer      String?
   choiceIndex Int
   body        String
   questionId  String

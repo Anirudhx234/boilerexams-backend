@@ -99,6 +99,7 @@ const createQuestion = async (req: Request, res: Response) => {
                     choiceIndex: Number(answerChoice.choiceIndex),
                     body: answerChoice.body,
                     type: answerChoice.type,
+                    answer: answerChoice.answer,
                     dataType: answerChoice.dataType,
                     operator: answerChoice.operator,
                     resources: {
@@ -204,6 +205,7 @@ const updateQuestion = async (req: Request, res: Response) => {
                         choiceIndex: Number(answerChoice.choiceIndex),
                         body: answerChoice.body,
                         type: answerChoice.type,
+                        answer: answerChoice.answer,
                         dataType: answerChoice.dataType,
                         operator: answerChoice.operator,
                         resources: {
@@ -221,6 +223,7 @@ const updateQuestion = async (req: Request, res: Response) => {
                         choiceIndex: Number(answerChoice.choiceIndex),
                         body: answerChoice.body,
                         type: answerChoice.type,
+                        answer: answerChoice.answer,
                         dataType: answerChoice.dataType,
                         operator: answerChoice.operator,
                         resources: {
