@@ -59,6 +59,7 @@ model Topic {
 
 model Question {
   id                   String          @id @default(uuid())
+  type                 QuestionType    @default(MCQ)
   examId               String
   body                 String
   courseId             String
@@ -175,9 +176,10 @@ model CourseRequest {
 }
 
 model VideoFeedback {
-  id                  String   @id @default(uuid())
+  id                  String              @id @default(uuid())
+  status              VideoFeedbackStatus @default(UNRESOLVED)
   questionId          String
-  question            Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  question            Question            @relation(fields: [questionId], references: [id], onDelete: Cascade)
   explanationQuality  Int
   productionQuality   Int
   videoRecommendation Boolean
@@ -237,6 +239,11 @@ model Event {
   @@unique([location, start])
 }
 
+enum QuestionType {
+  MCQ
+  FRQ
+}
+
 enum AccountType {
   DISCORD
   GOOGLE
@@ -252,6 +259,11 @@ enum ReportType {
   BUG_REPORT
   CONTENT_REPORT
   FEATURE_REQUEST
+}
+
+enum VideoFeedbackStatus {
+  RESOLVED
+  UNRESOLVED
 }
 
 enum Year {
