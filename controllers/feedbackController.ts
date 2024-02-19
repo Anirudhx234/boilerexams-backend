@@ -368,6 +368,19 @@ const updateReport = async (req: Request, res: Response) => {
     res.status(200).send(report);
 };
 
+const updateVideoFeedbackReport = async (req: Request, res: Response) => {
+    const reportId = req.params.reportId;
+
+    const report = await prisma.videoFeedback.update({
+        where: {
+            id: reportId,
+        },
+        data: req.body,
+    });
+
+    res.status(200).send(report);
+};
+
 const deleteVideoFeedback = async (req: Request, res: Response) => {
     const { reportId } = req.params;
 
@@ -393,4 +406,5 @@ export {
     getVideoFeedbackByCourse,
     getVideoFeedbackByExam,
     updateReport,
+    updateVideoFeedbackReport
 };

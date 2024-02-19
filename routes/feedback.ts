@@ -11,6 +11,7 @@ import {
     getVideoFeedbackByCourse,
     getVideoFeedbackByExam,
     updateReport,
+    updateVideoFeedbackReport
 } from "../controllers/feedbackController.js";
 import asyncWrapper from "../middleware/wrappers/asyncWrapper.js";
 import upload from "../middleware/multer/pdf.js";
@@ -39,6 +40,8 @@ router.post("/feature-requests", asyncWrapper(createFeatureRequest));
 router.post("/video-feedback/:questionId", asyncWrapper(createVideoFeedbackReport));
 
 router.put("/reports/:reportId", asyncWrapper(updateReport));
+
+router.put("/video-feedback/:reportId", asyncWrapper(updateVideoFeedbackReport));
 
 router.delete("/video-feedback/:reportId", asyncWrapper(deleteVideoFeedback));
 
