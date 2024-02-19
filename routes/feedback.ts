@@ -16,6 +16,8 @@ import {
 import asyncWrapper from "../middleware/wrappers/asyncWrapper.js";
 import upload from "../middleware/multer/pdf.js";
 import express from "express";
+import authHandler from "../middleware/auth/authHandler.js";
+import {Role} from "@prisma/client";
 
 const router = express.Router();
 
@@ -39,10 +41,10 @@ router.post("/feature-requests", asyncWrapper(createFeatureRequest));
 
 router.post("/video-feedback/:questionId", asyncWrapper(createVideoFeedbackReport));
 
-router.put("/reports/:reportId", asyncWrapper(updateReport));
+router.put("/reports/:reportId", authHandler(Role.CONTENT), asyncWrapper(updateReport));
 
-router.put("/video-feedback/:reportId", asyncWrapper(updateVideoFeedbackReport));
+router.put("/video-feedback/:reportId", authHandler(Role.CONTENT), asyncWrapper(updateVideoFeedbackReport));
 
-router.delete("/video-feedback/:reportId", asyncWrapper(deleteVideoFeedback));
+router.delete("/video-feedback/:reportId", authHandler(Role.CONTENT), asyncWrapper(deleteVideoFeedback));
 
 export default router;
