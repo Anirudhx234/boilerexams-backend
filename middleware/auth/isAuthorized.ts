@@ -20,11 +20,7 @@ const isAuthorized = (user: User, role: string) => {
     const userLevel = levels[user.role];
     const authLevel = levels[role];
 
-    if (userLevel >= authLevel) {
-        return true;
-    }
-
-    return false;
+    return userLevel >= authLevel;
 };
 
 export default isAuthorized;
