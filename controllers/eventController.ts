@@ -48,26 +48,26 @@ const getEvents = async (req: Request, res: Response) => {
 };
 
 const createEvents = async (req: Request, res: Response) => {
-    const { events } = req.body;
+    const { events }: { events: NewEvent[] } = req.body;
 
-    const newEvents: NewEvent[] = [];
-    for (const event of events) {
-        const { courseId, title, description, type, start, end, location } = event;
-        const newEvent = {
-            courseId: courseId,
-            type: type,
-            title: title,
-            description: description,
-            start: new Date(start),
-            end: new Date(end),
-            location: location,
-        };
-
-        newEvents.push(newEvent);
-    }
-
+    const courses = await prisma.course.findMany();
     const createdEvents = await prisma.event.createMany({
-        data: newEvents,
+        data: events
+            .map(event => { // This maps events to their respective courses and table schema
+                const courseId = courses.find(course => {
+                    return course.abbreviation == event.subject && course.number == event.number;
+                })?.id;
+                return {
+                    courseId: courseId,
+                    title: event.title,
+                    description: event.description,
+                    type: event.type,
+                    start: new Date(event.start),
+                    end: new Date(event.end),
+                    location: event.location
+                };
+            })
+            .filter(event => !!event.courseId)
     });
 
     res.status(200).send(createdEvents);
