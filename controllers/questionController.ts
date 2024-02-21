@@ -54,7 +54,7 @@ const getQuestion = async (req: Request, res: Response) => {
 const createQuestion = async (req: Request, res: Response) => {
     const { courseId, examId } = req.params;
 
-    const { number, body, correctChoiceIndices, solutionVideoLink, explanationText, disableRandomAnswers, answersStartHidden, disclaimer } =
+    const { number, body, correctChoiceIndices, solutionVideoLink, explanationText, disableRandomAnswers, answersStartHidden, disclaimer, type } =
         req.body;
 
     let { topics, answerChoices, resourceIds } = req.body;
@@ -89,6 +89,7 @@ const createQuestion = async (req: Request, res: Response) => {
         data: {
             courseId: courseId,
             examId: examId,
+            type: type,
             topics: {
                 connect: topics,
             },
@@ -144,6 +145,7 @@ const createQuestion = async (req: Request, res: Response) => {
 const updateQuestion = async (req: Request, res: Response) => {
     const { courseId, examId, questionId } = req.params;
     const {
+        type,
         topics,
         number,
         body,
@@ -182,6 +184,7 @@ const updateQuestion = async (req: Request, res: Response) => {
         data: {
             courseId: courseId,
             examId: examId,
+            type: type,
             topics: {
                 set: topics,
             },
