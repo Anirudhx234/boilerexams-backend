@@ -327,6 +327,7 @@ const createQuestionSubmission = async (req: Request, res: Response) => {
     const { questionId } = req.params;
     const {
         selectedChoiceIndices,
+        type,
         correct,
         timeStarted,
         timeEnded,
@@ -350,6 +351,7 @@ const createQuestionSubmission = async (req: Request, res: Response) => {
     const submission = await prisma.submission.create({
         data: {
             questionId: questionId,
+            type: type,
             correct: Boolean(correct),
             selectedChoiceIndices: selectedChoiceIndices,
             timeStarted: startTime,
@@ -374,6 +376,7 @@ const bulkQuestionSubmission = async (req: Request, res: Response) => {
         rawSubmissions.map(
             ({
                 questionId,
+                type,
                 selectedChoiceIndices,
                 correct,
                 timeStarted,
@@ -397,6 +400,7 @@ const bulkQuestionSubmission = async (req: Request, res: Response) => {
                 return prisma.submission.create({
                     data: {
                         questionId: questionId,
+                        type: type,
                         correct: Boolean(correct),
                         selectedChoiceIndices: selectedChoiceIndices,
                         timeStarted: startTime,
