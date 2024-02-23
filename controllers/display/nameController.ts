@@ -363,6 +363,13 @@ const getCourseTopicWithBasicQuestionInfo = async (req: Request, res: Response) 
         delete topic.questions[i].correctChoiceIndices;
     }
 
+    topic.questions = await Promise.all(topic.questions.map(async (q) => {
+        const stats = await questionStats(q.id);
+        // @ts-expect-error Plz work
+        q.difficulty = stats.totalCorrectSubmissions / stats.totalSubmissions;
+       return q;
+    }));
+
     res.status(200).send(topic);
 };
 
@@ -507,6 +514,14 @@ const getCourseExamWithBasicQuestionInfo = async (req: Request, res: Response) =
     if (!exam) {
         throw new NotFoundError("Exam not found");
     }
+
+    exam.questions = await Promise.all(exam.questions.map(async (q) => {
+        const stats = await questionStats(q.id);
+        // @ts-expect-error Plz work
+        q.difficulty = stats.totalCorrectSubmissions / stats.totalSubmissions;
+        return q;
+    }));
+
     res.status(200).send(exam);
 };
 
