@@ -231,15 +231,13 @@ const getCourseTopicsWithBasicQuestionInfo = async (req: Request, res: Response)
         throw new NotFoundError("Course not found");
     }
 
-    for (const topic of course.topics) {
-        topic.questions = await Promise.all(topic.questions.map(async (q) => {
-            const stats = await questionStats(q.id);
-            // @ts-expect-error Plz work
-            q.difficulty = stats.totalCorrectSubmissions / stats.totalSubmissions;
-            return q;
-        }));
-    }
-
+    course.questions = await Promise.all(course.questions.map(async (q) => {
+        const stats = await questionStats(q.id);
+        // @ts-expect-error Plz work
+        q.difficulty = stats.totalCorrectSubmissions / stats.totalSubmissions;
+        return q;
+    }));
+    
     res.status(200).send(course);
 };
 
