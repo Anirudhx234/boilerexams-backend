@@ -321,15 +321,6 @@ const getCourseExamsWithBasicQuestionInfo = async (req: Request, res: Response) 
         [(exam) => (exam.number === 0 ? 10 : exam.number), "semester.year", "semester.season"],
         ["asc", "desc", "asc"],
     );
-
-    for (const exam of sortedExams) {
-        exam.questions = await Promise.all(exam.questions.map(async (q) => {
-            const stats = await questionStats(q.id);
-            // @ts-expect-error Plz work
-            q.difficulty = stats.totalCorrectSubmissions / stats.totalSubmissions;
-            return q;
-        }));
-    }
     
     res.status(200).send(sortedExams);
 };
