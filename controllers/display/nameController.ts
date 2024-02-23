@@ -1,6 +1,6 @@
 import prisma from "../../libs/prisma.js";
 import { InvalidSeasonError, NotFoundError } from "../../middleware/errors/index.js";
-import { Season } from "@prisma/client";
+import { Exam, Season } from "@prisma/client";
 import { Request, Response } from "express";
 import _ from "lodash";
 import validCourseRegex from "../../utils/validCourseRegex.js";
@@ -237,6 +237,16 @@ const getCourseTopicsWithBasicQuestionInfo = async (req: Request, res: Response)
         q.difficulty = stats.totalCorrectSubmissions / stats.totalSubmissions;
         return q;
     }));
+
+    course.topics = await Promise.all(course.topics.map(async (topic) => {
+        topic.questions = await Promise.all(topic.questions.map(async (q) => {
+            const stats = await questionStats(q.id);
+            // @ts-expect-error Plz work
+            q.difficulty = stats.totalCorrectSubmissions / stats.totalSubmissions;
+            return q;
+        }));
+        return topic;
+    }));
     
     res.status(200).send(course);
 };
@@ -273,6 +283,7 @@ const getCourseExams = async (req: Request, res: Response) => {
         [(exam) => (exam.number === 0 ? 10 : exam.number), "semester.year", "semester.season"],
         ["asc", "desc", "asc"],
     );
+
     res.status(200).send(sortedExams);
 };
 
@@ -321,8 +332,16 @@ const getCourseExamsWithBasicQuestionInfo = async (req: Request, res: Response) 
         [(exam) => (exam.number === 0 ? 10 : exam.number), "semester.year", "semester.season"],
         ["asc", "desc", "asc"],
     );
-    
-    res.status(200).send(sortedExams);
+
+    res.status(200).send(sortedExams.map((async (exam) => {
+            exam.questions = await Promise.all(exam.questions.map(async (q) => {
+                const stats = await questionStats(q.id);
+                q.difficulty = stats.totalCorrectSubmissions / stats.totalSubmissions;
+                return q;
+            }));
+            return exam;
+        }
+    )));
 };
 
 // Basic question information for specific topic
