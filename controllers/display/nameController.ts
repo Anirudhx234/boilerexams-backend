@@ -436,7 +436,7 @@ const getCourseTopicWithFullQuestionInfo = async (req: Request, res: Response) =
         topic.questions[i].answerChoiceStats = answerStats[i];
     }
     
-    exam.questions = await Promise.all(exam.questions.map(async (q) => {
+    topic.questions = await Promise.all(topic.questions.map(async (q) => {
         const stats = await questionStats(q.id);
         // @ts-expect-error Plz work
         q.difficulty = stats.totalCorrectSubmissions / stats.totalSubmissions;
@@ -602,6 +602,13 @@ const getCourseExamWithFullQuestionInfo = async (req: Request, res: Response) =>
         // @ts-expect-error Extend Later
         exam.questions[i].answerChoiceStats = answerStats[i];
     }
+
+    exam.questions = await Promise.all(exam.questions.map(async (q) => {
+        const stats = await questionStats(q.id);
+        // @ts-expect-error Plz work
+        q.difficulty = stats.totalCorrectSubmissions / stats.totalSubmissions;
+        return q;
+    }));
 
     res.status(200).send(exam);
 };
