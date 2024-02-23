@@ -247,7 +247,7 @@ const getCourseTopicsWithBasicQuestionInfo = async (req: Request, res: Response)
         }));
         return topic;
     }));
-    
+
     res.status(200).send(course);
 };
 
@@ -333,15 +333,14 @@ const getCourseExamsWithBasicQuestionInfo = async (req: Request, res: Response) 
         ["asc", "desc", "asc"],
     );
 
-    res.status(200).send(sortedExams.map((async (exam) => {
-            exam.questions = await Promise.all(exam.questions.map(async (q) => {
-                const stats = await questionStats(q.id);
-                q.difficulty = stats.totalCorrectSubmissions / stats.totalSubmissions;
-                return q;
-            }));
-            return exam;
-        }
-    )));
+    res.status(200).send(await sortedExams.map((async (exam) => {
+        exam.questions = await Promise.all(exam.questions.map(async (q) => {
+            const stats = await questionStats(q.id);
+            q.difficulty = stats.totalCorrectSubmissions / stats.totalSubmissions;
+            return q;
+        }));
+        return exam;
+    })));
 };
 
 // Basic question information for specific topic
@@ -394,7 +393,7 @@ const getCourseTopicWithBasicQuestionInfo = async (req: Request, res: Response) 
         const stats = await questionStats(q.id);
         // @ts-expect-error Plz work
         q.difficulty = stats.totalCorrectSubmissions / stats.totalSubmissions;
-       return q;
+        return q;
     }));
 
     res.status(200).send(topic);
@@ -469,12 +468,12 @@ const getCourseTopicWithFullQuestionInfo = async (req: Request, res: Response) =
         // @ts-expect-error Extend Later
         topic.questions[i].answerChoiceStats = answerStats[i];
     }
-    
+
     topic.questions = await Promise.all(topic.questions.map(async (q) => {
         const stats = await questionStats(q.id);
         // @ts-expect-error Plz work
         q.difficulty = stats.totalCorrectSubmissions / stats.totalSubmissions;
-       return q;
+        return q;
     }));
 
     res.status(200).send(topic);
