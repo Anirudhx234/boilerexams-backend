@@ -333,14 +333,14 @@ const getCourseExamsWithBasicQuestionInfo = async (req: Request, res: Response) 
         ["asc", "desc", "asc"],
     );
 
-    res.status(200).send(await sortedExams.map((async (exam) => {
+    res.status(200).send(await Promise.all(sortedExams.map((async (exam) => {
         exam.questions = await Promise.all(exam.questions.map(async (q) => {
             const stats = await questionStats(q.id);
             q.difficulty = stats.totalCorrectSubmissions / stats.totalSubmissions;
             return q;
         }));
         return exam;
-    })));
+    }))));
 };
 
 // Basic question information for specific topic
