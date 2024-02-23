@@ -5,6 +5,7 @@ import { Request, Response } from "express";
 import _ from "lodash";
 import validCourseRegex from "../../utils/validCourseRegex.js";
 import answerChoiceStats from "../../helpers/stats/multiple.answerChoiceStats.js";
+import questionStats from "../../helpers/stats/questionStats.js";
 
 const questionSort: QuestionSortCategory[] = [
     {
@@ -434,6 +435,14 @@ const getCourseTopicWithFullQuestionInfo = async (req: Request, res: Response) =
         // @ts-expect-error Extend Later
         topic.questions[i].answerChoiceStats = answerStats[i];
     }
+    
+    exam.questions = await Promise.all(exam.questions.map(async (q) => {
+        const stats = await questionStats(q.id);
+        // @ts-expect-error Plz work
+        q.difficulty = stats.totalCorrectSubmissions / stats.totalSubmissions;
+       return q;
+    }));
+
     res.status(200).send(topic);
 };
 
