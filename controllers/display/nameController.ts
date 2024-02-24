@@ -232,17 +232,15 @@ const getCourseTopicsWithBasicQuestionInfo = async (req: Request, res: Response)
     }
 
     course.questions = await Promise.all(course.questions.map(async (q) => {
-        const stats = await questionStats(q.id);
         // @ts-expect-error Plz work
-        q.difficulty = stats.totalCorrectSubmissions / stats.totalSubmissions;
+        q.difficulty = Math.random();
         return q;
     }));
 
     course.topics = await Promise.all(course.topics.map(async (topic) => {
         topic.questions = await Promise.all(topic.questions.map(async (q) => {
-            const stats = await questionStats(q.id);
             // @ts-expect-error Plz work
-            q.difficulty = stats.totalCorrectSubmissions / stats.totalSubmissions;
+            q.difficulty = Math.random();
             return q;
         }));
         return topic;
@@ -335,8 +333,7 @@ const getCourseExamsWithBasicQuestionInfo = async (req: Request, res: Response) 
 
     res.status(200).send(await Promise.all(sortedExams.map((async (exam) => {
         exam.questions = await Promise.all(exam.questions.map(async (q) => {
-            const stats = await questionStats(q.id);
-            q.difficulty = stats.totalCorrectSubmissions / stats.totalSubmissions;
+            q.difficulty = Math.random();
             return q;
         }));
         return exam;
@@ -390,9 +387,8 @@ const getCourseTopicWithBasicQuestionInfo = async (req: Request, res: Response) 
     }
 
     topic.questions = await Promise.all(topic.questions.map(async (q) => {
-        const stats = await questionStats(q.id);
         // @ts-expect-error Plz work
-        q.difficulty = stats.totalCorrectSubmissions / stats.totalSubmissions;
+        q.difficulty = Math.random();
         return q;
     }));
 
@@ -470,9 +466,8 @@ const getCourseTopicWithFullQuestionInfo = async (req: Request, res: Response) =
     }
 
     topic.questions = await Promise.all(topic.questions.map(async (q) => {
-        const stats = await questionStats(q.id);
         // @ts-expect-error Plz work
-        q.difficulty = stats.totalCorrectSubmissions / stats.totalSubmissions;
+        q.difficulty = Math.random();
         return q;
     }));
 
@@ -542,9 +537,8 @@ const getCourseExamWithBasicQuestionInfo = async (req: Request, res: Response) =
     }
 
     exam.questions = await Promise.all(exam.questions.map(async (q) => {
-        const stats = await questionStats(q.id);
         // @ts-expect-error Plz work
-        q.difficulty = stats.totalCorrectSubmissions / stats.totalSubmissions;
+        q.difficulty = Math.random();
         return q;
     }));
 
@@ -645,9 +639,8 @@ const getCourseExamWithFullQuestionInfo = async (req: Request, res: Response) =>
     }
 
     exam.questions = await Promise.all(exam.questions.map(async (q) => {
-        const stats = await questionStats(q.id);
         // @ts-expect-error Plz work
-        q.difficulty = stats.totalCorrectSubmissions / stats.totalSubmissions;
+        q.difficulty = Math.random();
         return q;
     }));
 
