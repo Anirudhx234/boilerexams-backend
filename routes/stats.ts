@@ -8,6 +8,7 @@ import {
     getGeneralStats,
     getQuestionStats,
     getSubmissionStats,
+    getCourseTimeSubmissionStats
 } from "../controllers/statsController.js";
 import cache from "../cache/caching.js";
 
@@ -30,5 +31,7 @@ router.get("/exams/:examId", cache(600), asyncWrapper(getExamStats));
 router.get("/questions/:questionId", cache(600), asyncWrapper(getQuestionStats));
 
 router.get("/submissions", cache(600), asyncWrapper(getSubmissionStats));
+
+router.get("/submissions/time/:courseId", cache(600), asyncWrapper(getCourseTimeSubmissionStats))
 
 export default router;

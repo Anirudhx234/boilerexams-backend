@@ -25,3 +25,8 @@ type CourseMapData = {
     id: string;
     questionStats: QuestionQueryData[];
 };
+
+type TimedSubmissionQueryData = {
+    submission_hour: Date;
+    submissions_count: number;
+};
