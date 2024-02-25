@@ -252,7 +252,7 @@ const getAllTimeSubmissionStats = async (req: Request, res: Response) => {
 const getCourseTimeSubmissionStats = async (req: Request, res: Response) => {
     const { courseId } = req.params;
     if (courseId == "all") {
-        getAllTimeSubmissionStats(req, res);
+        await getAllTimeSubmissionStats(req, res);
         return;
     }
     const stats = await courseSubmissionTimeStats(courseId);

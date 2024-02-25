@@ -32,6 +32,6 @@ router.get("/questions/:questionId", cache(600), asyncWrapper(getQuestionStats))
 
 router.get("/submissions", cache(600), asyncWrapper(getSubmissionStats));
 
-router.get("/submissions/time/:courseId", cache(600), asyncWrapper(getCourseTimeSubmissionStats))
+router.get("/submissions/time/:courseId", cache(600), asyncWrapper(getCourseTimeSubmissionStats));
 
 export default router;
