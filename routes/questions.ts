@@ -1,4 +1,5 @@
 import express from "express";
+import { Role } from "@prisma/client";
 import {
     bulkQuestionSubmission,
     createQuestion,
@@ -18,13 +19,13 @@ const router = express.Router();
 
 router.get("/id/questions/:questionId", sendPublished, asyncWrapper(getQuestion));
 
-router.post("/courses/:courseId/exams/:examId/questions", authHandler, asyncWrapper(createQuestion));
+router.post("/courses/:courseId/exams/:examId/questions", authHandler(Role.CONTENT), asyncWrapper(createQuestion));
 
-router.put("/courses/:courseId/exams/:examId/questions/:questionId", authHandler, asyncWrapper(updateQuestion));
+router.put("/courses/:courseId/exams/:examId/questions/:questionId", authHandler(Role.CONTENT), asyncWrapper(updateQuestion));
 
-router.put("/questions/:questionId/togglePublished", authHandler, asyncWrapper(toggleQuestionPublished));
+router.put("/questions/:questionId/togglePublished", authHandler(Role.CONTENT), asyncWrapper(toggleQuestionPublished));
 
-router.delete("/courses/:courseId/exams/:examId/questions/:questionId", authHandler, asyncWrapper(deleteQuestion));
+router.delete("/courses/:courseId/exams/:examId/questions/:questionId", authHandler(Role.CONTENT), asyncWrapper(deleteQuestion));
 
 router.post("/questions/:questionId/submit", generalLimiter, asyncWrapper(createQuestionSubmission));
 

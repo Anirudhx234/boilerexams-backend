@@ -24,12 +24,12 @@ jobs:
                   context: .
                   file: ./Dockerfile.development
                   push: true
-                  tags: ${{ secrets.DOCKERHUB_USERNAME }}/boilerexams-backend:development
+                  tags: ${{ secrets.DOCKERHUB_USERNAME }}/backend:development
                   cache-from: type=gha
                   cache-to: type=gha,mode=max
             - name: Pull Image and Start Container
               working-directory: /home/boilerexams/docker
               run: |
-                  docker pull ${{ secrets.DOCKERHUB_USERNAME }}/boilerexams-backend:development
+                  docker pull ${{ secrets.DOCKERHUB_USERNAME }}/backend:development
                   docker compose down development
                   docker compose up development -d

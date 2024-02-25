@@ -1,7 +1,9 @@
 type NewEvent = {
-    title: string | null;
-    description: string | null;
-    type: import("@prisma/client").EventType;
+    subject: string;
+    number: number;
+    title?: string;
+    description?: string;
+    type: "EXAM" | "FINAL";
     start: Date;
     end: Date;
     location: string | null;

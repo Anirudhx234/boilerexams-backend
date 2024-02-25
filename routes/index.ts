@@ -1,3 +1,4 @@
+import { Role } from "@prisma/client";
 import auth from "../middleware/auth/auth.js";
 import authHandler from "../middleware/auth/authHandler.js";
 import analytics from "./analytics.js";
@@ -39,7 +40,7 @@ router.use(questions);
 
 router.use("/users", users);
 
-router.use(authHandler);
+router.use(authHandler(Role.CONTENT));
 
 router.use("/id", id_routes);
 

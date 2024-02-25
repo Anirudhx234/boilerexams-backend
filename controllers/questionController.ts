@@ -53,19 +53,11 @@ const getQuestion = async (req: Request, res: Response) => {
 
 const createQuestion = async (req: Request, res: Response) => {
     const { courseId, examId } = req.params;
-    let {
-        topics,
-        number,
-        body,
-        answerChoices,
-        correctChoiceIndices,
-        solutionVideoLink,
-        explanationText,
-        resourceIds,
-        disableRandomAnswers,
-        answersStartHidden,
-        disclaimer,
-    } = req.body;
+
+    const { number, body, correctChoiceIndices, solutionVideoLink, explanationText, disableRandomAnswers, answersStartHidden, disclaimer, type } =
+        req.body;
+
+    let { topics, answerChoices, resourceIds } = req.body;
 
     if (!topics) {
         topics = [];
@@ -85,7 +77,7 @@ const createQuestion = async (req: Request, res: Response) => {
         },
         data: {
             topics: {
-                connectOrCreate: topics.map((topic) => ({
+                connectOrCreate: topics.map((topic: { id: string; name: string }) => ({
                     where: topic,
                     create: topic,
                 })),
@@ -97,6 +89,7 @@ const createQuestion = async (req: Request, res: Response) => {
         data: {
             courseId: courseId,
             examId: examId,
+            type: type,
             topics: {
                 connect: topics,
             },
@@ -151,7 +144,8 @@ const createQuestion = async (req: Request, res: Response) => {
 
 const updateQuestion = async (req: Request, res: Response) => {
     const { courseId, examId, questionId } = req.params;
-    let {
+    const {
+        type,
         topics,
         number,
         body,
@@ -171,7 +165,7 @@ const updateQuestion = async (req: Request, res: Response) => {
         },
         data: {
             topics: {
-                connectOrCreate: topics.map((topic: string) => ({
+                connectOrCreate: topics.map((topic: { id: string; name: string }) => ({
                     where: topic,
                     create: topic,
                 })),
@@ -190,6 +184,7 @@ const updateQuestion = async (req: Request, res: Response) => {
         data: {
             courseId: courseId,
             examId: examId,
+            type: type,
             topics: {
                 set: topics,
             },
