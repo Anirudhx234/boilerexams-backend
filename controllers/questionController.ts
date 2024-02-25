@@ -335,6 +335,7 @@ const createQuestionSubmission = async (req: Request, res: Response) => {
         correct,
         timeStarted,
         timeEnded,
+        timeSpent,
         videoStartTime,
         videoEndTime,
         videoTotalWatchTime,
@@ -351,7 +352,6 @@ const createQuestionSubmission = async (req: Request, res: Response) => {
     const modalStart = msToDate(modalStartTime);
     const modalEnd = msToDate(modalEndTime);
 
-    const timeSpent = endTime.valueOf() - startTime.valueOf();
     const submission = await prisma.submission.create({
         data: {
             questionId: questionId,
@@ -383,6 +383,7 @@ const bulkQuestionSubmission = async (req: Request, res: Response) => {
                 correct,
                 timeStarted,
                 timeEnded,
+                 timeSpent,
                 videoStartTime,
                 videoEndTime,
                 videoTotalWatchTime,
@@ -397,7 +398,6 @@ const bulkQuestionSubmission = async (req: Request, res: Response) => {
                 const videoEnd = msToDate(videoEndTime);
                 const modalStart = msToDate(modalStartTime);
                 const modalEnd = msToDate(modalEndTime);
-                const timeSpent = endTime.valueOf() - startTime.valueOf();
 
                 return prisma.submission.create({
                     data: {
