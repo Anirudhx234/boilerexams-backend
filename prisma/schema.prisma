@@ -11,7 +11,7 @@ datasource db {
 
 model Course {
   id              String      @id @default(uuid())
-  name            String      @unique
+  name            String
   abbreviation    String
   subject         String
   backgroundColor String      @default("")
@@ -28,7 +28,6 @@ model Course {
   users           User[]      @relation("CourseToUser")
   events          Event[]
 
-  @@unique([subject, number])
   @@unique([abbreviation, number])
 }
 
