@@ -83,7 +83,49 @@ const allCoursesStats = async (before: Date, after: Date) => {
         };
     });
 };
+//NQ= No Questions
+const allCoursesStatsNQ = async (before: Date, after: Date) => {
+    // @ts-expect-error Fix Prisma BigInt Serialize
+    BigInt.prototype.toJSON = function () {
+        const int = Number.parseInt(this.toString());
+        return int ?? this.toString();
+    };
 
+    const courses: CourseQueryData[] = await prisma.$queryRaw`
+        SELECT
+            c.id AS "id",
+            c.name AS "name",
+            CONCAT(c."abbreviation", CAST(c."number" as VARCHAR)) AS "abbreviation",
+            (SELECT COUNT(*) FROM "Question" q WHERE q."courseId" = c.id AND q.published = true) AS "totalQuestions",
+            (SELECT COUNT(*) FROM "Exam" e WHERE e."courseId" = c.id AND e.published = true) AS "totalExams",
+            SUM(s."timeSpent") AS "totalTimeSpent",
+            SUM(s."timeSpentVideo") AS "totalTimeSpentVideo",
+            COUNT(s.id) AS "totalSubmissions",
+            SUM(CASE WHEN s.correct = TRUE THEN 1 ELSE 0 END) AS "totalSubmissionsCorrect"
+        FROM "Course" c
+                 JOIN "Question" q ON c.id = q."courseId"
+                 JOIN "Submission" s ON q.ID = s."questionId"
+        WHERE c."published" = true AND q.published = true
+        GROUP BY c.id;
+    `;
+    if (before.getTime() == 0) {
+        before.setTime(Date.now());
+    }    
+    return courses.map((course) => {
+        const courseId = course.id;
+        return {
+            courseId: courseId,
+            courseName: course.name,
+            courseAbbreviation: course.abbreviation,
+            totalExams: course.totalExams,
+            totalQuestions: course.totalQuestions,
+            totalTimeSpent: course.totalTimeSpent,
+            totalTimeSpentVideo: course.totalTimeSpentVideo,
+            totalSubmissions: course.totalSubmissions,
+            totalSubmissionsCorrect: course.totalSubmissionsCorrect,
+        };
+    });
+};
 const courseStats = async (courseId: string, before: Date, after: Date) => {
     // @ts-expect-error Fix Prisma BigInt Serialize
     BigInt.prototype.toJSON = function () {
@@ -146,4 +188,4 @@ const courseStats = async (courseId: string, before: Date, after: Date) => {
     };
 };
 
-export { allCoursesStats, courseStats };
+export { allCoursesStats, courseStats, allCoursesStatsNQ};

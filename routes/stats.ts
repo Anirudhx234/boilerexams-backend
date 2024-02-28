@@ -8,7 +8,8 @@ import {
     getGeneralStats,
     getQuestionStats,
     getSubmissionStats,
-    getCourseTimeSubmissionStats
+    getCourseTimeSubmissionStats,
+    getCourseStatsAllNQ
 } from "../controllers/statsController.js";
 import cache from "../cache/caching.js";
 
@@ -17,6 +18,8 @@ const router = express.Router();
 router.get("/", cache(600), asyncWrapper(getGeneralStats));
 
 router.get("/courses/all", cache(600), asyncWrapper(getCourseStatsAll));
+
+router.get("/courses/all/nq", cache(600), asyncWrapper(getCourseStatsAllNQ));
 
 //app.get("/courses/:courseId/after/:after/before/:before", cache(600), asyncWrapper(getCourseStats));
 
