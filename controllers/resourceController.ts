@@ -1,5 +1,5 @@
 import prisma from "../libs/prisma.js";
-import { Language, ResourceType } from "@prisma/client";
+import { ResourceType } from "@prisma/client";
 import { Request, Response } from "express";
 import axios from "axios";
 import { APIError } from "../middleware/errors/index.js";

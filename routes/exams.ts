@@ -4,7 +4,7 @@ import asyncWrapper from "../middleware/wrappers/asyncWrapper.js";
 
 const router = express.Router();
 
-router.post("/courses/:courseId/exams", asyncWrapper(createExam));
+router.post("/courses/:courseResolvable/exams", asyncWrapper(createExam));
 
 router.put("/courses/:courseId/exams/:examId", asyncWrapper(updateExam));
 

@@ -18,7 +18,7 @@
     "start": "npm run deploy && node dist/server.js",
     "dev:remote": "npm run deploy && cross-env NODE_ENV=development REMOTE=enabled node dist/server.js",
     "prod": "npm run deploy && cross-env NODE_ENV=production REMOTE=enabled node dist/server.js",
-    "bun": "bun server.ts"
+    "bun-dev": "export NODE_ENV=development && bun --watch server.ts"
   },
   "type": "module",
   "keywords": [],
@@ -49,7 +49,8 @@
     "prisma": "^5.3.1",
     "rimraf": "^5.0.5",
     "typescript": "^5.3.3",
-    "url": "^0.11.1"
+    "url": "^0.11.1",
+    "zod": "^3.22.4"
   },
   "devDependencies": {
     "@types/express-session": "^1.17.8",

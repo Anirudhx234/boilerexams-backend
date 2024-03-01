@@ -13,6 +13,7 @@ import upload from "../middleware/multer/image.js";
 
 const router = express.Router();
 
+/*
 router.get("/:resourceId", asyncWrapper(getResource));
 
 router.post("/images", upload.single("image"), asyncWrapper(createImageResource));
@@ -26,5 +27,7 @@ router.put("/:resourceId/image", asyncWrapper(updateImageResource));
 router.put("/:resourceId/code", asyncWrapper(updateCodeResource));
 
 router.delete("/:resourceId", asyncWrapper(deleteResource));
+
+ */
 
 export default router;

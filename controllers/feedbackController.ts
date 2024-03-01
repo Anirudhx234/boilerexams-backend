@@ -1,5 +1,4 @@
 import { APIError, CourseAlreadyExistsError, NotFoundError } from "../middleware/errors/index.js";
-import { ReportType, Year } from "@prisma/client";
 import { Request, Response } from "express";
 import { DiscordAPI } from "../services/discord.api.js";
 import { PurdueIoAPI } from "../services/purdue.io.js";
@@ -120,7 +119,7 @@ const createApplication = async (req: Request, res: Response) => {
             name: name,
             email: email,
             content: why,
-            year: year.toUpperCase() as Year,
+            year: year,
             pdfKey: pdfData.Key,
             pdfLink: pdfData.Location,
         },

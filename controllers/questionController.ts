@@ -3,162 +3,72 @@ import { Request, Response } from "express";
 import { APIError, NotFoundError } from "../middleware/errors/index.js";
 import msToDate from "../utils/msToDate.js";
 import answerChoiceStats from "../helpers/stats/single.answerChoiceStats.js";
+import Resolver from "../helpers/resolver.js";
+import { CreateQuestionScheme, UpdateQuestionScheme } from "../prisma/schema.js";
 
 const getQuestion = async (req: Request, res: Response) => {
-    const { questionId } = req.params;
+    const { courseResolvable, examResolvable, questionResolvable } = req.params;
+    console.log(courseResolvable);
+    console.log(examResolvable);
+    console.log(questionResolvable);
 
-    const question = await prisma.question.findFirst({
-        where: {
-            id: questionId,
-            OR: req.published,
-        },
+    const question = await prisma.question.findUnique({
+        where: await Resolver.question(questionResolvable, examResolvable, courseResolvable),
         include: {
             course: true,
             topics: true,
-            exam: {
-                include: {
-                    semester: true,
-                },
-            },
-            answerChoices: {
-                orderBy: {
-                    choiceIndex: "asc",
-                },
-                include: {
-                    resources: {
-                        include: {
-                            image: true,
-                            code: true,
-                        },
-                    },
-                },
-            },
-            resources: {
-                include: {
-                    image: true,
-                    code: true,
-                },
-            },
+            exam: true,
+            resources: true,
         },
     });
+
     if (!question) {
         throw new NotFoundError("Question not found");
     }
 
-    // @ts-expect-error Extend Later
-    question.answerChoiceStats = await answerChoiceStats(questionId);
-
-    res.status(200).send(question);
+    res.status(200).send({
+        ...question,
+        answerChoiceStats: await answerChoiceStats(question.id)
+    });
 };
 
 const createQuestion = async (req: Request, res: Response) => {
-    const { courseId, examId } = req.params;
+    const { courseResolvable, examResolvable } = req.params;
 
-    const { number, body, correctChoiceIndices, solutionVideoLink, explanationText, disableRandomAnswers, answersStartHidden, disclaimer, type } =
-        req.body;
-
-    let { topics, answerChoices, resourceIds } = req.body;
-
-    if (!topics) {
-        topics = [];
-    }
-
-    if (!resourceIds) {
-        resourceIds = [];
-    }
-
-    if (!answerChoices) {
-        answerChoices = [];
-    }
-
-    await prisma.course.update({
-        where: {
-            id: courseId,
-        },
-        data: {
-            topics: {
-                connectOrCreate: topics.map((topic: { id: string; name: string }) => ({
-                    where: topic,
-                    create: topic,
-                })),
-            },
-        },
+    const exam = await prisma.exam.findUnique({
+        where: await Resolver.exam(examResolvable, courseResolvable)
     });
+
+    if (!exam) {
+        throw new APIError("Exam not found", 404);
+    }
+
+    const options = CreateQuestionScheme.parse(req.body);
 
     const question = await prisma.question.create({
         data: {
-            courseId: courseId,
-            examId: examId,
-            type: type,
-            topics: {
-                connect: topics,
-            },
-            number: Number(number),
-            body: body ?? "",
-            answerChoices: {
-                create: answerChoices.map((answerChoice) => ({
-                    choiceIndex: Number(answerChoice.choiceIndex),
-                    body: answerChoice.body,
-                    resources: {
-                        connect: answerChoice.resourceIds.map((resourceId) => ({
-                            id: resourceId,
-                        })),
-                    },
-                })),
-            },
-            correctChoiceIndices: correctChoiceIndices,
-            solutionVideoLink: solutionVideoLink,
-            explanationText: explanationText,
-            disclaimer: disclaimer,
-            resources: {
-                connect: resourceIds.map((resourceId) => ({ id: resourceId })),
-            },
-            disableRandomAnswers: disableRandomAnswers,
-            answersStartHidden: answersStartHidden,
-        },
-        include: {
-            topics: true,
-            answerChoices: {
-                orderBy: {
-                    choiceIndex: "asc",
-                },
-                include: {
-                    resources: {
-                        include: {
-                            image: true,
-                            code: true,
-                        },
-                    },
-                },
-            },
-            resources: {
-                include: {
-                    image: true,
-                    code: true,
-                },
-            },
-        },
+            ...options,
+            examId: exam.id,
+            courseId: exam.courseId,
+            flags: 0
+        }
     });
+
     res.status(200).send(question);
 };
 
 const updateQuestion = async (req: Request, res: Response) => {
-    const { courseId, examId, questionId } = req.params;
-    const {
-        type,
-        topics,
-        number,
-        body,
-        answerChoices,
-        correctChoiceIndices,
-        solutionVideoLink,
-        explanationText,
-        resourceIds,
-        answersStartHidden,
-        disableRandomAnswers,
-        disclaimer,
-    } = req.body;
+    const { courseResolvable, examResolvable, questionResolvable } = req.params;
+    const options = UpdateQuestionScheme.parse(req.body);
 
+    const question = await prisma.question.update({
+        where: await Resolver.question(questionResolvable, examResolvable, courseResolvable),
+        data: {
+            ...options
+        }
+    });
+
+    /*
     await prisma.course.update({
         where: {
             id: courseId,
@@ -270,9 +180,11 @@ const updateQuestion = async (req: Request, res: Response) => {
             },
         },
     });
+
+     */
     res.status(200).send(question);
 };
-
+/*
 const toggleQuestionPublished = async (req: Request, res: Response) => {
     const { questionId } = req.params;
     const question = await prisma.question.findUnique({
@@ -309,6 +221,8 @@ const toggleQuestionPublished = async (req: Request, res: Response) => {
     });
 };
 
+ */
+
 const deleteQuestion = async (req: Request, res: Response) => {
     const { questionId } = req.params;
     const question = await prisma.question.delete({
@@ -323,6 +237,7 @@ const deleteQuestion = async (req: Request, res: Response) => {
     res.status(200).send(question);
 };
 
+/*
 const createQuestionSubmission = async (req: Request, res: Response) => {
     const { questionId } = req.params;
     const {
@@ -443,13 +358,15 @@ const updateSubmission = async (req: Request, res: Response) => {
     res.status(200).send(submission);
 };
 
+ */
+
 export {
     getQuestion,
     createQuestion,
     updateQuestion,
-    toggleQuestionPublished,
-    deleteQuestion,
-    createQuestionSubmission,
-    bulkQuestionSubmission,
-    updateSubmission,
+    //toggleQuestionPublished,
+    //deleteQuestion,
+    //createQuestionSubmission,
+    //bulkQuestionSubmission,
+    //updateSubmission,
 };

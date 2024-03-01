@@ -40,10 +40,10 @@ model Exam {
   courseId   String
   course     Course     @relation(fields: [courseId], references: [id], onDelete: Cascade)
   questions  Question[]
-  resources  Resource[]
+  pdf        Resource?
   flags      Int
 
-  @@unique([number, year, season])
+  @@unique([number, year, season, courseId])
 }
 
 model Question {
@@ -51,6 +51,7 @@ model Question {
   type         QuestionType
   data         Json
   number       Int
+  disclaimer   String?
   examId       String?
   courseId     String?
   parentId     String?
@@ -68,7 +69,7 @@ model Question {
   feedback     Feedback[]
   flags        Int
 
-  @@unique([examId, number])
+  @@unique([number, examId])
 }
 
 model Submission {
@@ -87,23 +88,23 @@ model Submission {
 }
 
 model Resource {
-  id            String       @id @default(uuid())
-  type          ResourceType
-  data          Json
-  examId        String?      @unique
-  courseId      String?      @unique
-  applicationId String?      @unique
-  exam          Exam?        @relation(fields: [examId], references: [id], onDelete: Cascade)
-  course        Course?      @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  application   Application? @relation(fields: [applicationId], references: [id], onDelete: Cascade)
-  shortQuestion Question?    @relation("QuestionToShortVideo")
-  longQuestion  Question?    @relation("QuestionToLongVideo")
-  questions     Question[]   @relation("QuestionToResource")
+  id                 String       @id @default(uuid())
+  type               ResourceType
+  data               Json
+  examId             String?      @unique
+  courseId           String?      @unique
+  applicationId      String?      @unique
+  exam               Exam?        @relation(fields: [examId], references: [id], onDelete: Cascade)
+  course             Course?      @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  application        Application? @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  shortVideoQuestion Question?    @relation("QuestionToShortVideo")
+  longVideoQuestion  Question?    @relation("QuestionToLongVideo")
+  questions          Question[]   @relation("QuestionToResource")
 }
 
 model Topic {
   id        String     @id @default(uuid())
-  name      String
+  name      String // Not unique because some topics may transcend course
   courseId  String     @unique
   course    Course     @relation(fields: [courseId], references: [id], onDelete: Cascade)
   questions Question[] @relation("QuestionToTopic")
@@ -145,10 +146,10 @@ model Event {
 
 model User {
   id             String        @id @default(uuid())
+  role           Role          @default(USER)
   name           String?
   email          String?       @unique
   profilePicture String?
-  role           Role          @default(USER)
   accountId      String?       @unique
   accountType    AccountType
   localAccount   LocalAccount?
@@ -207,6 +208,13 @@ enum EventType {
   CUSTOM
 }
 
+enum Role {
+  USER
+  CONTENT
+  PROFESSOR
+  ADMIN
+}
+
 enum Season {
   SPRING
   SUMMER
@@ -223,11 +231,4 @@ enum StudyMode {
 enum FeedbackStatus {
   OPEN
   CLOSED
-}
-
-enum Role {
-  USER
-  CONTENT
-  PROFESSOR
-  ADMIN
 }

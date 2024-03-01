@@ -31,12 +31,10 @@ const uploadFileToS3 = async (buffer: Buffer, contentType: string) => {
         params,
     }).done();
 
-    const data = {
+    return {
         Location: `https://${params.Bucket}.s3.us-east-2.amazonaws.com/${params.Key}`,
         Key: params.Key,
     };
-
-    return data;
 };
 
 export default uploadFileToS3;

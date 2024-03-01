@@ -1,169 +1,94 @@
 import prisma from "../libs/prisma.js";
-import { Season } from "@prisma/client";
+import Resolver from "../helpers/resolver.js";
 import { Request, Response } from "express";
 import { APIError, NotFoundError } from "../middleware/errors/index.js";
+import {
+    CreateExamScheme,
+    UpdateExamScheme,
+} from "../prisma/schema.js";
 
 const createExam = async (req: Request, res: Response) => {
-    const { courseId } = req.params;
-    const {
-        semester: { season, year },
-        number,
-        practice,
-        disclaimer,
-    } = req.body;
+    const { courseResolvable } = req.params;
+    const options = CreateExamScheme.parse(req.body);
 
-    if (!season || !year) {
-        throw new APIError("Season and year required", 400);
-    }
-
-    const exam = await prisma.$transaction(async (tx) => {
-        const semester = await tx.semester.upsert({
-            where: {
-                season_year: {
-                    season: Season[season.toUpperCase() as keyof typeof Season],
-                    year: Number(year),
-                },
-            },
-            update: {},
-            create: {
-                season: Season[season.toUpperCase() as keyof typeof Season],
-                year: Number(year),
-            },
-        });
-
-        await tx.course.update({
-            where: {
-                id: courseId,
-            },
-            data: {
-                semesters: {
-                    connect: {
-                        id: semester.id,
-                    },
-                },
-            },
-        });
-
-        return tx.exam.create({
-            data: {
-                courseId: courseId,
-                number: Number(number),
-                semesterId: semester.id,
-                practice: practice,
-                disclaimer: disclaimer,
-            },
-            include: {
-                semester: true,
-                questions: true,
-            },
-        });
+    const course = await prisma.course.findUnique({
+        where: Resolver.course(courseResolvable)
     });
+
+    if (!course) throw new APIError(`Course not found`, 404);
+
+    const exam = await prisma.exam.create({
+        data: {
+            courseId: course.id,
+            ...options,
+            flags: 0
+        },
+        include: {
+            questions: true
+        }
+    });
+
     res.status(200).send(exam);
 };
 
 const updateExam = async (req: Request, res: Response) => {
-    const { courseId, examId } = req.params;
-    const {
-        semester: { season, year },
-        number,
-        practice,
-        disclaimer,
-    } = req.body;
+    const { courseResolvable, examResolvable } = req.params;
+    const options = UpdateExamScheme.parse(req.body);
 
-    if (!season || !year) {
-        throw new APIError("Season and year required", 400);
-    }
-
-    const exam = await prisma.$transaction(async (tx) => {
-        const semester = await tx.semester.upsert({
-            where: {
-                season_year: {
-                    season: Season[season.toUpperCase() as keyof typeof Season],
-                    year: Number(year),
-                },
-            },
-            update: {},
-            create: {
-                season: Season[season.toUpperCase() as keyof typeof Season],
-                year: Number(year),
-            },
-        });
-
-        await tx.course.update({
-            where: {
-                id: courseId,
-            },
-            data: {
-                semesters: {
-                    connect: {
-                        id: semester.id,
-                    },
-                },
-            },
-        });
-
-        return tx.exam.update({
-            where: {
-                id: examId,
-            },
-            data: {
-                semesterId: semester.id,
-                number: number,
-                practice: practice,
-                disclaimer: disclaimer,
-            },
-            include: {
-                semester: true,
-            },
-        });
+    const exam = await prisma.exam.update({
+        where: await Resolver.exam(examResolvable, courseResolvable),
+        data: {
+            ...options
+        }
     });
+
     res.status(200).send(exam);
 };
 
 const toggleExamPublished = async (req: Request, res: Response) => {
-    const { examId } = req.params;
+    const { courseResolvable, examResolvable } = req.params;
+
     const exam = await prisma.exam.findUnique({
-        where: {
-            id: examId,
-        },
+        where: await Resolver.exam(examResolvable, courseResolvable),
         select: {
-            published: true,
-        },
+            id: true,
+            flags: true
+        }
     });
+
     if (!exam) {
         throw new NotFoundError("Exam not found");
     }
 
-    const published = !exam.published;
     await prisma.exam.update({
         where: {
-            id: examId,
+            id: exam.id,
         },
         data: {
-            published: published,
+            flags: exam.flags ^ 1,
             questions: {
                 updateMany: {
                     where: {
-                        published: !published,
+                        flags: exam.flags ^ 1 ^ 1,
                     },
                     data: {
-                        published: published,
+                        flags: exam.flags ^ 1,
                     },
                 },
             },
         },
     });
+
     res.status(200).send({
-        message: `Exam and questions are now ${published ? "published" : "unpublished"}`,
+        message: `Exam and questions are now ${((exam.flags ^ 1) & 1) == 1 ? "published" : "unpublished"}`,
     });
 };
 
 const deleteExam = async (req: Request, res: Response) => {
-    const { examId } = req.params;
+    const { courseResolvable, examResolvable } = req.params;
+
     const exam = await prisma.exam.delete({
-        where: {
-            id: examId,
-        },
+        where: await Resolver.exam(examResolvable, courseResolvable)
     });
 
     if (!exam) {
