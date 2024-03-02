@@ -5,6 +5,7 @@ import { DiscordAPI } from "../services/discord.api.js";
 import { PurdueIoAPI } from "../services/purdue.io.js";
 import prisma from "../libs/prisma.js";
 import uploadFileToS3 from "../utils/uploadFileToS3.js";
+import sendMail from "../utils/sendMail.js";
 
 const getReport = async (req: Request, res: Response) => {
     const reportId = req.params.reportId;
@@ -188,7 +189,17 @@ const createBugReport = async (req: Request, res: Response) => {
             user: true,
         },
     });
-
+    //Check if contact fits email
+    let regexp = new RegExp(/^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/);
+    if (regexp.test(contact)) {
+        let emailOptions = {
+            to: contact,
+            subject: `Bug Report: ${report.id}`,
+            html: `Your bug report <b>${report.title}</b> has been logged and is actively being looked into!<br>Thank you,<br><i>Boilerexams team</i>.`,
+        };
+        await sendMail(emailOptions);
+    }
+    
     await DiscordAPI.createReport(report);
     res.status(200).send("Success");
 };
