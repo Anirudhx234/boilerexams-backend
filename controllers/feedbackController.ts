@@ -6,6 +6,7 @@ import { PurdueIoAPI } from "../services/purdue.io.js";
 import prisma from "../libs/prisma.js";
 import uploadFileToS3 from "../utils/uploadFileToS3.js";
 import sendMail from "../utils/sendMail.js";
+import bugSubmissionTemplate from "../utils/emailTemplates/bugSubmission.js";
 
 const getReport = async (req: Request, res: Response) => {
     const reportId = req.params.reportId;
@@ -195,7 +196,7 @@ const createBugReport = async (req: Request, res: Response) => {
         let emailOptions = {
             to: contact,
             subject: `Bug Report: ${report.id}`,
-            html: `Your bug report <b>${report.title}</b> has been logged and is actively being looked into!<br>Thank you,<br><i>Boilerexams team</i>.`,
+            html: bugSubmissionTemplate(report.id, report.title),
         };
         await sendMail(emailOptions);
     }
