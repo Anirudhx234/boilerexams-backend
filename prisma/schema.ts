@@ -1,10 +1,11 @@
 import { z } from "zod";
 import { QuestionType, ResourceType, Season, StudyMode } from "@prisma/client";
+import { randomUUID } from "node:crypto";
 
 export const MultipleChoiceAnswerChoice = z.object({
-    index:      z.number(),
-    body:       z.string().optional(),
-    resourceId: z.string().optional(),
+    index:          z.number(),
+    body:           z.string().optional(),
+    resourceIds:    z.string().optional(),
 });
 
 export const MultipleChoiceQuestionData = z.object({
@@ -15,7 +16,6 @@ export const MultipleChoiceQuestionData = z.object({
 
 export const FreeResponseQuestionData = z.object({
     body:       z.string().optional(),
-    resourceId: z.string().optional(),
     solution:   z.string().optional(),
 });
 
@@ -27,7 +27,7 @@ export const MultipleChoiceSubmissionData = z.array(
     z.number()
 );
 
-export const FreeResponseSubmissionData = z.string();
+export const FreeResponseSubmissionData = z.string().optional();
 
 export const ShortAnswerSubmissionData = FreeResponseSubmissionData;
 
@@ -51,8 +51,9 @@ export const CodeResourceData = z.object({
 export const PdfResourceData = ImageResourceData; // Weird lil data
 
 export const CreateResourceScheme = z.object({
-    id:     z.string().uuid().optional(),
+    id:     z.string().uuid().default(randomUUID),
     type:   z.nativeEnum(ResourceType),
+    data:   z.union([ ImageResourceData, VideoResourceData, CodeResourceData, PdfResourceData ]),
 });
 
 export const ResourceScheme = CreateResourceScheme.extend({
@@ -99,6 +100,15 @@ export const PdfResourceScheme = ResourceScheme.extend({
     data:   ImageResourceData,
 });
 
+export const CreateTopicScheme = z.object({
+    id:     z.string().uuid().default(randomUUID),
+    name:   z.string(),
+});
+
+export const UpdateTopicScheme = CreateTopicScheme.extend({
+    id: z.string().uuid(),
+});
+
 export const CourseResolvable = z.union([
     z.object({
         id: z.string().uuid()
@@ -130,10 +140,8 @@ export const QuestionResolvable = z.union([
        id: z.string().uuid()
    }),
     z.object({
-        number_examId: z.object({
-            number: z.number().min(1),
-            examId: z.string().uuid(),
-        })
+        number: z.number().min(1),
+        examId: z.string().uuid(),
     })
 ]);
 
@@ -171,5 +179,6 @@ export const CreateQuestionScheme = z.object({
 });
 
 export const UpdateQuestionScheme = CreateQuestionScheme.extend({
-
+    topics:     z.array(z.union([ CreateTopicScheme, UpdateTopicScheme ])),
+    resources:  z.array(z.union([ CreateResourceScheme, ResourceScheme ])),
 });

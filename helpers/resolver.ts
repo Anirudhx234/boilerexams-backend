@@ -1,20 +1,20 @@
 import { CourseResolvable, ExamResolvable, QuestionResolvable } from "../prisma/schema.js";
 import { APIError } from "../middleware/errors/index.js";
 import prisma from "../libs/prisma.js";
-import { Season } from "@prisma/client";
+
 
 export default class Resolver {
-    private static uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-    private static abbreviationNumberRegex = /^([a-zA-Z]+)([1-9]\d{4})$/;
-    private static numberYearSeasonRegex = /^([a-zA-Z]+)-(\d{4})-(\d)$/;
+    private static uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i; // uuid
+    private static abbreviationNumberRegex = /^([a-zA-Z]+)([1-9]\d{4})$/; // ABC10000
+    private static numberYearSeasonRegex = /^([a-zA-Z]+)-(\d{4})-(\d)$/; // Spring-1970-1
 
+    // Resolve a Course from either id or abbreviation_number
     public static course(courseResolvable: string) {
         if (Resolver.uuidRegex.test(courseResolvable)) {
             // If input matches UUIDv4, return object with id and null for abbreviation and number
             return CourseResolvable.parse({
                 id: courseResolvable
             });
-
         }
 
         if (Resolver.abbreviationNumberRegex.test(courseResolvable)) {
@@ -34,13 +34,13 @@ export default class Resolver {
         throw new APIError(`CourseResolvable could not be parsed: ${courseResolvable}`, 400);
     }
 
+    // Resolve an Exam from either id or number_year_season_courseId
     public static async exam(examResolvable: string, courseResolvable?: string) {
         if (Resolver.uuidRegex.test(examResolvable)) {
             // If input matches UUIDv4, return object with id and null for abbreviation and number
             return ExamResolvable.parse({
                 id: examResolvable
             });
-
         }
 
         if (Resolver.numberYearSeasonRegex.test(examResolvable) && courseResolvable) {
@@ -71,6 +71,7 @@ export default class Resolver {
         throw new APIError(`ExamResolvable could not be parsed: ${examResolvable} ${courseResolvable}`, 400);
     }
 
+    // Resolve a Question from either id or number_examId and ExamResolvable/CourseResolvable
     public static async question(questionResolvable: string, examResolvable?: string, courseResolvable?: string) {
         if (Resolver.uuidRegex.test(questionResolvable)) {
             return QuestionResolvable.parse({
@@ -88,10 +89,8 @@ export default class Resolver {
             }
 
             return QuestionResolvable.parse({
-                number_examId: {
-                    number: Number.parseInt(questionResolvable),
-                    examId: exam.id
-                }
+                number: Number.parseInt(questionResolvable),
+                examId: exam.id
             });
         }
 

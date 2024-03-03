@@ -68,9 +68,7 @@ const toggleExamPublished = async (req: Request, res: Response) => {
             flags: exam.flags ^ 1,
             questions: {
                 updateMany: {
-                    where: {
-                        flags: exam.flags ^ 1 ^ 1,
-                    },
+                    where: {  },
                     data: {
                         flags: exam.flags ^ 1,
                     },

@@ -26,7 +26,7 @@ const createCourse = async (req: Request, res: Response) => {
 
     if (options.graphic && !options.graphic.id) {
         // Upload graphic to S3
-        await uploadGraphic(options.graphic.data.url, req.file);
+        options.graphic.data.url = await uploadGraphic(options.graphic.data.url, req.file);
     }
 
     const course = await prisma.course.create({
@@ -99,6 +99,7 @@ const updateCourse = async (req: Request, res: Response) => {
             flags: 0,
         }
     });
+
     res.status(200).send(course);
 };
 

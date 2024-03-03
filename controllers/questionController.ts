@@ -4,15 +4,12 @@ import { APIError, NotFoundError } from "../middleware/errors/index.js";
 import msToDate from "../utils/msToDate.js";
 import answerChoiceStats from "../helpers/stats/single.answerChoiceStats.js";
 import Resolver from "../helpers/resolver.js";
-import { CreateQuestionScheme, UpdateQuestionScheme } from "../prisma/schema.js";
+import { CreateQuestionScheme, MultipleChoiceQuestionData, UpdateQuestionScheme } from "../prisma/schema.js";
 
 const getQuestion = async (req: Request, res: Response) => {
     const { courseResolvable, examResolvable, questionResolvable } = req.params;
-    console.log(courseResolvable);
-    console.log(examResolvable);
-    console.log(questionResolvable);
 
-    const question = await prisma.question.findUnique({
+    const question = await prisma.question.findFirst({
         where: await Resolver.question(questionResolvable, examResolvable, courseResolvable),
         include: {
             course: true,
@@ -61,183 +58,130 @@ const updateQuestion = async (req: Request, res: Response) => {
     const { courseResolvable, examResolvable, questionResolvable } = req.params;
     const options = UpdateQuestionScheme.parse(req.body);
 
-    const question = await prisma.question.update({
-        where: await Resolver.question(questionResolvable, examResolvable, courseResolvable),
-        data: {
-            ...options
-        }
+    // Need to hack since we can't force uniqueness on question numbers
+    const question = await prisma.question.findFirst({
+        where: await Resolver.question(questionResolvable, examResolvable, courseResolvable)
     });
 
-    /*
-    await prisma.course.update({
-        where: {
-            id: courseId,
-        },
-        data: {
-            topics: {
-                connectOrCreate: topics.map((topic: { id: string; name: string }) => ({
-                    where: topic,
-                    create: topic,
-                })),
+    if (!question) throw new APIError(`Question not found: ${questionResolvable}`, 404);
+
+    const topicOptions = options.topics.map(topic => {
+        return {
+            where: {
+                id: topic.id
             },
-        },
+            create: {
+                ...topic,
+                courseId: question.courseId
+            }
+        };
     });
 
-    const existingAnswerChoices = answerChoices.filter((answerChoice: { id: string }) => {
-        return answerChoice.id !== undefined;
+    const resourceOptions = options.resources.map(resource => {
+        return {
+            where: {
+                id: resource.id
+            },
+            create: {
+                ...resource
+            }
+        };
     });
 
-    const question = await prisma.question.update({
+    const updatedQuestion = await prisma.question.update({
         where: {
-            id: questionId,
+            id: question.id
         },
         data: {
-            courseId: courseId,
-            examId: examId,
-            type: type,
+            ...options,
             topics: {
-                set: topics,
-            },
-            number: Number(number),
-            body: body,
-            answerChoices: {
+                connectOrCreate: {
+                    ...topicOptions
+                },
                 deleteMany: {
                     id: {
-                        notIn: existingAnswerChoices.map((answerChoice) => answerChoice.id),
-                    },
-                },
-                upsert: answerChoices.map((answerChoice) => ({
-                    where: {
-                        id: answerChoice.id || "",
-                    },
-                    update: {
-                        choiceIndex: Number(answerChoice.choiceIndex),
-                        body: answerChoice.body,
-                        resources: {
-                            deleteMany: {
-                                id: {
-                                    notIn: answerChoice.resourceIds,
-                                },
-                            },
-                            connect: answerChoice.resourceIds.map((resourceId) => ({
-                                id: resourceId,
-                            })),
-                        },
-                    },
-                    create: {
-                        choiceIndex: Number(answerChoice.choiceIndex),
-                        body: answerChoice.body,
-                        resources: {
-                            connect: answerChoice.resourceIds.map((resourceId) => ({
-                                id: resourceId,
-                            })),
-                        },
-                    },
-                })),
+                        notIn: options.topics.map(topic => topic.id)
+                    }
+                }
             },
-            correctChoiceIndices: correctChoiceIndices,
-            solutionVideoLink: solutionVideoLink,
-            explanationText: explanationText,
-            disableRandomAnswers: disableRandomAnswers,
-            answersStartHidden: answersStartHidden,
-            disclaimer: disclaimer,
             resources: {
+                connectOrCreate: {
+                    ...resourceOptions
+                },
                 deleteMany: {
                     id: {
-                        notIn: resourceIds,
-                    },
-                },
-                connect: resourceIds.map((resourceId) => ({ id: resourceId })),
-                // upsert: resources.map((resource) => ({
-                //    where: {
-                //        id: resource.id ?? "",
-                //    },
-                //    update: resource,
-                //    create: resource,
-                //})),
+                        notIn: options.resources.map(resource => resource.id)
+                    }
+                }
             },
         },
         include: {
             topics: true,
-            answerChoices: {
-                orderBy: {
-                    choiceIndex: "asc",
-                },
-                include: {
-                    resources: {
-                        include: {
-                            image: true,
-                            code: true,
-                        },
-                    },
-                },
-            },
-            resources: {
-                include: {
-                    image: true,
-                    code: true,
-                },
-            },
-        },
+            resources: true,
+        }
     });
 
-     */
-    res.status(200).send(question);
+    res.status(200).send(updatedQuestion);
 };
-/*
+
 const toggleQuestionPublished = async (req: Request, res: Response) => {
-    const { questionId } = req.params;
-    const question = await prisma.question.findUnique({
-        where: {
-            id: questionId,
-        },
+    const { questionResolvable, examResolvable, courseResolvable } = req.params;
+
+    // Need to hack since we can't force uniqueness on question numbers
+    const question = await prisma.question.findFirst({
+        where: await Resolver.question(questionResolvable, examResolvable, courseResolvable),
         select: {
+            id: true,
             exam: {
                 select: {
-                    published: true,
-                },
+                    flags: true
+                }
             },
-            published: true,
-        },
+            flags: true
+        }
     });
+
     if (!question) {
         throw new NotFoundError("Question not found");
     }
-    if (!question.exam.published) {
+    if ((question.exam.flags & 1) == 0) {
         throw new APIError("Exam must be published", 409);
     }
 
-    const published = !question.published;
+    const published = (question.flags & 1) == 0;
+
     await prisma.question.update({
         where: {
-            id: questionId,
+            id: question.id,
         },
         data: {
-            published: published,
+            flags: question.flags ^ 1
         },
     });
+
     res.status(200).send({
         message: `Question is now ${published ? "published" : "unpublished"}`,
     });
 };
 
- */
+
 
 const deleteQuestion = async (req: Request, res: Response) => {
-    const { questionId } = req.params;
-    const question = await prisma.question.delete({
-        where: {
-            id: questionId,
-        },
+    const { questionResolvable, examResolvable, courseResolvable } = req.params;
+
+    // More hacks because question number is not unique
+    const question = await prisma.question.deleteMany({
+        where: await Resolver.question(questionResolvable, examResolvable, courseResolvable),
     });
 
     if (!question) {
         throw new NotFoundError("Question not found");
     }
+
     res.status(200).send(question);
 };
 
-/*
+
 const createQuestionSubmission = async (req: Request, res: Response) => {
     const { questionId } = req.params;
     const {
@@ -288,20 +232,20 @@ const bulkQuestionSubmission = async (req: Request, res: Response) => {
     const submissions = await prisma.$transaction(
         rawSubmissions.map(
             ({
-                questionId,
-                selectedChoiceIndices,
-                correct,
-                timeStarted,
-                timeEnded,
+                 questionId,
+                 selectedChoiceIndices,
+                 correct,
+                 timeStarted,
+                 timeEnded,
                  timeSpent,
-                videoStartTime,
-                videoEndTime,
-                videoTotalWatchTime,
-                modalStartTime,
-                modalEndTime,
-                modalTotalTime,
-                osFamily,
-            }) => {
+                 videoStartTime,
+                 videoEndTime,
+                 videoTotalWatchTime,
+                 modalStartTime,
+                 modalEndTime,
+                 modalTotalTime,
+                 osFamily,
+             }) => {
                 const startTime = msToDate(timeStarted);
                 const endTime = msToDate(timeEnded);
                 const videoStart = msToDate(videoStartTime);
@@ -358,15 +302,15 @@ const updateSubmission = async (req: Request, res: Response) => {
     res.status(200).send(submission);
 };
 
- */
+
 
 export {
     getQuestion,
     createQuestion,
     updateQuestion,
-    //toggleQuestionPublished,
-    //deleteQuestion,
-    //createQuestionSubmission,
-    //bulkQuestionSubmission,
-    //updateSubmission,
+    toggleQuestionPublished,
+    deleteQuestion,
+    createQuestionSubmission,
+    bulkQuestionSubmission,
+    updateSubmission,
 };
