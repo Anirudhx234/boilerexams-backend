@@ -111,7 +111,6 @@ const resetPassword = async (req: Request, res: Response) => {
     const resetLink = `${process.env.API_URL}/auth/password-change/?id=${userId}&d=${date}&h=${hash.toString("hex")}`;
 
     const options = {
-        from: process.env.EMAIL_ADDRESS || "",
         to: email,
         subject: "Reset Password",
         html: resetPasswordTemplate(resetLink),
