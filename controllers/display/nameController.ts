@@ -1,10 +1,11 @@
 import prisma from "../../libs/prisma.js";
 import { InvalidSeasonError, NotFoundError } from "../../middleware/errors/index.js";
-import { Season } from "@prisma/client";
+import { Exam, Season } from "@prisma/client";
 import { Request, Response } from "express";
 import _ from "lodash";
 import validCourseRegex from "../../utils/validCourseRegex.js";
 import answerChoiceStats from "../../helpers/stats/multiple.answerChoiceStats.js";
+import questionStats from "../../helpers/stats/questionStats.js";
 
 const questionSort: QuestionSortCategory[] = [
     {
@@ -230,6 +231,21 @@ const getCourseTopicsWithBasicQuestionInfo = async (req: Request, res: Response)
         throw new NotFoundError("Course not found");
     }
 
+    course.questions = await Promise.all(course.questions.map(async (q) => {
+        // @ts-expect-error Plz work
+        q.difficulty = Math.random();
+        return q;
+    }));
+
+    course.topics = await Promise.all(course.topics.map(async (topic) => {
+        topic.questions = await Promise.all(topic.questions.map(async (q) => {
+            // @ts-expect-error Plz work
+            q.difficulty = Math.random();
+            return q;
+        }));
+        return topic;
+    }));
+
     res.status(200).send(course);
 };
 
@@ -265,6 +281,7 @@ const getCourseExams = async (req: Request, res: Response) => {
         [(exam) => (exam.number === 0 ? 10 : exam.number), "semester.year", "semester.season"],
         ["asc", "desc", "asc"],
     );
+
     res.status(200).send(sortedExams);
 };
 
@@ -313,7 +330,14 @@ const getCourseExamsWithBasicQuestionInfo = async (req: Request, res: Response) 
         [(exam) => (exam.number === 0 ? 10 : exam.number), "semester.year", "semester.season"],
         ["asc", "desc", "asc"],
     );
-    res.status(200).send(sortedExams);
+
+    res.status(200).send(await Promise.all(sortedExams.map((async (exam) => {
+        exam.questions = await Promise.all(exam.questions.map(async (q) => {
+            q.difficulty = Math.random();
+            return q;
+        }));
+        return exam;
+    }))));
 };
 
 // Basic question information for specific topic
@@ -361,6 +385,12 @@ const getCourseTopicWithBasicQuestionInfo = async (req: Request, res: Response) 
         // @ts-expect-error Extend later
         delete topic.questions[i].correctChoiceIndices;
     }
+
+    topic.questions = await Promise.all(topic.questions.map(async (q) => {
+        // @ts-expect-error Plz work
+        q.difficulty = Math.random();
+        return q;
+    }));
 
     res.status(200).send(topic);
 };
@@ -434,6 +464,13 @@ const getCourseTopicWithFullQuestionInfo = async (req: Request, res: Response) =
         // @ts-expect-error Extend Later
         topic.questions[i].answerChoiceStats = answerStats[i];
     }
+
+    topic.questions = await Promise.all(topic.questions.map(async (q) => {
+        // @ts-expect-error Plz work
+        q.difficulty = Math.random();
+        return q;
+    }));
+
     res.status(200).send(topic);
 };
 
@@ -498,6 +535,13 @@ const getCourseExamWithBasicQuestionInfo = async (req: Request, res: Response) =
     if (!exam) {
         throw new NotFoundError("Exam not found");
     }
+
+    exam.questions = await Promise.all(exam.questions.map(async (q) => {
+        // @ts-expect-error Plz work
+        q.difficulty = Math.random();
+        return q;
+    }));
+
     res.status(200).send(exam);
 };
 
@@ -593,6 +637,12 @@ const getCourseExamWithFullQuestionInfo = async (req: Request, res: Response) =>
         // @ts-expect-error Extend Later
         exam.questions[i].answerChoiceStats = answerStats[i];
     }
+
+    exam.questions = await Promise.all(exam.questions.map(async (q) => {
+        // @ts-expect-error Plz work
+        q.difficulty = Math.random();
+        return q;
+    }));
 
     res.status(200).send(exam);
 };

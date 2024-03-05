@@ -4,7 +4,8 @@ import { NotFoundError } from "../middleware/errors/index.js";
 import questionStats from "../helpers/stats/questionStats.js";
 import examStats from "../helpers/stats/examStats.js";
 import msToHMS from "../utils/msToHMS.js";
-import { allCoursesStats, courseStats } from "../helpers/stats/courseStats.js";
+import { allCoursesStats, courseStats, allCoursesStatsNQ} from "../helpers/stats/courseStats.js";
+import {allSubmissionTimeStats, courseSubmissionTimeStats} from "../helpers/stats/submissionStats.js";
 import answerChoiceStats from "../helpers/stats/single.answerChoiceStats.js";
 
 const OLD_SUBMISSIONS = 1920571;
@@ -119,7 +120,13 @@ const getCourseStatsAll = async (req: Request, res: Response) => {
 
     res.status(200).json(stats);
 };
+const getCourseStatsAllNQ = async (req: Request, res: Response) => {
+    const before = req.query.before ? Number.parseInt(<string>req.query.before) : Date.now();
+    const after = req.query.after ? Number.parseInt(<string>req.query.after) : 0;
+    const stats = await allCoursesStatsNQ(new Date(before), new Date(after));
 
+    res.status(200).json(stats);
+};
 const getCourseExamsStats = async (req: Request, res: Response) => {
     const { courseId } = req.params;
 
@@ -243,4 +250,20 @@ const getSubmissionStats = async (req: Request, res: Response) => {
     res.status(200).json(submissionsStats);
 };
 
-export { getGeneralStats, getCourseExamsStats, getQuestionStats, getExamStats, getCourseStats, getCourseStatsAll, getSubmissionStats };
+const getAllTimeSubmissionStats = async (req: Request, res: Response) => {
+    const stats = await allSubmissionTimeStats();
+
+    res.status(200).json(stats);
+}
+const getCourseTimeSubmissionStats = async (req: Request, res: Response) => {
+    const { courseId } = req.params;
+    if (courseId == "all") {
+        await getAllTimeSubmissionStats(req, res);
+        return;
+    }
+    const stats = await courseSubmissionTimeStats(courseId);
+
+    res.status(200).json(stats);
+}
+
+export { getGeneralStats, getCourseExamsStats, getQuestionStats, getExamStats, getCourseStats, getCourseStatsAll, getSubmissionStats, getCourseTimeSubmissionStats,getCourseStatsAllNQ };

@@ -120,7 +120,8 @@ model Code {
 }
 
 model Submission {
-  id                    String   @id @default(uuid())
+  id                    String       @id @default(uuid())
+  type                  QuestionType @default(MCQ)
   correct               Boolean
   timeStarted           DateTime
   timeEnded             DateTime
@@ -129,12 +130,12 @@ model Submission {
   videoEndTime          DateTime
   timeSpentVideo        Int
   questionId            String
-  modalEndTime          DateTime @default(now())
-  modalStartTime        DateTime @default(now())
+  modalEndTime          DateTime     @default(now())
+  modalStartTime        DateTime     @default(now())
   modalTotalTime        Int
   osFamily              String
   selectedChoiceIndices Int[]
-  question              Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  question              Question     @relation(fields: [questionId], references: [id], onDelete: Cascade)
 }
 
 model Semester {
