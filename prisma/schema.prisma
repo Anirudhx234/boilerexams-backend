@@ -63,7 +63,6 @@ model Question {
   submissions Submission[]
   resources   Resource[]        @relation("QuestionToResource")
 
-  @@unique([number, courseId])
   @@unique([number, courseId], map: "unique_number_courseId")
 }
 
@@ -173,7 +172,6 @@ model QuestionToTopic {
   topic      Topic    @relation(fields: [topicId], references: [id], onDelete: Cascade)
 
   @@id([questionId, topicId])
-  @@unique([number, topicId])
   @@unique([number, topicId], map: "unique_number_topicId")
   @@index([number])
 }
