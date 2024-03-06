@@ -21,9 +21,9 @@ export async function createExam(req: Request, res: Response)  {
 
     const exam = await prisma.exam.create({
         data: {
-            courseId: course.id,
             ...options,
-            flags: FlagEncoder.exam(options.flags)
+            courseId: course.id,
+            flags: FlagEncoder.exam(options.flags),
         },
         include: {
             questions: true
@@ -37,11 +37,27 @@ export async function updateExam(req: Request, res: Response) {
     const { courseResolvable, examResolvable } = req.params;
     const options = UpdateExamScheme.parse(req.body);
 
+    const resourceOptions = options.resources.map(resource => {
+        return {
+            where: {
+                id: resource.id
+            },
+            create: {
+                ...resource
+            }
+        };
+    });
+
     const exam = await prisma.exam.update({
         where: await Resolver.exam(examResolvable, courseResolvable),
         data: {
             ...options,
-            flags: FlagEncoder.exam(options.flags)
+            flags: FlagEncoder.exam(options.flags),
+            resources: {
+                connectOrCreate: {
+                    ...resourceOptions
+                }
+            }
         }
     });
 

@@ -15,7 +15,7 @@ export default class FlagEncoder {
         let encodedFlags = 0;
 
         if (flags.published)    encodedFlags |= (1 << 0);
-        if (flags.practice )    encodedFlags |= (1 << 1);
+        if (flags.practice)     encodedFlags |= (1 << 1);
 
         return encodedFlags;
     }

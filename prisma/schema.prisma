@@ -23,6 +23,7 @@ model Course {
   exams        Exam[]
   questions    Question[]
   topics       Topic[]
+  feedback     Feedback[]
   resources    Resource[]  @relation("CourseToResource")
   users        User[]      @relation("CourseToUser")
 
@@ -39,6 +40,7 @@ model Exam {
   flags      Int
   course     Course     @relation(fields: [courseId], references: [id], onDelete: Cascade)
   questions  Question[]
+  feedback   Feedback[]
   resources  Resource[] @relation("ExamToResource")
 
   @@unique([number, year, season, courseId])
@@ -54,16 +56,16 @@ model Question {
   courseId    String
   parentId    String?
   flags       Int
-  feedback    Feedback[]
   course      Course            @relation(fields: [courseId], references: [id], onDelete: Cascade)
   exam        Exam              @relation(fields: [examId], references: [id], onDelete: Cascade)
   parent      Question?         @relation("QuestionToQuestion", fields: [parentId], references: [id], onDelete: Cascade)
   children    Question[]        @relation("QuestionToQuestion")
   topics      QuestionToTopic[]
   submissions Submission[]
+  feedback    Feedback[]
   resources   Resource[]        @relation("QuestionToResource")
 
-  @@unique([number, courseId], map: "unique_number_courseId")
+  @@unique([number, examId])
 }
 
 model Submission {
@@ -105,16 +107,32 @@ model Topic {
 model Feedback {
   id         String         @id @default(uuid())
   type       FeedbackType
-  status     FeedbackStatus
+  status     FeedbackStatus @default(OPEN)
   data       Json
-  questionId String
+  userId     String?
+  courseId   String?
+  examId     String?
+  questionId String?
   createdAt  DateTime       @default(now())
   updatedAt  DateTime       @updatedAt
-  question   Question       @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  user       User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
+  course     Course?        @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  exam       Exam?          @relation(fields: [examId], references: [id], onDelete: Cascade)
+  question   Question?      @relation(fields: [questionId], references: [id], onDelete: Cascade)
+}
+
+model CourseRequest {
+  id           String @id @default(uuid())
+  abbreviation String
+  number       Int
+  name         String
+  subject      String
+  count        Int    @default(1)
 }
 
 model Application {
-  id      String    @id @default(uuid())
+  id      String         @id @default(uuid())
+  status  FeedbackStatus @default(OPEN)
   name    String
   email   String
   content String
@@ -146,6 +164,7 @@ model User {
   accountType    AccountType
   localAccount   LocalAccount?
   courses        Course[]      @relation("CourseToUser")
+  feedback       Feedback[]
 }
 
 model LocalAccount {
@@ -172,7 +191,7 @@ model QuestionToTopic {
   topic      Topic    @relation(fields: [topicId], references: [id], onDelete: Cascade)
 
   @@id([questionId, topicId])
-  @@unique([number, topicId], map: "unique_number_topicId")
+  @@unique([number, topicId])
   @@index([number])
 }
 
@@ -204,7 +223,7 @@ enum AccountType {
 
 enum FeedbackType {
   BUG_REPORT
-  CONTENT_REPORT
+  QUESTION_REPORT
   FEATURE_REQUEST
   VIDEO_FEEDBACK
 }

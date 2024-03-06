@@ -8,7 +8,7 @@ CREATE TYPE "ResourceType" AS ENUM ('COURSE_LOGO', 'QUESTION_IMAGE', 'SOLUTION_I
 CREATE TYPE "AccountType" AS ENUM ('DISCORD', 'GOOGLE', 'LOCAL');
 
 -- CreateEnum
-CREATE TYPE "FeedbackType" AS ENUM ('BUG_REPORT', 'CONTENT_REPORT', 'FEATURE_REQUEST', 'VIDEO_FEEDBACK');
+CREATE TYPE "FeedbackType" AS ENUM ('BUG_REPORT', 'QUESTION_REPORT', 'FEATURE_REQUEST', 'VIDEO_FEEDBACK');
 
 -- CreateEnum
 CREATE TYPE "EventType" AS ENUM ('EXAM', 'FINAL', 'CUSTOM');
@@ -108,9 +108,12 @@ CREATE TABLE "Topic" (
 CREATE TABLE "Feedback" (
     "id" TEXT NOT NULL,
     "type" "FeedbackType" NOT NULL,
-    "status" "FeedbackStatus" NOT NULL,
+    "status" "FeedbackStatus" NOT NULL DEFAULT 'OPEN',
     "data" JSONB NOT NULL,
-    "questionId" TEXT NOT NULL,
+    "userId" TEXT,
+    "courseId" TEXT,
+    "examId" TEXT,
+    "questionId" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -118,8 +121,21 @@ CREATE TABLE "Feedback" (
 );
 
 -- CreateTable
+CREATE TABLE "CourseRequest" (
+    "id" TEXT NOT NULL,
+    "abbreviation" TEXT NOT NULL,
+    "number" INTEGER NOT NULL,
+    "name" TEXT NOT NULL,
+    "subject" TEXT NOT NULL,
+    "count" INTEGER NOT NULL DEFAULT 1,
+
+    CONSTRAINT "CourseRequest_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "Application" (
     "id" TEXT NOT NULL,
+    "status" "FeedbackStatus" NOT NULL DEFAULT 'OPEN',
     "name" TEXT NOT NULL,
     "email" TEXT NOT NULL,
     "content" TEXT NOT NULL,
@@ -208,19 +224,16 @@ CREATE TABLE "_QuestionToResource" (
 );
 
 -- CreateConstraint
-ALTER TABLE "Question" ADD CONSTRAINT "unique_number_courseId" UNIQUE ("number", "courseId") DEFERRABLE INITIALLY DEFERRED ;
+ALTER TABLE "Question" ADD CONSTRAINT "unique_number_examId" UNIQUE ("number", "examId") DEFERRABLE INITIALLY DEFERRED;
 
 -- CreateConstraint
-ALTER TABLE "QuestionToTopic" ADD CONSTRAINT "unique_number_topicId" UNIQUE ("number", "topicId") DEFERRABLE INITIALLY DEFERRED ;
+ALTER TABLE "QuestionToTopic" ADD CONSTRAINT "unique_number_topicId" UNIQUE ("number", "topicId") DEFERRABLE INITIALLY DEFERRED;
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Course_abbreviation_number_key" ON "Course"("abbreviation", "number");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Exam_number_year_season_courseId_key" ON "Exam"("number", "year", "season", "courseId");
-
--- CreateIndex
-CREATE UNIQUE INDEX "Question_number_courseId_key" ON "Question"("number", "courseId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Resource_applicationId_key" ON "Resource"("applicationId");
@@ -245,9 +258,6 @@ CREATE INDEX "IDX_session_expire" ON "Session"("expire");
 
 -- CreateIndex
 CREATE INDEX "QuestionToTopic_number_idx" ON "QuestionToTopic"("number");
-
--- CreateIndex
-CREATE UNIQUE INDEX "QuestionToTopic_number_topicId_key" ON "QuestionToTopic"("number", "topicId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "_CourseToResource_AB_unique" ON "_CourseToResource"("A", "B");
@@ -293,6 +303,15 @@ ALTER TABLE "Resource" ADD CONSTRAINT "Resource_applicationId_fkey" FOREIGN KEY 
 
 -- AddForeignKey
 ALTER TABLE "Topic" ADD CONSTRAINT "Topic_courseId_fkey" FOREIGN KEY ("courseId") REFERENCES "Course"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Feedback" ADD CONSTRAINT "Feedback_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Feedback" ADD CONSTRAINT "Feedback_courseId_fkey" FOREIGN KEY ("courseId") REFERENCES "Course"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Feedback" ADD CONSTRAINT "Feedback_examId_fkey" FOREIGN KEY ("examId") REFERENCES "Exam"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Feedback" ADD CONSTRAINT "Feedback_questionId_fkey" FOREIGN KEY ("questionId") REFERENCES "Question"("id") ON DELETE CASCADE ON UPDATE CASCADE;

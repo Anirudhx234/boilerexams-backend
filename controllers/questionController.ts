@@ -40,7 +40,7 @@ export async function createQuestion(req: Request, res: Response) {
 export async function getQuestion(req: Request, res: Response) {
     const { questionResolvable, topicResolvable, examResolvable, courseResolvable } = req.params;
 
-    const question = await prisma.question.findFirst({
+    const question = await prisma.question.findUnique({
         where: await Resolver.question(questionResolvable, topicResolvable, examResolvable, courseResolvable),
         include: {
             course: true,
@@ -69,8 +69,7 @@ export async function updateQuestion(req: Request, res: Response) {
     const { questionResolvable, topicResolvable, examResolvable, courseResolvable } = req.params;
     const options = UpdateQuestionScheme.parse(req.body);
 
-    // Need to hack since we can't force uniqueness on question numbers
-    const question = await prisma.question.findFirst({
+    const question = await prisma.question.findUnique({
         where: await Resolver.question(questionResolvable, topicResolvable, examResolvable, courseResolvable)
     });
 
@@ -160,7 +159,7 @@ export async function toggleQuestionPublished(req: Request, res: Response) {
     const { questionResolvable, topicResolvable, examResolvable, courseResolvable } = req.params;
 
     // Need to hack since we can't force uniqueness on question numbers
-    const question = await prisma.question.findFirst({
+    const question = await prisma.question.findUnique({
         where: await Resolver.question(questionResolvable, topicResolvable, examResolvable, courseResolvable),
         select: {
             id: true,
@@ -209,7 +208,7 @@ export async function deleteQuestion(req: Request, res: Response) {
     const { questionResolvable, topicResolvable, examResolvable, courseResolvable } = req.params;
 
     // More hacks because question number is not unique
-    const question = await prisma.question.deleteMany({
+    const question = await prisma.question.delete({
         where: await Resolver.question(questionResolvable, topicResolvable, examResolvable, courseResolvable),
     });
 
@@ -223,7 +222,7 @@ export async function createQuestionSubmission(req: Request, res: Response) {
     const { questionResolvable, topicResolvable, examResolvable, courseResolvable } = req.params;
     const options = CreateSubmissionScheme.parse(req.body);
 
-    const question = await prisma.question.findFirst({
+    const question = await prisma.question.findUnique({
         where: await Resolver.question(questionResolvable, topicResolvable, examResolvable, courseResolvable)
     });
 
@@ -243,7 +242,7 @@ export async function createQuestionSubmission(req: Request, res: Response) {
 export async function bulkQuestionSubmission(req: Request, res: Response) {
     const { questionResolvable, topicResolvable, examResolvable, courseResolvable } = req.params;
 
-    const question = await prisma.question.findFirst({
+    const question = await prisma.question.findUnique({
         where: await Resolver.question(questionResolvable, topicResolvable, examResolvable, courseResolvable)
     });
 

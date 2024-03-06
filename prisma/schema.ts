@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { QuestionType, ResourceType, Season, StudyMode } from "@prisma/client";
+import { FeedbackStatus, FeedbackType, QuestionType, ResourceType, Season, StudyMode } from "@prisma/client";
 import { randomUUID } from "node:crypto";
 
 export const MultipleChoiceAnswerChoice = z.object({
@@ -34,17 +34,22 @@ export const FillInBlankSubmissionData = FillInBlankQuestionData;
 
 export const FileResourceData = z.object({
     key:        z.string().optional(),
-    url:        z.string(),
+    url:        z.string().optional(),
     altText:    z.string().optional(),
+    mathpixId:  z.string().optional()
 });
 
 export const VideoResourceData = z.object({
-    url:    z.string()
+    url:    z.string().url()
 });
 
 export const CodeResourceData = z.object({
     language:   z.enum([ "C", "PYTHON" ]),
     content:    z.string(),
+});
+
+export const AnswerChoiceScheme = z.object({
+    index: z.number()
 });
 
 export const FileResourceScheme = z.object({
@@ -149,8 +154,10 @@ export const QuestionResolvable = z.union([
        id: z.string().uuid()
    }),
     z.object({
-        number: z.number().min(1),
-        examId: z.string().uuid(),
+        number_examId: z.object({
+            number: z.number().min(1),
+            examId: z.string().uuid(),
+        })
     })
 ]);
 
@@ -174,7 +181,9 @@ export const CreateExamScheme = z.object({
     flags:      ExamFlagsScheme.optional().default({  })
 });
 
-export const UpdateExamScheme = CreateExamScheme;
+export const UpdateExamScheme = CreateExamScheme.extend({
+    resources:  z.array(ResourceScheme).default([  ]),
+});
 
 export const CreateQuestionScheme = z.object({
     type:       z.nativeEnum(QuestionType),
@@ -221,3 +230,66 @@ export const UpdateSubmissionScheme = z.object({
 });
 
 export const ReorderQuestions = z.array(z.string().uuid());
+
+export const FeatureRequestData = z.object({
+    title:      z.string(),
+    content:    z.string().max(2000),
+    contact:    z.string().max(50),
+});
+
+export const QuestionReportData = FeatureRequestData.extend({
+    userAgent:  z.string(),
+});
+
+export const BugReportData = QuestionReportData.extend({
+    location:   z.string(),
+});
+
+export const VideoFeedbackData = z.object({
+    explanationQuality: z.number().min(1).max(5),
+    productionQuality:  z.number().min(1).max(5),
+    recommended:        z.boolean(),
+    content:            z.string().optional()
+});
+
+export const CourseRequestData = z.object({
+    id:             z.string().uuid(),
+    subject:        z.string(),
+    abbreviation:   z.string(),
+    name:           z.string(),
+    number:         z.number().min(10000).max(99999),
+    count:          z.number().min(1).default(1),
+});
+
+export const BaseFeedbackScheme = z.object({
+    id:         z.string().uuid().default(randomUUID),
+    type:       z.nativeEnum(FeedbackType),
+    status:     z.nativeEnum(FeedbackStatus).default(FeedbackStatus.OPEN),
+    data:       z.object({}),
+    userId:     z.string().uuid().optional(),
+    questionId: z.string().uuid().optional(),
+});
+
+export const BugReportScheme = BaseFeedbackScheme.extend({
+    type:   z.literal(FeedbackType.BUG_REPORT),
+    data:   BugReportData
+});
+
+export const QuestionReportScheme = BaseFeedbackScheme.extend({
+    type:   z.literal(FeedbackType.QUESTION_REPORT),
+    data:   QuestionReportData
+});
+
+export const FeatureRequestScheme = BaseFeedbackScheme.extend({
+    type:   z.literal(FeedbackType.FEATURE_REQUEST),
+    data:   FeatureRequestData
+});
+
+export const VideoFeedbackScheme = BaseFeedbackScheme.extend({
+    type:   z.literal(FeedbackType.VIDEO_FEEDBACK),
+    data:   VideoFeedbackData
+});
+
+export const CourseRequestScheme = BaseFeedbackScheme.extend({
+    data:   CourseRequestData
+});
