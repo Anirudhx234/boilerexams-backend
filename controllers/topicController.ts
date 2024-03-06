@@ -1,48 +1,88 @@
 import prisma from "../libs/prisma.js";
 import { Request, Response } from "express";
 import { APIError, NotFoundError } from "../middleware/errors/index.js";
+import Resolver from "../helpers/resolver.js";
+import { CreateTopicScheme, ReorderQuestions, UpdateTopicScheme } from "../prisma/schema.js";
 
-const createTopic = async (req: Request, res: Response) => {
-    const { courseId } = req.params;
-    const { name } = req.body;
+export async function createTopic(req: Request, res: Response) {
+    const { courseResolvable } = req.params;
+    const options = CreateTopicScheme.parse(req.body);
 
-    if (typeof name === "string" && name.length > 50) {
-        throw new APIError("Topic length must be under 50 characters", 400);
-    }
+    const course = await prisma.course.findUnique({
+        where: Resolver.course(courseResolvable)
+    });
+
+    if (!course) throw new APIError(`Course not found`, 404);
 
     const topic = await prisma.topic.create({
         data: {
-            name: name,
-            courseId: courseId
+            ...options,
+            courseId: course.id
         },
         include: {
-            questions: true,
+            questions: {
+                include: {
+                    question: true
+                }
+            }
         },
     });
-    res.status(200).send(topic);
-};
 
-const updateTopic = async (req: Request, res: Response) => {
-    const { topicId } = req.params;
-    const { name } = req.body;
+    res.status(200).send({
+        ...topic,
+        questions: topic.questions.map(relation => relation.question)
+    });
+}
 
-    if (typeof name === "string" && name.length > 50) {
-        throw new APIError("Topic length must be under 50 characters", 400);
-    }
+export async function updateTopic(req: Request, res: Response) {
+    const { topicResolvable, courseResolvable } = req.params;
+    const options = UpdateTopicScheme.parse(req.body);
 
     const topic = await prisma.topic.update({
-        where: {
-            id: topicId
-        },
+        where: await Resolver.topic(topicResolvable, courseResolvable),
         data: {
-            name: name
+            ...options
         }
     });
 
     res.status(200).send(topic);
-};
+}
 
-const setTopicQuestions = async (req: Request, res: Response) => {
+export async function reorderQuestions(req: Request, res: Response) {
+    const { topicResolvable, courseResolvable } = req.params;
+
+    const topic = await prisma.topic.findUnique({
+        where: await Resolver.topic(topicResolvable, courseResolvable),
+        select: {
+            id: true,
+            questions: true
+        }
+    });
+
+    if (!topic) {
+        throw new NotFoundError(`Topic not found: ${topicResolvable} ${courseResolvable}`);
+    }
+
+    const options = ReorderQuestions.parse(req.body);
+
+    const questions = await prisma.$transaction(topic.questions.map(relation => {
+        return prisma.questionToTopic.update({
+            where: {
+                questionId_topicId: {
+                    questionId: relation.questionId,
+                    topicId: relation.topicId
+                }
+            },
+            data: {
+                number: options.indexOf(relation.questionId) + 1
+            }
+        });
+    }));
+
+    res.status(200).send(questions);
+}
+
+export async function setTopicQuestions(req: Request, res: Response) {
     const { topicId } = req.params;
     const { questionIds } = req.body;
 
@@ -58,9 +98,9 @@ const setTopicQuestions = async (req: Request, res: Response) => {
     });
 
     res.status(200).send(topic);
-};
+}
 
-const deleteTopic = async (req: Request, res: Response) => {
+export async function deleteTopic(req: Request, res: Response) {
     const { topicId } = req.params;
 
     const topic = await prisma.topic.delete({
@@ -74,6 +114,4 @@ const deleteTopic = async (req: Request, res: Response) => {
     }
 
     res.status(200).send(topic);
-};
-
-export { createTopic, updateTopic, setTopicQuestions, deleteTopic };
+}

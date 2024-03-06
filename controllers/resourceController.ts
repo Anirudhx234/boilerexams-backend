@@ -4,45 +4,37 @@ import { Request, Response } from "express";
 import axios from "axios";
 import { APIError } from "../middleware/errors/index.js";
 import uploadFileToS3 from "../utils/uploadFileToS3.js";
+import { FileResourceScheme } from "../prisma/schema.js";
 
 const getResource = async (req: Request, res: Response) => {
     const { resourceId } = req.params;
+
     const resource = await prisma.resource.findUnique({
         where: {
             id: resourceId,
-        },
-        include: {
-            image: true,
-            code: true,
-        },
+        }
     });
+
     res.status(200).send(resource);
 };
 
-const createImageResource = async (req: Request, res: Response) => {
-    const { altText } = req.body;
-
+const createFileResource = async (req: Request, res: Response) => {
     if (!req.file) {
         throw new APIError("No file attached", 400);
     }
 
     const data = await uploadFileToS3(req.file.buffer, req.file.mimetype);
+    const options = FileResourceScheme.parse(req.body);
 
     const resource = await prisma.resource.create({
         data: {
-            type: ResourceType.IMAGE,
-            image: {
-                create: {
-                    key: data.Key,
-                    url: data.Location,
-                    altText: altText,
-                },
-            },
+            ...options,
         },
         include: {
             image: true,
         },
     });
+
     res.status(200).send(resource);
 };
 

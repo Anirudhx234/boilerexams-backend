@@ -1,36 +1,19 @@
 import prisma from "../libs/prisma.js";
 import { Request, Response } from "express";
 import { APIError, NotFoundError } from "../middleware/errors/index.js";
-import msToDate from "../utils/msToDate.js";
 import answerChoiceStats from "../helpers/stats/single.answerChoiceStats.js";
 import Resolver from "../helpers/resolver.js";
-import { CreateQuestionScheme, MultipleChoiceQuestionData, UpdateQuestionScheme } from "../prisma/schema.js";
+import {
+    CreateQuestionScheme,
+    CreateSubmissionScheme,
+    UpdateQuestionScheme
+} from "../prisma/schema.js";
+import { z } from "zod";
+import FlagDecoder from "../helpers/decoder.js";
+import FlagEncoder from "../helpers/encoder.js";
 
-const getQuestion = async (req: Request, res: Response) => {
-    const { courseResolvable, examResolvable, questionResolvable } = req.params;
-
-    const question = await prisma.question.findFirst({
-        where: await Resolver.question(questionResolvable, examResolvable, courseResolvable),
-        include: {
-            course: true,
-            topics: true,
-            exam: true,
-            resources: true,
-        },
-    });
-
-    if (!question) {
-        throw new NotFoundError("Question not found");
-    }
-
-    res.status(200).send({
-        ...question,
-        answerChoiceStats: await answerChoiceStats(question.id)
-    });
-};
-
-const createQuestion = async (req: Request, res: Response) => {
-    const { courseResolvable, examResolvable } = req.params;
+export async function createQuestion(req: Request, res: Response) {
+    const { examResolvable, courseResolvable } = req.params;
 
     const exam = await prisma.exam.findUnique({
         where: await Resolver.exam(examResolvable, courseResolvable)
@@ -47,32 +30,72 @@ const createQuestion = async (req: Request, res: Response) => {
             ...options,
             examId: exam.id,
             courseId: exam.courseId,
-            flags: 0
+            flags: FlagEncoder.question(options.flags),
         }
     });
 
     res.status(200).send(question);
-};
+}
 
-const updateQuestion = async (req: Request, res: Response) => {
-    const { courseResolvable, examResolvable, questionResolvable } = req.params;
+export async function getQuestion(req: Request, res: Response) {
+    const { questionResolvable, topicResolvable, examResolvable, courseResolvable } = req.params;
+
+    const question = await prisma.question.findFirst({
+        where: await Resolver.question(questionResolvable, topicResolvable, examResolvable, courseResolvable),
+        include: {
+            course: true,
+            exam: true,
+            resources: true,
+            topics: {
+                include: {
+                    topic: true
+                }
+            }
+        },
+    });
+
+    if (!question) {
+        throw new NotFoundError("Question not found");
+    }
+
+    res.status(200).send({
+        ...question,
+        topics: question.topics.map(relation => relation.topic),
+        answerChoiceStats: await answerChoiceStats(question.id)
+    });
+}
+
+export async function updateQuestion(req: Request, res: Response) {
+    const { questionResolvable, topicResolvable, examResolvable, courseResolvable } = req.params;
     const options = UpdateQuestionScheme.parse(req.body);
 
     // Need to hack since we can't force uniqueness on question numbers
     const question = await prisma.question.findFirst({
-        where: await Resolver.question(questionResolvable, examResolvable, courseResolvable)
+        where: await Resolver.question(questionResolvable, topicResolvable, examResolvable, courseResolvable)
     });
 
     if (!question) throw new APIError(`Question not found: ${questionResolvable}`, 404);
 
     const topicOptions = options.topics.map(topic => {
         return {
-            where: {
-                id: topic.id
+            where: { // Unique topic to question
+                questionId_topicId: {
+                    questionId: question.id,
+                    topicId: topic.id
+                }
             },
-            create: {
-                ...topic,
-                courseId: question.courseId
+            create: { // Create a new QuestionToTopic relation
+                topic: {
+                    connectOrCreate: {
+                        where: { // Connect to existing topic
+                            id: topic.id,
+                        },
+                        create: { // Create new topic and connect
+                            ...topic,
+                            courseId: question.courseId
+                        }
+                    }
+                }
             }
         };
     });
@@ -94,12 +117,13 @@ const updateQuestion = async (req: Request, res: Response) => {
         },
         data: {
             ...options,
+            flags: FlagEncoder.question(options.flags),
             topics: {
                 connectOrCreate: {
                     ...topicOptions
                 },
                 deleteMany: {
-                    id: {
+                    topicId: {
                         notIn: options.topics.map(topic => topic.id)
                     }
                 }
@@ -116,20 +140,28 @@ const updateQuestion = async (req: Request, res: Response) => {
             },
         },
         include: {
-            topics: true,
+            topics: {
+                include: {
+                    topic: true
+                }
+            },
             resources: true,
         }
     });
 
-    res.status(200).send(updatedQuestion);
-};
+    res.status(200).send({
+        ...updatedQuestion,
+        topics: updatedQuestion.topics.map(relation => relation.topic),
+        flags: FlagDecoder.question(question.flags)
+    });
+}
 
-const toggleQuestionPublished = async (req: Request, res: Response) => {
-    const { questionResolvable, examResolvable, courseResolvable } = req.params;
+export async function toggleQuestionPublished(req: Request, res: Response) {
+    const { questionResolvable, topicResolvable, examResolvable, courseResolvable } = req.params;
 
     // Need to hack since we can't force uniqueness on question numbers
     const question = await prisma.question.findFirst({
-        where: await Resolver.question(questionResolvable, examResolvable, courseResolvable),
+        where: await Resolver.question(questionResolvable, topicResolvable, examResolvable, courseResolvable),
         select: {
             id: true,
             exam: {
@@ -141,133 +173,94 @@ const toggleQuestionPublished = async (req: Request, res: Response) => {
         }
     });
 
+
+
     if (!question) {
         throw new NotFoundError("Question not found");
     }
-    if ((question.exam.flags & 1) == 0) {
+
+    const examFlags = FlagDecoder.exam(question.exam.flags);
+
+    if (!examFlags.published) {
         throw new APIError("Exam must be published", 409);
     }
 
-    const published = (question.flags & 1) == 0;
+    const questionFlags = FlagDecoder.question(question.flags);
+    const status = !questionFlags.published;
 
     await prisma.question.update({
         where: {
             id: question.id,
         },
         data: {
-            flags: question.flags ^ 1
+            flags: FlagEncoder.question({
+                ...questionFlags,
+                published: status
+            })
         },
     });
 
     res.status(200).send({
-        message: `Question is now ${published ? "published" : "unpublished"}`,
+        message: `Question is now ${status ? "published" : "unpublished"}`,
     });
-};
+}
 
-
-
-const deleteQuestion = async (req: Request, res: Response) => {
-    const { questionResolvable, examResolvable, courseResolvable } = req.params;
+export async function deleteQuestion(req: Request, res: Response) {
+    const { questionResolvable, topicResolvable, examResolvable, courseResolvable } = req.params;
 
     // More hacks because question number is not unique
     const question = await prisma.question.deleteMany({
-        where: await Resolver.question(questionResolvable, examResolvable, courseResolvable),
+        where: await Resolver.question(questionResolvable, topicResolvable, examResolvable, courseResolvable),
     });
 
     if (!question) {
-        throw new NotFoundError("Question not found");
+        throw new NotFoundError(`Question not found: ${questionResolvable}`);
     }
-
     res.status(200).send(question);
-};
+}
 
+export async function createQuestionSubmission(req: Request, res: Response) {
+    const { questionResolvable, topicResolvable, examResolvable, courseResolvable } = req.params;
+    const options = CreateSubmissionScheme.parse(req.body);
 
-const createQuestionSubmission = async (req: Request, res: Response) => {
-    const { questionId } = req.params;
-    const {
-        selectedChoiceIndices,
-        correct,
-        timeStarted,
-        timeEnded,
-        timeSpent,
-        videoStartTime,
-        videoEndTime,
-        videoTotalWatchTime,
-        modalStartTime,
-        modalEndTime,
-        modalTotalTime,
-        osFamily,
-    } = req.body;
+    const question = await prisma.question.findFirst({
+        where: await Resolver.question(questionResolvable, topicResolvable, examResolvable, courseResolvable)
+    });
 
-    const startTime = msToDate(timeStarted);
-    const endTime = msToDate(timeEnded);
-    const videoStart = msToDate(videoStartTime);
-    const videoEnd = msToDate(videoEndTime);
-    const modalStart = msToDate(modalStartTime);
-    const modalEnd = msToDate(modalEndTime);
+    if (!question) {
+        throw new NotFoundError(`Question not found: ${questionResolvable}`);
+    }
 
     const submission = await prisma.submission.create({
         data: {
-            questionId: questionId,
-            correct: Boolean(correct),
-            selectedChoiceIndices: selectedChoiceIndices,
-            timeStarted: startTime,
-            timeEnded: endTime,
-            timeSpent: Math.floor(timeSpent),
-            videoStartTime: videoStart,
-            videoEndTime: videoEnd,
-            timeSpentVideo: Math.floor(videoTotalWatchTime),
-            modalStartTime: modalStart,
-            modalEndTime: modalEnd,
-            modalTotalTime: modalTotalTime,
-            osFamily: osFamily,
+            ...options,
+            questionId: question.id
         },
     });
     res.status(200).send(submission);
-};
+}
 
-const bulkQuestionSubmission = async (req: Request, res: Response) => {
-    const rawSubmissions = req.body;
+export async function bulkQuestionSubmission(req: Request, res: Response) {
+    const { questionResolvable, topicResolvable, examResolvable, courseResolvable } = req.params;
+
+    const question = await prisma.question.findFirst({
+        where: await Resolver.question(questionResolvable, topicResolvable, examResolvable, courseResolvable)
+    });
+
+    if (!question) {
+        throw new NotFoundError(`Question not found: ${questionResolvable}`);
+    }
+
+    const options: z.infer<typeof CreateSubmissionScheme>[] = req.body.map((option: unknown) => {
+        return CreateSubmissionScheme.parse(option);
+    });
 
     const submissions = await prisma.$transaction(
-        rawSubmissions.map(
-            ({
-                 questionId,
-                 selectedChoiceIndices,
-                 correct,
-                 timeStarted,
-                 timeEnded,
-                 timeSpent,
-                 videoStartTime,
-                 videoEndTime,
-                 videoTotalWatchTime,
-                 modalStartTime,
-                 modalEndTime,
-                 modalTotalTime,
-                 osFamily,
-             }) => {
-                const startTime = msToDate(timeStarted);
-                const endTime = msToDate(timeEnded);
-                const videoStart = msToDate(videoStartTime);
-                const videoEnd = msToDate(videoEndTime);
-                const modalStart = msToDate(modalStartTime);
-                const modalEnd = msToDate(modalEndTime);
-
+        options.map((option) => {
                 return prisma.submission.create({
                     data: {
-                        questionId: questionId,
-                        correct: Boolean(correct),
-                        selectedChoiceIndices: selectedChoiceIndices,
-                        timeStarted: startTime,
-                        timeEnded: endTime,
-                        timeSpent: Math.floor(timeSpent),
-                        videoStartTime: videoStart,
-                        videoEndTime: videoEnd,
-                        timeSpentVideo: Math.floor(videoTotalWatchTime),
-                        modalStartTime: modalStart,
-                        modalEndTime: modalEnd,
-                        modalTotalTime: modalTotalTime,
-                        osFamily: osFamily,
+                        ...option,
+                        questionId: question.id
                     },
                 });
             },
@@ -275,42 +268,20 @@ const bulkQuestionSubmission = async (req: Request, res: Response) => {
     );
 
     res.status(200).send(submissions);
-};
+}
 
-const updateSubmission = async (req: Request, res: Response) => {
+export async function updateSubmission(req: Request, res: Response) {
     const { submissionId } = req.params;
-    const { videoStartTime, videoEndTime, videoTotalWatchTime, modalStartTime, modalEndTime, modalTotalTime } = req.body;
-
-    const videoStart = msToDate(videoStartTime);
-    const videoEnd = msToDate(videoEndTime);
-    const modalStart = msToDate(modalStartTime);
-    const modalEnd = msToDate(modalEndTime);
+    const options = UpdateQuestionScheme.parse(req.body);
 
     const submission = await prisma.submission.update({
         where: {
             id: submissionId,
         },
         data: {
-            videoStartTime: videoStart,
-            videoEndTime: videoEnd,
-            timeSpentVideo: videoTotalWatchTime,
-            modalStartTime: modalStart,
-            modalEndTime: modalEnd,
-            modalTotalTime: modalTotalTime,
+            ...options
         },
     });
+
     res.status(200).send(submission);
-};
-
-
-
-export {
-    getQuestion,
-    createQuestion,
-    updateQuestion,
-    toggleQuestionPublished,
-    deleteQuestion,
-    createQuestionSubmission,
-    bulkQuestionSubmission,
-    updateSubmission,
-};
+}

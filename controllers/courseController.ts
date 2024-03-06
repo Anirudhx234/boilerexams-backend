@@ -5,50 +5,59 @@ import { NotFoundError } from "../middleware/errors/index.js";
 import { PurdueIoAPI } from "../services/purdue.io.js";
 import {
     CreateCourseScheme,
-    UpdateCourseScheme,
+    FileResourceData,
+    UpdateCourseScheme
 } from "../prisma/schema.js";
 import Resolver from "../helpers/resolver.js";
+import FlagEncoder from "../helpers/encoder.js";
+import FlagDecoder from "../helpers/decoder.js";
 
-const uploadGraphic = async (graphicLink: string, file?: Express.Multer.File) => {
+export async function uploadGraphic(graphicLink: string, file?: Express.Multer.File) {
     if (file) {
         const data = await uploadFileToS3(file.buffer, file.mimetype);
         return data.Location;
     }
     return graphicLink;
-};
+}
 
-const createCourse = async (req: Request, res: Response) => {
+export async function createCourse(req: Request, res: Response) {
     const options = CreateCourseScheme.parse(req.body);
 
     // PurdueIO confirms existence of course and standardizes name and subject fields
     const purdueIoSubject = await PurdueIoAPI.getSubject(options.abbreviation);
     const purdueIoCourse = await PurdueIoAPI.getCourse(purdueIoSubject, options.number);
 
-    if (options.graphic && !options.graphic.id) {
-        // Upload graphic to S3
-        options.graphic.data.url = await uploadGraphic(options.graphic.data.url, req.file);
+    // Upload image resource images to S3
+    for (const resource of options.resources) {
+        const result = FileResourceData.safeParse(resource.data);
+        if (result.success) {
+            result.data.url = await uploadGraphic(result.data.url, req.file);
+            resource.data = result.data;
+        }
     }
+
+    const resourceOptions = options.resources.map(resource => {
+        return {
+            where: {
+                id: resource.id
+            },
+            create: {
+                ...resource
+            }
+        };
+    });
 
     const course = await prisma.course.create({
         data: {
-
+            ...options,
             name: purdueIoCourse.Title,
             subject: purdueIoSubject.Name,
-            ...options,
-
-            // Connect an existing graphic or create a new graphic resource
-            graphic: options.graphic ? {
+            flags: FlagEncoder.course(options.flags),
+            resources: {
                 connectOrCreate: {
-                    where: {
-                        id: options.graphic?.id
-                    },
-                    create: {
-                        ...options.graphic
-                    }
-                }
-            } : undefined, // This handles no graphic
-
-            flags: 0,
+                    ...resourceOptions
+                },
+            },
         },
         include: {
             exams: true,
@@ -58,9 +67,9 @@ const createCourse = async (req: Request, res: Response) => {
     });
 
     res.status(200).send(course);
-};
+}
 
-const updateCourse = async (req: Request, res: Response) => {
+export async function updateCourse(req: Request, res: Response) {
     const { courseResolvable } = req.params;
     const options = UpdateCourseScheme.parse(req.body);
 
@@ -68,42 +77,50 @@ const updateCourse = async (req: Request, res: Response) => {
     const purdueIoSubject = await PurdueIoAPI.getSubject(options.abbreviation);
     const purdueIoCourse = await PurdueIoAPI.getCourse(purdueIoSubject, options.number);
 
-    if (options.graphic && !options.graphic.id) {
-        // Upload graphic to S3
-        await uploadGraphic(options.graphic.data.url, req.file);
+    // Upload image resource images to S3
+    for (const resource of options.resources) {
+        const result = FileResourceData.safeParse(resource.data);
+        if (result.success) {
+            result.data.url = await uploadGraphic(result.data.url, req.file);
+            resource.data = result.data;
+        }
     }
+
+    const resourceOptions = options.resources.map(resource => {
+        return {
+            where: {
+                id: resource.id
+            },
+            create: {
+                ...resource
+            }
+        };
+    });
 
     const course = await prisma.course.update({
         where: Resolver.course(courseResolvable),
         data: {
-            abbreviation: options.abbreviation,
-            number: options.number,
+            ...options,
             name: purdueIoCourse.Title,
             subject: purdueIoSubject.Name,
-            color: options.color,
-            disclaimer: options.disclaimer,
-
-            // Connect an existing graphic or create a new graphic resource
-            graphic: options.graphic ? {
+            flags: FlagEncoder.course(options.flags),
+            resources: {
                 connectOrCreate: {
-                    where: {
-                        id: options.graphic?.id
-                    },
-                    create: {
-                        ...options.graphic
+                    ...resourceOptions
+                },
+                deleteMany: {
+                    id: {
+                        notIn: options.resources.map(resource => resource.id)
                     }
                 }
-            } : undefined, // This handles no graphic
-
-            modes: options.modes,
-            flags: 0,
+            },
         }
     });
 
     res.status(200).send(course);
-};
+}
 
-const toggleCoursePublished = async (req: Request, res: Response) => {
+export async function toggleCoursePublished(req: Request, res: Response) {
     const { courseResolvable } = req.params;
 
     const course = await prisma.course.findUnique({
@@ -119,22 +136,28 @@ const toggleCoursePublished = async (req: Request, res: Response) => {
         throw new NotFoundError("Course not found");
     }
 
+    const courseFlags = FlagDecoder.course(course.flags);
+    const status = !courseFlags.published;
+
     await prisma.course.update({
         where: {
             id: course.id,
         },
         data: {
             // Flip the LSB on flags
-            flags: course.flags ^ 1
+            flags: FlagEncoder.course({
+                ...courseFlags,
+                published: status
+            }),
         },
     });
 
     res.status(200).send({
-        message: `${course.name} is now ${(((course.flags ^ 1) & 1) == 1) ? "published" : "unpublished"}`,
+        message: `${course.name} is now ${status ? "published" : "unpublished"}`,
     });
-};
+}
 
-const deleteCourse = async (req: Request, res: Response) => {
+export async function deleteCourse(req: Request, res: Response) {
     const { courseResolvable } = req.params;
 
     const course = await prisma.course.delete({
@@ -146,6 +169,4 @@ const deleteCourse = async (req: Request, res: Response) => {
     }
 
     res.status(200).send(course);
-};
-
-export { createCourse, updateCourse, toggleCoursePublished, deleteCourse };
+}

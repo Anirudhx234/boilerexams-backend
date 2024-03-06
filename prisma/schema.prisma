@@ -5,11 +5,9 @@ generator client {
 
 datasource db {
   provider  = "postgresql"
-  directUrl = env("DATABASE_URL")
   url       = env("DATABASE_URL_BOUNCER")
+  directUrl = env("DATABASE_URL")
 }
-
-// Models
 
 model Course {
   id           String      @id @default(uuid())
@@ -19,14 +17,14 @@ model Course {
   subject      String
   color        String?
   disclaimer   String?
-  topics       Topic[]
   modes        StudyMode[]
+  flags        Int
+  events       Event[]
   exams        Exam[]
   questions    Question[]
+  topics       Topic[]
+  resources    Resource[]  @relation("CourseToResource")
   users        User[]      @relation("CourseToUser")
-  events       Event[]
-  graphic      Resource?
-  flags        Int
 
   @@unique([abbreviation, number])
 }
@@ -38,16 +36,16 @@ model Exam {
   season     Season
   disclaimer String?
   courseId   String
+  flags      Int
   course     Course     @relation(fields: [courseId], references: [id], onDelete: Cascade)
   questions  Question[]
-  pdf        Resource?
-  flags      Int
+  resources  Resource[] @relation("ExamToResource")
 
   @@unique([number, year, season, courseId])
 }
 
 model Question {
-  id          String       @id @default(uuid())
+  id          String            @id @default(uuid())
   type        QuestionType
   data        Json
   number      Int
@@ -55,51 +53,54 @@ model Question {
   examId      String
   courseId    String
   parentId    String?
-  exam        Exam         @relation(fields: [examId], references: [id], onDelete: Cascade)
-  course      Course       @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  parent      Question?    @relation("QuestionToQuestion", fields: [parentId], references: [id])
-  children    Question[]   @relation("QuestionToQuestion")
-  topics      Topic[]      @relation("QuestionToTopic")
-  resources   Resource[]   @relation("QuestionToResource")
-  submissions Submission[]
-  feedback    Feedback[]
   flags       Int
+  feedback    Feedback[]
+  course      Course            @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  exam        Exam              @relation(fields: [examId], references: [id], onDelete: Cascade)
+  parent      Question?         @relation("QuestionToQuestion", fields: [parentId], references: [id], onDelete: Cascade)
+  children    Question[]        @relation("QuestionToQuestion")
+  topics      QuestionToTopic[]
+  submissions Submission[]
+  resources   Resource[]        @relation("QuestionToResource")
+
+  @@unique([number, courseId])
+  @@unique([number, courseId], map: "unique_number_courseId")
 }
 
 model Submission {
   id             String       @id @default(uuid())
   type           QuestionType
-  data           Json
+  solution       Json?
   correct        Boolean
   timeStarted    DateTime
   timeEnded      DateTime
   timeSpent      BigInt
   timeSpentVideo BigInt
   timeSpentModal BigInt
-  questionId     String
-  osFamily       String
-  question       Question     @relation(fields: [questionId], references: [id], onDelete: NoAction)
+  osFamily       String?
+  questionId     String?
+  question       Question?    @relation(fields: [questionId], references: [id])
 }
 
 model Resource {
   id            String       @id @default(uuid())
   type          ResourceType
   data          Json
-  examId        String?      @unique
-  courseId      String?      @unique
   applicationId String?      @unique
-  exam          Exam?        @relation(fields: [examId], references: [id], onDelete: Cascade)
-  course        Course?      @relation(fields: [courseId], references: [id], onDelete: Cascade)
   application   Application? @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  courses       Course[]     @relation("CourseToResource")
+  exams         Exam[]       @relation("ExamToResource")
   questions     Question[]   @relation("QuestionToResource")
 }
 
 model Topic {
-  id        String     @id @default(uuid())
-  name      String // Not unique because some topics may transcend course
-  courseId  String     @unique
-  course    Course     @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  questions Question[] @relation("QuestionToTopic")
+  id        String            @id @default(uuid())
+  name      String
+  courseId  String
+  questions QuestionToTopic[]
+  course    Course            @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([name, courseId])
 }
 
 model Feedback {
@@ -108,9 +109,9 @@ model Feedback {
   status     FeedbackStatus
   data       Json
   questionId String
-  question   Question       @relation(fields: [questionId], references: [id], onDelete: Cascade)
   createdAt  DateTime       @default(now())
   updatedAt  DateTime       @updatedAt
+  question   Question       @relation(fields: [questionId], references: [id], onDelete: Cascade)
 }
 
 model Application {
@@ -146,7 +147,6 @@ model User {
   accountType    AccountType
   localAccount   LocalAccount?
   courses        Course[]      @relation("CourseToUser")
-  feedbackId     String?
 }
 
 model LocalAccount {
@@ -165,7 +165,18 @@ model Session {
   @@index([expire], map: "IDX_session_expire")
 }
 
-// Enums
+model QuestionToTopic {
+  questionId String
+  topicId    String
+  number     Int      @default(autoincrement())
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  topic      Topic    @relation(fields: [topicId], references: [id], onDelete: Cascade)
+
+  @@id([questionId, topicId])
+  @@unique([number, topicId])
+  @@unique([number, topicId], map: "unique_number_topicId")
+  @@index([number])
+}
 
 enum QuestionType {
   MULTIPLE_CHOICE
@@ -175,10 +186,16 @@ enum QuestionType {
 }
 
 enum ResourceType {
-  IMAGE
-  VIDEO
-  CODE
-  PDF
+  COURSE_LOGO
+  QUESTION_IMAGE
+  SOLUTION_IMAGE
+  ANSWER_CHOICE_IMAGE
+  SHORT_SOLUTION_VIDEO
+  LONG_SOLUTION_VIDEO
+  QUESTION_CODE
+  ANSWER_CHOICE_CODE
+  EXAM_PDF
+  RESUME_PDF
 }
 
 enum AccountType {
@@ -212,11 +229,6 @@ enum Season {
   SUMMER
   FALL
   WINTER
-}
-
-enum Language {
-  C
-  PYTHON
 }
 
 enum StudyMode {

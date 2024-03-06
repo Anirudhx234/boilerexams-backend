@@ -3,11 +3,13 @@ import Resolver from "../helpers/resolver.js";
 import { Request, Response } from "express";
 import { APIError, NotFoundError } from "../middleware/errors/index.js";
 import {
-    CreateExamScheme,
-    UpdateExamScheme,
+    CreateExamScheme, ReorderQuestions,
+    UpdateExamScheme
 } from "../prisma/schema.js";
+import FlagEncoder from "../helpers/encoder.js";
+import FlagDecoder from "../helpers/decoder.js";
 
-const createExam = async (req: Request, res: Response) => {
+export async function createExam(req: Request, res: Response)  {
     const { courseResolvable } = req.params;
     const options = CreateExamScheme.parse(req.body);
 
@@ -21,7 +23,7 @@ const createExam = async (req: Request, res: Response) => {
         data: {
             courseId: course.id,
             ...options,
-            flags: 0
+            flags: FlagEncoder.exam(options.flags)
         },
         include: {
             questions: true
@@ -29,23 +31,60 @@ const createExam = async (req: Request, res: Response) => {
     });
 
     res.status(200).send(exam);
-};
+}
 
-const updateExam = async (req: Request, res: Response) => {
+export async function updateExam(req: Request, res: Response) {
     const { courseResolvable, examResolvable } = req.params;
     const options = UpdateExamScheme.parse(req.body);
 
     const exam = await prisma.exam.update({
         where: await Resolver.exam(examResolvable, courseResolvable),
         data: {
-            ...options
+            ...options,
+            flags: FlagEncoder.exam(options.flags)
         }
     });
 
     res.status(200).send(exam);
-};
+}
 
-const toggleExamPublished = async (req: Request, res: Response) => {
+export async function reorderQuestions(req: Request, res: Response) {
+    const { examResolvable, courseResolvable } = req.params;
+
+    const exam = await prisma.exam.findUnique({
+        where: await Resolver.exam(examResolvable, courseResolvable),
+        select: {
+            id: true,
+            questions: {
+                select: {
+                    id: true,
+                    number: true
+                }
+            }
+        }
+    });
+
+    if (!exam) {
+        throw new NotFoundError(`Exam not found: ${examResolvable}`);
+    }
+
+    const options = ReorderQuestions.parse(req.body);
+
+    const questions = await prisma.$transaction(exam.questions.map(question => {
+        return prisma.question.update({
+            where: {
+                id: question.id
+            },
+            data: {
+                number: options.indexOf(question.id) + 1
+            }
+        });
+    }));
+
+    res.status(200).send(questions);
+}
+
+export async function toggleExamPublished(req: Request, res: Response) {
     const { courseResolvable, examResolvable } = req.params;
 
     const exam = await prisma.exam.findUnique({
@@ -60,29 +99,27 @@ const toggleExamPublished = async (req: Request, res: Response) => {
         throw new NotFoundError("Exam not found");
     }
 
+    const examFlags = FlagDecoder.exam(exam.flags);
+    const status = !examFlags.published;
+
     await prisma.exam.update({
         where: {
             id: exam.id,
         },
         data: {
-            flags: exam.flags ^ 1,
-            questions: {
-                updateMany: {
-                    where: {  },
-                    data: {
-                        flags: exam.flags ^ 1,
-                    },
-                },
-            },
+            flags: FlagEncoder.exam({
+                ...examFlags,
+                published: status
+            })
         },
     });
 
     res.status(200).send({
-        message: `Exam and questions are now ${((exam.flags ^ 1) & 1) == 1 ? "published" : "unpublished"}`,
+        message: `Exam is now ${status ? "published" : "unpublished"}`,
     });
-};
+}
 
-const deleteExam = async (req: Request, res: Response) => {
+export async function deleteExam(req: Request, res: Response) {
     const { courseResolvable, examResolvable } = req.params;
 
     const exam = await prisma.exam.delete({
@@ -93,6 +130,4 @@ const deleteExam = async (req: Request, res: Response) => {
         throw new NotFoundError("Exam not found");
     }
     res.status(200).send(exam);
-};
-
-export { createExam, updateExam, toggleExamPublished, deleteExam };
+}
