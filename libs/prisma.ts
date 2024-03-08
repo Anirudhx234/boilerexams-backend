@@ -1,44 +1,39 @@
 import { PrismaClient } from "@prisma/client";
-import { FileResourceData } from "../prisma/schema.js";
-import { deleteFileFromS3 } from "../utils/uploadFileToS3.js";
+import FlagDecoder from "../helpers/decoder.js";
 
-let prisma: PrismaClient;
+const prisma = new PrismaClient();
 
-// ToDo Hook function for deleting image resources from S3
-async function onResourceDelete(args: unknown ) {
-    const resource = await prisma.resource.findUnique({
-        // @ts-expect-error Need to type args
-        where: args.where
-    });
-
-    if (!resource) return;
-
-    const result = FileResourceData.safeParse(resource.data);
-
-    if (!result.success) return;
-    if (!result.data.key) return;
-
-    await deleteFileFromS3(result.data.key);
-}
-
-if (process.env.NODE_ENV === "production") {
-    prisma = new PrismaClient();
-        /*.$extends({ // ToDo hook into Resource Delete
-        query: {
-            resource: {
-                async delete({ args, query }) {
-                    await onResourceDelete(args);
-                    return query(args);
+export default prisma.$extends({
+    result: { // Extension of result allows us to modify result of a fetch query
+        course: { // Modify course result
+            flags: {
+                needs: { flags : true },
+                compute(course) {
+                    return FlagDecoder.course(course.flags); // Overwrite flag field with computed flags
+                }
+            }
+        },
+        exam: { // Modify exam query
+            flags: {
+                needs: { flags : true },
+                compute(exam) {
+                    return FlagDecoder.exam(exam.flags); // Overwrite flag field with computed flags
+                }
+            }
+        },
+        question: { // Modify question query
+            flags: {
+                needs: { flags: true },
+                compute(question) {
+                    return FlagDecoder.question(question.flags); // Overwrite flag field with computed flags
                 }
             }
         }
-    });
-         */
-} else {
-    if (!global.prisma) {
-        global.prisma = new PrismaClient();
     }
-    prisma = global.prisma;
-}
+});
 
-export default prisma;
+if (process.env.NODE_ENV != "production") {
+    if (!global.prisma) {
+        global.prisma = prisma;
+    }
+}

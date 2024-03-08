@@ -115,8 +115,7 @@ export async function toggleExamPublished(req: Request, res: Response) {
         throw new NotFoundError("Exam not found");
     }
 
-    const examFlags = FlagDecoder.exam(exam.flags);
-    const status = !examFlags.published;
+    const status = !exam.flags.published;
 
     await prisma.exam.update({
         where: {
@@ -124,7 +123,7 @@ export async function toggleExamPublished(req: Request, res: Response) {
         },
         data: {
             flags: FlagEncoder.exam({
-                ...examFlags,
+                ...exam.flags,
                 published: status
             })
         },

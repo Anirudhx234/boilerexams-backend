@@ -12,7 +12,8 @@ import Resolver from "../helpers/resolver.js";
 import FlagEncoder from "../helpers/encoder.js";
 import FlagDecoder from "../helpers/decoder.js";
 
-export async function uploadGraphic(graphicLink: string, file?: Express.Multer.File) {
+// ToDo handle multiple graphic resource uploads that are file-based
+export async function uploadGraphic(graphicLink?: string, file?: Express.Multer.File) {
     if (file) {
         const data = await uploadFileToS3(file.buffer, file.mimetype);
         return data.Location;
@@ -27,37 +28,13 @@ export async function createCourse(req: Request, res: Response) {
     const purdueIoSubject = await PurdueIoAPI.getSubject(options.abbreviation);
     const purdueIoCourse = await PurdueIoAPI.getCourse(purdueIoSubject, options.number);
 
-    // Upload image resource images to S3
-    for (const resource of options.resources) {
-        const result = FileResourceData.safeParse(resource.data);
-        if (result.success) {
-            result.data.url = await uploadGraphic(result.data.url, req.file);
-            resource.data = result.data;
-        }
-    }
-
-    const resourceOptions = options.resources.map(resource => {
-        return {
-            where: {
-                id: resource.id
-            },
-            create: {
-                ...resource
-            }
-        };
-    });
-
     const course = await prisma.course.create({
         data: {
             ...options,
             name: purdueIoCourse.Title,
             subject: purdueIoSubject.Name,
             flags: FlagEncoder.course(options.flags),
-            resources: {
-                connectOrCreate: {
-                    ...resourceOptions
-                },
-            },
+            resources: { },
         },
         include: {
             exams: true,
@@ -136,8 +113,7 @@ export async function toggleCoursePublished(req: Request, res: Response) {
         throw new NotFoundError("Course not found");
     }
 
-    const courseFlags = FlagDecoder.course(course.flags);
-    const status = !courseFlags.published;
+    const status = !course.flags.published;
 
     await prisma.course.update({
         where: {
@@ -146,7 +122,7 @@ export async function toggleCoursePublished(req: Request, res: Response) {
         data: {
             // Flip the LSB on flags
             flags: FlagEncoder.course({
-                ...courseFlags,
+                ...course.flags,
                 published: status
             }),
         },

@@ -209,7 +209,7 @@ export async function reportBug(req: Request, res: Response) {
         },
     });
 
-    await DiscordAPI.createReport(report);
+    await DiscordAPI.createFeedback(report);
     res.status(200).send("Success");
 }
 
@@ -264,7 +264,7 @@ export async function reportQuestion(req: Request, res: Response) {
         },
     });
 
-    await DiscordAPI.createReport(report);
+    await DiscordAPI.createFeedback(report);
     res.status(200).send(report);
 }
 
@@ -281,7 +281,7 @@ export async function requestFeature(req: Request, res: Response) {
         }
     });
 
-    await DiscordAPI.createReport(request);
+    await DiscordAPI.createFeedback(request);
     res.status(200).send(request);
 }
 

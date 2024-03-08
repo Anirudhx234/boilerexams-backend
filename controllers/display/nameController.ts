@@ -5,6 +5,8 @@ import { Request, Response } from "express";
 import _ from "lodash";
 import validCourseRegex from "../../utils/validCourseRegex.js";
 import answerChoiceStats from "../../helpers/stats/multiple.answerChoiceStats.js";
+import FlagDecoder from "../../helpers/decoder.js";
+import Resolver from "../../helpers/resolver.js";
 
 const questionSort: QuestionSortCategory[] = [
     {
@@ -33,105 +35,94 @@ const questionSort: QuestionSortCategory[] = [
 
 // All courses metadata, with no relations
 const getCourses = async (req: Request, res: Response) => {
-    let courses = await prisma.course.findMany({
-        where: {
-            OR: req.published,
-        },
+    const courses = await prisma.course.findMany({
         orderBy: [
             {
                 subject: "asc",
             },
             {
                 number: "asc",
-            },
+            }
         ],
     });
 
-    if (!courses.length) {
+    if (courses.length == 0) {
         throw new NotFoundError("No courses found");
     }
-    courses = _.groupBy(courses, "subject");
-    let result: { subject: string; courses: Array<string> }[] = [];
-    _.forEach(courses, (value, key) => {
-        result.push({ subject: key, courses: value });
-    });
-    result = _.orderBy(result, "courses", "desc");
-    res.status(200).send(result);
+
+    const groupedCourses = _.groupBy(courses.filter(course => FlagDecoder.course(course.flags).published), "subject");
+
+    const result = Object.entries(groupedCourses).map(([subject, courses]) => ({
+            subject,
+            courses,
+        })
+    );
+
+    const sortedResult = _.orderBy(result, ['courses.length'], ['desc']);
+
+    // Send the sorted result as the response
+    res.status(200).send(sortedResult);
 };
 
 // All topics metadata, no relations
 const getAllTopics = async (req: Request, res: Response) => {
     const topics = await prisma.topic.findMany();
+
     if (!topics.length) {
         throw new NotFoundError("No topics found");
     }
+
     res.status(200).send(topics);
 };
 
 // All courses with relations
 const getAllCourses = async (req: Request, res: Response) => {
     const courses = await prisma.course.findMany({
-        where: {
-            OR: req.published,
-        },
         include: {
             topics: true,
-            semesters: true,
             exams: {
-                where: {
-                    OR: req.published,
-                },
                 include: {
                     questions: {
-                        where: {
-                            OR: req.published,
-                        },
                         include: {
                             topics: true,
-                            answerChoices: {
-                                orderBy: {
-                                    choiceIndex: "asc",
-                                },
-                                include: {
-                                    resources: {
-                                        include: {
-                                            image: true,
-                                            code: true,
-                                        },
-                                    },
-                                },
-                            },
-                            resources: {
-                                include: {
-                                    image: true,
-                                    code: true,
-                                },
-                            },
+                            resources: true,
                         },
-                    },
-                    semester: true,
+                    }
                 },
             },
             users: true,
         },
     });
+
     if (!courses) {
         throw new NotFoundError("Courses not found");
     }
-    res.status(200).send(courses);
+
+    // ToDo Standardize this behavior of published objects and published sub-objects
+    res.status(200).send(courses
+        .filter(course => FlagDecoder.course(course.flags).published)
+        .map(course => {
+            return {
+                ...course,
+                exams: course.exams
+                    .filter(exam => FlagDecoder.exam(exam.flags).published)
+                    .map(exam => {
+                        return {
+                            ...exam,
+                            questions: exam.questions.filter(question => FlagDecoder.question(question.flags).published)
+                        };
+                    })
+            };
+        })
+    );
 };
 
 // Metadata for specific course, no relations
 const getCourse = async (req: Request, res: Response) => {
-    const { courseAbbrev } = req.params;
-    const { abbreviation, number } = validCourseRegex(courseAbbrev);
+    const { courseResolvable } = req.params;
 
-    const course = await prisma.course.findFirst({
-        where: {
-            abbreviation: abbreviation.toUpperCase(),
-            number: Number(number),
-            OR: req.published,
-        },
+    const course = await prisma.course.findUnique({
+        where: Resolver.course(courseResolvable),
         include: {
             events: {
                 orderBy: {
@@ -140,97 +131,84 @@ const getCourse = async (req: Request, res: Response) => {
             },
         },
     });
-    if (!course) {
-        throw new NotFoundError("No course found");
+
+    if (!course || !FlagDecoder.course(course.flags).published) {
+        throw new NotFoundError("Course not found");
     }
+
     res.status(200).send(course);
 };
 
 // All topics for a specific course, no other relations
 const getCourseTopics = async (req: Request, res: Response) => {
-    const { courseAbbrev } = req.params;
-    const { abbreviation, number } = validCourseRegex(courseAbbrev);
+    const { courseResolvable } = req.params;
 
-    const course = await prisma.course.findFirst({
-        where: {
-            abbreviation: abbreviation.toUpperCase(),
-            number: Number(number),
-            OR: req.published,
-        },
+    const course = await prisma.course.findUnique({
+        where: Resolver.course(courseResolvable),
         select: {
-            topics: true,
-        },
-        orderBy: {
-            name: "asc",
-        },
+            topics: {
+                orderBy: {
+                    name: "asc"
+                }
+            }
+        }
     });
 
     if (!course) {
         throw new NotFoundError("Course not found");
     }
+
     res.status(200).send(course.topics);
 };
 
 // All questions with topics included for a specific topic in a course.
 // Includes questions from other courses.
 const getCourseTopicsWithBasicQuestionInfo = async (req: Request, res: Response) => {
-    const { courseAbbrev } = req.params;
-    const { abbreviation, number } = validCourseRegex(courseAbbrev);
+    const { courseResolvable } = req.params;
 
-    const course = await prisma.course.findFirst({
-        where: {
-            abbreviation: abbreviation.toUpperCase(),
-            number: Number(number),
-            OR: req.published,
-        },
+    const course = await prisma.course.findUnique({
+        where: Resolver.course(courseResolvable),
         select: {
+            flags: true,
             topics: {
                 include: {
                     questions: {
-                        where: {
-                            course: {
-                                abbreviation: abbreviation.toUpperCase(),
-                                number: Number(number),
-                            },
-                            OR: req.published,
+                        include: {
+                            question: {
+                                select: {
+                                    id: true,
+                                    number: true,
+                                    flags: true,
+                                }
+                            }
                         },
-                        select: {
-                            id: true,
-                            number: true,
-                            published: true,
-                        },
-                        orderBy: questionSort,
-                    },
+                        orderBy: {
+                            number: "asc"
+                        }
+                    }
                 },
                 orderBy: {
                     name: "asc",
                 },
-            },
-            questions: {
-                where: {
-                    course: {
-                        abbreviation: abbreviation.toUpperCase(),
-                        number: Number(number),
-                    },
-                    OR: req.published,
-                    topics: {
-                        none: {},
-                    },
-                },
-                select: {
-                    id: true,
-                    number: true,
-                    published: true,
-                },
-                orderBy: questionSort,
-            },
+            }
         },
     });
-    if (!course) {
+
+    if (!course || !FlagDecoder.course(course.flags).published) {
         throw new NotFoundError("Course not found");
     }
 
-    res.status(200).send(course);
+    res.status(200).send({
+        ...course,
+        topics: course.topics.map(topic => {
+            return {
+                ...topic,
+                questions: topic.questions
+                    .map(relation => relation.question)
+                    .filter(question => FlagDecoder.question(question.flags).published)
+            };
+        })
+    });
 };
 
 // All exams with semester (no questions)
