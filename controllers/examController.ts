@@ -7,7 +7,6 @@ import {
     UpdateExamScheme
 } from "../prisma/schema.js";
 import FlagEncoder from "../helpers/encoder.js";
-import FlagDecoder from "../helpers/decoder.js";
 
 export async function createExam(req: Request, res: Response)  {
     const { courseResolvable } = req.params;

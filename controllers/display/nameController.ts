@@ -50,7 +50,7 @@ const getCourses = async (req: Request, res: Response) => {
         throw new NotFoundError("No courses found");
     }
 
-    const groupedCourses = _.groupBy(courses.filter(course => FlagDecoder.course(course.flags).published), "subject");
+    const groupedCourses = _.groupBy(courses.filter(course => course.flags.published), "subject");
 
     const result = Object.entries(groupedCourses).map(([subject, courses]) => ({
             subject,
@@ -98,18 +98,17 @@ const getAllCourses = async (req: Request, res: Response) => {
         throw new NotFoundError("Courses not found");
     }
 
-    // ToDo Standardize this behavior of published objects and published sub-objects
     res.status(200).send(courses
-        .filter(course => FlagDecoder.course(course.flags).published)
+        .filter(course => course.flags.published)
         .map(course => {
             return {
                 ...course,
                 exams: course.exams
-                    .filter(exam => FlagDecoder.exam(exam.flags).published)
+                    .filter(exam => exam.flags.published)
                     .map(exam => {
                         return {
                             ...exam,
-                            questions: exam.questions.filter(question => FlagDecoder.question(question.flags).published)
+                            questions: exam.questions.filter(question => question.flags.published)
                         };
                     })
             };

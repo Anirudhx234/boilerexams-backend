@@ -10,7 +10,6 @@ import {
 } from "../prisma/schema.js";
 import Resolver from "../helpers/resolver.js";
 import FlagEncoder from "../helpers/encoder.js";
-import FlagDecoder from "../helpers/decoder.js";
 
 // ToDo handle multiple graphic resource uploads that are file-based
 export async function uploadGraphic(graphicLink?: string, file?: Express.Multer.File) {
