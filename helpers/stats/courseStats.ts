@@ -1,6 +1,8 @@
 import prisma from "../../libs/prisma.js";
 import { NotFoundError } from "../../middleware/errors/index.js";
 
+// ToDo Rework
+
 const allCoursesStats = async (before: Date, after: Date) => {
     // @ts-expect-error Fix Prisma BigInt Serialize
     BigInt.prototype.toJSON = function () {

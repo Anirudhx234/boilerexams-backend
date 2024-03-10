@@ -1,26 +1,19 @@
 import prisma from "../../libs/prisma.js";
-import { InvalidSeasonError, NotFoundError } from "../../middleware/errors/index.js";
-import { Season } from "@prisma/client";
+import { NotFoundError } from "../../middleware/errors/index.js";
 import { Request, Response } from "express";
 import _ from "lodash";
-import validCourseRegex from "../../utils/validCourseRegex.js";
-import answerChoiceStats from "../../helpers/stats/multiple.answerChoiceStats.js";
-import FlagDecoder from "../../helpers/decoder.js";
 import Resolver from "../../helpers/resolver.js";
+import questionStats from "../../helpers/stats/questionStats.js";
 
 const questionSort: QuestionSortCategory[] = [
     {
         exam: {
-            semester: {
-                year: "desc",
-            },
+            year: "desc"
         },
     },
     {
         exam: {
-            semester: {
-                season: "asc",
-            },
+            season: "asc",
         },
     },
     {
@@ -68,7 +61,7 @@ const getCourses = async (req: Request, res: Response) => {
 const getAllTopics = async (req: Request, res: Response) => {
     const topics = await prisma.topic.findMany();
 
-    if (!topics.length) {
+    if (topics.length < 1) {
         throw new NotFoundError("No topics found");
     }
 
@@ -84,8 +77,12 @@ const getAllCourses = async (req: Request, res: Response) => {
                 include: {
                     questions: {
                         include: {
-                            topics: true,
                             resources: true,
+                            topics: {
+                                include: {
+                                    topic: true
+                                }
+                            }
                         },
                     }
                 },
@@ -108,7 +105,14 @@ const getAllCourses = async (req: Request, res: Response) => {
                     .map(exam => {
                         return {
                             ...exam,
-                            questions: exam.questions.filter(question => question.flags.published)
+                            questions: exam.questions
+                                .filter(question => question.flags.published)
+                                .map(question => {
+                                    return {
+                                        ...question,
+                                        topics: question.topics.map(relation => relation.topic)
+                                    };
+                                })
                         };
                     })
             };
@@ -120,7 +124,7 @@ const getAllCourses = async (req: Request, res: Response) => {
 const getCourse = async (req: Request, res: Response) => {
     const { courseResolvable } = req.params;
 
-    const course = await prisma.course.findUnique({
+    const course = await prisma.course.findUniqueOrThrow({
         where: Resolver.course(courseResolvable),
         include: {
             events: {
@@ -131,7 +135,7 @@ const getCourse = async (req: Request, res: Response) => {
         },
     });
 
-    if (!course || !FlagDecoder.course(course.flags).published) {
+    if (!course.flags.published) {
         throw new NotFoundError("Course not found");
     }
 
@@ -142,7 +146,7 @@ const getCourse = async (req: Request, res: Response) => {
 const getCourseTopics = async (req: Request, res: Response) => {
     const { courseResolvable } = req.params;
 
-    const course = await prisma.course.findUnique({
+    const course = await prisma.course.findUniqueOrThrow({
         where: Resolver.course(courseResolvable),
         select: {
             topics: {
@@ -153,10 +157,6 @@ const getCourseTopics = async (req: Request, res: Response) => {
         }
     });
 
-    if (!course) {
-        throw new NotFoundError("Course not found");
-    }
-
     res.status(200).send(course.topics);
 };
 
@@ -165,7 +165,7 @@ const getCourseTopics = async (req: Request, res: Response) => {
 const getCourseTopicsWithBasicQuestionInfo = async (req: Request, res: Response) => {
     const { courseResolvable } = req.params;
 
-    const course = await prisma.course.findUnique({
+    const course = await prisma.course.findUniqueOrThrow({
         where: Resolver.course(courseResolvable),
         select: {
             flags: true,
@@ -193,7 +193,7 @@ const getCourseTopicsWithBasicQuestionInfo = async (req: Request, res: Response)
         },
     });
 
-    if (!course || !FlagDecoder.course(course.flags).published) {
+    if (!course.flags.published) {
         throw new NotFoundError("Course not found");
     }
 
@@ -204,7 +204,7 @@ const getCourseTopicsWithBasicQuestionInfo = async (req: Request, res: Response)
                 ...topic,
                 questions: topic.questions
                     .map(relation => relation.question)
-                    .filter(question => FlagDecoder.question(question.flags).published)
+                    .filter(question => question.flags.published)
             };
         })
     });
@@ -212,366 +212,225 @@ const getCourseTopicsWithBasicQuestionInfo = async (req: Request, res: Response)
 
 // All exams with semester (no questions)
 const getCourseExams = async (req: Request, res: Response) => {
-    const { courseAbbrev } = req.params;
-    const { abbreviation, number } = validCourseRegex(courseAbbrev);
+    const { courseResolvable } = req.params;
 
-    const course = await prisma.course.findFirst({
-        where: {
-            abbreviation: abbreviation.toUpperCase(),
-            number: Number(number),
-            OR: req.published,
-        },
-        select: {
-            exams: {
-                where: {
-                    OR: req.published,
-                },
-                include: {
-                    semester: true,
-                },
-            },
-        },
+    const course = await prisma.course.findUniqueOrThrow({
+        where: Resolver.course(courseResolvable),
+        include: {
+            exams: true
+        }
     });
 
-    if (!course) {
+    if (!course.flags.published) {
         throw new NotFoundError("Course not found");
     }
+
     const exams = course.exams;
+
     const sortedExams = _.orderBy(
-        exams,
+        exams.filter(exam => exam.flags.published),
         [(exam) => (exam.number === 0 ? 10 : exam.number), "semester.year", "semester.season"],
         ["asc", "desc", "asc"],
     );
+
     res.status(200).send(sortedExams);
 };
 
 // All exams with question ids and numbers
 const getCourseExamsWithBasicQuestionInfo = async (req: Request, res: Response) => {
-    const { courseAbbrev } = req.params;
-    const { abbreviation, number } = validCourseRegex(courseAbbrev);
+    const { courseResolvable } = req.params;
 
-    const course = await prisma.course.findFirst({
-        where: {
-            abbreviation: abbreviation.toUpperCase(),
-            number: Number(number),
-            OR: req.published,
-        },
-        select: {
+    const course = await prisma.course.findUniqueOrThrow({
+        where: Resolver.course((courseResolvable)),
+        include: {
             exams: {
-                where: {
-                    OR: req.published,
-                },
                 include: {
                     questions: {
-                        where: {
-                            OR: req.published,
-                        },
-                        select: {
-                            id: true,
-                            number: true,
-                            published: true,
-                        },
                         orderBy: {
                             number: "asc",
                         },
                     },
-                    semester: true,
                 },
             },
-        },
+        }
     });
-    if (!course) {
+
+    if (!course.flags.published) {
         throw new NotFoundError("Course not found");
     }
 
-    const exams = course.exams;
+    const exams = course.exams.filter(exam => exam.flags.published);
+
     const sortedExams = _.orderBy(
         exams,
         [(exam) => (exam.number === 0 ? 10 : exam.number), "semester.year", "semester.season"],
         ["asc", "desc", "asc"],
     );
-    res.status(200).send(sortedExams);
+
+    res.status(200).send(sortedExams.map(exam => {
+        return {
+            ...exam,
+            questions: exam.questions.filter(question => question.flags.published)
+        };
+    }));
 };
 
 // Basic question information for specific topic
 const getCourseTopicWithBasicQuestionInfo = async (req: Request, res: Response) => {
-    const { courseAbbrev, topicName } = req.params;
-    const { abbreviation, number } = validCourseRegex(courseAbbrev);
+    const { topicResolvable, courseResolvable } = req.params;
 
-    const topic = await prisma.topic.findUnique({
-        where: {
-            name: topicName,
-        },
+    const topic = await prisma.topic.findUniqueOrThrow({
+        where: await Resolver.topic(topicResolvable, courseResolvable),
         include: {
             questions: {
-                where: {
-                    course: {
-                        abbreviation: abbreviation.toUpperCase(),
-                        number: Number(number),
-                        OR: req.published,
-                    },
-                    OR: req.published,
-                },
-                select: {
-                    id: true,
-                    number: true,
-                    correctChoiceIndices: true,
-                    topics: true,
-                    published: true,
+                include: {
+                    question: true,
                 },
                 orderBy: questionSort,
             },
         },
     });
-    if (!topic) {
-        throw new NotFoundError("Topic not found");
-    }
 
-    const answerStats = await answerChoiceStats(topic.questions.map((question) => question.id));
-    for (let i = 0; i < answerStats.length; i++) {
-        // @ts-expect-error Extend later
-        topic.questions[i].answerChoiceStats = answerStats[i];
-        // @ts-expect-error Extend later
-        topic.questions[i].percentCorrect =
-            (answerStats[i][topic.questions[i].correctChoiceIndices[0]] * 100) /
-            answerStats[i].reduce((sum: number, a: number) => sum + a, 0);
-        // @ts-expect-error Extend later
-        delete topic.questions[i].correctChoiceIndices;
-    }
-
-    res.status(200).send(topic);
+    res.status(200).send({
+        ...topic,
+        questions: Promise.all(topic.questions
+            .map(relation => relation.question)
+            .filter(question => question.flags.published)
+            .map(async (question) => {
+                const stats = await questionStats(question.id);
+                return {
+                    ...question,
+                    answerChoiceStats: stats
+                };
+            }))
+    });
 };
 
 // Full question information for specific topic
 const getCourseTopicWithFullQuestionInfo = async (req: Request, res: Response) => {
-    const { courseAbbrev, topicName } = req.params;
-    const { abbreviation, number } = validCourseRegex(courseAbbrev);
+    const { topicResolvable, courseResolvable } = req.params;
 
-    const topic = await prisma.topic.findUnique({
-        where: {
-            name: topicName,
-        },
+    const topic = await prisma.topic.findUniqueOrThrow({
+        where: await Resolver.topic(topicResolvable, courseResolvable),
         include: {
             questions: {
-                where: {
-                    course: {
-                        abbreviation: abbreviation.toUpperCase(),
-                        number: Number(number),
-                        OR: req.published,
-                    },
-                    OR: req.published,
-                },
                 include: {
-                    topics: true,
-                    exam: {
+                    question: {
                         include: {
-                            semester: true,
-                        },
-                    },
-                    answerChoices: {
-                        orderBy: {
-                            choiceIndex: "asc",
-                        },
-                        include: {
-                            resources: {
+                            exam: true,
+                            resources: true,
+                            topics: {
                                 include: {
-                                    image: true,
-                                    code: true,
-                                },
-                            },
-                        },
-                    },
-                    resources: {
-                        include: {
-                            image: true,
-                            code: true,
-                        },
-                    },
+                                    topic: true
+                                }
+                            }
+                        }
+                    }
                 },
                 orderBy: questionSort,
             },
         },
     });
+
     if (!topic) {
         throw new NotFoundError("Topic not found");
     }
 
-    /* OLD METHOD USING PRISMA ONLY
-    const promises: Promise<number[]>[] = [];
-
-    for (const question of topic.questions) {
-        promises.push(answerChoiceStats(question.id));
-    }
-
-    const resolved = await Promise.all(promises);
-    */
-
-    const answerStats = await answerChoiceStats(topic.questions.map((question) => question.id));
-    for (let i = 0; i < answerStats.length; i++) {
-        // @ts-expect-error Extend Later
-        topic.questions[i].answerChoiceStats = answerStats[i];
-    }
-    res.status(200).send(topic);
+    res.status(200).send({
+        ...topic,
+        questions: await Promise.all(topic.questions
+            .map(relation => relation.question)
+            .filter(question => question.flags.published)
+            .map(async (question) => {
+                const stats = await questionStats(question.id);
+                return {
+                    ...question,
+                    topics: question.topics.map(relation => relation.topic),
+                    questionStats: stats
+                };
+            }))
+    });
 };
 
 // All questions with id, number, and topics for an exam
 const getCourseExamWithBasicQuestionInfo = async (req: Request, res: Response) => {
-    const { courseAbbrev, season, year, examNumber } = req.params;
-    const { abbreviation, number } = validCourseRegex(courseAbbrev);
-    const season_type = Season[season.toUpperCase() as keyof typeof Season];
+    const { examResolvable, courseResolvable } = req.params;
 
-    if (!season_type) {
-        throw new InvalidSeasonError("Invalid season");
-    }
-
-    const course = await prisma.course.findFirst({
-        where: {
-            abbreviation: abbreviation.toUpperCase(),
-            number: Number(number),
-            OR: req.published,
-        },
-        include: {
-            semesters: {
-                where: {
-                    season: season_type,
-                    year: Number(year),
-                },
-            },
-        },
-    });
-
-    if (!course) {
-        throw new NotFoundError("Course not found");
-    }
-    if (!course.semesters.length) {
-        throw new NotFoundError("Semester not found");
-    }
-
-    const exam = await prisma.exam.findFirst({
-        where: {
-            number: Number(examNumber),
-            courseId: course.id,
-            semesterId: course.semesters[0].id,
-            OR: req.published,
-        },
+    const exam = await prisma.exam.findUniqueOrThrow({
+        where: await Resolver.exam(examResolvable, courseResolvable),
         include: {
             questions: {
-                where: {
-                    OR: req.published,
-                },
-                select: {
-                    id: true,
-                    number: true,
-                    topics: true,
-                    published: true,
+                include: {
+                    topics: {
+                        include: {
+                            topic: true
+                        }
+                    }
                 },
                 orderBy: {
-                    number: "asc",
-                },
-            },
-        },
+                    number: "asc"
+                }
+            }
+        }
     });
 
-    if (!exam) {
+    if (!exam.flags.published) {
         throw new NotFoundError("Exam not found");
     }
-    res.status(200).send(exam);
+
+    res.status(200).send({
+        ...exam,
+        questions: exam.questions
+            .filter(question => question.flags.published)
+            .map(question => {
+                return {
+                    ...question,
+                    topics: question.topics.map(relation => relation.topic)
+                };
+            })
+    });
 };
 
 // All questions for a specific exam, includes topics within questions.
 const getCourseExamWithFullQuestionInfo = async (req: Request, res: Response) => {
-    const { courseAbbrev, season, year, examNumber } = req.params;
-    const { abbreviation, number } = validCourseRegex(courseAbbrev);
-    const season_type = Season[season.toUpperCase() as keyof typeof Season];
+    const { examResolvable, courseResolvable } = req.params;
 
-    if (!season_type) {
-        throw new InvalidSeasonError("Invalid season");
-    }
-
-    const semester = await prisma.semester.findUnique({
-        where: {
-            season_year: {
-                season: season_type,
-                year: Number(year),
-            },
-        },
-    });
-    if (!semester) {
-        throw new NotFoundError("Semester not found");
-    }
-
-    const course = await prisma.course.findFirst({
-        where: {
-            abbreviation: abbreviation.toUpperCase(),
-            number: Number(number),
-            OR: req.published,
-        },
-    });
-    if (!course) {
-        throw new NotFoundError("Course not found");
-    }
-
-    const exam = await prisma.exam.findFirst({
-        where: {
-            number: Number(examNumber),
-            courseId: course.id,
-            semesterId: semester.id,
-            OR: req.published,
-        },
+    const exam = await prisma.exam.findUniqueOrThrow({
+        where: await Resolver.exam(examResolvable, courseResolvable),
         include: {
             questions: {
-                where: {
-                    OR: req.published,
+                include: {
+                    resources: true,
+                    topics: {
+                        include: {
+                            topic: true
+                        }
+                    }
                 },
                 orderBy: {
-                    number: "asc",
-                },
-                include: {
-                    topics: true,
-                    answerChoices: {
-                        orderBy: {
-                            choiceIndex: "asc",
-                        },
-                        include: {
-                            resources: {
-                                include: {
-                                    image: true,
-                                    code: true,
-                                },
-                            },
-                        },
-                    },
-                    resources: {
-                        include: {
-                            image: true,
-                            code: true,
-                        },
-                    },
-                },
-            },
-        },
+                    number: "asc"
+                }
+            }
+        }
     });
-    if (!exam) {
+
+    if (!exam.flags.published) {
         throw new NotFoundError("Exam not found");
     }
 
-    /* OLD METHOD USING PRISMA ONLY
-    const promises: Promise<number[]>[] = [];
-
-    for (const question of exam.questions) {
-        promises.push(answerChoiceStats(question.id));
-        //promises.push(newStats(question.id, question.answerChoices.map((choice) => choice.choiceIndex)));
-    }
-
-    const resolved = await Promise.all(promises);
-    */
-    const answerStats = await answerChoiceStats(exam.questions.map((question) => question.id));
-    for (let i = 0; i < answerStats.length; i++) {
-        // @ts-expect-error Extend Later
-        exam.questions[i].answerChoiceStats = answerStats[i];
-    }
-
-    res.status(200).send(exam);
+    res.status(200).send({
+        ...exam,
+        questions: await Promise.all(exam.questions
+            .filter(question => question.flags.published)
+            .map(async (question) => {
+                const stats = await questionStats(question.id);
+                return {
+                    ...question,
+                    topics: question.topics.map(relation => relation.topic),
+                    questionStats: stats
+                };
+            }))
+    });
 };
 
 export {

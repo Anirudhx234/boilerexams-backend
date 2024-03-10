@@ -36,27 +36,27 @@ export async function updateExam(req: Request, res: Response) {
     const { courseResolvable, examResolvable } = req.params;
     const options = UpdateExamScheme.parse(req.body);
 
-    const resourceOptions = options.resources.map(resource => {
-        return {
-            where: {
-                id: resource.id
-            },
-            create: {
-                ...resource
-            }
-        };
-    });
+    /* // ToDo update/create pdf
+    const pdf = options.pdf ? await prisma.resource.upsert({
+        where: {
+            id: options.pdf?.id
+        },
+        create: {
+            ...options.pdf
+        },
+        update: {
+            ...options.pdf
+        }
+    }) : undefined;
+
+     */
 
     const exam = await prisma.exam.update({
         where: await Resolver.exam(examResolvable, courseResolvable),
         data: {
             ...options,
-            flags: FlagEncoder.exam(options.flags),
-            resources: {
-                connectOrCreate: {
-                    ...resourceOptions
-                }
-            }
+            pdf: undefined, // ToDo set this
+            flags: FlagEncoder.exam(options.flags)
         }
     });
 

@@ -3,6 +3,8 @@ import msToHMS from "../../utils/msToHMS.js";
 
 const minimumValidSubmissionTime = 0;
 
+// ToDo Rework
+
 const questionStats = async (questionId: string) => {
     const submissions = await prisma.submission.aggregate({
         where: {

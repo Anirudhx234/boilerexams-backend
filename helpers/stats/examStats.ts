@@ -3,12 +3,13 @@ import msToHMS from "../../utils/msToHMS.js";
 
 const minimumValidSubmissionTime = 0;
 
+// ToDo Rework
+
 const examStats = async (examId: string) => {
     const submissions = await prisma.submission.aggregate({
         where: {
             question: {
                 examId: examId,
-                published: true,
             },
             timeSpent: {
                 gte: minimumValidSubmissionTime,
@@ -25,7 +26,6 @@ const examStats = async (examId: string) => {
         where: {
             question: {
                 examId: examId,
-                published: true,
             },
             timeSpent: {
                 gte: minimumValidSubmissionTime,

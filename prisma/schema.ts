@@ -182,7 +182,7 @@ export const CreateExamScheme = z.object({
 });
 
 export const UpdateExamScheme = CreateExamScheme.extend({
-    resources:  z.array(ResourceScheme).default([  ]),
+    pdf:    FileResourceScheme.optional()
 });
 
 export const CreateQuestionScheme = z.object({

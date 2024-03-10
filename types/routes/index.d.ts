@@ -14,10 +14,8 @@ interface CreateCourseOptions {
 
 type QuestionSortCategory = {
     exam?: {
-        semester?: {
-            year?: "asc" | "desc";
-            season?: "asc" | "desc";
-        };
+        year?: "asc" | "desc";
+        season?: "asc" | "desc";
         number?: "asc" | "desc";
     };
     number?: "asc" | "desc";

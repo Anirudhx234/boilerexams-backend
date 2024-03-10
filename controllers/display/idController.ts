@@ -83,16 +83,17 @@ const getExamQuestions = async (req: Request, res: Response) => {
 };
 
 const getCourseTopicQuestions = async (req: Request, res: Response) => {
-    const { courseId, topicId } = req.params;
+    const { topicId } = req.params;
+
     const topic = await prisma.topic.findUnique({
         where: {
             id: topicId,
         },
         select: {
             questions: {
-                where: {
-                    id: courseId,
-                },
+                include: {
+                    question: true
+                }
             },
         },
     });
@@ -100,7 +101,8 @@ const getCourseTopicQuestions = async (req: Request, res: Response) => {
     if (!topic) {
         throw new NotFoundError("Topic not found");
     }
-    return res.status(200).send(topic.questions);
+
+    return res.status(200).send(topic.questions.map(relation => relation.question));
 };
 
 export { getCourse, getCourseTopics, getExam, getExamQuestions, getCourseTopicQuestions };

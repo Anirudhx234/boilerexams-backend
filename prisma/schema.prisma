@@ -38,10 +38,10 @@ model Exam {
   disclaimer String?
   courseId   String
   flags      Int
+  pdf        Resource?
   course     Course     @relation(fields: [courseId], references: [id], onDelete: Cascade)
   questions  Question[]
   feedback   Feedback[]
-  resources  Resource[] @relation("ExamToResource")
 
   @@unique([number, year, season, courseId])
 }
@@ -87,10 +87,11 @@ model Resource {
   id            String       @id @default(uuid())
   type          ResourceType
   data          Json
+  examId        String?      @unique
   applicationId String?      @unique
+  exam          Exam?        @relation(fields: [examId], references: [id], onDelete: Cascade)
   application   Application? @relation(fields: [applicationId], references: [id], onDelete: Cascade)
   courses       Course[]     @relation("CourseToResource")
-  exams         Exam[]       @relation("ExamToResource")
   questions     Question[]   @relation("QuestionToResource")
 }
 

@@ -151,7 +151,6 @@ export async function updateQuestion(req: Request, res: Response) {
     res.status(200).send({
         ...updatedQuestion,
         topics: updatedQuestion.topics.map(relation => relation.topic),
-        flags: FlagDecoder.question(question.flags)
     });
 }
 
@@ -172,20 +171,15 @@ export async function toggleQuestionPublished(req: Request, res: Response) {
         }
     });
 
-
-
     if (!question) {
         throw new NotFoundError("Question not found");
     }
 
-    const examFlags = FlagDecoder.exam(question.exam.flags);
-
-    if (!examFlags.published) {
+    if (!question.exam.flags.published) {
         throw new APIError("Exam must be published", 409);
     }
 
-    const questionFlags = FlagDecoder.question(question.flags);
-    const status = !questionFlags.published;
+    const status = !question.flags.published;
 
     await prisma.question.update({
         where: {
@@ -193,7 +187,7 @@ export async function toggleQuestionPublished(req: Request, res: Response) {
         },
         data: {
             flags: FlagEncoder.question({
-                ...questionFlags,
+                ...question.flags,
                 published: status
             })
         },

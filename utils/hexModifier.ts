@@ -1,5 +1,8 @@
 import { APIError } from "../middleware/errors/index.js";
 
+// ToDo Deprecated
+//
+
 const hexModifier = (color: string, decimal: number): string => {
     if (color === "") {
         return "";

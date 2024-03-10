@@ -1,5 +1,7 @@
 import { InvalidCourseError } from "../middleware/errors/index.js";
 
+// ToDo Deprecated
+
 const validCourseRegex = (courseAbbrev: string) => {
     const regex = /([a-zA-Z]+)(\d+)/;
     const matches = courseAbbrev.match(regex);

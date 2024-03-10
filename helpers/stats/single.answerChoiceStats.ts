@@ -1,5 +1,6 @@
 import prisma from "../../libs/prisma.js";
-import _ from "lodash";
+
+// ToDo Deprecated
 
 const answerChoiceStats = async (questionId: string) => {
     const stats: any = await prisma.$queryRaw`
@@ -22,5 +23,3 @@ const answerChoiceStats = async (questionId: string) => {
     const rawStats: number[] = stats.map((stat) => Number(stat.submissionCount));
     return rawStats;
 };
-
-export default answerChoiceStats;
