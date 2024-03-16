@@ -21,9 +21,9 @@ model Course {
   flags        Int
   events       Event[]
   exams        Exam[]
+  feedback     Feedback[]
   questions    Question[]
   topics       Topic[]
-  feedback     Feedback[]
   resources    Resource[]  @relation("CourseToResource")
   users        User[]      @relation("CourseToUser")
 
@@ -38,10 +38,10 @@ model Exam {
   disclaimer String?
   courseId   String
   flags      Int
-  pdf        Resource?
   course     Course     @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  questions  Question[]
   feedback   Feedback[]
+  questions  Question[]
+  resources  Resource[] @relation("ExamToResource")
 
   @@unique([number, year, season, courseId])
 }
@@ -56,13 +56,13 @@ model Question {
   courseId    String
   parentId    String?
   flags       Int
+  feedback    Feedback[]
   course      Course            @relation(fields: [courseId], references: [id], onDelete: Cascade)
   exam        Exam              @relation(fields: [examId], references: [id], onDelete: Cascade)
   parent      Question?         @relation("QuestionToQuestion", fields: [parentId], references: [id], onDelete: Cascade)
   children    Question[]        @relation("QuestionToQuestion")
   topics      QuestionToTopic[]
   submissions Submission[]
-  feedback    Feedback[]
   resources   Resource[]        @relation("QuestionToResource")
 
   @@unique([number, examId])
@@ -87,11 +87,10 @@ model Resource {
   id            String       @id @default(uuid())
   type          ResourceType
   data          Json
-  examId        String?      @unique
   applicationId String?      @unique
-  exam          Exam?        @relation(fields: [examId], references: [id], onDelete: Cascade)
   application   Application? @relation(fields: [applicationId], references: [id], onDelete: Cascade)
   courses       Course[]     @relation("CourseToResource")
+  exams         Exam[]       @relation("ExamToResource")
   questions     Question[]   @relation("QuestionToResource")
 }
 
@@ -116,10 +115,10 @@ model Feedback {
   questionId String?
   createdAt  DateTime       @default(now())
   updatedAt  DateTime       @updatedAt
-  user       User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
   course     Course?        @relation(fields: [courseId], references: [id], onDelete: Cascade)
   exam       Exam?          @relation(fields: [examId], references: [id], onDelete: Cascade)
   question   Question?      @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  user       User?          @relation(fields: [userId], references: [id])
 }
 
 model CourseRequest {
@@ -129,6 +128,8 @@ model CourseRequest {
   name         String
   subject      String
   count        Int    @default(1)
+
+  @@unique([abbreviation, number])
 }
 
 model Application {
@@ -163,9 +164,9 @@ model User {
   profilePicture String?
   accountId      String?       @unique
   accountType    AccountType
+  feedback       Feedback[]
   localAccount   LocalAccount?
   courses        Course[]      @relation("CourseToUser")
-  feedback       Feedback[]
 }
 
 model LocalAccount {
@@ -177,11 +178,11 @@ model LocalAccount {
 }
 
 model Session {
-  sid    String   @id(map: "session_pkey") @db.VarChar
+  sid    String   @id @db.VarChar
   sess   Json     @db.Json
   expire DateTime @db.Timestamp(6)
 
-  @@index([expire], map: "IDX_session_expire")
+  @@index([expire])
 }
 
 model QuestionToTopic {
@@ -204,16 +205,9 @@ enum QuestionType {
 }
 
 enum ResourceType {
-  COURSE_LOGO
-  QUESTION_IMAGE
-  SOLUTION_IMAGE
-  ANSWER_CHOICE_IMAGE
-  SHORT_SOLUTION_VIDEO
-  LONG_SOLUTION_VIDEO
-  QUESTION_CODE
-  ANSWER_CHOICE_CODE
-  EXAM_PDF
-  RESUME_PDF
+  FILE
+  CODE
+  URL
 }
 
 enum AccountType {

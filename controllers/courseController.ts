@@ -5,7 +5,6 @@ import { NotFoundError } from "../middleware/errors/index.js";
 import { PurdueIoAPI } from "../services/purdue.io.js";
 import {
     CreateCourseScheme,
-    FileResourceData,
     UpdateCourseScheme
 } from "../prisma/schema.js";
 import Resolver from "../helpers/resolver.js";
@@ -33,7 +32,6 @@ export async function createCourse(req: Request, res: Response) {
             name: purdueIoCourse.Title,
             subject: purdueIoSubject.Name,
             flags: FlagEncoder.course(options.flags),
-            resources: { },
         },
         include: {
             exams: true,
@@ -53,26 +51,6 @@ export async function updateCourse(req: Request, res: Response) {
     const purdueIoSubject = await PurdueIoAPI.getSubject(options.abbreviation);
     const purdueIoCourse = await PurdueIoAPI.getCourse(purdueIoSubject, options.number);
 
-    // Upload image resource images to S3
-    for (const resource of options.resources) {
-        const result = FileResourceData.safeParse(resource.data);
-        if (result.success) {
-            result.data.url = await uploadGraphic(result.data.url, req.file);
-            resource.data = result.data;
-        }
-    }
-
-    const resourceOptions = options.resources.map(resource => {
-        return {
-            where: {
-                id: resource.id
-            },
-            create: {
-                ...resource
-            }
-        };
-    });
-
     const course = await prisma.course.update({
         where: Resolver.course(courseResolvable),
         data: {
@@ -80,16 +58,6 @@ export async function updateCourse(req: Request, res: Response) {
             name: purdueIoCourse.Title,
             subject: purdueIoSubject.Name,
             flags: FlagEncoder.course(options.flags),
-            resources: {
-                connectOrCreate: {
-                    ...resourceOptions
-                },
-                deleteMany: {
-                    id: {
-                        notIn: options.resources.map(resource => resource.id)
-                    }
-                }
-            },
         }
     });
 

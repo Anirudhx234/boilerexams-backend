@@ -55,7 +55,6 @@ export async function updateExam(req: Request, res: Response) {
         where: await Resolver.exam(examResolvable, courseResolvable),
         data: {
             ...options,
-            pdf: undefined, // ToDo set this
             flags: FlagEncoder.exam(options.flags)
         }
     });

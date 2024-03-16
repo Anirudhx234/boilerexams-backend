@@ -10,7 +10,7 @@ import {
     BugReportData,
     QuestionReportData,
     FeatureRequestData,
-    VideoFeedbackData,
+    VideoFeedbackData, CourseRequestScheme
 } from "../prisma/schema.js";
 
 export async function getAllVideoFeedback(req: Request, res: Response) {
@@ -138,10 +138,10 @@ export async function createApplication(req: Request, res: Response) {
             year: year,
             resume: {
                 create: {
-                    type: ResourceType.RESUME_PDF,
+                    type: ResourceType.URL,
                     data: {
-                        pdfKey: pdfData.Key,
-                        pdfLink: pdfData.Location,
+                        key: pdfData.Key,
+                        url: pdfData.Location,
                     }
                 }
             }
@@ -153,37 +153,39 @@ export async function createApplication(req: Request, res: Response) {
 }
 
 export async function requestCourse(req: Request, res: Response) {
-    const { abbreviation, number } = req.body;
+    const options = CourseRequestScheme.parse(req.body);
+    options.number = options.number < 100 ? options.number * 100 : options.number;
 
     const existingCourse = await prisma.course.findUnique({
         where: {
             abbreviation_number: {
-                abbreviation: abbreviation,
-                number: Number(number)
+                abbreviation: options.abbreviation,
+                number: options.number,
             }
         },
     });
 
     if (existingCourse) throw new CourseAlreadyExistsError(`Existing Course Requested`);
 
-    const purdueIoSubject = await PurdueIoAPI.getSubject(abbreviation);
-    const purdueIoCourse = await PurdueIoAPI.getCourse(purdueIoSubject, Number(number));
+    const subject = await PurdueIoAPI.getSubject(options.abbreviation);
+    const course = await PurdueIoAPI.getCourse(subject, options.number);
 
+    // ToDo figure out why this has wrong argument type
     const courseRequest = await prisma.courseRequest.upsert({
         where: {
-            id: purdueIoCourse.Id,
+            id: course.Id,
         },
         create: {
-            id: purdueIoCourse.Id,
-            subject: purdueIoSubject.Name,
-            abbreviation: purdueIoSubject.Abbreviation,
-            name: purdueIoCourse.Title,
-            number: Number(purdueIoCourse.Number)
+            id: course.Id,
+            name: course.Title,
+            subject: subject.Name,
+            abbreviation: subject.Abbreviation,
+            number: Number(course.Number),
         },
         update: {
             count: {
-                increment: 1
-            }
+                increment: 1, // Increment Request Count if CourseRequest exists
+            },
         },
     });
 

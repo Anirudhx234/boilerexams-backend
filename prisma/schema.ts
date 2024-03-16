@@ -2,9 +2,11 @@ import { z } from "zod";
 import { FeedbackStatus, FeedbackType, QuestionType, ResourceType, Season, StudyMode } from "@prisma/client";
 import { randomUUID } from "node:crypto";
 
+export const Epoch = new Date(2019, 10);
+
 export const MultipleChoiceAnswerChoice = z.object({
-    index:          z.number(),
-    body:           z.string().optional(),
+    index:  z.number(),
+    body:   z.string().optional(),
 });
 
 export const MultipleChoiceQuestionData = z.object({
@@ -22,9 +24,7 @@ export const ShortAnswerQuestionData = FreeResponseQuestionData;
 
 export const FillInBlankQuestionData = FreeResponseQuestionData;
 
-export const MultipleChoiceSubmissionData = z.array(
-    z.number()
-);
+export const MultipleChoiceSubmissionData = z.array(z.number());
 
 export const FreeResponseSubmissionData = z.string().optional();
 
@@ -32,59 +32,33 @@ export const ShortAnswerSubmissionData = FreeResponseSubmissionData;
 
 export const FillInBlankSubmissionData = FillInBlankQuestionData;
 
-export const FileResourceData = z.object({
-    key:        z.string().optional(),
-    url:        z.string().optional(),
-    altText:    z.string().optional(),
-    mathpixId:  z.string().optional()
-});
-
-export const VideoResourceData = z.object({
-    url:    z.string().url()
+export const UrlResourceData = z.object({
+    url:    z.string().url(),
+    key:    z.string().optional(),
+    index:  z.number().optional()
 });
 
 export const CodeResourceData = z.object({
     language:   z.enum([ "C", "PYTHON" ]),
     content:    z.string(),
+    index:      z.number().optional()
 });
 
-export const AnswerChoiceScheme = z.object({
-    index: z.number()
-});
-
-export const FileResourceScheme = z.object({
+export const UrlResourceScheme = z.object({
     id:     z.string().uuid().default(randomUUID),
-    type:   z.union([
-        z.literal(ResourceType.COURSE_LOGO),
-        z.literal(ResourceType.QUESTION_IMAGE),
-        z.literal(ResourceType.SOLUTION_IMAGE),
-        z.literal(ResourceType.ANSWER_CHOICE_IMAGE),
-        z.literal(ResourceType.EXAM_PDF),
-        z.literal(ResourceType.RESUME_PDF)
-    ]),
-    data:   FileResourceData
-});
-
-export const VideoResourceScheme = z.object({
-    id:     z.string().uuid().default(randomUUID),
-    type:   z.union([
-        z.literal(ResourceType.SHORT_SOLUTION_VIDEO),
-        z.literal(ResourceType.LONG_SOLUTION_VIDEO),
-    ]),
-    data:   VideoResourceData
+    type:   z.literal(ResourceType.URL),
+    data:   UrlResourceData
 });
 
 export const CodeResourceScheme = z.object({
     id:     z.string().uuid().default(randomUUID),
-    type:   z.union([
-        z.literal(ResourceType.QUESTION_CODE),
-        z.literal(ResourceType.ANSWER_CHOICE_CODE),
-    ]),
+    type:   z.literal(ResourceType.CODE),
     data:   CodeResourceData
 });
 
 export const ResourceScheme = z.union([
-    FileResourceScheme, VideoResourceScheme, CodeResourceScheme
+    UrlResourceScheme,
+    CodeResourceScheme
 ]);
 
 export const CreateTopicScheme = z.object({
@@ -168,7 +142,6 @@ export const CreateCourseScheme = z.object({
     disclaimer:     z.string().optional(),
     modes:          z.array(z.nativeEnum(StudyMode)).default([ StudyMode.EXAM, StudyMode.TIMED_EXAM, StudyMode.TOPIC ]),
     flags:          CourseFlagsScheme.optional().default({  }),
-    resources:      z.array(ResourceScheme).optional().default([  ]),
 });
 
 export const UpdateCourseScheme = CreateCourseScheme;
@@ -181,9 +154,7 @@ export const CreateExamScheme = z.object({
     flags:      ExamFlagsScheme.optional().default({  })
 });
 
-export const UpdateExamScheme = CreateExamScheme.extend({
-    pdf:    FileResourceScheme.optional()
-});
+export const UpdateExamScheme = CreateExamScheme;
 
 export const CreateQuestionScheme = z.object({
     type:       z.nativeEnum(QuestionType),
@@ -201,10 +172,17 @@ export const CreateQuestionScheme = z.object({
 
 export const UpdateQuestionScheme = CreateQuestionScheme.extend({
     topics:     z.array(z.union([ CreateTopicScheme, UpdateTopicScheme ])),
-    resources:  z.array(ResourceScheme).default([  ]),
 });
 
-export const CreateSubmissionScheme = z.object({
+export const UpdateSubmissionScheme = z.object({
+    timeStarted:    z.coerce.date().min(Epoch),
+    timeEnded:      z.coerce.date().max(new Date()),
+    timeSpent:      z.number(),
+    timeSpentVideo: z.number().default(0),
+    timeSpentModal: z.number().default(0),
+});
+
+export const CreateSubmissionScheme = UpdateSubmissionScheme.extend({
     type:           z.nativeEnum(QuestionType),
     data:           z.union([
         MultipleChoiceSubmissionData,
@@ -213,20 +191,7 @@ export const CreateSubmissionScheme = z.object({
         FillInBlankSubmissionData
     ]),
     correct:        z.boolean(),
-    timeStarted:    z.coerce.date().min(new Date(2019, 10)),
-    timeEnded:      z.coerce.date().max(new Date()),
-    timeSpent:      z.number(),
-    timeSpentVideo: z.number().default(0),
-    timeSpentModal: z.number().default(0),
     osFamily:       z.string().optional(),
-});
-
-export const UpdateSubmissionScheme = z.object({
-    timeStarted:    z.coerce.date().min(new Date(2019, 10)),
-    timeEnded:      z.coerce.date().max(new Date()),
-    timeSpent:      z.number(),
-    timeSpentVideo: z.number().default(0),
-    timeSpentModal: z.number().default(0),
 });
 
 export const ReorderQuestions = z.array(z.string().uuid());
@@ -250,15 +215,6 @@ export const VideoFeedbackData = z.object({
     productionQuality:  z.number().min(1).max(5),
     recommended:        z.boolean(),
     content:            z.string().optional()
-});
-
-export const CourseRequestData = z.object({
-    id:             z.string().uuid(),
-    subject:        z.string(),
-    abbreviation:   z.string(),
-    name:           z.string(),
-    number:         z.number().min(10000).max(99999),
-    count:          z.number().min(1).default(1),
 });
 
 export const BaseFeedbackScheme = z.object({
@@ -291,5 +247,6 @@ export const VideoFeedbackScheme = BaseFeedbackScheme.extend({
 });
 
 export const CourseRequestScheme = BaseFeedbackScheme.extend({
-    data:   CourseRequestData
+    abbreviation:   z.string().toUpperCase(),
+    number:         z.number().min(100).max(99999)
 });

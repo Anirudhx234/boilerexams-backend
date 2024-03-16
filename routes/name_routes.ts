@@ -26,6 +26,7 @@ router.get("/courses", generalLimiter, sendPublished, asyncWrapper(getCourses));
 router.get("/topics", generalLimiter, sendPublished, asyncWrapper(getAllTopics));
 
 // All courses with relations. Use for testing only.
+// ToDo Deprecated
 // app.get("/courses/all", generalLimiter, sendPublished, asyncWrapper(getAllCourses));
 
 // CURRENTLY USED
@@ -49,11 +50,11 @@ router.get("/courses/:courseResolvable/exams/questions", generalLimiter, sendPub
 
 // CURRENTLY USED
 // All questions with id, number, topics, published status for a topic in a course.
-router.get("/courses/:courseResolvable/topics/:topicName", generalLimiter, sendPublished, asyncWrapper(getCourseTopicWithBasicQuestionInfo));
+router.get("/courses/:courseResolvable/topics/:topicResolvable", generalLimiter, sendPublished, asyncWrapper(getCourseTopicWithBasicQuestionInfo));
 
 // Full question information for specific topic
 router.get(
-    "/courses/:courseResolvable/topics/:topicName/questions",
+    "/courses/:courseResolvable/topics/:topicResolvable/questions",
     generalLimiter,
     sendPublished,
     asyncWrapper(getCourseTopicWithFullQuestionInfo),

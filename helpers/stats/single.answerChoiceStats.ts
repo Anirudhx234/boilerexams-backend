@@ -9,9 +9,9 @@ const answerChoiceStats = async (questionId: string) => {
         FROM
             "Question" q
         LEFT JOIN
-            "AnswerChoice" ac ON q.id = ac."questionId"
+            "Data" ac ON q.id = ac."questionId"
         LEFT JOIN
-            "Submission" s ON q.id = s."questionId" AND ac."choiceIndex" = ANY(s."selectedChoiceIndices")
+            "Submission" s ON q.id = s."questionId" AND ac."data" = ANY(s."data")
         WHERE
             q.id = ${questionId}
         GROUP BY

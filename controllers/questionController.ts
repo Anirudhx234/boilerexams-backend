@@ -1,7 +1,6 @@
 import prisma from "../libs/prisma.js";
 import { Request, Response } from "express";
 import { APIError, NotFoundError } from "../middleware/errors/index.js";
-import answerChoiceStats from "../helpers/stats/single.answerChoiceStats.js";
 import Resolver from "../helpers/resolver.js";
 import {
     CreateQuestionScheme,
@@ -9,8 +8,8 @@ import {
     UpdateQuestionScheme
 } from "../prisma/schema.js";
 import { z } from "zod";
-import FlagDecoder from "../helpers/decoder.js";
 import FlagEncoder from "../helpers/encoder.js";
+import questionStats from "../helpers/stats/questionStats.js";
 
 export async function createQuestion(req: Request, res: Response) {
     const { examResolvable, courseResolvable } = req.params;
@@ -61,7 +60,7 @@ export async function getQuestion(req: Request, res: Response) {
     res.status(200).send({
         ...question,
         topics: question.topics.map(relation => relation.topic),
-        answerChoiceStats: await answerChoiceStats(question.id)
+        answerChoiceStats: await questionStats(question.id)
     });
 }
 
@@ -99,6 +98,7 @@ export async function updateQuestion(req: Request, res: Response) {
         };
     });
 
+    /* ToDo Work on Resources
     const resourceOptions = options.resources.map(resource => {
         return {
             where: {
@@ -109,6 +109,8 @@ export async function updateQuestion(req: Request, res: Response) {
             }
         };
     });
+
+     */
 
     const updatedQuestion = await prisma.question.update({
         where: {
@@ -127,6 +129,7 @@ export async function updateQuestion(req: Request, res: Response) {
                     }
                 }
             },
+            /* ToDo Work on Resources
             resources: {
                 connectOrCreate: {
                     ...resourceOptions
@@ -137,6 +140,7 @@ export async function updateQuestion(req: Request, res: Response) {
                     }
                 }
             },
+            */
         },
         include: {
             topics: {
@@ -225,15 +229,15 @@ export async function createQuestionSubmission(req: Request, res: Response) {
     }
 
     const submission = await prisma.submission.create({
-        data: {
-            ...options,
-            questionId: question.id
+        include: {
+            question: true
         },
+        data: options
     });
     res.status(200).send(submission);
 }
 
-export async function bulkQuestionSubmission(req: Request, res: Response) {
+export async function batchCreateQuestionSubmission(req: Request, res: Response) {
     const { questionResolvable, topicResolvable, examResolvable, courseResolvable } = req.params;
 
     const question = await prisma.question.findUnique({

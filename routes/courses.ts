@@ -7,10 +7,10 @@ const router = express.Router();
 
 router.post("/courses", upload.single("image"), asyncWrapper(createCourse));
 
-router.put("/courses/:courseId", upload.single("image"), asyncWrapper(updateCourse));
+router.put("/courses/:courseResolvable", upload.single("image"), asyncWrapper(updateCourse));
 
-router.put("/courses/:courseId/togglePublished", asyncWrapper(toggleCoursePublished));
+router.put("/courses/:courseResolvable/togglePublished", asyncWrapper(toggleCoursePublished));
 
-router.delete("/courses/:courseId/hardDelete", asyncWrapper(deleteCourse));
+router.delete("/courses/:courseResolvable/hardDelete", asyncWrapper(deleteCourse));
 
 export default router;
