@@ -1,9 +1,5 @@
-import prisma from "../../libs/prisma.js";
-import _ from "lodash";
-import { Prisma } from "@prisma/client";
-
 // ToDo Deprecated
-
+/*
 const answerChoiceStats = async (questionIds: string[]) => {
     if (questionIds.length == 0) {
         return [];

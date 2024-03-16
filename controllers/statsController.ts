@@ -1,16 +1,10 @@
-import prisma from "../libs/prisma.js";
-import { Request, Response } from "express";
-import { NotFoundError } from "../middleware/errors/index.js";
-import questionStats from "../helpers/stats/questionStats.js";
-import examStats from "../helpers/stats/examStats.js";
-import msToHMS from "../utils/msToHMS.js";
-import { allCoursesStats, courseStats } from "../helpers/stats/courseStats.js";
-import answerChoiceStats from "../helpers/stats/single.answerChoiceStats.js";
-
 const OLD_SUBMISSIONS = 1920571;
 const OLD_TIME_SPENT_HRS = 95074.53;
 const OLD_PERCENT_CORRECT = 0.6571;
 const minimumValidSubmissionTime = 0;
+
+// ToDo Fix All
+/*
 
 const getGeneralStats = async (req: Request, res: Response) => {
     const promises: Promise<any>[] = [];
@@ -182,7 +176,7 @@ const getQuestionStats = async (req: Request, res: Response) => {
 
     const mainStats = await questionStats(questionId);
 
-    const answerStats = await answerChoiceStats(questionId);
+    //const answerStats = await answerChoiceStats(questionId);
 
     const stats = {
         questionStats: mainStats,
@@ -243,4 +237,6 @@ const getSubmissionStats = async (req: Request, res: Response) => {
     res.status(200).json(submissionsStats);
 };
 
-export { getGeneralStats, getCourseExamsStats, getQuestionStats, getExamStats, getCourseStats, getCourseStatsAll, getSubmissionStats };
+ */
+
+//export { getGeneralStats, getCourseExamsStats, getQuestionStats, getExamStats, getCourseStats, getCourseStatsAll, getSubmissionStats };

@@ -1,7 +1,5 @@
-import prisma from "../../libs/prisma.js";
-
 // ToDo Deprecated
-
+/*
 const answerChoiceStats = async (questionId: string) => {
     const stats: any = await prisma.$queryRaw`
         SELECT
@@ -23,3 +21,5 @@ const answerChoiceStats = async (questionId: string) => {
     const rawStats: number[] = stats.map((stat) => Number(stat.submissionCount));
     return rawStats;
 };
+
+ */
