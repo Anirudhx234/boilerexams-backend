@@ -1,4 +1,4 @@
-name: Deploy API to Docker Hub and EC2 - Production
+name: Deploy API to Docker Hub and Beast - Production
 
 on:
     push:
