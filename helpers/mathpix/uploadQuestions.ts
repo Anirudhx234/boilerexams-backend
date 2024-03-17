@@ -1,29 +1,32 @@
 import prisma from "../../libs/prisma.js";
-import { ResourceType } from "@prisma/client";
+import { QuestionType, ResourceType } from "@prisma/client";
 import axios from "axios";
 import uploadFileToS3 from "../../utils/uploadFileToS3.js";
 
 const uploadQuestions = async (courseId: string, examId: string, questions: any[]) => {
     const promises: Promise<any>[] = [];
-    await questions.forEach(async (question, index) => {
+    for (const question of questions) {
+        const index = questions.indexOf(question);
         const newQuestion = {
             number: index + 1,
-            body: question[0].content,
+            body: question[0].content
         };
         const tempResources = question[0].hasImage ? question[0].imageLinks : [];
-        const questionResources = await uploadResources(tempResources);
+        const questionResources = uploadResources(tempResources);
         question.shift();
         const answerChoices: any[] = [];
-        question.forEach(async (answerChoice, index) => {
+
+        for (const answerChoice of question) {
+            const index1 = question.indexOf(answerChoice);
             const ac = {
-                choiceIndex: index,
-                body: answerChoice.content,
+                choiceIndex: index1,
+                body: answerChoice.content
                 //resources: [] as any
             };
             //resources = (answerChoice.hasImage) ? (answerChoice.imageLinks) : ([]),
             //ac.resources = await uploadResources(resources)
             answerChoices.push(ac);
-        });
+        }
 
         promises.push(
             prisma.question.create({
@@ -31,42 +34,24 @@ const uploadQuestions = async (courseId: string, examId: string, questions: any[
                     courseId: courseId,
                     examId: examId,
                     number: newQuestion.number,
-                    body: newQuestion.body,
-                    answerChoices: {
-                        createMany: {
-                            data: answerChoices,
-                        },
+                    type: QuestionType.MULTIPLE_CHOICE,
+                    data: {
+                        body: newQuestion.body,
+                        answerChoices: answerChoices
                     },
                     resources: {
-                        connect: questionResources?.map((id) => ({ id: id })),
+                        connect: questionResources?.map((id) => ({ id: id }))
                     },
+                    flags: 0
                 },
                 include: {
                     submissions: true,
                     topics: true,
-                    answerChoices: {
-                        orderBy: {
-                            choiceIndex: "asc",
-                        },
-                        include: {
-                            resources: {
-                                include: {
-                                    image: true,
-                                    code: true,
-                                },
-                            },
-                        },
-                    },
-                    resources: {
-                        include: {
-                            image: true,
-                            code: true,
-                        },
-                    },
-                },
-            }),
+                    resources: true
+                }
+            })
         );
-    });
+    }
     return await Promise.all(promises);
 };
 
@@ -81,14 +66,13 @@ const uploadResources = (resources) => {
 
         const data = await uploadFileToS3(image.data, contentType);
 
+        // ToDo make sure this works with new reoources
         const resp = await prisma.resource.create({
             data: {
-                type: ResourceType.IMAGE,
-                image: {
-                    create: {
-                        key: data.Key,
-                        url: data.Location,
-                    },
+                type: ResourceType.QUESTION_IMAGE,
+                data: {
+                    key: data.Key,
+                    url: data.Location,
                 },
             },
         });

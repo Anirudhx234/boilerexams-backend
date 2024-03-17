@@ -44,22 +44,7 @@ export const CodeResourceData = z.object({
     index:      z.number().optional()
 });
 
-export const UrlResourceScheme = z.object({
-    id:     z.string().uuid().default(randomUUID),
-    type:   z.literal(ResourceType.URL),
-    data:   UrlResourceData
-});
-
-export const CodeResourceScheme = z.object({
-    id:     z.string().uuid().default(randomUUID),
-    type:   z.literal(ResourceType.CODE),
-    data:   CodeResourceData
-});
-
-export const ResourceScheme = z.union([
-    UrlResourceScheme,
-    CodeResourceScheme
-]);
+export const ResourceScheme = z.object({});
 
 export const CreateTopicScheme = z.object({
     id:     z.string().uuid().default(randomUUID),

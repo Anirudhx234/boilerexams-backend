@@ -1,11 +1,6 @@
-import prisma from "../libs/prisma.js";
-import { ResourceType } from "@prisma/client";
-import { Request, Response } from "express";
-import axios from "axios";
-import { APIError } from "../middleware/errors/index.js";
-import uploadFileToS3 from "../utils/uploadFileToS3.js";
-import { FileResourceScheme } from "../prisma/schema.js";
 
+
+/*
 const getResource = async (req: Request, res: Response) => {
     const { resourceId } = req.params;
 
@@ -155,3 +150,5 @@ export {
     updateCodeResource,
     deleteResource,
 };
+
+ */

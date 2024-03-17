@@ -1,15 +1,4 @@
 import express from "express";
-import {
-    createCodeResource,
-    createImageResource,
-    createImageResourceFromLink,
-    deleteResource,
-    getResource,
-    updateImageResource,
-    updateCodeResource,
-} from "../controllers/resourceController.js";
-import asyncWrapper from "../middleware/wrappers/asyncWrapper.js";
-import upload from "../middleware/multer/image.js";
 
 const router = express.Router();
 

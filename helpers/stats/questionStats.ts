@@ -5,7 +5,9 @@ const minimumValidSubmissionTime = 0;
 
 // ToDo Rework
 
+
 const questionStats = async (questionId: string) => {
+    /*
     const submissions = await prisma.submission.aggregate({
         where: {
             question: {
@@ -45,6 +47,8 @@ const questionStats = async (questionId: string) => {
         totalSubmissions: submissions._count,
         totalCorrectSubmissions: correctSubmissions,
     };
+
+     */
 };
 
 export default questionStats;
