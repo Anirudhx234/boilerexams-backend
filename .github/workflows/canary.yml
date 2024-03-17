@@ -3,7 +3,7 @@ name: Deploy API to Docker Hub and Beast - Canary
 on:
     push:
         branches:
-            - "refactor-prisma"
+            - "canary"
 
 jobs:
     deploy:
