@@ -38,12 +38,15 @@ app.use(routes);
 app.use(errorHandler);
 
 const getPORT = () => {
-    if (process.env.NODE_ENV === "production") {
-        return process.env.PORT || 8080;
-    } else {
-        return process.env.DEV_PORT || 8081;
+    if (process.env.NODE_ENV === "canary") {
+        return process.env.PORT || 8082;
     }
+    if (process.env.NODE_ENV == "development") {
+        return process.env.PORT || 8081;
+    }
+    return process.env.DEV_PORT || 8080;
 };
+
 const PORT = getPORT();
 
 app.listen(PORT, () => {

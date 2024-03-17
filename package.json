@@ -12,13 +12,15 @@
     "seed": "node prisma/seed.ts",
     "build": "rimraf dist && tsc --build",
     "dev": "dotenv -e .env.development npm run nodemon",
+    "canary": "dotenv -e .env.canary npm run nodemon",
     "nodemon": "nodemon --config config/nodemon.json",
     "starthotfix": "cross-env NODE_ENV=development node --loader ts-node/esm server.ts",
     "deploy": "npx prisma migrate deploy",
     "start": "npm run deploy && node dist/server.js",
     "dev:remote": "npm run deploy && cross-env NODE_ENV=development REMOTE=enabled node dist/server.js",
     "prod": "npm run deploy && cross-env NODE_ENV=production REMOTE=enabled node dist/server.js",
-    "bun-dev": "export NODE_ENV=development && bun --watch server.ts"
+    "bun-dev": "export NODE_ENV=development && bun --env-file=./.env.development --watch server.ts",
+    "bun-canary": "export NODE_ENV=canary && bun --env-file=./.env.canary --watch server.ts"
   },
   "type": "module",
   "keywords": [],

@@ -11,7 +11,7 @@ services:
     #  ports:
     #    - "8081:8081"
     #  env_file:
-    #    - ./.env.development
+    #    - ./.env.production.development
     #  volumes:
     #    - ./:/app
     #    - /app/node_modules

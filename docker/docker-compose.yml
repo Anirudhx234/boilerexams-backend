@@ -10,7 +10,7 @@ services:
         container_name: production
         image: anirudhx234/boilerexams-backend:production
         env_file:
-            - ../.env.production
+            - ../.env.production.production
         restart: always
         ports:
             - "8080:8080"
