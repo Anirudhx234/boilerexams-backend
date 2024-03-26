@@ -12,7 +12,7 @@ function prismaClientSingleton() {
                     if (args.data.type == ResourceType.QUESTION_IMAGE) {
                         // ToDo Test if this works
 
-                        const file = args.data.data as unknown as Express.Multer.File;
+                        const file = args.data.data as any;
                         const { Location, Key} = await uploadFileToS3(file.buffer, file.mimetype);
                         args.data.data = {
                             url: Location,

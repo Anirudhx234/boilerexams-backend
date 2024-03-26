@@ -11,7 +11,7 @@ import Resolver from "../helpers/resolver.js";
 import FlagEncoder from "../helpers/encoder.js";
 
 // ToDo handle multiple graphic resource uploads that are file-based
-export async function uploadGraphic(graphicLink?: string, file?: Express.Multer.File) {
+export async function uploadGraphic(graphicLink?: string, file?) {
     if (file) {
         const data = await uploadFileToS3(file.buffer, file.mimetype);
         return data.Location;
