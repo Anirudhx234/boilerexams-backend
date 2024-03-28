@@ -2,8 +2,13 @@ import express from "express";
 import { createCourse, deleteCourse, toggleCoursePublished, updateCourse } from "../controllers/courseController.js";
 import asyncWrapper from "../middleware/wrappers/asyncWrapper.js";
 import upload from "../middleware/multer/image.js";
+import generalLimiter from "../middleware/rateLimiting/generalLimiter.js";
+import sendPublished from "../middleware/auth/sendPublished.js";
+import { getCourses } from "../controllers/display/nameController.js";
 
 const router = express.Router();
+
+router.get("/", generalLimiter, sendPublished, asyncWrapper(getCourses));
 
 router.post("/courses", upload.single("image"), asyncWrapper(createCourse));
 

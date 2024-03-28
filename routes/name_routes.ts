@@ -20,7 +20,7 @@ const router = express.Router();
 
 // CURRENTLY USED
 // Get all courses
-router.get("/courses", generalLimiter, sendPublished, asyncWrapper(getCourses));
+router.get("/courses", );
 
 // All topics metadata, no relations
 router.get("/topics", generalLimiter, sendPublished, asyncWrapper(getAllTopics));

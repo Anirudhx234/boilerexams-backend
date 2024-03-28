@@ -10,7 +10,7 @@ function prismaClientSingleton() {
             resource: {
                 // Hook into resource create query
                 async create({ query, args}) {
-                    if (args.data.type == ResourceType.QUESTION_IMAGE) {
+                    if (args.data.type == ResourceType.IMAGE) {
                         // ToDo Test if this works
 
                         const file = args.data.data as any;
@@ -19,7 +19,7 @@ function prismaClientSingleton() {
                             url: Location,
                             key: Key
                         };
-                        args.data.type = ResourceType.QUESTION_IMAGE;
+                        args.data.type = ResourceType.IMAGE;
                     }
 
                     return query(args);
@@ -28,7 +28,7 @@ function prismaClientSingleton() {
                 async delete({ query, args }) {
                     const resource = await query(args);
 
-                    if (resource.type == ResourceType.QUESTION_IMAGE) {
+                    if (resource.type == ResourceType.IMAGE) {
                         const result = UrlResourceData.safeParse(resource.data);
 
                         if (result.success) {
