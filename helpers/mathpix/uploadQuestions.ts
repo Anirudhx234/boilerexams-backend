@@ -69,7 +69,7 @@ const uploadResources = (resources) => {
         // ToDo make sure this works with new reoources
         const resp = await prisma.resource.create({
             data: {
-                type: ResourceType.QUESTION_IMAGE,
+                type: ResourceType.IMAGE,
                 data: {
                     key: data.Key,
                     url: data.Location,

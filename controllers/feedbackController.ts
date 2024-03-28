@@ -138,7 +138,7 @@ export async function createApplication(req: Request, res: Response) {
             year: year,
             resume: {
                 create: {
-                    type: ResourceType.RESUME_PDF,
+                    type: ResourceType.PDF,
                     data: {
                         key: pdfData.Key,
                         url: pdfData.Location,
