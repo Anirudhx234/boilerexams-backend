@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { FeedbackStatus, FeedbackType, QuestionType, ResourceType, Season, StudyMode } from "@prisma/client";
+import { FeedbackStatus, FeedbackType, QuestionType, Season, StudyMode } from "@prisma/client";
 import { randomUUID } from "node:crypto";
 
 export const Epoch = new Date(2019, 10);
@@ -10,7 +10,7 @@ export const MultipleChoiceAnswerChoice = z.object({
 });
 
 export const MultipleChoiceQuestionData = z.object({
-    body:           z.string(),
+    body:           z.string().optional(),
     answerChoices:  z.array(MultipleChoiceAnswerChoice),
     solution:       z.array(z.number()),
 });
@@ -39,7 +39,7 @@ export const UrlResourceData = z.object({
 });
 
 export const CodeResourceData = z.object({
-    language:   z.enum([ "C", "PYTHON" ]),
+    language:   z.enum([ "C", "JAVA", "PYTHON" ]),
     content:    z.string(),
     index:      z.number().optional()
 });
@@ -184,11 +184,11 @@ export const ReorderQuestions = z.array(z.string().uuid());
 export const FeatureRequestData = z.object({
     title:      z.string(),
     content:    z.string().max(2000),
-    contact:    z.string().max(50),
+    contact:    z.string().max(50).optional(),
 });
 
 export const QuestionReportData = FeatureRequestData.extend({
-    userAgent:  z.string(),
+    userAgent:  z.string().optional(),
 });
 
 export const BugReportData = QuestionReportData.extend({

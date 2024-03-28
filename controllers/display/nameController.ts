@@ -37,24 +37,30 @@ const getCourses = async (req: Request, res: Response) => {
                 number: "asc",
             }
         ],
+        include: {
+            resources: true
+        }
     });
 
-    if (courses.length == 0) {
-        throw new NotFoundError("No courses found");
-    }
+    const subjects = courses.reduce((acc, course) => {
+        const subjectName = course.subject;
+        if (!acc[subjectName]) {
+            acc[subjectName] = {
+                subject: subjectName,
+                courses: []
+            };
+        }
+        acc[subjectName].courses.push(course);
+        return acc;
+    }, {});
 
-    const groupedCourses = _.groupBy(courses.filter(course => course.flags.published), "subject");
+    const uniqueSubjects = Object.values(subjects);
 
-    const result = Object.entries(groupedCourses).map(([subject, courses]) => ({
-            subject,
-            courses,
-        })
-    );
-
-    const sortedResult = _.orderBy(result, ['courses.length'], ['desc']);
+    // @ts-expect-error reduction doesn't type correctly
+    uniqueSubjects.sort((a, b) => b.courses.length - a.courses.length);
 
     // Send the sorted result as the response
-    res.status(200).send(sortedResult);
+    res.status(200).send(uniqueSubjects);
 };
 
 // All topics metadata, no relations
@@ -66,58 +72,6 @@ const getAllTopics = async (req: Request, res: Response) => {
     }
 
     res.status(200).send(topics);
-};
-
-// All courses with relations
-const getAllCourses = async (req: Request, res: Response) => {
-    const courses = await prisma.course.findMany({
-        include: {
-            topics: true,
-            exams: {
-                include: {
-                    questions: {
-                        include: {
-                            resources: true,
-                            topics: {
-                                include: {
-                                    topic: true
-                                }
-                            }
-                        },
-                    }
-                },
-            },
-            users: true,
-        },
-    });
-
-    if (!courses) {
-        throw new NotFoundError("Courses not found");
-    }
-
-    res.status(200).send(courses
-        .filter(course => course.flags.published)
-        .map(course => {
-            return {
-                ...course,
-                exams: course.exams
-                    .filter(exam => exam.flags.published)
-                    .map(exam => {
-                        return {
-                            ...exam,
-                            questions: exam.questions
-                                .filter(question => question.flags.published)
-                                .map(question => {
-                                    return {
-                                        ...question,
-                                        topics: question.topics.map(relation => relation.topic)
-                                    };
-                                })
-                        };
-                    })
-            };
-        })
-    );
 };
 
 // Metadata for specific course, no relations
@@ -208,32 +162,6 @@ const getCourseTopicsWithBasicQuestionInfo = async (req: Request, res: Response)
             };
         })
     });
-};
-
-// All exams with semester (no questions)
-const getCourseExams = async (req: Request, res: Response) => {
-    const { courseResolvable } = req.params;
-
-    const course = await prisma.course.findUniqueOrThrow({
-        where: Resolver.course(courseResolvable),
-        include: {
-            exams: true
-        }
-    });
-
-    if (!course.flags.published) {
-        throw new NotFoundError("Course not found");
-    }
-
-    const exams = course.exams;
-
-    const sortedExams = _.orderBy(
-        exams.filter(exam => exam.flags.published),
-        [(exam) => (exam.number === 0 ? 10 : exam.number), "semester.year", "semester.season"],
-        ["asc", "desc", "asc"],
-    );
-
-    res.status(200).send(sortedExams);
 };
 
 // All exams with question ids and numbers
@@ -436,11 +364,9 @@ const getCourseExamWithFullQuestionInfo = async (req: Request, res: Response) =>
 export {
     getCourses,
     getAllTopics,
-    getAllCourses,
     getCourse,
     getCourseTopics,
     getCourseTopicsWithBasicQuestionInfo,
-    getCourseExams,
     getCourseExamsWithBasicQuestionInfo,
     getCourseTopicWithBasicQuestionInfo,
     getCourseTopicWithFullQuestionInfo,
