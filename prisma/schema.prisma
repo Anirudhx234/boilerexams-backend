@@ -47,23 +47,24 @@ model Exam {
 }
 
 model Question {
-  id          String            @id @default(uuid())
-  type        QuestionType
-  data        Json
-  number      Int
-  disclaimer  String?
-  examId      String
-  courseId    String
-  parentId    String?
-  flags       Int
-  feedback    Feedback[]
-  course      Course            @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  exam        Exam              @relation(fields: [examId], references: [id], onDelete: Cascade)
-  parent      Question?         @relation("QuestionToQuestion", fields: [parentId], references: [id], onDelete: Cascade)
-  children    Question[]        @relation("QuestionToQuestion")
-  topics      QuestionToTopic[]
-  submissions Submission[]
-  resources   Resource[]        @relation("QuestionToResource")
+  id              String            @id @default(uuid())
+  type            QuestionType
+  data            Json
+  number          Int
+  disclaimer      String?
+  explanationText String?
+  examId          String
+  courseId        String
+  parentId        String?
+  flags           Int
+  feedback        Feedback[]
+  course          Course            @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  exam            Exam              @relation(fields: [examId], references: [id], onDelete: Cascade)
+  parent          Question?         @relation("QuestionToQuestion", fields: [parentId], references: [id], onDelete: Cascade)
+  children        Question[]        @relation("QuestionToQuestion")
+  topics          QuestionToTopic[]
+  submissions     Submission[]
+  resources       Resource[]        @relation("QuestionToResource")
 
   @@unique([number, examId])
 }

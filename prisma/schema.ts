@@ -33,9 +33,10 @@ export const ShortAnswerSubmissionData = FreeResponseSubmissionData;
 export const FillInBlankSubmissionData = FillInBlankQuestionData;
 
 export const UrlResourceData = z.object({
-    url:    z.string().url(),
-    key:    z.string().optional(),
-    index:  z.number().optional()
+    url:        z.string().url(),
+    key:        z.string().optional(),
+    index:      z.number().optional(),
+    altText:    z.string().optional()
 });
 
 export const CodeResourceData = z.object({

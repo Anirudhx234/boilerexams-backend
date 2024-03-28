@@ -7,6 +7,7 @@ import {
     getExamQuestions,
 } from "../controllers/display/idController.js";
 import asyncWrapper from "../middleware/wrappers/asyncWrapper.js";
+import { getQuestion } from "../controllers/questionController.js";
 
 const router = express.Router();
 
@@ -19,5 +20,7 @@ router.get("/exams/:examId", asyncWrapper(getExam));
 router.get("/exams/:examId/questions", asyncWrapper(getExamQuestions));
 
 router.get("/courses/:courseId/:topicId/questions", asyncWrapper(getCourseTopicQuestions));
+
+router.get("/questions/:questionResolvable", asyncWrapper(getQuestion));
 
 export default router;

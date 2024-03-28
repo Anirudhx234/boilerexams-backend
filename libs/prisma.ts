@@ -1,7 +1,8 @@
-import { PrismaClient, ResourceType } from "@prisma/client";
+import { PrismaClient, QuestionType, ResourceType } from "@prisma/client";
 import FlagDecoder from "../helpers/decoder.js";
 import uploadFileToS3 from "../utils/uploadFileToS3.js";
-import { UrlResourceData } from "../prisma/schema.js";
+import { MultipleChoiceQuestionData, MultipleChoiceSubmissionData, UrlResourceData } from "../prisma/schema.js";
+import { z } from "zod";
 
 function prismaClientSingleton() {
     return new PrismaClient().$extends({
@@ -59,6 +60,29 @@ function prismaClientSingleton() {
                 }
             },
             question: { // Modify question query
+                stats: {
+                    needs: { id: true, type: true, data: true },
+                    async compute(question) {
+                        if (question.type != QuestionType.MULTIPLE_CHOICE) return;
+                        const data = question.data as z.infer<typeof MultipleChoiceQuestionData>;
+
+                        const submissions = await prisma.submission.findMany({
+                            where: {
+                                questionId: question.id
+                            }
+                        });
+
+                        const answerStats: number[] = new Array(data.answerChoices.length).fill(0);
+
+                        submissions.forEach((submission) => {
+                            const solution = submission.solution as z.infer<typeof MultipleChoiceSubmissionData>;
+                            for (const index of solution) {
+                                answerStats[index] += 1;
+                            }
+                        });
+                        return answerStats;
+                    }
+                },
                 flags: {
                     needs: { flags: true },
                     compute(question) {
