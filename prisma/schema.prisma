@@ -47,24 +47,25 @@ model Exam {
 }
 
 model Question {
-  id          String            @id @default(uuid())
-  type        QuestionType
-  data        Json
-  number      Int
-  disclaimer  String?
-  examId      String
-  courseId    String
-  parentId    String?
-  flags       Int
-  feedback    Feedback[]
-  explanation Explanation?
-  course      Course            @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  exam        Exam              @relation(fields: [examId], references: [id], onDelete: Cascade)
-  parent      Question?         @relation("QuestionToQuestion", fields: [parentId], references: [id], onDelete: Cascade)
-  children    Question[]        @relation("QuestionToQuestion")
-  topics      QuestionToTopic[]
-  submissions Submission[]
-  resources   Resource[]
+  id           String            @id @default(uuid())
+  type         QuestionType
+  data         Json
+  number       Int
+  disclaimer   String?
+  examId       String
+  courseId     String
+  parentId     String?
+  flags        Int
+  feedback     Feedback[]
+  explanation  Explanation?
+  course       Course            @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  exam         Exam              @relation(fields: [examId], references: [id], onDelete: Cascade)
+  parent       Question?         @relation("QuestionToQuestion", fields: [parentId], references: [id], onDelete: Cascade)
+  children     Question[]        @relation("QuestionToQuestion")
+  topics       QuestionToTopic[]
+  submissions  Submission[]
+  resources    Resource[]
+  answerChoices AnswerChoice[]
 
   @@unique([number, examId])
 }
@@ -75,6 +76,17 @@ model Explanation {
   questionId String     @unique
   question   Question   @relation(fields: [questionId], references: [id], onDelete: Cascade)
   resources  Resource[]
+}
+
+model AnswerChoice {
+  id          String     @id @default(uuid())
+  choiceIndex Int
+  body        String
+  questionId  String
+  question    Question   @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  resources   Resource[]
+
+  @@unique([questionId, choiceIndex])
 }
 
 model Submission {
@@ -93,19 +105,21 @@ model Submission {
 }
 
 model Resource {
-  id            String       @id @default(uuid())
-  type          ResourceType
-  data          Json
-  courseId      String?      @unique
-  examId        String?      @unique
-  questionId    String?      @unique
-  explanationId String?      @unique
-  applicationId String?      @unique
-  course        Course?      @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  exam          Exam?        @relation(fields: [examId], references: [id], onDelete: Cascade)
-  question      Question?    @relation(fields: [questionId], references: [id], onDelete: Cascade)
-  expalantion   Explanation? @relation(fields: [explanationId], references: [id], onDelete: Cascade)
-  application   Application? @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  id             String        @id @default(uuid())
+  type           ResourceType
+  data           Json
+  courseId       String?       @unique
+  examId         String?       @unique
+  questionId     String?       @unique
+  explanationId  String?       @unique
+  applicationId  String?       @unique
+  answerChoiceId String?       @unique
+  course         Course?       @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  exam           Exam?         @relation(fields: [examId], references: [id], onDelete: Cascade)
+  question       Question?     @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  explanation    Explanation?  @relation(fields: [explanationId], references: [id], onDelete: Cascade)
+  application    Application?  @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  answerChoice   AnswerChoice? @relation(fields: [answerChoiceId], references: [id], onDelete: Cascade)
 }
 
 model Topic {
