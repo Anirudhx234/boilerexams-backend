@@ -50,10 +50,10 @@ router.use("/resources", resources);
 
 router.use(parsing);
 
-router.use("/courses", courses);
+router.use(courses);
 
-router.use("/exams", exams);
+router.use(exams);
 
-router.use("/topics", topics);
+router.use(topics);
 
 export default router;

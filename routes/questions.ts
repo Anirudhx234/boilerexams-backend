@@ -13,17 +13,17 @@ import sendPublished from "../middleware/auth/sendPublished.js";
 
 const router = express.Router();
 
-router.get("/id/questions/:questionId", sendPublished, asyncWrapper(getQuestion));
+router.get("/id/questions/:questionResolvable", sendPublished, asyncWrapper(getQuestion));
 
-router.post("/courses/:courseId/exams/:examId/questions", authHandler(Role.CONTENT), asyncWrapper(createQuestion));
+router.post("/courses/:courseResolvable/exams/:examResolvable/questions", authHandler(Role.CONTENT), asyncWrapper(createQuestion));
 
-router.put("/courses/:courseId/exams/:examId/questions/:questionId", authHandler(Role.CONTENT), asyncWrapper(updateQuestion));
+router.put("/courses/:courseResolvable/exams/:examResolvable/questions/:questionResolvable", authHandler(Role.CONTENT), asyncWrapper(updateQuestion));
 
-router.put("/questions/:questionId/togglePublished", authHandler(Role.CONTENT), asyncWrapper(toggleQuestionPublished));
+router.put("/questions/:questionResolvable/togglePublished", authHandler(Role.CONTENT), asyncWrapper(toggleQuestionPublished));
 
-router.delete("/courses/:courseId/exams/:examId/questions/:questionId", authHandler(Role.CONTENT), asyncWrapper(deleteQuestion));
+router.delete("/courses/:courseResolvable/exams/:examResolvable/questions/:questionResolvable", authHandler(Role.CONTENT), asyncWrapper(deleteQuestion));
 
-router.post("/questions/:questionId/submit", generalLimiter, asyncWrapper(createQuestionSubmission));
+router.post("/questions/:questionResolvable/submit", generalLimiter, asyncWrapper(createQuestionSubmission));
 
 router.post("/questions/bulkSubmit", generalLimiter, asyncWrapper(batchCreateQuestionSubmission));
 
