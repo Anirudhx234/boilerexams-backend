@@ -7,14 +7,11 @@ const allowList = ["https://boilerclasses.com", "http://localhost:3000", "https:
 
 const corsOptions = {
     origin: (origin: any, cb: any) => {
-        if (allowList.includes(origin) || !origin || vercelRegexp.test(origin) || prodRegexp.test(origin)) {
-
-        } else {
-            cb(new APIError("Not allowed by CORS", 403));
-        }
+       cb(null, true);
     },
     credentials: true,
     exposedHeaders: ["set-cookie"],
 };
+
 
 export default corsOptions;
