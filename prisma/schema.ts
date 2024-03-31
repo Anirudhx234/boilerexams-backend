@@ -159,12 +159,12 @@ export const UpdateQuestionScheme = CreateQuestionScheme.extend({
 });
 
 export const UpdateSubmissionScheme = z.object({
-    correct:        z.boolean(),
-    timeStarted:    z.coerce.date().min(Epoch),
-    timeEnded:      z.coerce.date().refine(date => date < new Date()),
-    timeSpent:      z.coerce.bigint(),
-    timeSpentVideo: z.coerce.bigint().default(0n),
-    timeSpentModal: z.coerce.bigint().default(0n),
+    correct:        z.boolean().optional(),
+    timeStarted:    z.coerce.date().min(Epoch).optional(),
+    timeEnded:      z.coerce.date().refine(date => date < new Date()).optional(),
+    timeSpent:      z.coerce.bigint().optional(),
+    timeSpentVideo: z.coerce.bigint().optional(),
+    timeSpentModal: z.coerce.bigint().optional(),
 });
 
 export const CreateSubmissionScheme = UpdateSubmissionScheme.extend({
