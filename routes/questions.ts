@@ -25,7 +25,7 @@ router.delete("/courses/:courseResolvable/exams/:examResolvable/questions/:quest
 
 router.post("/questions/:questionResolvable/submit", generalLimiter, asyncWrapper(createSubmission));
 
-router.post("/questions/bulkSubmit", generalLimiter, asyncWrapper(batchCreateSubmission));
+router.post("/submissions/batch", generalLimiter, asyncWrapper(batchCreateSubmission));
 
 router.put("/submissions/:submissionId", generalLimiter, asyncWrapper(updateSubmission));
 
