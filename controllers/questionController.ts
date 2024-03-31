@@ -4,8 +4,9 @@ import { APIError, NotFoundError } from "../middleware/errors/index.js";
 import Resolver from "../helpers/resolver.js";
 import {
     CreateQuestionScheme,
+    UpdateQuestionScheme,
     CreateSubmissionScheme,
-    UpdateQuestionScheme
+    UpdateSubmissionScheme
 } from "../prisma/schema.js";
 import { z } from "zod";
 import FlagEncoder from "../helpers/encoder.js";
@@ -282,7 +283,7 @@ export async function batchCreateSubmission(req: Request, res: Response) {
 
 export async function updateSubmission(req: Request, res: Response) {
     const { submissionId } = req.params;
-    const options = UpdateQuestionScheme.parse(req.body);
+    const options = UpdateSubmissionScheme.parse(req.body);
 
     const submission = await prisma.submission.update({
         where: {
