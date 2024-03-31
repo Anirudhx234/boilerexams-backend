@@ -87,7 +87,6 @@ export async function toggleCoursePublished(req: Request, res: Response) {
             id: course.id,
         },
         data: {
-            // Flip the LSB on flags
             flags: FlagEncoder.course({
                 ...course.flags,
                 published: status

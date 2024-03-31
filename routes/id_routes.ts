@@ -11,15 +11,15 @@ import { getQuestion } from "../controllers/questionController.js";
 
 const router = express.Router();
 
-router.get("/courses/:courseId", asyncWrapper(getCourse));
+router.get("/courses/:courseResolvable", asyncWrapper(getCourse));
 
-router.get("/courses/:courseId/topics", asyncWrapper(getCourseTopics));
+router.get("/courses/:courseResolvable/topics", asyncWrapper(getCourseTopics));
 
-router.get("/exams/:examId", asyncWrapper(getExam));
+router.get("/exams/:courseResolvable", asyncWrapper(getExam));
 
-router.get("/exams/:examId/questions", asyncWrapper(getExamQuestions));
+router.get("/exams/:courseResolvable/questions", asyncWrapper(getExamQuestions));
 
-router.get("/courses/:courseId/:topicId/questions", asyncWrapper(getCourseTopicQuestions));
+router.get("/courses/:courseResolvable/:topicResolvable/questions", asyncWrapper(getCourseTopicQuestions));
 
 router.get("/questions/:questionResolvable", asyncWrapper(getQuestion));
 

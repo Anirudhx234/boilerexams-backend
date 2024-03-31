@@ -4,6 +4,19 @@ import { APIError, InvalidCourseError, InvalidSeasonError, NotFoundError } from 
 import multer from "multer";
 import axios from "axios";
 
+export function errorHandler2(err, req: Request, res: Response, next: NextFunction) {
+    console.error(err.stack); // Log the error stack trace
+
+    // Check if headers have already been sent to avoid 'ERR_HTTP_HEADERS_SENT' error
+    if (res.headersSent) {
+        return next(err);
+    }
+
+    // Set the status code based on the error
+    res.status(500).json({ ...err, code: err.code });
+}
+
+
 const errorHandler = async (error, req: Request, res: Response, next: NextFunction) => {
     const errorResponse: ErrorResponse = {
         message: error.message,
@@ -70,4 +83,4 @@ const errorHandler = async (error, req: Request, res: Response, next: NextFuncti
     return res.status(500).json(errorResponse);
 };
 
-export default errorHandler;
+export default errorHandler2;

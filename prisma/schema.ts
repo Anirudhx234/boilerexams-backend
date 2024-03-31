@@ -40,12 +40,10 @@ export const UrlResourceData = z.object({
 });
 
 export const CodeResourceData = z.object({
-    language:   z.enum([ "C", "JAVA", "PYTHON" ]),
+    language:   z.enum([ "C", "JAVA", "PYTHON", "TEXT" ]),
     content:    z.string(),
     index:      z.number().optional()
 });
-
-export const ResourceScheme = z.object({});
 
 export const CreateTopicScheme = z.object({
     id:     z.string().uuid().default(randomUUID),
@@ -161,22 +159,22 @@ export const UpdateQuestionScheme = CreateQuestionScheme.extend({
 });
 
 export const UpdateSubmissionScheme = z.object({
+    correct:        z.boolean(),
     timeStarted:    z.coerce.date().min(Epoch),
-    timeEnded:      z.coerce.date().max(new Date()),
-    timeSpent:      z.number(),
-    timeSpentVideo: z.number().default(0),
-    timeSpentModal: z.number().default(0),
+    timeEnded:      z.coerce.date().refine(date => date < new Date()),
+    timeSpent:      z.coerce.bigint(),
+    timeSpentVideo: z.coerce.bigint().default(0n),
+    timeSpentModal: z.coerce.bigint().default(0n),
 });
 
 export const CreateSubmissionScheme = UpdateSubmissionScheme.extend({
     type:           z.nativeEnum(QuestionType),
-    data:           z.union([
+    solution:           z.union([
         MultipleChoiceSubmissionData,
         FreeResponseSubmissionData,
         ShortAnswerSubmissionData,
         FillInBlankSubmissionData
     ]),
-    correct:        z.boolean(),
     osFamily:       z.string().optional(),
 });
 

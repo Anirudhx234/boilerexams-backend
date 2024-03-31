@@ -1,8 +1,8 @@
 import express from "express";
 import { Role } from "@prisma/client";
 import {
-    batchCreateQuestionSubmission,
-    createQuestion, createQuestionSubmission, deleteQuestion,
+    batchCreateSubmission,
+    createQuestion, createSubmission, deleteQuestion,
     getQuestion, toggleQuestionPublished,
     updateQuestion, updateSubmission
 } from "../controllers/questionController.js";
@@ -23,9 +23,9 @@ router.put("/questions/:questionResolvable/togglePublished", authHandler(Role.CO
 
 router.delete("/courses/:courseResolvable/exams/:examResolvable/questions/:questionResolvable", authHandler(Role.CONTENT), asyncWrapper(deleteQuestion));
 
-router.post("/questions/:questionResolvable/submit", generalLimiter, asyncWrapper(createQuestionSubmission));
+router.post("/questions/:questionResolvable/submit", generalLimiter, asyncWrapper(createSubmission));
 
-router.post("/questions/bulkSubmit", generalLimiter, asyncWrapper(batchCreateQuestionSubmission));
+router.post("/questions/bulkSubmit", generalLimiter, asyncWrapper(batchCreateSubmission));
 
 router.put("/submissions/:submissionId", generalLimiter, asyncWrapper(updateSubmission));
 

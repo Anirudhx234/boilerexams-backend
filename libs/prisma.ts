@@ -1,8 +1,7 @@
-import { PrismaClient, QuestionType, ResourceType } from "@prisma/client";
+import {PrismaClient, QuestionType, ResourceType, Submission} from "@prisma/client";
 import FlagDecoder from "../helpers/decoder.js";
 import uploadFileToS3 from "../utils/uploadFileToS3.js";
-import { MultipleChoiceQuestionData, MultipleChoiceSubmissionData, UrlResourceData } from "../prisma/schema.js";
-import { z } from "zod";
+import { UrlResourceData } from "../prisma/schema.js";
 
 function prismaClientSingleton() {
     return new PrismaClient().$extends({
@@ -64,7 +63,6 @@ function prismaClientSingleton() {
                     needs: { id: true, type: true, data: true },
                     async compute(question) {
                         if (question.type != QuestionType.MULTIPLE_CHOICE) return;
-                        const data = question.data as z.infer<typeof MultipleChoiceQuestionData>;
 
                         const submissions = await prisma.submission.findMany({
                             where: {
@@ -72,15 +70,30 @@ function prismaClientSingleton() {
                             }
                         });
 
-                        const answerStats: number[] = new Array(data.answerChoices.length).fill(0);
+                        const totalSubmissions = submissions.length;
+                        const totalCorrectSubmissions = submissions.reduce((count: number, submission: Submission) => {
+                            return submission.correct ? count + 1 : count;
+                        }, 0);
+                        const timeSpent = submissions.reduce((count: bigint, submission: Submission) => {
+                            if (submission.timeSpent < 0n) return count;
+                            return count + submission.timeSpent;
+                        }, 0n);
+                        const timeSpentVideo = submissions.reduce((count: bigint, submission: Submission) => {
+                            if (submission.timeSpentVideo < 0n) return count;
+                            return count + submission.timeSpentVideo;
+                        }, 0n);
+                        const timeSpentModal = submissions.reduce((count: bigint, submission: Submission) => {
+                            if (submission.timeSpentModal < 0n) return count;
+                            return count + submission.timeSpentModal;
+                        }, 0n);
 
-                        submissions.forEach((submission) => {
-                            const solution = submission.solution as z.infer<typeof MultipleChoiceSubmissionData>;
-                            for (const index of solution) {
-                                answerStats[index] += 1;
-                            }
-                        });
-                        return answerStats;
+                        return {
+                            totalSubmissions: totalSubmissions,
+                            totalCorrectSubmissions: totalCorrectSubmissions,
+                            timeSpent: timeSpent,
+                            timeSpentVideo: timeSpentVideo,
+                            timeSpentModal: timeSpentModal
+                        };
                     }
                 },
                 flags: {
@@ -90,11 +103,27 @@ function prismaClientSingleton() {
                     }
                 }
             },
+            answerChoice: {
+                stats: {
+                    needs: {  id: true, questionId: true, choiceIndex: true },
+                    async compute(answerChoice) {
+                        return prisma.submission.count({
+                            where: {
+                                questionId: answerChoice.questionId,
+                                solution: {
+                                    array_contains: answerChoice.choiceIndex
+                                }
+                            }
+                        });
+                    }
+                }
+            }
         }
     });
 }
 
 declare global {
+    // @ts-expect-error Prisma doesn't like being called
     // eslint-disable-next-line no-var
     var prisma: undefined | ReturnType<typeof prismaClientSingleton>;
 }

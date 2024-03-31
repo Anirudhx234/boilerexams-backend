@@ -9,7 +9,6 @@ import {
 } from "../prisma/schema.js";
 import { z } from "zod";
 import FlagEncoder from "../helpers/encoder.js";
-import questionStats from "../helpers/stats/questionStats.js";
 
 export async function createQuestion(req: Request, res: Response) {
     const { examResolvable, courseResolvable } = req.params;
@@ -45,23 +44,46 @@ export async function getQuestion(req: Request, res: Response) {
             course: true,
             exam: true,
             resources: true,
+            explanation: {
+                include: {
+                    resources: true
+                }
+            },
+            answerChoices: {
+                include: {
+                    resources: true
+                }
+            },
             topics: {
                 include: {
                     topic: true
                 }
             }
         },
+    })
+    .then(async (question) => {
+        return {
+            ...question,
+            answerChoices: undefined,
+            stats: await question.stats,
+            topics: question.topics.map((relation: { topic: object }) => relation.topic),
+            data: {
+                ...question.data,
+                answerChoices: await Promise.all(question.answerChoices.map(async (answerChoice) => {
+                    return {
+                        ...answerChoice,
+                        stats: await answerChoice.stats
+                    };
+                }))
+            }
+        };
     });
 
     if (!question) {
         throw new NotFoundError("Question not found");
     }
 
-    res.status(200).send({
-        ...question,
-        topics: question.topics.map(relation => relation.topic),
-        answerChoiceStats: await questionStats(question.id)
-    });
+    res.status(200).send(question);
 }
 
 export async function updateQuestion(req: Request, res: Response) {
@@ -216,7 +238,7 @@ export async function deleteQuestion(req: Request, res: Response) {
     res.status(200).send(question);
 }
 
-export async function createQuestionSubmission(req: Request, res: Response) {
+export async function createSubmission(req: Request, res: Response) {
     const { questionResolvable, topicResolvable, examResolvable, courseResolvable } = req.params;
     const options = CreateSubmissionScheme.parse(req.body);
 
@@ -229,25 +251,17 @@ export async function createQuestionSubmission(req: Request, res: Response) {
     }
 
     const submission = await prisma.submission.create({
+        data: {
+            ...options,
+        },
         include: {
             question: true
-        },
-        data: options
+        }
     });
     res.status(200).send(submission);
 }
 
-export async function batchCreateQuestionSubmission(req: Request, res: Response) {
-    const { questionResolvable, topicResolvable, examResolvable, courseResolvable } = req.params;
-
-    const question = await prisma.question.findUnique({
-        where: await Resolver.question(questionResolvable, topicResolvable, examResolvable, courseResolvable)
-    });
-
-    if (!question) {
-        throw new NotFoundError(`Question not found: ${questionResolvable}`);
-    }
-
+export async function batchCreateSubmission(req: Request, res: Response) {
     const options: z.infer<typeof CreateSubmissionScheme>[] = req.body.map((option: unknown) => {
         return CreateSubmissionScheme.parse(option);
     });
@@ -257,7 +271,6 @@ export async function batchCreateQuestionSubmission(req: Request, res: Response)
                 return prisma.submission.create({
                     data: {
                         ...option,
-                        questionId: question.id
                     },
                 });
             },

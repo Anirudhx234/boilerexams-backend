@@ -8,7 +8,11 @@ import corsOptions from "./utils/corsOptions.js";
 import sessionOptions from "./utils/sessionOptions.js";
 import initializePassport from "./middleware/auth/passport/index.js";
 import routes from "./routes/index.js";
-import errorHandler from "./middleware/errorHandler.js";
+import errorHandler2 from "./middleware/errorHandler.js";
+
+(BigInt.prototype as any).toJSON = function () {
+    return this.toString();
+};
 
 const app = express();
 
@@ -35,7 +39,7 @@ app.get("/", (req: Request, res: Response) => {
 
 app.use(routes);
 
-app.use(errorHandler);
+app.use(errorHandler2);
 
 const getPORT = () => {
     if (process.env.NODE_ENV === "canary") {

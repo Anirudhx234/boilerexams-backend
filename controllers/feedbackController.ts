@@ -78,8 +78,8 @@ export async function getVideoFeedbackByCourse(req: Request, res: Response) {
             feedback: {
                 include: {
                     question: {
-                        include: {
-                            resources: true
+                        select: {
+                            id: true
                         }
                     }
                 }
@@ -104,8 +104,8 @@ export async function getVideoFeedbackByExam(req: Request, res: Response) {
             feedback: {
                 include: {
                     question: {
-                        include: {
-                            resources: true
+                        select: {
+                            id: true
                         }
                     }
                 }
