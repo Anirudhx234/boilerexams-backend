@@ -2,6 +2,15 @@ import { z } from "zod";
 import { FeedbackStatus, FeedbackType, QuestionType, Season, StudyMode } from "@prisma/client";
 import { randomUUID } from "node:crypto";
 
+
+
+const coerceBigIntSafely = (input) => {
+if (input !== undefined) {
+    return BigInt(input);
+}
+return input;
+};
+
 export const Epoch = new Date(2019, 10);
 
 export const MultipleChoiceAnswerChoice = z.object({
@@ -159,13 +168,13 @@ export const UpdateQuestionScheme = CreateQuestionScheme.extend({
 });
 
 export const UpdateSubmissionScheme = z.object({
-    correct:        z.boolean().optional(),
-    timeStarted:    z.coerce.date().min(Epoch).optional(),
-    timeEnded:      z.coerce.date().refine(date => date < new Date()).optional(),
-    timeSpent:      z.coerce.bigint().optional(),
-    timeSpentVideo: z.coerce.bigint().optional(),
-    timeSpentModal: z.coerce.bigint().optional(),
-});
+    correct: z.boolean().optional(),
+    timeStarted: z.date().min(Epoch).optional(),
+    timeEnded: z.date().refine(date => date < new Date()).optional(),
+    timeSpent: z.preprocess(coerceBigIntSafely, z.bigint()).optional(),
+    timeSpentVideo: z.preprocess(coerceBigIntSafely, z.bigint()).optional(),
+    timeSpentModal: z.preprocess(coerceBigIntSafely, z.bigint()).optional(),
+  });
 
 export const CreateSubmissionScheme = UpdateSubmissionScheme.extend({
     type:           z.nativeEnum(QuestionType),
