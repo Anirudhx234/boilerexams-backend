@@ -169,14 +169,14 @@ export const UpdateQuestionScheme = CreateQuestionScheme.extend({
 
 export const UpdateSubmissionScheme = z.object({
     correct: z.boolean().optional(),
-    timeStarted: z.date().min(Epoch).optional(),
-    timeEnded: z.date().refine(date => date < new Date()).optional(),
+    timeStarted: z.coerce.date().min(Epoch).optional(),
+    timeEnded: z.coerce.date().refine(date => date < new Date()).optional(),
     timeSpent: z.preprocess(coerceBigIntSafely, z.bigint()).optional(),
     timeSpentVideo: z.preprocess(coerceBigIntSafely, z.bigint()).optional(),
     timeSpentModal: z.preprocess(coerceBigIntSafely, z.bigint()).optional(),
   });
 
-export const CreateSubmissionScheme = UpdateSubmissionScheme.extend({
+export const CreateSubmissionScheme = z.object({
     type:           z.nativeEnum(QuestionType),
     solution:           z.union([
         MultipleChoiceSubmissionData,
@@ -184,6 +184,12 @@ export const CreateSubmissionScheme = UpdateSubmissionScheme.extend({
         ShortAnswerSubmissionData,
         FillInBlankSubmissionData
     ]),
+    correct: z.boolean(),
+    timeStarted: z.coerce.date().min(Epoch),
+    timeEnded: z.coerce.date().refine(date => date < new Date()),
+    timeSpent: z.preprocess(coerceBigIntSafely, z.bigint()),
+    timeSpentVideo: z.preprocess(coerceBigIntSafely, z.bigint()),
+    timeSpentModal: z.preprocess(coerceBigIntSafely, z.bigint()),
     osFamily:       z.string().optional(),
 });
 
