@@ -178,7 +178,7 @@ export const UpdateSubmissionScheme = z.object({
 
 export const CreateSubmissionScheme = z.object({
     type:           z.nativeEnum(QuestionType),
-    solution:           z.union([
+    userSolution:           z.union([
         MultipleChoiceSubmissionData,
         FreeResponseSubmissionData,
         ShortAnswerSubmissionData,

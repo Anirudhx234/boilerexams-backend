@@ -92,7 +92,7 @@ model AnswerChoice {
 model Submission {
   id             String       @id @default(uuid())
   type           QuestionType
-  solution       Json?
+  userSolution   Json?
   correct        Boolean
   timeStarted    DateTime
   timeEnded      DateTime
@@ -199,9 +199,9 @@ model User {
 
 model LocalAccount {
   id       String @id @default(uuid())
-  userId   String @unique
   password Bytes
   salt     Bytes
+  userId   String @unique
   User     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 

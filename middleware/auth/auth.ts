@@ -9,9 +9,8 @@ const router = express.Router();
 
 const redirect = (req: Request, res: Response) => {
     try {
-        const { state } = req.query;
-        // @ts-ignore
-        const { redirect } = JSON.parse(Buffer.from(state, "base64").toString());
+        const state = req.query.state as string;
+        const { redirect } = JSON.parse(Buffer.from(state, 'base64').toString());
         return res.redirect(redirect);
     } catch {
         return res.redirect("https://boilerexams.com");
