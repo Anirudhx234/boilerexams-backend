@@ -4,7 +4,7 @@ import type { Request, Response } from "express";
 import _ from "lodash";
 import Resolver from "../../helpers/resolver.js";
 import { questionStats } from "../../helpers/stats/questionStats.js";
-import { Epoch } from "../../prisma/schema.ts";
+import { Epoch } from "../../prisma/schema.js";
 
 const questionSort: QuestionSortCategory[] = [
     {

@@ -13,7 +13,7 @@ import asyncWrapper from "../middleware/wrappers/asyncWrapper.js";
 import sendPublished from "../middleware/auth/sendPublished.js";
 import generalLimiter from "../middleware/rateLimiting/generalLimiter.js";
 import { getEvent, getEvents } from "../controllers/eventController.js";
-import { getCourse } from "../controllers/courseController.ts";
+import { getCourse } from "../controllers/courseController.js";
 // import cache from '../cache/caching';
 
 const router = express.Router();

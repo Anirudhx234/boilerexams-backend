@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { FeedbackStatus, FeedbackType, QuestionType, Season, StudyMode } from "@prisma/client";
 import { randomUUID } from "node:crypto";
-import { CreateTopic, UpdateTopic } from "../controllers/topicController.ts";
+import { CreateTopic, UpdateTopic } from "../controllers/topicController.js";
 
 const coerceBigIntSafely = (input) => {
     if (input !== undefined) {

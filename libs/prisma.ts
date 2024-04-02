@@ -2,10 +2,10 @@ import {PrismaClient, QuestionType, ResourceType, type Submission} from "@prisma
 import FlagDecoder from "../helpers/decoder.js";
 import uploadFileToS3 from "../utils/uploadFileToS3.js";
 import { Epoch, UrlResourceData } from "../prisma/schema.js";
-import { courseStats } from "../helpers/stats/courseStats.ts";
-import { examStats } from "../helpers/stats/examStats.ts";
-import { questionStats } from "../helpers/stats/questionStats.ts";
-import { submissionStats } from "../helpers/stats/submissionStats.ts";
+import { courseStats } from "../helpers/stats/courseStats.js";
+import { examStats } from "../helpers/stats/examStats.js";
+import { questionStats } from "../helpers/stats/questionStats.js";
+import { submissionStats } from "../helpers/stats/submissionStats.js";
 
 const prisma = new PrismaClient();
 

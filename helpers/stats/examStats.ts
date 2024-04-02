@@ -1,4 +1,4 @@
-import prisma from "../../libs/prisma.ts";
+import prisma from "../../libs/prisma.js";
 
 // ToDo Working on this
 

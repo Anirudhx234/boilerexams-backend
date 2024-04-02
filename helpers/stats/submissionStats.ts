@@ -1,4 +1,4 @@
-import prisma from "../../libs/prisma.ts";
+import prisma from "../../libs/prisma.js";
 
 export async function submissionStats(before: Date, after: Date): Promise<SubmissionStats[]> {
     return await prisma.$queryRaw`

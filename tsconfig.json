@@ -10,11 +10,11 @@
         "forceConsistentCasingInFileNames": true,
         "composite": true,
         "module": "NodeNext",
+        "moduleResolution": "NodeNext",
         "target": "ES2022",
         "typeRoots": ["./types"],
 
         // Latest Features
         "allowJs": true,
-        "moduleResolution": "bundler",
     },
 }

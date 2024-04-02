@@ -2,11 +2,11 @@ import prisma from "../libs/prisma.js";
 import uploadFileToS3 from "../utils/uploadFileToS3.js";
 import type { Request, Response } from "express";
 import { NotFoundError } from "../middleware/errors/index.js";
-import { PurdueIoAPI } from "../services/purdue.io";
+import { PurdueIoAPI } from "../services/purdue.io.js";
 import {
     CreateCourseScheme,
     UpdateCourseScheme
-} from "../prisma/schema";
+} from "../prisma/schema.js";
 import Resolver from "../helpers/resolver.js";
 import FlagEncoder from "../helpers/encoder.js";
 
