@@ -1,10 +1,10 @@
-import { Request } from "express";
+import type { Request } from "express";
 
 const isWhitelisted = (req: Request) => {
-    if (!process.env.FEEDBACK_API_KEY) {
+    if (!process.env["FEEDBACK_API_KEY"]) {
         return false;
     }
-    return req.headers.authorization === process.env.FEEDBACK_API_KEY;
+    return req.headers.authorization === process.env["FEEDBACK_API_KEY"];
 };
 
 export default isWhitelisted;

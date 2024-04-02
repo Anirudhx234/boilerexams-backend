@@ -1,4 +1,3 @@
-import prisma from "../libs/prisma.js";
 
 async function main() {
     /*

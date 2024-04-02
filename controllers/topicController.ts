@@ -1,12 +1,23 @@
-import prisma from "../libs/prisma.js";
-import { Request, Response } from "express";
-import { APIError, NotFoundError } from "../middleware/errors/index.js";
+import prisma from "../libs/prisma";
+import type { Request, Response } from "express";
+import { APIError, NotFoundError } from "../middleware/errors/index";
 import Resolver from "../helpers/resolver.js";
-import { CreateTopicScheme, ReorderQuestions, UpdateTopicScheme } from "../prisma/schema.js";
+import { ReorderQuestions} from "../prisma/schema";
+import { z } from "zod";
+import { randomUUID } from "node:crypto";
+
+export const CreateTopic = z.object({
+    id:     z.string().uuid().default(randomUUID),
+    name:   z.string().max(50, "Topic name must be <= 50 characters"),
+});
+
+export const UpdateTopic= CreateTopic.extend({
+    id: z.string().uuid(),
+});
 
 export async function createTopic(req: Request, res: Response) {
     const { courseResolvable } = req.params;
-    const options = CreateTopicScheme.parse(req.body);
+    const options = CreateTopic.parse(req.body);
 
     const course = await prisma.course.findUnique({
         where: Resolver.course(courseResolvable)
@@ -36,7 +47,7 @@ export async function createTopic(req: Request, res: Response) {
 
 export async function updateTopic(req: Request, res: Response) {
     const { topicResolvable, courseResolvable } = req.params;
-    const options = UpdateTopicScheme.parse(req.body);
+    const options = UpdateTopic.parse(req.body);
 
     const topic = await prisma.topic.update({
         where: await Resolver.topic(topicResolvable, courseResolvable),

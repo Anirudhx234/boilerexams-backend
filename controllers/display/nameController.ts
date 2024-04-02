@@ -1,9 +1,10 @@
 import prisma from "../../libs/prisma.js";
 import { NotFoundError } from "../../middleware/errors/index.js";
-import { Request, Response } from "express";
+import type { Request, Response } from "express";
 import _ from "lodash";
 import Resolver from "../../helpers/resolver.js";
-import questionStats from "../../helpers/stats/questionStats.js";
+import { questionStats } from "../../helpers/stats/questionStats.js";
+import { Epoch } from "../../prisma/schema.ts";
 
 const questionSort: QuestionSortCategory[] = [
     {
@@ -28,39 +29,7 @@ const questionSort: QuestionSortCategory[] = [
 
 // All courses metadata, with no relations
 const getCourses = async (req: Request, res: Response) => {
-    const courses = await prisma.course.findMany({
-        orderBy: [
-            {
-                subject: "asc",
-            },
-            {
-                number: "asc",
-            }
-        ],
-        include: {
-            resources: true
-        }
-    });
 
-    const subjects = courses.reduce((acc, course) => {
-        const subjectName = course.subject;
-        if (!acc[subjectName]) {
-            acc[subjectName] = {
-                subject: subjectName,
-                courses: []
-            };
-        }
-        acc[subjectName].courses.push(course);
-        return acc;
-    }, {});
-
-    const uniqueSubjects = Object.values(subjects);
-
-    // @ts-expect-error reduction doesn't type correctly
-    uniqueSubjects.sort((a, b) => b.courses.length - a.courses.length);
-
-    // Send the sorted result as the response
-    res.status(200).send(uniqueSubjects);
 };
 
 // All topics metadata, no relations
@@ -72,28 +41,6 @@ const getAllTopics = async (req: Request, res: Response) => {
     }
 
     res.status(200).send(topics);
-};
-
-// Metadata for specific course, no relations
-const getCourse = async (req: Request, res: Response) => {
-    const { courseResolvable } = req.params;
-
-    const course = await prisma.course.findUniqueOrThrow({
-        where: Resolver.course(courseResolvable),
-        include: {
-            events: {
-                orderBy: {
-                    start: "asc",
-                },
-            },
-        },
-    });
-
-    if (!course.flags.published) {
-        throw new NotFoundError("Course not found");
-    }
-
-    res.status(200).send(course);
 };
 
 // All topics for a specific course, no other relations
@@ -225,7 +172,7 @@ const getCourseTopicWithBasicQuestionInfo = async (req: Request, res: Response) 
             .map(relation => relation.question)
             .filter(question => question.flags.published)
             .map(async (question) => {
-                const stats = await questionStats(question.id);
+                const stats = await questionStats(new Date(), Epoch);
                 return {
                     ...question,
                     answerChoiceStats: stats
@@ -270,7 +217,7 @@ const getCourseTopicWithFullQuestionInfo = async (req: Request, res: Response) =
             .map(relation => relation.question)
             .filter(question => question.flags.published)
             .map(async (question) => {
-                const stats = await questionStats(question.id);
+                const stats = await questionStats(new Date(), Epoch);
                 return {
                     ...question,
                     topics: question.topics.map(relation => relation.topic),
@@ -351,7 +298,7 @@ const getCourseExamWithFullQuestionInfo = async (req: Request, res: Response) =>
         questions: await Promise.all(exam.questions
             .filter(question => question.flags.published)
             .map(async (question) => {
-                const stats = await questionStats(question.id);
+                const stats = await questionStats(new Date(), Epoch);
                 return {
                     ...question,
                     topics: question.topics.map(relation => relation.topic),
@@ -364,7 +311,6 @@ const getCourseExamWithFullQuestionInfo = async (req: Request, res: Response) =>
 export {
     getCourses,
     getAllTopics,
-    getCourse,
     getCourseTopics,
     getCourseTopicsWithBasicQuestionInfo,
     getCourseExamsWithBasicQuestionInfo,

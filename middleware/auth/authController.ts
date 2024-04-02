@@ -1,5 +1,5 @@
 import prisma from "../../libs/prisma.js";
-import { NextFunction, Request, Response } from "express";
+import type { NextFunction, Request, Response } from "express";
 import passport from "passport";
 import { URL } from "url";
 import { randomBytes } from "crypto";
@@ -108,15 +108,15 @@ const resetPassword = async (req: Request, res: Response) => {
     };
     const hash = await hashString(JSON.stringify(data), Buffer.from("lol", "hex"));
 
-    const resetLink = `${process.env.API_URL}/auth/password-change/?id=${userId}&d=${date}&h=${hash.toString("hex")}`;
+    const resetLink = `${process.env["API_URL"]}/auth/password-change/?id=${userId}&d=${date}&h=${hash.toString("hex")}`;
 
     const options = {
-        from: process.env.EMAIL_ADDRESS || "",
+        from: process.env["EMAIL_ADDRESS"] || "",
         to: email,
         subject: "Reset Password",
         html: resetPasswordTemplate(resetLink),
     };
-    sendEmail(options);
+    await sendEmail(options);
 
     res.status(200).send({ resetLink: resetLink });
 };

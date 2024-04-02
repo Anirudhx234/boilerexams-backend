@@ -101,7 +101,7 @@ model Submission {
   timeSpentModal BigInt
   osFamily       String?
   questionId     String?
-  question       Question?    @relation(fields: [questionId], references: [id])
+  question       Question?    @relation(fields: [questionId], references: [id]) // SetNull needs to be added
 }
 
 model Resource {

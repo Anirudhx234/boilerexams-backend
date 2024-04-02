@@ -1,5 +1,5 @@
 import prisma from "../libs/prisma.js";
-import { Request, Response } from "express";
+import type { Request, Response } from "express";
 import { APIError, NotFoundError } from "../middleware/errors/index.js";
 import Resolver from "../helpers/resolver.js";
 import {
@@ -8,7 +8,7 @@ import {
     CreateSubmissionScheme,
     UpdateSubmissionScheme
 } from "../prisma/schema.js";
-import { z } from "zod";
+import { object, z } from "zod";
 import FlagEncoder from "../helpers/encoder.js";
 
 export async function createQuestion(req: Request, res: Response) {
@@ -63,6 +63,8 @@ export async function getQuestion(req: Request, res: Response) {
         },
     })
     .then(async (question) => {
+        if (!question) return undefined;
+        if (!(question.data instanceof object)) return undefined;
         return {
             ...question,
             answerChoices: undefined,

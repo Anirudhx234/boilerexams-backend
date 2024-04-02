@@ -1,14 +1,13 @@
 import { z } from "zod";
 import { FeedbackStatus, FeedbackType, QuestionType, Season, StudyMode } from "@prisma/client";
 import { randomUUID } from "node:crypto";
-
-
+import { CreateTopic, UpdateTopic } from "../controllers/topicController.ts";
 
 const coerceBigIntSafely = (input) => {
-if (input !== undefined) {
-    return BigInt(input);
-}
-return input;
+    if (input !== undefined) {
+        return BigInt(input);
+    }
+    return input;
 };
 
 export const Epoch = new Date(2019, 10);
@@ -52,15 +51,6 @@ export const CodeResourceData = z.object({
     language:   z.enum([ "C", "JAVA", "PYTHON", "TEXT" ]),
     content:    z.string(),
     index:      z.number().optional()
-});
-
-export const CreateTopicScheme = z.object({
-    id:     z.string().uuid().default(randomUUID),
-    name:   z.string().max(50, "Topic name must be <= 50 characters"),
-});
-
-export const UpdateTopicScheme = CreateTopicScheme.extend({
-    id: z.string().uuid(),
 });
 
 export const CourseFlagsScheme = z.object({
@@ -117,9 +107,9 @@ export const TopicResolvable = z.union([
 ]);
 
 export const QuestionResolvable = z.union([
-   z.object({
-       id: z.string().uuid()
-   }),
+    z.object({
+        id: z.string().uuid()
+    }),
     z.object({
         number_examId: z.object({
             number: z.number().min(1),
@@ -164,7 +154,7 @@ export const CreateQuestionScheme = z.object({
 });
 
 export const UpdateQuestionScheme = CreateQuestionScheme.extend({
-    topics:     z.array(z.union([ CreateTopicScheme, UpdateTopicScheme ])),
+    topics:     z.array(z.union([ CreateTopic, UpdateTopic ])),
 });
 
 export const UpdateSubmissionScheme = z.object({
@@ -174,7 +164,7 @@ export const UpdateSubmissionScheme = z.object({
     timeSpent: z.preprocess(coerceBigIntSafely, z.bigint()).optional(),
     timeSpentVideo: z.preprocess(coerceBigIntSafely, z.bigint()).optional(),
     timeSpentModal: z.preprocess(coerceBigIntSafely, z.bigint()).optional(),
-  });
+});
 
 export const CreateSubmissionScheme = z.object({
     type:           z.nativeEnum(QuestionType),

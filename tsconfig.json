@@ -1,15 +1,36 @@
 {
     "compilerOptions": {
+        // Compile and Type
         "sourceMap": true,
         "outDir": "dist",
-        "strict": true,
-        "lib": ["esnext"],
-        "allowSyntheticDefaultImports": true,
-        "noImplicitAny": false,
-        "forceConsistentCasingInFileNames": true,
-        "composite": true,
-        "module": "NodeNext",
-        "target": "ES2022",
         "typeRoots": ["./types"],
+
+        // Latest Features
+        "lib": ["ESNext"],
+        "target": "ESNext",
+        "module": "ESNext",
+        "moduleDetection": "force",
+        "jsx": "react-jsx",
+        "allowJs": true,
+
+        "allowSyntheticDefaultImports": true,
+
+        // Bundler mode
+        "moduleResolution": "bundler",
+        "allowImportingTsExtensions": true,
+        "verbatimModuleSyntax": true,
+        "noEmit": true,
+
+        // Best practices
+        "strict": true,
+        "skipLibCheck": true,
+        "noFallthroughCasesInSwitch": true,
+
+        // Some stricter flags
+        "composite": true,
+        "noImplicitAny": false,
+        "noUnusedLocals": true,
+        "noPropertyAccessFromIndexSignature": true,
+        "forceConsistentCasingInFileNames": true
     },
 }

@@ -1,5 +1,5 @@
 import prisma from "../libs/prisma.js";
-import { Request, Response } from "express";
+import type { Request, Response } from "express";
 import parseQuestions from "../helpers/mathpix/questionParser.js";
 import getPDFResult from "../helpers/mathpix/retrievePDF.js";
 import FormData from "form-data";
@@ -56,7 +56,7 @@ const parseFromFile = async (req: Request, res: Response) => {
         maxBodyLength: Infinity,
         url: "https://api.mathpix.com/v3/pdf",
         headers: {
-            app_key: process.env.MATHPIX_KEY,
+            app_key: process.env["MATHPIX_KEY"],
             "Content-Type": "multipart/form-data",
             ...data.getHeaders(),
         },
@@ -101,8 +101,8 @@ const parseFromLink = async (req: Request, res: Response) => {
     }
 
     const headers = {
-        app_id: process.env.MATHPIX_ID,
-        app_key: process.env.MATHPIX_KEY,
+        app_id: process.env["MATHPIX_ID"],
+        app_key: process.env["MATHPIX_KEY"],
         "Content-Type": "application/json",
     };
     const pdf = await axios.post(

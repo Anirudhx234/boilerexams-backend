@@ -1,5 +1,5 @@
 import prisma from "../../../libs/prisma.js";
-import { AccountType, User } from "@prisma/client";
+import { AccountType, type User } from "@prisma/client";
 import { Strategy } from "passport-local";
 import { timingSafeEqual } from "crypto";
 import { APIError } from "../../errors/index.js";

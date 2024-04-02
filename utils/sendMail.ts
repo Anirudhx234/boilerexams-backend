@@ -12,14 +12,14 @@ const sendEmail = async (options: EmailOptions) => {
     const transporter = nodemailer.createTransport({
         service: "gmail",
         host: "smtp.gmail.com",
-        secure: process.env.NODE_ENV === "production",
+        secure: process.env["NODE_ENV"] === "production",
         auth: {
-            user: process.env.EMAIL_ADDRESS,
-            pass: process.env.EMAIL_PASSWORD,
+            user: process.env["EMAIL_ADDRESS"],
+            pass: process.env["EMAIL_PASSWORD"],
         },
     });
 
-    const info = await transporter.sendMail(options);
+    await transporter.sendMail(options);
     return true;
 };
 

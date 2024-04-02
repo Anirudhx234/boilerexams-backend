@@ -1,5 +1,5 @@
 import express from "express";
-import { Request, Response } from "express";
+import type { Request, Response } from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import session from "express-session";
@@ -25,7 +25,7 @@ app.use("/favicon.ico", express.static("images/favicon.ico"));
 app.use(cookieParser());
 app.use(express.json());
 
-if (process.env.REMOTE === "enabled") {
+if (process.env["REMOTE"] === "enabled") {
     app.set("trust proxy", 1);
 }
 
@@ -41,17 +41,8 @@ app.use(routes);
 
 app.use(errorHandler2);
 
-const getPORT = () => {
-    if (process.env.NODE_ENV === "canary") {
-        return process.env.PORT || 8082;
-    }
-    if (process.env.NODE_ENV == "development") {
-        return process.env.PORT || 8081;
-    }
-    return process.env.DEV_PORT || 8080;
-};
 
-const PORT = getPORT();
+const PORT = process.env["PORT"]
 
 app.listen(PORT, () => {
     console.log(`Server is running at port ${PORT}`);

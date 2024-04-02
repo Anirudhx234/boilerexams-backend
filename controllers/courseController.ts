@@ -1,22 +1,100 @@
-import prisma from "../libs/prisma.js";
-import uploadFileToS3 from "../utils/uploadFileToS3.js";
-import { Request, Response } from "express";
-import { NotFoundError } from "../middleware/errors/index.js";
-import { PurdueIoAPI } from "../services/purdue.io.js";
+import prisma from "../libs/prisma";
+import uploadFileToS3 from "../utils/uploadFileToS3";
+import type { Request, Response } from "express";
+import { NotFoundError } from "../middleware/errors/index";
+import { PurdueIoAPI } from "../services/purdue.io";
 import {
     CreateCourseScheme,
     UpdateCourseScheme
-} from "../prisma/schema.js";
+} from "../prisma/schema";
 import Resolver from "../helpers/resolver.js";
 import FlagEncoder from "../helpers/encoder.js";
 
 // ToDo handle multiple graphic resource uploads that are file-based
-export async function uploadGraphic(graphicLink?: string, file?) {
+export async function uploadGraphic(graphicLink?: string, file?: any) {
     if (file) {
         const data = await uploadFileToS3(file.buffer, file.mimetype);
         return data.Location;
     }
     return graphicLink;
+}
+
+export async function getCourse(req: Request, res: Response) {
+    const { courseResolvable } = req.params;
+
+    const course = await prisma.course.findUniqueOrThrow({
+        where: Resolver.course(courseResolvable),
+        include: {
+            events: {
+                orderBy: {
+                    start: "asc",
+                },
+            },
+        },
+    });
+
+    if (!course.flags.published) {
+        throw new NotFoundError("Course not found");
+    }
+
+    res.status(200).send(course);
+}
+
+export async function getAllCourses(req: Request, res: Response) {
+    const courses = await prisma.course.findMany({
+        orderBy: [
+            {
+                subject: "asc",
+            },
+            {
+                number: "asc",
+            }
+        ],
+        include: {
+            events: {
+                orderBy: {
+                    start: "asc",
+                },
+            },
+        },
+    });
+
+    res.status(200).send(courses.filter(course => course.flags.published));
+}
+
+export async function getSubjects(req: Request, res: Response) {
+    const courses = await prisma.course.findMany({
+        orderBy: [
+            {
+                subject: "asc",
+            },
+            {
+                number: "asc",
+            }
+        ],
+        include: {
+            resources: true
+        }
+    });
+
+    const subjects = courses.reduce((acc, course) => {
+        const subjectName = course.subject;
+        if (!acc[subjectName]) {
+            acc[subjectName] = {
+                subject: subjectName,
+                courses: []
+            };
+        }
+        acc[subjectName].courses.push(course);
+        return acc;
+    }, {} as {  });
+
+    const uniqueSubjects: Subject[] = Object.values(subjects);
+
+    uniqueSubjects.sort((a, b) => b.courses.length - a.courses.length);
+
+    // Send the sorted result as the response
+    res.status(200).send(uniqueSubjects);
 }
 
 export async function createCourse(req: Request, res: Response) {

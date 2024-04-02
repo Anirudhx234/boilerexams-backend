@@ -1,12 +1,7 @@
 import express from "express";
-import asyncWrapper from "../middleware/wrappers/asyncWrapper.js";
-import {
 
-} from "../controllers/statsController.js";
-import cache from "../cache/caching.js";
 
 const router = express.Router();
-
 
 // ToDo Fix All
 /*

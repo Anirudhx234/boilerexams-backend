@@ -1,27 +1,22 @@
-type QuestionQueryData = {
-    id: string;
-    courseId: string;
-    totalTimeSpent: number;
-    totalTimeSpentVideo: number;
-    totalSubmissions: number;
-    totalSubmissionsCorrect: number;
-    topicIds: string[];
-    topicNames: string[];
-};
+interface SubmissionStats {
+    timeSpent:      bigint;
+    timeSpentVideo: bigint;
+}
 
-type CourseQueryData = {
-    id: string;
-    name: string;
-    abbreviation: string;
-    totalExams: number;
-    totalQuestions: number;
-    totalTimeSpent: number;
-    totalTimeSpentVideo: number;
-    totalSubmissions: number;
-    totalSubmissionsCorrect: number;
-};
+interface QuestionStats extends SubmissionStats {
+    submissions:        number;
+    submissionsCorrect: number;
+}
+
+interface ExamStats {
+    questions:          number;
+}
+
+interface CourseStats extends QuestionStats {
+    exams:              number;
+}
 
 type CourseMapData = {
     id: string;
-    questionStats: QuestionQueryData[];
+    questionStats: QuestionStats[];
 };

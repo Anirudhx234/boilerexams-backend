@@ -1,5 +1,5 @@
 import prisma from "../../../libs/prisma.js";
-import { AccountType, User } from "@prisma/client";
+import { AccountType, type User } from "@prisma/client";
 import { Strategy } from "passport-google-oauth20";
 
 const googlePassport = (passport) => {
@@ -26,9 +26,9 @@ const googlePassport = (passport) => {
     passport.use(
         new Strategy(
             {
-                clientID: process.env.GOOGLE_CLIENT_ID,
-                clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-                callbackURL: `${process.env.API_URL}/auth/google/redirect`,
+                clientID: process.env["GOOGLE_CLIENT_ID"],
+                clientSecret: process.env["GOOGLE_CLIENT_SECRET"],
+                callbackURL: `${process.env["API_URL"]}/auth/google/redirect`,
                 scope: ["profile", "email"],
             },
             async (accessToken: string, refreshToken: string, profile: any, done: any) => {

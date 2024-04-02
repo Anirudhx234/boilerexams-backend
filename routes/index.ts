@@ -1,7 +1,6 @@
 import { Role } from "@prisma/client";
 import auth from "../middleware/auth/auth.js";
 import authHandler from "../middleware/auth/authHandler.js";
-import analytics from "./analytics.js";
 import courses from "./courses.js";
 import exams from "./exams.js";
 import events from "./events.js";
@@ -28,8 +27,6 @@ router.use(globalLimiter);
 router.use("/auth", generalLimiter, auth);
 
 router.use("/stats", generalLimiter, stats);
-
-router.use("/analytics", generalLimiter, analytics);
 
 router.use(name_routes);
 

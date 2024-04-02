@@ -1,5 +1,5 @@
 import { Prisma } from "@prisma/client";
-import { NextFunction, Request, Response } from "express";
+import type { NextFunction, Request, Response } from "express";
 import { APIError, InvalidCourseError, InvalidSeasonError, NotFoundError } from "./errors/index.js";
 import multer from "multer";
 import axios from "axios";
@@ -17,7 +17,7 @@ export function errorHandler2(err, req: Request, res: Response, next: NextFuncti
 }
 
 
-const errorHandler = async (error, req: Request, res: Response, next: NextFunction) => {
+async (error, req: Request, res: Response, next: NextFunction) => {
     const errorResponse: ErrorResponse = {
         message: error.message,
         fullError: {},
@@ -75,7 +75,7 @@ const errorHandler = async (error, req: Request, res: Response, next: NextFuncti
     }
 
     try {
-        await axios.post(`${process.env.DISCORD_URL}/error`, { stackTrace: error.stack });
+        await axios.post(`${process.env["DISCORD_URL"]}/error`, { stackTrace: error.stack });
     } catch {}
 
     console.log(error);

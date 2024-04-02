@@ -1,13 +1,13 @@
-import session, { SessionOptionsExtended } from "express-session";
+import session, { type SessionOptionsExtended } from "express-session";
 import connect from "connect-pg-simple";
 
 const sessionOptions: SessionOptionsExtended = {
     store: new (connect(session))({
-        conString: process.env.DATABASE_URL,
+        conString: process.env["DATABASE_URL"],
         tableName: "Session",
         createTableIfMissing: true,
     }),
-    secret: process.env.SESSION_SECRET || "",
+    secret: process.env["SESSION_SECRET"] || "",
     resave: false,
     saveUninitialized: false,
     cookie: {
@@ -19,18 +19,18 @@ const sessionOptions: SessionOptionsExtended = {
     name: "sessionId",
 };
 
-if (process.env.REMOTE === "enabled") {
+if (process.env["REMOTE"] === "enabled") {
     sessionOptions.cookie.secure = true;
-    if (process.env.NODE_ENV === "development" || process.env.NODE_ENV === "canary") {
+    if (process.env["NODE_ENV"] === "development" || process.env["NODE_ENV"] === "canary") {
         sessionOptions.cookie.sameSite = "none";
     }
 }
 
-if (process.env.NODE_ENV === "development") {
+if (process.env["NODE_ENV"] === "development") {
     sessionOptions.name = "sessionIdDev";
 }
 
-if (process.env.NODE_ENV === "canary") {
+if (process.env["NODE_ENV"] === "canary") {
     sessionOptions.name = "sessionIdCanary";
 }
 

@@ -1,7 +1,7 @@
 import uploadFileToS3 from "../../utils/uploadFileToS3.js";
 
 const savePDFtoExam = async (examId: string, buffer: Buffer, contentType: string, id?: string) => {
-    const data = await uploadFileToS3(buffer, contentType);
+    await uploadFileToS3(buffer, contentType);
 
     /* ToDo Rework this logic
         const resource = await prisma.resource.upsert({

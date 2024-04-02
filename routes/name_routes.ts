@@ -2,7 +2,6 @@ import express from "express";
 import {
     getCourses,
     getAllTopics,
-    getCourse,
     getCourseTopicsWithBasicQuestionInfo,
     getCourseExamsWithBasicQuestionInfo,
     getCourseTopicWithBasicQuestionInfo,
@@ -14,6 +13,7 @@ import asyncWrapper from "../middleware/wrappers/asyncWrapper.js";
 import sendPublished from "../middleware/auth/sendPublished.js";
 import generalLimiter from "../middleware/rateLimiting/generalLimiter.js";
 import { getEvent, getEvents } from "../controllers/eventController.js";
+import { getCourse } from "../controllers/courseController.ts";
 // import cache from '../cache/caching';
 
 const router = express.Router();

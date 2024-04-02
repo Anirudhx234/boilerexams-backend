@@ -1,10 +1,16 @@
-import {PrismaClient, QuestionType, ResourceType, Submission} from "@prisma/client";
+import {PrismaClient, QuestionType, ResourceType, type Submission} from "@prisma/client";
 import FlagDecoder from "../helpers/decoder.js";
 import uploadFileToS3 from "../utils/uploadFileToS3.js";
-import { UrlResourceData } from "../prisma/schema.js";
+import { Epoch, UrlResourceData } from "../prisma/schema.js";
+import { courseStats } from "../helpers/stats/courseStats.ts";
+import { examStats } from "../helpers/stats/examStats.ts";
+import { questionStats } from "../helpers/stats/questionStats.ts";
+import { submissionStats } from "../helpers/stats/submissionStats.ts";
 
-function prismaClientSingleton() {
-    return new PrismaClient().$extends({
+const prisma = new PrismaClient();
+
+export default prisma
+    .$extends({
         query: {
             resource: {
                 // Hook into resource create query
@@ -39,7 +45,7 @@ function prismaClientSingleton() {
 
                     return resource;
                 }
-            }
+            },
         },
         result: { // Extension of result allows us to modify result of a fetch query
             course: { // Modify course result
@@ -110,7 +116,7 @@ function prismaClientSingleton() {
                         return prisma.submission.count({
                             where: {
                                 questionId: answerChoice.questionId,
-                                solution: {
+                                userSolution: {
                                     array_contains: answerChoice.index
                                 }
                             }
@@ -119,17 +125,36 @@ function prismaClientSingleton() {
                 }
             }
         }
+    })
+    .$extends({
+        model: {
+            course: {
+                async stats(data: { before?: Date, after?: Date }) {
+                    const before = data.before ?? new Date();
+                    const after = data.after ?? Epoch;
+                    return courseStats(before, after);
+                }
+            },
+            exam: {
+                async stats(data: { before?: Date, after?: Date }) {
+                    const before = data.before ?? new Date();
+                    const after = data.after ?? Epoch;
+                    return examStats(before, after);
+                }
+            },
+            question: {
+                async stats(data: { before?: Date, after?: Date }) {
+                    const before = data.before ?? new Date();
+                    const after = data.after ?? Epoch;
+                    return questionStats(before, after);
+                }
+            },
+            submission: {
+                async stats(data: { before?: Date, after?: Date }) {
+                    const before = data.before ?? new Date();
+                    const after = data.after ?? Epoch;
+                    return submissionStats(before, after);
+                }
+            }
+        },
     });
-}
-
-declare global {
-    // @ts-expect-error Prisma doesn't like being called
-    // eslint-disable-next-line no-var
-    var prisma: undefined | ReturnType<typeof prismaClientSingleton>;
-}
-
-const prisma = globalThis.prisma ?? prismaClientSingleton();
-
-export default prisma;
-
-if (process.env.NODE_ENV !== 'production') globalThis.prisma = prisma;

@@ -1,100 +1,19 @@
-const OLD_SUBMISSIONS = 1920571;
-const OLD_TIME_SPENT_HRS = 95074.53;
-const OLD_PERCENT_CORRECT = 0.6571;
-const minimumValidSubmissionTime = 0;
-
 // ToDo Fix All
+
 /*
+export async function generalStats(req: Request, res: Response) {
+    const courseStats = await prisma.course.stats({});
 
-const getGeneralStats = async (req: Request, res: Response) => {
-    const promises: Promise<any>[] = [];
-
-    promises.push(
-        prisma.course.aggregate({
-            where: {
-                published: true,
-            },
-            _count: true,
-        }),
-    );
-
-    promises.push(
-        prisma.exam.aggregate({
-            where: {
-                published: true,
-            },
-            _count: true,
-        }),
-    );
-
-    promises.push(
-        prisma.question.aggregate({
-            where: {
-                published: true,
-            },
-            _count: true,
-        }),
-    );
-
-    promises.push(
-        prisma.submission.aggregate({
-            where: {
-                question: {
-                    published: true,
-                },
-                timeSpent: {
-                    gte: minimumValidSubmissionTime,
-                },
-            },
-            _count: true,
-            _sum: {
-                timeSpent: true,
-            },
-        }),
-    );
-
-    promises.push(
-        prisma.submission.count({
-            where: {
-                correct: true,
-                question: {
-                    published: true,
-                },
-                timeSpent: {
-                    gte: minimumValidSubmissionTime,
-                },
-            },
-        }),
-    );
-
-    const resolved = await Promise.all(promises);
-    const courses = resolved[0];
-    const exams = resolved[1];
-    const questions = resolved[2];
-    const submissions = resolved[3];
-    const correctSubmissions = resolved[4];
-
-    let timeSpent = submissions._sum.timeSpent;
-    if (!timeSpent) {
-        timeSpent = 0;
-    }
-
-    const totalTimeSpent = msToHMS(timeSpent + OLD_TIME_SPENT_HRS * 3600000);
-    const totalSubmissions = submissions._count + OLD_SUBMISSIONS;
-    const percentCorrect = 100.0 * ((correctSubmissions + OLD_PERCENT_CORRECT * OLD_SUBMISSIONS) / totalSubmissions);
-
-    const stats = {
-        totalStudents: 10000,
-        totalCourses: courses._count,
-        totalExams: exams._count,
-        totalQuestions: questions._count,
-        totalSubmissions: submissions._count + OLD_SUBMISSIONS,
-        totalTimeSpent: totalTimeSpent,
-        percentCorrect: percentCorrect,
-    };
-
-    res.status(200).json(stats);
-};
+    res.status(200).send({
+        totalStudents:      10000,
+        totalCourses:       totalCourses,
+        totalExams:         totalExams,
+        totalQuestions:     totalQuestions,
+        totalSubmissions:   totalSubmissions,
+        totalTimeSpent:     totalTimeSpent,
+        percentCorrect:     100 * totalCorrectSubmissions / totalSubmissions,
+    });
+}
 
 const getCourseStats = async (req: Request, res: Response) => {
     const { courseId } = req.params;
@@ -237,6 +156,8 @@ const getSubmissionStats = async (req: Request, res: Response) => {
     res.status(200).json(submissionsStats);
 };
 
- */
 
 //export { getGeneralStats, getCourseExamsStats, getQuestionStats, getExamStats, getCourseStats, getCourseStatsAll, getSubmissionStats };
+
+
+ */
