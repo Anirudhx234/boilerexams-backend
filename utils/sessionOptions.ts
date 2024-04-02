@@ -21,13 +21,17 @@ const sessionOptions: SessionOptionsExtended = {
 
 if (process.env.REMOTE === "enabled") {
     sessionOptions.cookie.secure = true;
-    if (process.env.NODE_ENV === "development") {
+    if (process.env.NODE_ENV === "development" || process.env.NODE_ENV === "canary") {
         sessionOptions.cookie.sameSite = "none";
     }
 }
 
 if (process.env.NODE_ENV === "development") {
     sessionOptions.name = "sessionIdDev";
+}
+
+if (process.env.NODE_ENV === "canary") {
+    sessionOptions.name = "sessionIdCanary";
 }
 
 export default sessionOptions;
