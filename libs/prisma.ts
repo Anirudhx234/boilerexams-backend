@@ -105,13 +105,13 @@ function prismaClientSingleton() {
             },
             answerChoice: {
                 stats: {
-                    needs: {  id: true, questionId: true, choiceIndex: true },
+                    needs: {  id: true, questionId: true, index: true },
                     async compute(answerChoice) {
                         return prisma.submission.count({
                             where: {
                                 questionId: answerChoice.questionId,
                                 solution: {
-                                    array_contains: answerChoice.choiceIndex
+                                    array_contains: answerChoice.index
                                 }
                             }
                         });
