@@ -2,7 +2,7 @@
 CREATE TYPE "QuestionType" AS ENUM ('MULTIPLE_CHOICE', 'FREE_RESPONSE', 'SHORT_ANSWER', 'FILL_IN_BLANK');
 
 -- CreateEnum
-CREATE TYPE "ResourceType" AS ENUM ('COURSE_LOGO', 'QUESTION_IMAGE', 'SOLUTION_IMAGE', 'ANSWER_CHOICE_IMAGE', 'SHORT_SOLUTION_VIDEO', 'LONG_SOLUTION_VIDEO', 'QUESTION_CODE', 'ANSWER_CHOICE_CODE', 'EXAM_PDF', 'RESUME_PDF');
+CREATE TYPE "ResourceType" AS ENUM ('LOGO', 'IMAGE', 'VIDEO', 'LONG_VIDEO', 'CODE', 'PDF');
 
 -- CreateEnum
 CREATE TYPE "AccountType" AS ENUM ('DISCORD', 'GOOGLE', 'LOCAL');
@@ -14,7 +14,7 @@ CREATE TYPE "FeedbackType" AS ENUM ('BUG_REPORT', 'QUESTION_REPORT', 'FEATURE_RE
 CREATE TYPE "EventType" AS ENUM ('EXAM', 'FINAL', 'CUSTOM');
 
 -- CreateEnum
-CREATE TYPE "Role" AS ENUM ('USER', 'CONTENT', 'PROFESSOR', 'ADMIN');
+CREATE TYPE "Role" AS ENUM ('USER', 'CONTENT', 'GRAPHIC', 'PROFESSOR', 'ADMIN');
 
 -- CreateEnum
 CREATE TYPE "Season" AS ENUM ('SPRING', 'SUMMER', 'FALL', 'WINTER');
@@ -34,7 +34,7 @@ CREATE TABLE "Course" (
     "subject" TEXT NOT NULL,
     "color" TEXT,
     "disclaimer" TEXT,
-    "modes" "StudyMode"[],
+    "studyModes" "StudyMode"[],
     "flags" INTEGER NOT NULL,
 
     CONSTRAINT "Course_pkey" PRIMARY KEY ("id")
@@ -69,10 +69,29 @@ CREATE TABLE "Question" (
 );
 
 -- CreateTable
+CREATE TABLE "Explanation" (
+    "id" TEXT NOT NULL,
+    "body" TEXT,
+    "questionId" TEXT NOT NULL,
+
+    CONSTRAINT "Explanation_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "AnswerChoice" (
+    "id" TEXT NOT NULL,
+    "index" INTEGER NOT NULL,
+    "body" TEXT NOT NULL,
+    "questionId" TEXT NOT NULL,
+
+    CONSTRAINT "AnswerChoice_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "Submission" (
     "id" TEXT NOT NULL,
     "type" "QuestionType" NOT NULL,
-    "solution" JSONB,
+    "userSolution" JSONB,
     "correct" BOOLEAN NOT NULL,
     "timeStarted" TIMESTAMP(3) NOT NULL,
     "timeEnded" TIMESTAMP(3) NOT NULL,
@@ -90,7 +109,12 @@ CREATE TABLE "Resource" (
     "id" TEXT NOT NULL,
     "type" "ResourceType" NOT NULL,
     "data" JSONB NOT NULL,
+    "courseId" TEXT,
+    "examId" TEXT,
+    "questionId" TEXT,
+    "explanationId" TEXT,
     "applicationId" TEXT,
+    "answerChoiceId" TEXT,
 
     CONSTRAINT "Resource_pkey" PRIMARY KEY ("id")
 );
@@ -174,9 +198,9 @@ CREATE TABLE "User" (
 -- CreateTable
 CREATE TABLE "LocalAccount" (
     "id" TEXT NOT NULL,
-    "userId" TEXT NOT NULL,
     "password" BYTEA NOT NULL,
     "salt" BYTEA NOT NULL,
+    "userId" TEXT NOT NULL,
 
     CONSTRAINT "LocalAccount_pkey" PRIMARY KEY ("id")
 );
@@ -200,31 +224,16 @@ CREATE TABLE "QuestionToTopic" (
 );
 
 -- CreateTable
-CREATE TABLE "_CourseToResource" (
-    "A" TEXT NOT NULL,
-    "B" TEXT NOT NULL
-);
-
--- CreateTable
 CREATE TABLE "_CourseToUser" (
-    "A" TEXT NOT NULL,
-    "B" TEXT NOT NULL
-);
-
--- CreateTable
-CREATE TABLE "_ExamToResource" (
-    "A" TEXT NOT NULL,
-    "B" TEXT NOT NULL
-);
-
--- CreateTable
-CREATE TABLE "_QuestionToResource" (
     "A" TEXT NOT NULL,
     "B" TEXT NOT NULL
 );
 
 -- CreateConstraint
 ALTER TABLE "Question" ADD CONSTRAINT "Question_number_examId_key" UNIQUE ("number", "examId") DEFERRABLE INITIALLY DEFERRED;
+
+-- CreateConstraint
+ALTER TABLE "AnswerChoice" ADD CONSTRAINT "AnswerChoice_index_questionId_key" UNIQUE ("index", "questionId") DEFERRABLE INITIALLY DEFERRED;
 
 -- CreateConstraint
 ALTER TABLE "QuestionToTopic" ADD CONSTRAINT "QuestionToTopic_number_topicId_key" UNIQUE ("number", "topicId") DEFERRABLE INITIALLY DEFERRED;
@@ -234,6 +243,9 @@ CREATE UNIQUE INDEX "Course_abbreviation_number_key" ON "Course"("abbreviation",
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Exam_number_year_season_courseId_key" ON "Exam"("number", "year", "season", "courseId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Explanation_questionId_key" ON "Explanation"("questionId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Resource_applicationId_key" ON "Resource"("applicationId");
@@ -263,28 +275,10 @@ CREATE INDEX "Session_expire_idx" ON "Session"("expire");
 CREATE INDEX "QuestionToTopic_number_idx" ON "QuestionToTopic"("number");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "_CourseToResource_AB_unique" ON "_CourseToResource"("A", "B");
-
--- CreateIndex
-CREATE INDEX "_CourseToResource_B_index" ON "_CourseToResource"("B");
-
--- CreateIndex
 CREATE UNIQUE INDEX "_CourseToUser_AB_unique" ON "_CourseToUser"("A", "B");
 
 -- CreateIndex
 CREATE INDEX "_CourseToUser_B_index" ON "_CourseToUser"("B");
-
--- CreateIndex
-CREATE UNIQUE INDEX "_ExamToResource_AB_unique" ON "_ExamToResource"("A", "B");
-
--- CreateIndex
-CREATE INDEX "_ExamToResource_B_index" ON "_ExamToResource"("B");
-
--- CreateIndex
-CREATE UNIQUE INDEX "_QuestionToResource_AB_unique" ON "_QuestionToResource"("A", "B");
-
--- CreateIndex
-CREATE INDEX "_QuestionToResource_B_index" ON "_QuestionToResource"("B");
 
 -- AddForeignKey
 ALTER TABLE "Exam" ADD CONSTRAINT "Exam_courseId_fkey" FOREIGN KEY ("courseId") REFERENCES "Course"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -299,10 +293,31 @@ ALTER TABLE "Question" ADD CONSTRAINT "Question_examId_fkey" FOREIGN KEY ("examI
 ALTER TABLE "Question" ADD CONSTRAINT "Question_parentId_fkey" FOREIGN KEY ("parentId") REFERENCES "Question"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "Explanation" ADD CONSTRAINT "Explanation_questionId_fkey" FOREIGN KEY ("questionId") REFERENCES "Question"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "AnswerChoice" ADD CONSTRAINT "AnswerChoice_questionId_fkey" FOREIGN KEY ("questionId") REFERENCES "Question"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "Submission" ADD CONSTRAINT "Submission_questionId_fkey" FOREIGN KEY ("questionId") REFERENCES "Question"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "Resource" ADD CONSTRAINT "Resource_courseId_fkey" FOREIGN KEY ("courseId") REFERENCES "Course"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Resource" ADD CONSTRAINT "Resource_examId_fkey" FOREIGN KEY ("examId") REFERENCES "Exam"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Resource" ADD CONSTRAINT "Resource_questionId_fkey" FOREIGN KEY ("questionId") REFERENCES "Question"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Resource" ADD CONSTRAINT "Resource_explanationId_fkey" FOREIGN KEY ("explanationId") REFERENCES "Explanation"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "Resource" ADD CONSTRAINT "Resource_applicationId_fkey" FOREIGN KEY ("applicationId") REFERENCES "Application"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Resource" ADD CONSTRAINT "Resource_answerChoiceId_fkey" FOREIGN KEY ("answerChoiceId") REFERENCES "AnswerChoice"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Topic" ADD CONSTRAINT "Topic_courseId_fkey" FOREIGN KEY ("courseId") REFERENCES "Course"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -332,25 +347,7 @@ ALTER TABLE "QuestionToTopic" ADD CONSTRAINT "QuestionToTopic_questionId_fkey" F
 ALTER TABLE "QuestionToTopic" ADD CONSTRAINT "QuestionToTopic_topicId_fkey" FOREIGN KEY ("topicId") REFERENCES "Topic"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "_CourseToResource" ADD CONSTRAINT "_CourseToResource_A_fkey" FOREIGN KEY ("A") REFERENCES "Course"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "_CourseToResource" ADD CONSTRAINT "_CourseToResource_B_fkey" FOREIGN KEY ("B") REFERENCES "Resource"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
 ALTER TABLE "_CourseToUser" ADD CONSTRAINT "_CourseToUser_A_fkey" FOREIGN KEY ("A") REFERENCES "Course"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "_CourseToUser" ADD CONSTRAINT "_CourseToUser_B_fkey" FOREIGN KEY ("B") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "_ExamToResource" ADD CONSTRAINT "_ExamToResource_A_fkey" FOREIGN KEY ("A") REFERENCES "Exam"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "_ExamToResource" ADD CONSTRAINT "_ExamToResource_B_fkey" FOREIGN KEY ("B") REFERENCES "Resource"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "_QuestionToResource" ADD CONSTRAINT "_QuestionToResource_A_fkey" FOREIGN KEY ("A") REFERENCES "Question"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "_QuestionToResource" ADD CONSTRAINT "_QuestionToResource_B_fkey" FOREIGN KEY ("B") REFERENCES "Resource"("id") ON DELETE CASCADE ON UPDATE CASCADE;
