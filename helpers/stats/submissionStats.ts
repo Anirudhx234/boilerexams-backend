@@ -6,6 +6,6 @@ export async function submissionStats(before: Date, after: Date): Promise<Submis
             SUM(submission."timeSpent")                                 AS "timeSpent",
             SUM(submission."timeSpentVideo")                            AS "timeSpentVideo"
         FROM "Submission" submission
-        WHERE submission."timeStarted" BETWEEN SYMMETRIC ${after} AND ${before}
+        WHERE submission."timeStarted" BETWEEN SYMMETRIC ${after} AND ${before};
     `;
 }

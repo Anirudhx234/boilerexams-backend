@@ -13,6 +13,6 @@ export async function questionStats(before: Date, after: Date): Promise<Question
                  JOIN "Submission" submission ON question.id = submission."questionId"
         WHERE
             question.flags & 1 = 1
-          AND (submission."timeStarted" BETWEEN SYMMETRIC ${after} AND ${before})
+          AND (submission."timeStarted" BETWEEN SYMMETRIC ${after} AND ${before});
     `;
 }

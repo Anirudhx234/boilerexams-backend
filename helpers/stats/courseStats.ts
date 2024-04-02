@@ -14,7 +14,7 @@ export async function courseStats(before: Date, after: Date): Promise<CourseStat
         FROM "Course" c
                  JOIN "Question" q ON c.id = q."courseId"
                  JOIN "Submission" s ON q.ID = s."questionId"
-        WHERE c.flags = true AND q.flags = true
+        WHERE c.flags = true AND q.flags = true;
     `;
     /*
     {
