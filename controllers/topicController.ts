@@ -1,8 +1,8 @@
-import prisma from "../libs/prisma";
+import prisma from "../libs/prisma.js";
 import type { Request, Response } from "express";
-import { APIError, NotFoundError } from "../middleware/errors/index";
+import { APIError, NotFoundError } from "../middleware/errors/index.js";
 import Resolver from "../helpers/resolver.js";
-import { ReorderQuestions} from "../prisma/schema";
+import { ReorderQuestions} from "../prisma/schema.js";
 import { z } from "zod";
 import { randomUUID } from "node:crypto";
 

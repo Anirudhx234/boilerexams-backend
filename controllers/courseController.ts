@@ -1,7 +1,7 @@
-import prisma from "../libs/prisma";
-import uploadFileToS3 from "../utils/uploadFileToS3";
+import prisma from "../libs/prisma.js";
+import uploadFileToS3 from "../utils/uploadFileToS3.js";
 import type { Request, Response } from "express";
-import { NotFoundError } from "../middleware/errors/index";
+import { NotFoundError } from "../middleware/errors/index.js";
 import { PurdueIoAPI } from "../services/purdue.io";
 import {
     CreateCourseScheme,
