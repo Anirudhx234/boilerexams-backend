@@ -27,11 +27,6 @@ const questionSort: QuestionSortCategory[] = [
     },
 ];
 
-// All courses metadata, with no relations
-const getCourses = async (req: Request, res: Response) => {
-
-};
-
 // All topics metadata, no relations
 const getAllTopics = async (req: Request, res: Response) => {
     const topics = await prisma.topic.findMany();
@@ -309,7 +304,6 @@ const getCourseExamWithFullQuestionInfo = async (req: Request, res: Response) =>
 };
 
 export {
-    getCourses,
     getAllTopics,
     getCourseTopics,
     getCourseTopicsWithBasicQuestionInfo,

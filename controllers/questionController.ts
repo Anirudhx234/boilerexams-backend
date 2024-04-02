@@ -64,13 +64,13 @@ export async function getQuestion(req: Request, res: Response) {
     })
     .then(async (question) => {
         if (!question) return undefined;
-        if (!(question.data instanceof object)) return undefined;
         return {
             ...question,
             answerChoices: undefined,
             stats: await question.stats,
             topics: question.topics.map((relation: { topic: object }) => relation.topic),
             data: {
+                // @ts-expect-error Fuck me
                 ...question.data,
                 answerChoices: await Promise.all(question.answerChoices.map(async (answerChoice) => {
                     return {

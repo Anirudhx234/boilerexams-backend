@@ -1,6 +1,5 @@
 import express from "express";
 import {
-    getCourses,
     getAllTopics,
     getCourseTopicsWithBasicQuestionInfo,
     getCourseExamsWithBasicQuestionInfo,
@@ -13,14 +12,13 @@ import asyncWrapper from "../middleware/wrappers/asyncWrapper.js";
 import sendPublished from "../middleware/auth/sendPublished.js";
 import generalLimiter from "../middleware/rateLimiting/generalLimiter.js";
 import { getEvent, getEvents } from "../controllers/eventController.js";
-import { getCourse } from "../controllers/courseController.js";
-// import cache from '../cache/caching';
+import { getCourse, getSubjects } from "../controllers/courseController.js";
 
 const router = express.Router();
 
 // CURRENTLY USED
 // Get all courses
-router.get("/courses", generalLimiter, sendPublished, asyncWrapper(getCourses));
+router.get("/courses", generalLimiter, sendPublished, asyncWrapper(getSubjects));
 
 // All topics metadata, no relations
 router.get("/topics", generalLimiter, sendPublished, asyncWrapper(getAllTopics));
