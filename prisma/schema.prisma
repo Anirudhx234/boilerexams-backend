@@ -17,7 +17,7 @@ model Course {
   subject      String
   color        String?
   disclaimer   String?
-  modes        StudyMode[]
+  studyModes   StudyMode[]
   flags        Int
   events       Event[]
   exams        Exam[]
@@ -79,14 +79,14 @@ model Explanation {
 }
 
 model AnswerChoice {
-  id          String     @id @default(uuid())
-  choiceIndex Int
-  body        String
-  questionId  String
-  question    Question   @relation(fields: [questionId], references: [id], onDelete: Cascade)
-  resources   Resource[]
+  id         String     @id @default(uuid())
+  index      Int
+  body       String
+  questionId String
+  question   Question   @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  resources  Resource[]
 
-  @@unique([questionId, choiceIndex])
+  @@unique([index, questionId])
 }
 
 model Submission {
