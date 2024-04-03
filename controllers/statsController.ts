@@ -1,29 +1,53 @@
 // ToDo Fix All
+import prisma from "../libs/prisma.js";
+import { Request, Response } from "express";
+import Resolver from "../helpers/resolver.js";
+import { NotFoundError } from "../middleware/errors/index.js";
+import { courseStats } from "../helpers/stats/courseStats.js";
+import { Epoch } from "../prisma/schema.js";
 
-/*
 export async function generalStats(req: Request, res: Response) {
-    const courseStats = await prisma.course.stats({});
+    const courseStats = await prisma.course.stats({  });
+    const combinedCourseStats = courseStats.reduce((a, b) => {
+       return {
+           count: a.count,
+           exams: a.exams + b.exams,
+           questions: a.questions + b.questions,
+           submissions: a.submissions + b.submissions,
+           submissionsCorrect: a.submissionsCorrect + b.submissionsCorrect,
+           timeSpent: a.timeSpent + b.timeSpent,
+           timeSpentVideo: a.timeSpentVideo + b.timeSpentVideo
+       };
+    });
 
     res.status(200).send({
-        totalStudents:      10000,
-        totalCourses:       totalCourses,
-        totalExams:         totalExams,
-        totalQuestions:     totalQuestions,
-        totalSubmissions:   totalSubmissions,
-        totalTimeSpent:     totalTimeSpent,
-        percentCorrect:     100 * totalCorrectSubmissions / totalSubmissions,
+        students:       10000,
+        courses:        combinedCourseStats.count,
+        exams:          combinedCourseStats.exams,
+        questions:      combinedCourseStats.questions,
+        submissions:    combinedCourseStats.submissions,
+        timeSpent:      combinedCourseStats.timeSpent,
+        timeSpentVideo: combinedCourseStats.timeSpentVideo,
+        percentCorrect: 100 * combinedCourseStats.submissionsCorrect / combinedCourseStats.submissions,
     });
 }
 
+
 const getCourseStats = async (req: Request, res: Response) => {
-    const { courseId } = req.params;
-    const before = req.query.before ? Number.parseInt(<string>req.query.before) : Date.now();
-    const after = req.query.after ? Number.parseInt(<string>req.query.after) : 0;
+    const { courseResolvable } = req.params;
+    const before = req.query.before ? new Date(Number.parseInt(<string>req.query.before)) : new Date();
+    const after = req.query.after ? new Date(Number.parseInt(<string>req.query.before)) : Epoch;
 
-    const stats = await courseStats(courseId, new Date(before), new Date(after));
+    const course = await prisma.course.findUniqueOrThrow({
+        where: Resolver.course(courseResolvable)
+    });
 
-    res.status(200).json(stats);
+    if (!course) throw new NotFoundError(`Course not found: ${courseResolvable}`);
+    const stats = await courseStats(before, after, course.id);
+
+    res.status(200).json(stats[0]);
 };
+/*
 
 const getCourseStatsAll = async (req: Request, res: Response) => {
     const before = req.query.before ? Number.parseInt(<string>req.query.before) : Date.now();

@@ -3,29 +3,7 @@ import { NotFoundError } from "../../middleware/errors/index.js";
 import type { Request, Response } from "express";
 import _ from "lodash";
 import Resolver from "../../helpers/resolver.js";
-import { questionStats } from "../../helpers/stats/questionStats.js";
-import { Epoch } from "../../prisma/schema.js";
 
-const questionSort: QuestionSortCategory[] = [
-    {
-        exam: {
-            year: "desc"
-        },
-    },
-    {
-        exam: {
-            season: "asc",
-        },
-    },
-    {
-        exam: {
-            number: "asc",
-        },
-    },
-    {
-        number: "asc",
-    },
-];
 
 // All topics metadata, no relations
 const getAllTopics = async (req: Request, res: Response) => {
@@ -89,7 +67,7 @@ const getCourseTopicsWithBasicQuestionInfo = async (req: Request, res: Response)
         },
     });
 
-    if (!(course.flags as any).published) {
+    if (course.flags.published) {
         throw new NotFoundError("Course not found");
     }
 
@@ -100,7 +78,7 @@ const getCourseTopicsWithBasicQuestionInfo = async (req: Request, res: Response)
                 ...topic,
                 questions: topic.questions
                     .map(relation => relation.question)
-                    .filter(question => (question.flags as any).published)
+                    .filter(question => question.flags.published)
             };
         })
     });
@@ -125,11 +103,11 @@ const getCourseExamsWithBasicQuestionInfo = async (req: Request, res: Response) 
         }
     });
 
-    if (!(course.flags as any).published) {
+    if (course.flags.published) {
         throw new NotFoundError("Course not found");
     }
 
-    const exams = course.exams.filter(exam => (exam.flags as any).published);
+    const exams = course.exams.filter(exam => exam.flags.published);
 
     const sortedExams = _.orderBy(
         exams,
@@ -140,7 +118,7 @@ const getCourseExamsWithBasicQuestionInfo = async (req: Request, res: Response) 
     res.status(200).send(sortedExams.map(exam => {
         return {
             ...exam,
-            questions: exam.questions.filter(question => (question.flags as any).published)
+            questions: exam.questions.filter(question => question.flags.published)
         };
     }));
 };
@@ -154,9 +132,11 @@ const getCourseTopicWithBasicQuestionInfo = async (req: Request, res: Response) 
         include: {
             questions: {
                 include: {
-                    question: true,
+                    question: true
                 },
-                orderBy: questionSort,
+                orderBy: {
+                    number: "asc"
+                },
             },
         },
     });
@@ -165,14 +145,8 @@ const getCourseTopicWithBasicQuestionInfo = async (req: Request, res: Response) 
         ...topic,
         questions: Promise.all(topic.questions
             .map(relation => relation.question)
-            .filter(question => (question.flags as any).published)
-            .map(async (question) => {
-                const stats = await questionStats(new Date(), Epoch);
-                return {
-                    ...question,
-                    answerChoiceStats: stats
-                };
-            }))
+            .filter(question => question.flags.published)
+        )
     });
 };
 
@@ -197,7 +171,9 @@ const getCourseTopicWithFullQuestionInfo = async (req: Request, res: Response) =
                         }
                     }
                 },
-                orderBy: questionSort,
+                orderBy: {
+                    number: "asc"
+                },
             },
         },
     });
@@ -210,14 +186,12 @@ const getCourseTopicWithFullQuestionInfo = async (req: Request, res: Response) =
         ...topic,
         questions: await Promise.all(topic.questions
             .map(relation => relation.question)
-            .filter(question => (question.flags as any).published)
+            .filter(question => question.flags.published)
             .map(async (question) => {
-                const stats = await questionStats(new Date(), Epoch);
                 return {
                     ...question,
                     topics: question.topics.map(relation => relation.topic),
-                    questionStats: stats
-                };
+                }
             }))
     });
 };
@@ -244,14 +218,14 @@ const getCourseExamWithBasicQuestionInfo = async (req: Request, res: Response) =
         }
     });
 
-    if (!(exam.flags as any).published) {
+    if (!exam.flags.published) {
         throw new NotFoundError("Exam not found");
     }
 
     res.status(200).send({
         ...exam,
         questions: exam.questions
-            .filter(question => (question.flags as any).published)
+            .filter(question => question.flags.published)
             .map(question => {
                 return {
                     ...question,
@@ -284,20 +258,18 @@ const getCourseExamWithFullQuestionInfo = async (req: Request, res: Response) =>
         }
     });
 
-    if (!(exam.flags as any).published) {
+    if (exam.flags.published) {
         throw new NotFoundError("Exam not found");
     }
 
     res.status(200).send({
         ...exam,
         questions: await Promise.all(exam.questions
-            .filter(question => (question.flags as any).published)
+            .filter(question => question.flags.published)
             .map(async (question) => {
-                const stats = await questionStats(new Date(), Epoch);
                 return {
                     ...question,
                     topics: question.topics.map(relation => relation.topic),
-                    questionStats: stats
                 };
             }))
     });

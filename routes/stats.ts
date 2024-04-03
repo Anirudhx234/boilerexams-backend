@@ -1,12 +1,16 @@
 import express from "express";
+import { generalStats } from "../controllers/statsController.js";
+import asyncWrapper from "../middleware/wrappers/asyncWrapper.js";
+import cache from "../cache/caching.js";
 
 
 const router = express.Router();
 
 // ToDo Fix All
-/*
-router.get("/", cache(600), asyncWrapper(getGeneralStats));
 
+router.get("/", cache(600), asyncWrapper(generalStats));
+
+/*
 router.get("/courses/all", cache(600), asyncWrapper(getCourseStatsAll));
 
 //app.get("/courses/:courseId/after/:after/before/:before", cache(600), asyncWrapper(getCourseStats));

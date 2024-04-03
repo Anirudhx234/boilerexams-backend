@@ -123,7 +123,7 @@ export const CreateCourseScheme = z.object({
     number:         z.number(),
     color:          z.string().optional(),
     disclaimer:     z.string().optional(),
-    modes:          z.array(z.nativeEnum(StudyMode)).default([ StudyMode.EXAM, StudyMode.TIMED_EXAM, StudyMode.TOPIC ]),
+    studyModes:     z.array(z.nativeEnum(StudyMode)).default([ StudyMode.EXAM, StudyMode.TIMED_EXAM, StudyMode.TOPIC ]),
     flags:          CourseFlagsScheme.optional().default({  }),
 });
 

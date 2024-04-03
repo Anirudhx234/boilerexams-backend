@@ -1,4 +1,4 @@
-import {PrismaClient, QuestionType, ResourceType, type Submission} from "@prisma/client";
+import { PrismaClient, ResourceType } from "@prisma/client";
 import FlagDecoder from "../helpers/decoder.js";
 import uploadFileToS3 from "../utils/uploadFileToS3.js";
 import { Epoch, UrlResourceData } from "../prisma/schema.js";
@@ -54,6 +54,12 @@ export default prisma
                     compute(course) {
                         return FlagDecoder.course(course.flags); // Overwrite flag field with computed flags
                     }
+                },
+                stats: {
+                    needs: { id: true },
+                    async compute(course) {
+                        return courseStats(new Date(), Epoch, course.id);
+                    }
                 }
             },
             exam: { // Modify exam query
@@ -62,56 +68,31 @@ export default prisma
                     compute(exam) {
                         return FlagDecoder.exam(exam.flags); // Overwrite flag field with computed flags
                     }
+                },
+                stats: {
+                    needs: { id: true },
+                    async compute(exam) {
+                        return courseStats(new Date(), Epoch, exam.id);
+                    }
                 }
             },
             question: { // Modify question query
-                stats: {
-                    needs: { id: true, type: true, data: true },
-                    async compute(question) {
-                        if (question.type != QuestionType.MULTIPLE_CHOICE) return;
-
-                        const submissions = await prisma.submission.findMany({
-                            where: {
-                                questionId: question.id
-                            }
-                        });
-
-                        const totalSubmissions = submissions.length;
-                        const totalCorrectSubmissions = submissions.reduce((count: number, submission: Submission) => {
-                            return submission.correct ? count + 1 : count;
-                        }, 0);
-                        const timeSpent = submissions.reduce((count: bigint, submission: Submission) => {
-                            if (submission.timeSpent < 0n) return count;
-                            return count + submission.timeSpent;
-                        }, 0n);
-                        const timeSpentVideo = submissions.reduce((count: bigint, submission: Submission) => {
-                            if (submission.timeSpentVideo < 0n) return count;
-                            return count + submission.timeSpentVideo;
-                        }, 0n);
-                        const timeSpentModal = submissions.reduce((count: bigint, submission: Submission) => {
-                            if (submission.timeSpentModal < 0n) return count;
-                            return count + submission.timeSpentModal;
-                        }, 0n);
-
-                        return {
-                            totalSubmissions: totalSubmissions,
-                            totalCorrectSubmissions: totalCorrectSubmissions,
-                            timeSpent: timeSpent,
-                            timeSpentVideo: timeSpentVideo,
-                            timeSpentModal: timeSpentModal
-                        };
-                    }
-                },
                 flags: {
                     needs: { flags: true },
                     compute(question) {
                         return FlagDecoder.question(question.flags); // Overwrite flag field with computed flags
                     }
+                },
+                stats: {
+                    needs: { id: true },
+                    async compute(question) {
+                        return courseStats(new Date(), Epoch, question.id);
+                    }
                 }
             },
             answerChoice: {
                 stats: {
-                    needs: {  id: true, questionId: true, index: true },
+                    needs: { id: true, questionId: true, index: true },
                     async compute(answerChoice) {
                         return prisma.submission.count({
                             where: {

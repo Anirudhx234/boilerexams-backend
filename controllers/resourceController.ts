@@ -1,4 +1,5 @@
-
+import { Request, Response } from "express";
+import prisma from "../libs/prisma.js";
 
 /*
 const getResource = async (req: Request, res: Response) => {
@@ -150,5 +151,4 @@ export {
     updateCodeResource,
     deleteResource,
 };
-
  */

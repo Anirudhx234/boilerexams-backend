@@ -3,7 +3,7 @@ import isWhitelisted from "../../helpers/auth/isWhiteListed.js";
 
 const globalLimiter = rateLimit({
     windowMs: 1000,
-    max: 50,
+    max: 10,
     standardHeaders: "draft-7",
     legacyHeaders: false,
     skip: (req) => {

@@ -2,21 +2,26 @@ import prisma from "../../libs/prisma.js";
 
 // ToDo Working on this
 
-export async function examStats(before: Date, after: Date): Promise<ExamStats[]> {
+export async function examStats(before: Date, after: Date, id?: string): Promise<ExamStats> {
     return await prisma.$queryRaw`
         SELECT
-                (SELECT COUNT(*) FROM "Question" q WHERE q.flags & 1 = 1)   AS "questions",
-                SUM(submission."timeSpent")                                 AS "timeSpent",
-                SUM(submission."timeSpentVideo")                            AS "timeSpentVideo",
-                COUNT(submission.id)                                        AS  "submissions",
-                SUM(CASE WHEN submission.correct = TRUE THEN 1 ELSE 0 END)  AS "submissionsCorrect"
-        FROM
-            "Question" question
-                JOIN
-            "Submission" submission ON question.id = submission."questionId"
+            (SELECT COUNT(*) FROM "Exam" e WHERE
+                (e.id = ${id} OR ${id} = ${undefined}) AND 
+                e.flags & 1 = true)                             AS "count",
+            (SELECT COUNT(*) FROM "Question" q WHERE 
+                 q."examId" = e.id AND q.flags & 1 = true)      AS "questions",
+            SUM(s."timeSpent")                                  AS "timeSpent",
+            SUM(s."timeSpentVideo")                             AS "timeSpentVideo",
+            COUNT(s.id)                                         AS "submissions",
+            SUM(CASE WHEN s.correct = TRUE THEN 1 ELSE 0 END)   AS "submissionsCorrect"
+        FROM "Exam" e
+                 JOIN "Question" q ON e.id = q."examId"
+                 JOIN "Submission" s ON q.id = s."questionId"
         WHERE
-            question.flags & 1 = 1
-          AND (submission."timeStarted" BETWEEN SYMMETRIC ${after} AND ${before});
+            (e.id = ${id} OR ${id} = ${undefined}) AND
+            e.flags & 1 = true AND q.flags & 1 = true AND
+            (s."timeStarted" BETWEEN SYMMETRIC ${after} AND ${before})
+        GROUP BY e.id
     `;
 }
 
