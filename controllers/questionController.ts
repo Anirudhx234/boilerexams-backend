@@ -383,6 +383,7 @@ const bulkQuestionSubmission = async (req: Request, res: Response) => {
                 correct,
                 timeStarted,
                 timeEnded,
+                timeSpent,
                 videoStartTime,
                 videoEndTime,
                 timeSpentVideo,
