@@ -30,6 +30,7 @@ export async function getCourse(req: Request, res: Response) {
                     start: "asc",
                 },
             },
+            resources: true,
         },
     });
 
@@ -56,6 +57,7 @@ export async function getAllCourses(req: Request, res: Response) {
                     start: "asc",
                 },
             },
+            resources: true,
         },
     });
 
