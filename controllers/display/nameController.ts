@@ -89,7 +89,7 @@ const getCourseTopicsWithBasicQuestionInfo = async (req: Request, res: Response)
         },
     });
 
-    if (!course.flags.published) {
+    if (!(course.flags as any).published) {
         throw new NotFoundError("Course not found");
     }
 
@@ -100,7 +100,7 @@ const getCourseTopicsWithBasicQuestionInfo = async (req: Request, res: Response)
                 ...topic,
                 questions: topic.questions
                     .map(relation => relation.question)
-                    .filter(question => question.flags.published)
+                    .filter(question => (question.flags as any).published)
             };
         })
     });
@@ -125,11 +125,11 @@ const getCourseExamsWithBasicQuestionInfo = async (req: Request, res: Response) 
         }
     });
 
-    if (!course.flags.published) {
+    if (!(course.flags as any).published) {
         throw new NotFoundError("Course not found");
     }
 
-    const exams = course.exams.filter(exam => exam.flags.published);
+    const exams = course.exams.filter(exam => (exam.flags as any).published);
 
     const sortedExams = _.orderBy(
         exams,
@@ -140,7 +140,7 @@ const getCourseExamsWithBasicQuestionInfo = async (req: Request, res: Response) 
     res.status(200).send(sortedExams.map(exam => {
         return {
             ...exam,
-            questions: exam.questions.filter(question => question.flags.published)
+            questions: exam.questions.filter(question => (question.flags as any).published)
         };
     }));
 };
@@ -165,7 +165,7 @@ const getCourseTopicWithBasicQuestionInfo = async (req: Request, res: Response) 
         ...topic,
         questions: Promise.all(topic.questions
             .map(relation => relation.question)
-            .filter(question => question.flags.published)
+            .filter(question => (question.flags as any).published)
             .map(async (question) => {
                 const stats = await questionStats(new Date(), Epoch);
                 return {
@@ -210,7 +210,7 @@ const getCourseTopicWithFullQuestionInfo = async (req: Request, res: Response) =
         ...topic,
         questions: await Promise.all(topic.questions
             .map(relation => relation.question)
-            .filter(question => question.flags.published)
+            .filter(question => (question.flags as any).published)
             .map(async (question) => {
                 const stats = await questionStats(new Date(), Epoch);
                 return {
@@ -244,14 +244,14 @@ const getCourseExamWithBasicQuestionInfo = async (req: Request, res: Response) =
         }
     });
 
-    if (!exam.flags.published) {
+    if (!(exam.flags as any).published) {
         throw new NotFoundError("Exam not found");
     }
 
     res.status(200).send({
         ...exam,
         questions: exam.questions
-            .filter(question => question.flags.published)
+            .filter(question => (question.flags as any).published)
             .map(question => {
                 return {
                     ...question,
@@ -284,14 +284,14 @@ const getCourseExamWithFullQuestionInfo = async (req: Request, res: Response) =>
         }
     });
 
-    if (!exam.flags.published) {
+    if (!(exam.flags as any).published) {
         throw new NotFoundError("Exam not found");
     }
 
     res.status(200).send({
         ...exam,
         questions: await Promise.all(exam.questions
-            .filter(question => question.flags.published)
+            .filter(question => (question.flags as any).published)
             .map(async (question) => {
                 const stats = await questionStats(new Date(), Epoch);
                 return {

@@ -34,7 +34,7 @@ export async function getCourse(req: Request, res: Response) {
         },
     });
 
-    if (!course.flags.published) {
+    if (!(course.flags as any).published) {
         throw new NotFoundError("Course not found");
     }
 
@@ -61,7 +61,7 @@ export async function getAllCourses(req: Request, res: Response) {
         },
     });
 
-    res.status(200).send(courses.filter(course => course.flags.published));
+    res.status(200).send(courses.filter(course => (course.flags as any).published));
 }
 
 export async function getSubjects(req: Request, res: Response) {
@@ -160,7 +160,7 @@ export async function toggleCoursePublished(req: Request, res: Response) {
         throw new NotFoundError("Course not found");
     }
 
-    const status = !course.flags.published;
+    const status = !(course.flags as any).published;
 
     await prisma.course.update({
         where: {
@@ -168,7 +168,7 @@ export async function toggleCoursePublished(req: Request, res: Response) {
         },
         data: {
             flags: FlagEncoder.course({
-                ...course.flags,
+                ...(course.flags as any),
                 published: status
             }),
         },

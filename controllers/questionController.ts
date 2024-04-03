@@ -204,11 +204,11 @@ export async function toggleQuestionPublished(req: Request, res: Response) {
         throw new NotFoundError("Question not found");
     }
 
-    if (!question.exam.flags.published) {
+    if (!(question.exam.flags as any).published) {
         throw new APIError("Exam must be published", 409);
     }
 
-    const status = !question.flags.published;
+    const status = !(question.flags as any).published;
 
     await prisma.question.update({
         where: {
@@ -216,7 +216,7 @@ export async function toggleQuestionPublished(req: Request, res: Response) {
         },
         data: {
             flags: FlagEncoder.question({
-                ...question.flags,
+                ...(question.flags as any),
                 published: status
             })
         },
