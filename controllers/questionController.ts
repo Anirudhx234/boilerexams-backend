@@ -334,7 +334,7 @@ const createQuestionSubmission = async (req: Request, res: Response) => {
         timeEnded,
         videoStartTime,
         videoEndTime,
-        videoTotalWatchTime,
+        timeSpentVideo,
         modalStartTime,
         modalEndTime,
         modalTotalTime,
@@ -347,8 +347,8 @@ const createQuestionSubmission = async (req: Request, res: Response) => {
     const videoEnd = msToDate(videoEndTime);
     const modalStart = msToDate(modalStartTime);
     const modalEnd = msToDate(modalEndTime);
-    const timeSpentSafe = Math.floor(Math.min(1073741824, timeSpent));
-    const videoTimeSpentSafe = Math.floor(Math.min(1073741824, videoTotalWatchTime));
+    const timeSpentSafe = Math.floor(Math.min(1073741824, timeSpent ?? 0));
+    const timeSpetnVieoSafe = Math.floor(Math.min(1073741824, timeSpentVideo ?? 0));
 
     const submission = await prisma.submission.create({
         data: {
@@ -361,7 +361,7 @@ const createQuestionSubmission = async (req: Request, res: Response) => {
             timeSpent: timeSpentSafe,
             videoStartTime: videoStart,
             videoEndTime: videoEnd,
-            timeSpentVideo: videoTimeSpentSafe,
+            timeSpentVideo: timeSpentVideoSafe,
             modalStartTime: modalStart,
             modalEndTime: modalEnd,
             modalTotalTime: modalTotalTime,
@@ -385,7 +385,7 @@ const bulkQuestionSubmission = async (req: Request, res: Response) => {
                 timeEnded,
                 videoStartTime,
                 videoEndTime,
-                videoTotalWatchTime,
+                timeSpentVideo,
                 modalStartTime,
                 modalEndTime,
                 modalTotalTime,
@@ -397,7 +397,8 @@ const bulkQuestionSubmission = async (req: Request, res: Response) => {
                 const videoEnd = msToDate(videoEndTime);
                 const modalStart = msToDate(modalStartTime);
                 const modalEnd = msToDate(modalEndTime);
-                const timeSpent = 0;
+                const timeSpentSafe = Math.floor(Math.min(1073741824, timeSpent ?? 0));
+                const timeSpentVideoSafe = Math.floor(Math.min(1073741824, timeSpentVideo ?? 0));
 
                 return prisma.submission.create({
                     data: {
@@ -407,10 +408,10 @@ const bulkQuestionSubmission = async (req: Request, res: Response) => {
                         selectedChoiceIndices: selectedChoiceIndices,
                         timeStarted: startTime,
                         timeEnded: endTime,
-                        timeSpent: Math.floor(timeSpent),
+                        timeSpent: timeSpentSafe,
                         videoStartTime: videoStart,
                         videoEndTime: videoEnd,
-                        timeSpentVideo: Math.floor(videoTotalWatchTime),
+                        timeSpentVideo: timeSpentVideoSafe,
                         modalStartTime: modalStart,
                         modalEndTime: modalEnd,
                         modalTotalTime: modalTotalTime,
@@ -426,12 +427,13 @@ const bulkQuestionSubmission = async (req: Request, res: Response) => {
 
 const updateSubmission = async (req: Request, res: Response) => {
     const { submissionId } = req.params;
-    const { videoStartTime, videoEndTime, videoTotalWatchTime, modalStartTime, modalEndTime, modalTotalTime } = req.body;
+    const { videoStartTime, videoEndTime, timeSpentVideo, modalStartTime, modalEndTime, modalTotalTime } = req.body;
 
     const videoStart = msToDate(videoStartTime);
     const videoEnd = msToDate(videoEndTime);
     const modalStart = msToDate(modalStartTime);
     const modalEnd = msToDate(modalEndTime);
+    const timeSpentVideoSafe = Math.floor(Math.min(1073741824, timeSpentVideo ?? 0));
 
     const submission = await prisma.submission.update({
         where: {
@@ -440,7 +442,7 @@ const updateSubmission = async (req: Request, res: Response) => {
         data: {
             videoStartTime: videoStart,
             videoEndTime: videoEnd,
-            timeSpentVideo: videoTotalWatchTime,
+            timeSpentVideo: timeSpentVideoSafe,
             modalStartTime: modalStart,
             modalEndTime: modalEnd,
             modalTotalTime: modalTotalTime,
