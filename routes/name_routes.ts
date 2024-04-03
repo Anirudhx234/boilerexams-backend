@@ -18,14 +18,10 @@ const router = express.Router();
 
 // CURRENTLY USED
 // Get all courses
-router.get("/courses", generalLimiter, sendPublished, asyncWrapper(getSubjects));
+router.get("/subjects", generalLimiter, sendPublished, asyncWrapper(getSubjects));
 
 // All topics metadata, no relations
 router.get("/topics", generalLimiter, sendPublished, asyncWrapper(getAllTopics));
-
-// All courses with relations. Use for testing only.
-// ToDo Deprecated
-// app.get("/courses/all", generalLimiter, sendPublished, asyncWrapper(getAllCourses));
 
 // CURRENTLY USED
 // Metadata for specific course, no relations

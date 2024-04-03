@@ -1,4 +1,4 @@
-import prisma from "../libs/prisma.js";
+import prisma from "../prisma/prisma.js";
 import uploadFileToS3 from "../utils/uploadFileToS3.js";
 import type { Request, Response } from "express";
 import { NotFoundError } from "../middleware/errors/index.js";
@@ -38,7 +38,10 @@ export async function getCourse(req: Request, res: Response) {
         throw new NotFoundError("Course not found");
     }
 
-    res.status(200).send(course);
+    res.status(200).send({
+        ...course,
+        stats: await course.stats
+    });
 }
 
 export async function getAllCourses(req: Request, res: Response) {
@@ -61,6 +64,7 @@ export async function getAllCourses(req: Request, res: Response) {
         },
     });
 
+    for (const c of courses) await c.stats;
     res.status(200).send(courses.filter(course => (course.flags as any).published));
 }
 

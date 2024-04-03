@@ -1,6 +1,6 @@
-import prisma from "../../libs/prisma.js";
+import prisma from "../../prisma/prisma.js";
 
-export async function submissionStats(before: Date, after: Date, id?: string): Promise<SubmissionStats> {
+export async function submissionStats(before: Date, after: Date, id?: string): Promise<SubmissionStats[]> {
     return await prisma.$queryRaw`
         SELECT
             (SELECT COUNT(*) FROM "Submission" s WHERE

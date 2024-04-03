@@ -1,4 +1,4 @@
-import prisma from "../libs/prisma.js";
+import prisma from "../prisma/prisma.js";
 import type { Request, Response } from "express";
 import parseQuestions from "../helpers/mathpix/questionParser.js";
 import getPDFResult from "../helpers/mathpix/retrievePDF.js";

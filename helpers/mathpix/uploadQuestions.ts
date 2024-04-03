@@ -1,4 +1,4 @@
-import prisma from "../../libs/prisma.js";
+import prisma from "../../prisma/prisma.js";
 import { QuestionType, ResourceType } from "@prisma/client";
 import axios from "axios";
 import uploadFileToS3 from "../../utils/uploadFileToS3.js";

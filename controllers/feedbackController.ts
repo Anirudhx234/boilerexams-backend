@@ -2,7 +2,7 @@ import { APIError, CourseAlreadyExistsError, NotFoundError } from "../middleware
 import { Request, Response } from "express";
 import { DiscordAPI } from "../services/discord.api.js";
 import { PurdueIoAPI } from "../services/purdue.io.js";
-import prisma from "../libs/prisma.js";
+import prisma from "../prisma/prisma.js";
 import uploadFileToS3 from "../utils/uploadFileToS3.js";
 import { FeedbackStatus, FeedbackType, ResourceType } from "@prisma/client";
 import Resolver from "../helpers/resolver.js";

@@ -1,4 +1,4 @@
-import prisma from "../../libs/prisma.js";
+import prisma from "../../prisma/prisma.js";
 import type { NextFunction, Request, Response } from "express";
 import passport from "passport";
 import { URL } from "url";

@@ -1,7 +1,7 @@
 import { PrismaClient, ResourceType } from "@prisma/client";
 import FlagDecoder from "../helpers/decoder.js";
 import uploadFileToS3 from "../utils/uploadFileToS3.js";
-import { Epoch, UrlResourceData } from "../prisma/schema.js";
+import { Epoch, UrlResourceData } from "./schema.js";
 import { courseStats } from "../helpers/stats/courseStats.js";
 import { examStats } from "../helpers/stats/examStats.js";
 import { questionStats } from "../helpers/stats/questionStats.js";
@@ -58,7 +58,8 @@ export default prisma
                 stats: {
                     needs: { id: true },
                     async compute(course) {
-                        return courseStats(new Date(), Epoch, course.id);
+                        const stats = await courseStats(new Date(), Epoch, course.id);
+                        return stats[0];
                     }
                 }
             },
@@ -72,7 +73,8 @@ export default prisma
                 stats: {
                     needs: { id: true },
                     async compute(exam) {
-                        return courseStats(new Date(), Epoch, exam.id);
+                        const stats = await examStats(new Date(), Epoch, exam.id);
+                        return stats[0];
                     }
                 }
             },
@@ -86,7 +88,8 @@ export default prisma
                 stats: {
                     needs: { id: true },
                     async compute(question) {
-                        return courseStats(new Date(), Epoch, question.id);
+                        const stats = await questionStats(new Date(), Epoch, question.id);
+                        return stats[0];
                     }
                 }
             },

@@ -1,4 +1,4 @@
-import prisma from "../../libs/prisma.js";
+import prisma from "../../prisma/prisma.js";
 import { NotFoundError } from "../../middleware/errors/index.js";
 import type { Request, Response } from "express";
 import _ from "lodash";

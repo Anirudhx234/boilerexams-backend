@@ -1,6 +1,6 @@
 import { CourseResolvable, ExamResolvable, QuestionResolvable, TopicResolvable } from "../prisma/schema.js";
 import { APIError } from "../middleware/errors/index.js";
-import prisma from "../libs/prisma.js";
+import prisma from "../prisma/prisma.js";
 
 export default class Resolver {
     private static uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i; // uuid

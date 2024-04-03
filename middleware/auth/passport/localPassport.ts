@@ -1,4 +1,4 @@
-import prisma from "../../../libs/prisma.js";
+import prisma from "../../../prisma/prisma.js";
 import { AccountType, type User } from "@prisma/client";
 import { Strategy } from "passport-local";
 import { timingSafeEqual } from "crypto";
