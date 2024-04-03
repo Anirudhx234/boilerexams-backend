@@ -111,13 +111,13 @@ export default prisma
             },
             answerChoice: {
                 stats: {
-                    needs: {  id: true, questionId: true, index: true },
+                    needs: {  id: true, questionId: true, choiceIndex: true},
                     async compute(answerChoice) {
                         return prisma.submission.count({
                             where: {
                                 questionId: answerChoice.questionId,
-                                userSolution: {
-                                    array_contains: answerChoice.index
+                                solution: {
+                                    array_contains: answerChoice.choiceIndex
                                 }
                             }
                         });

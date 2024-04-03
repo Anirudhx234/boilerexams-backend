@@ -5,7 +5,6 @@ import _ from "lodash";
 import Resolver from "../../helpers/resolver.js";
 import { questionStats } from "../../helpers/stats/questionStats.js";
 import { Epoch } from "../../prisma/schema.js";
-import FlagDecoder from "../../helpers/decoder.js";
 
 const questionSort: QuestionSortCategory[] = [
     {
@@ -90,8 +89,7 @@ const getCourseTopicsWithBasicQuestionInfo = async (req: Request, res: Response)
         },
     });
 
-    const decodedCourseFlags = FlagDecoder.course(course.flags);
-    if (!decodedCourseFlags.published) {
+    if (!course.flags.published) {
         throw new NotFoundError("Course not found");
     }
 
@@ -101,16 +99,12 @@ const getCourseTopicsWithBasicQuestionInfo = async (req: Request, res: Response)
             return {
                 ...topic,
                 questions: topic.questions
-                    .map(relation => {
-                        const decodedQuestionFlags = FlagDecoder.question(relation.question.flags);
-                        return decodedQuestionFlags.published ? relation.question : null;
-                    })
-                    .filter(question => question !== null)
+                    .map(relation => relation.question)
+                    .filter(question => question.flags.published)
             };
         })
     });
 };
-
 
 // All exams with question ids and numbers
 const getCourseExamsWithBasicQuestionInfo = async (req: Request, res: Response) => {
@@ -131,34 +125,25 @@ const getCourseExamsWithBasicQuestionInfo = async (req: Request, res: Response) 
         }
     });
 
-    const decodedCourseFlags = FlagDecoder.course(course.flags);
-    if (!decodedCourseFlags.published) {
+    if (!course.flags.published) {
         throw new NotFoundError("Course not found");
     }
 
-    const exams = course.exams.map(exam => {
-        const decodedExamFlags = FlagDecoder.exam(exam.flags);
-        if (!decodedExamFlags.published) {
-            return null;
-        }
-        return {
-            ...exam,
-            questions: exam.questions.filter(question => {
-                const decodedQuestionFlags = FlagDecoder.question(question.flags);
-                return decodedQuestionFlags.published;
-            })
-        };
-    }).filter(exam => exam !== null);
+    const exams = course.exams.filter(exam => exam.flags.published);
 
     const sortedExams = _.orderBy(
         exams,
-        [(exam) => (exam?.number === 0 ? 10 : exam?.number), "semester.year", "semester.season"],
+        [(exam) => (exam.number === 0 ? 10 : exam.number), "semester.year", "semester.season"],
         ["asc", "desc", "asc"],
     );
 
-    res.status(200).send(sortedExams);
+    res.status(200).send(sortedExams.map(exam => {
+        return {
+            ...exam,
+            questions: exam.questions.filter(question => question.flags.published)
+        };
+    }));
 };
-
 
 // Basic question information for specific topic
 const getCourseTopicWithBasicQuestionInfo = async (req: Request, res: Response) => {
@@ -176,25 +161,18 @@ const getCourseTopicWithBasicQuestionInfo = async (req: Request, res: Response) 
         },
     });
 
-    const questionsWithStats = await Promise.all(topic.questions.map(async (relation) => {
-        const decodedFlags = FlagDecoder.question(relation.question.flags);
-        // Filter based on the published property of the decoded flags
-        if (!decodedFlags.published) {
-            return null; 
-        }
-
-        const stats = await questionStats(new Date(), Epoch);
-        return {
-            ...relation.question,
-            answerChoiceStats: stats
-        };
-    }));
-
-    const filteredQuestionsWithStats = questionsWithStats.filter(question => question !== null);
-
     res.status(200).send({
         ...topic,
-        questions: filteredQuestionsWithStats
+        questions: Promise.all(topic.questions
+            .map(relation => relation.question)
+            .filter(question => question.flags.published)
+            .map(async (question) => {
+                const stats = await questionStats(new Date(), Epoch);
+                return {
+                    ...question,
+                    answerChoiceStats: stats
+                };
+            }))
     });
 };
 
@@ -227,25 +205,20 @@ const getCourseTopicWithFullQuestionInfo = async (req: Request, res: Response) =
     if (!topic) {
         throw new NotFoundError("Topic not found");
     }
-    const questionsWithStats = await Promise.all(topic.questions.map(async (relation) => {
-        const decodedFlags = FlagDecoder.question(relation.question.flags);
-        // Filter based on the published property of the decoded flags
-        if (!decodedFlags.published) {
-            return null; 
-        }
-
-        const stats = await questionStats(new Date(), Epoch);
-        return {
-            ...relation.question,
-            questionStats: stats
-        };
-    }));
-
-    const filteredQuestionsWithStats = questionsWithStats.filter(question => question !== null);
 
     res.status(200).send({
         ...topic,
-        questions: filteredQuestionsWithStats
+        questions: await Promise.all(topic.questions
+            .map(relation => relation.question)
+            .filter(question => question.flags.published)
+            .map(async (question) => {
+                const stats = await questionStats(new Date(), Epoch);
+                return {
+                    ...question,
+                    topics: question.topics.map(relation => relation.topic),
+                    questionStats: stats
+                };
+            }))
     });
 };
 
@@ -271,28 +244,22 @@ const getCourseExamWithBasicQuestionInfo = async (req: Request, res: Response) =
         }
     });
 
-    const decodedExamFlags = FlagDecoder.exam(exam.flags);
-    if (!decodedExamFlags.published) {
+    if (!exam.flags.published) {
         throw new NotFoundError("Exam not found");
     }
 
-    const processedQuestions = exam.questions.map(question => {
-        const decodedQuestionFlags = FlagDecoder.question(question.flags);
-
-        if (!decodedQuestionFlags.published) {
-            return null; 
-        }
-        return {
-            ...question,
-            topics: question.topics.map(relation => relation.topic)
-        };
-    }).filter(question => question !== null);
     res.status(200).send({
         ...exam,
-        questions: processedQuestions
+        questions: exam.questions
+            .filter(question => question.flags.published)
+            .map(question => {
+                return {
+                    ...question,
+                    topics: question.topics.map(relation => relation.topic)
+                };
+            })
     });
 };
-
 
 // All questions for a specific exam, includes topics within questions.
 const getCourseExamWithFullQuestionInfo = async (req: Request, res: Response) => {
@@ -317,34 +284,24 @@ const getCourseExamWithFullQuestionInfo = async (req: Request, res: Response) =>
         }
     });
 
-    const decodedExamFlags = FlagDecoder.exam(exam.flags);
-    if (!decodedExamFlags.published) {
+    if (!exam.flags.published) {
         throw new NotFoundError("Exam not found");
     }
 
-
-    const processedQuestions = await Promise.all(exam.questions.map(async (question) => {
-        const decodedQuestionFlags = FlagDecoder.question(question.flags);
-
-        if (!decodedQuestionFlags.published) {
-            return null;
-        }
-        const stats = await questionStats(new Date(), Epoch);
-        return {
-            ...question,
-            topics: question.topics.map(relation => relation.topic),
-            questionStats: stats
-        };
-    }));
-
-
-    const filteredQuestions = processedQuestions.filter(question => question !== null);
     res.status(200).send({
         ...exam,
-        questions: filteredQuestions
+        questions: await Promise.all(exam.questions
+            .filter(question => question.flags.published)
+            .map(async (question) => {
+                const stats = await questionStats(new Date(), Epoch);
+                return {
+                    ...question,
+                    topics: question.topics.map(relation => relation.topic),
+                    questionStats: stats
+                };
+            }))
     });
 };
-
 
 export {
     getAllTopics,
