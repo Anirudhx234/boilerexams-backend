@@ -31,6 +31,11 @@ const authHandler = (role: string) =>
             if (userLevel >= authLevel) {
                 return next();
             }
+        } else {
+            const authLevel = levels[role];
+            if (authLevel === 1) {
+                return next();
+            }
         }
         throw new APIError("Unauthorized", 403);
     });
