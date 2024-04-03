@@ -348,7 +348,7 @@ const createQuestionSubmission = async (req: Request, res: Response) => {
     const modalStart = msToDate(modalStartTime);
     const modalEnd = msToDate(modalEndTime);
     const timeSpentSafe = Math.floor(Math.min(1073741824, timeSpent ?? 0));
-    const timeSpetnVieoSafe = Math.floor(Math.min(1073741824, timeSpentVideo ?? 0));
+    const timeSpentVideoSafe = Math.floor(Math.min(1073741824, timeSpentVideo ?? 0));
 
     const submission = await prisma.submission.create({
         data: {
