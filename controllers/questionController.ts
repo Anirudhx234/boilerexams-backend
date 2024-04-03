@@ -329,6 +329,7 @@ const createQuestionSubmission = async (req: Request, res: Response) => {
         selectedChoiceIndices,
         type,
         correct,
+        timeSpent,
         timeStarted,
         timeEnded,
         videoStartTime,
@@ -346,7 +347,8 @@ const createQuestionSubmission = async (req: Request, res: Response) => {
     const videoEnd = msToDate(videoEndTime);
     const modalStart = msToDate(modalStartTime);
     const modalEnd = msToDate(modalEndTime);
-    const timeSpent = 0;
+    const timeSpentSafe = Math.floor(Math.max(1073741824, timeSpent));
+    const videoTimeSpentSafe = Math.floor(Math.max(1073741824, videoTotalWatchTime));
 
     const submission = await prisma.submission.create({
         data: {
@@ -356,10 +358,10 @@ const createQuestionSubmission = async (req: Request, res: Response) => {
             selectedChoiceIndices: selectedChoiceIndices,
             timeStarted: startTime,
             timeEnded: endTime,
-            timeSpent: Math.floor(timeSpent),
+            timeSpent: timeSpentSafe,
             videoStartTime: videoStart,
             videoEndTime: videoEnd,
-            timeSpentVideo: Math.floor(videoTotalWatchTime),
+            timeSpentVideo: videoTimeSpentSafe,
             modalStartTime: modalStart,
             modalEndTime: modalEnd,
             modalTotalTime: modalTotalTime,
