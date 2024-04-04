@@ -181,7 +181,7 @@ export async function getCourseTopics(req: Request, res: Response) {
         orderBy: {
             name: "asc",
         },
-    })
+    });
 
     res.status(200).send(Formatter.topics(topics, req.sendUnpublished));
 }

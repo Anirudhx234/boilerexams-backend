@@ -43,12 +43,11 @@ export async function getTopic(req: Request, res: Response) {
                 include: {
                     question: true
                 },
-                orderBy: {
-                    number: "asc"
-                },
-            },
+            }
         },
     });
+
+    console.log(topic);
 
     res.status(200).send(Formatter.topic(topic, req.sendUnpublished));
 }
