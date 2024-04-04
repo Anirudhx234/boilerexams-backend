@@ -34,56 +34,6 @@ const getCourseTopics = async (req: Request, res: Response) => {
     res.status(200).send(course.topics);
 };
 
-// All questions with topics included for a specific topic in a course.
-// Includes questions from other courses.
-const getCourseTopicsWithBasicQuestionInfo = async (req: Request, res: Response) => {
-    const { courseResolvable } = req.params;
-
-    const course = await prisma.course.findUniqueOrThrow({
-        where: Resolver.course(courseResolvable),
-        select: {
-            flags: true,
-            topics: {
-                include: {
-                    questions: {
-                        include: {
-                            question: {
-                                select: {
-                                    id: true,
-                                    number: true,
-                                    flags: true,
-                                }
-                            }
-                        },
-                        orderBy: {
-                            number: "asc"
-                        }
-                    }
-                },
-                orderBy: {
-                    name: "asc",
-                },
-            }
-        },
-    });
-
-    if (!req.sendUnpublished && !course.flags.published) {
-        throw new NotFoundError("Course not found");
-    }
-
-    res.status(200).send({
-        ...course,
-        topics: course.topics.map(topic => {
-            return {
-                ...topic,
-                questions: topic.questions
-                    .map(relation => relation.question)
-                    .filter(question => req.sendUnpublished || question.flags.published)
-            };
-        })
-    });
-};
-
 // All exams with question ids and numbers
 const getCourseExamsWithBasicQuestionInfo = async (req: Request, res: Response) => {
     const { courseResolvable } = req.params;
@@ -103,14 +53,11 @@ const getCourseExamsWithBasicQuestionInfo = async (req: Request, res: Response) 
         }
     });
 
-    console.log(`SEND UNPUBLISHED: ${req.sendUnpublished}`);
-
     if (!req.sendUnpublished && !course.flags.published) {
         throw new NotFoundError("Course not found");
     }
 
     const exams = course.exams.filter(exam => req.sendUnpublished || exam.flags.published);
-
     const sortedExams = _.orderBy(
         exams,
         [(exam) => (exam.number === 0 ? 10 : exam.number), "semester.year", "semester.season"],
@@ -280,7 +227,6 @@ const getCourseExamWithFullQuestionInfo = async (req: Request, res: Response) =>
 export {
     getAllTopics,
     getCourseTopics,
-    getCourseTopicsWithBasicQuestionInfo,
     getCourseExamsWithBasicQuestionInfo,
     getCourseTopicWithBasicQuestionInfo,
     getCourseTopicWithFullQuestionInfo,

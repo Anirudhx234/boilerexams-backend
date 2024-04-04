@@ -9,6 +9,8 @@ import {
 } from "../prisma/schema.js";
 import Resolver from "../helpers/resolver.js";
 import FlagEncoder from "../helpers/encoder.js";
+import questions from "../routes/questions.js";
+import Formatter from "../helpers/formatter.js";
 
 // ToDo handle multiple graphic resource uploads that are file-based
 export async function uploadGraphic(graphicLink?: string, file?: any) {
@@ -17,6 +19,43 @@ export async function uploadGraphic(graphicLink?: string, file?: any) {
         return data.Location;
     }
     return graphicLink;
+}
+
+export async function getSubjects(req: Request, res: Response) {
+    const courses = await prisma.course.findMany({
+        orderBy: [
+            {
+                subject: "asc",
+            },
+            {
+                number: "asc",
+            }
+        ],
+        include: {
+            resources: true
+        }
+    });
+
+    const subjects = courses
+        .filter(course => req.sendUnpublished || course.flags.published)
+        .reduce((acc, course) => {
+            const subjectName = course.subject;
+            if (!acc[subjectName]) {
+                acc[subjectName] = {
+                    subject: subjectName,
+                    courses: []
+                };
+            }
+            acc[subjectName].courses.push(course);
+            return acc;
+        }, {} as {  });
+
+    const uniqueSubjects: Subject[] = Object.values(subjects);
+
+    uniqueSubjects.sort((a, b) => b.courses.length - a.courses.length);
+
+    // Send the sorted result as the response
+    res.status(200).send(uniqueSubjects);
 }
 
 export async function getCourse(req: Request, res: Response) {
@@ -64,45 +103,83 @@ export async function getAllCourses(req: Request, res: Response) {
         },
     });
 
-    for (const c of courses) await c.stats;
-    res.status(200).send(courses.filter(course => req.sendUnpublished || course.flags.published));
+    res.status(200).send(courses.map(course => Formatter.course(course, req.sendUnpublished)));
 }
 
-export async function getSubjects(req: Request, res: Response) {
-    const courses = await prisma.course.findMany({
-        orderBy: [
-            {
-                subject: "asc",
-            },
-            {
-                number: "asc",
-            }
-        ],
+export async function getCourseExams(req: Request, res: Response) {
+    const { courseResolvable } = req.params;
+
+    const course = await prisma.course.findUniqueOrThrow({
+        where: Resolver.course(courseResolvable),
+        select: {
+            id: true,
+            flags: true,
+        },
+    });
+
+    if (!req.sendUnpublished && !course.flags.published) {
+        throw new NotFoundError("Course not found");
+    }
+
+    const exams = await prisma.exam.findMany({
+        where: {
+            courseId: course.id
+        },
         include: {
-            resources: true
+            resources: true,
+            questions: {
+                select: {
+                    id: true,
+                    number: true,
+                    flags: true
+                }
+            }
         }
     });
 
-    const subjects = courses
-        .filter(course => req.sendUnpublished || course.flags.published)
-        .reduce((acc, course) => {
-            const subjectName = course.subject;
-            if (!acc[subjectName]) {
-                acc[subjectName] = {
-                    subject: subjectName,
-                    courses: []
-                };
+    res.status(200).send(exams.map(exam => Formatter.exam(exam, req.sendUnpublished)));
+}
+
+export async function getCourseTopics(req: Request, res: Response) {
+    const { courseResolvable } = req.params;
+
+    const course = await prisma.course.findUniqueOrThrow({
+        where: Resolver.course(courseResolvable),
+        select: {
+            id: true,
+            flags: true,
+        },
+    });
+
+    if (!req.sendUnpublished && !course.flags.published) {
+        throw new NotFoundError("Course not found");
+    }
+
+    const topics = await prisma.topic.findMany({
+        where: {
+            courseId: course.id
+        },
+        include: {
+            questions: {
+                include: {
+                    question: {
+                        select: {
+                            id: true,
+                            flags: true,
+                        }
+                    }
+                },
+                orderBy: {
+                    number: "asc"
+                }
             }
-            acc[subjectName].courses.push(course);
-            return acc;
-        }, {} as {  });
+        },
+        orderBy: {
+            name: "asc",
+        },
+    })
 
-    const uniqueSubjects: Subject[] = Object.values(subjects);
-
-    uniqueSubjects.sort((a, b) => b.courses.length - a.courses.length);
-
-    // Send the sorted result as the response
-    res.status(200).send(uniqueSubjects);
+    res.status(200).send(Formatter.topics(topics, req.sendUnpublished));
 }
 
 export async function createCourse(req: Request, res: Response) {

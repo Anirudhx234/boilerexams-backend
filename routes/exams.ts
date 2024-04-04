@@ -1,8 +1,22 @@
 import express from "express";
-import { createExam, deleteExam, toggleExamPublished, updateExam } from "../controllers/examController.js";
+import {
+    createExam,
+    deleteExam, getAllExams,
+    getExam,
+    getExamQuestions,
+    toggleExamPublished,
+    updateExam
+} from "../controllers/examController.js";
 import asyncWrapper from "../middleware/wrappers/asyncWrapper.js";
+import sendPublished from "../middleware/auth/sendPublished.js";
 
 const router = express.Router();
+
+router.get("/exams", sendPublished, asyncWrapper(getAllExams));
+
+router.get("/exams/:examResolvable", sendPublished, asyncWrapper(getExam));
+
+router.get("/exams/:examResolvable/questions", asyncWrapper(getExamQuestions));
 
 router.post("/courses/:courseResolvable/exams", asyncWrapper(createExam));
 

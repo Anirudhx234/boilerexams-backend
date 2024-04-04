@@ -1,7 +1,6 @@
 import express from "express";
 import {
     getAllTopics,
-    getCourseTopicsWithBasicQuestionInfo,
     getCourseExamsWithBasicQuestionInfo,
     getCourseTopicWithBasicQuestionInfo,
     getCourseTopicWithFullQuestionInfo,
@@ -12,7 +11,7 @@ import asyncWrapper from "../middleware/wrappers/asyncWrapper.js";
 import sendPublished from "../middleware/auth/sendPublished.js";
 import generalLimiter from "../middleware/rateLimiting/generalLimiter.js";
 import { getEvent, getEvents } from "../controllers/eventController.js";
-import { getCourse, getSubjects } from "../controllers/courseController.js";
+import { getCourse, getCourseTopics, getSubjects } from "../controllers/courseController.js";
 
 const router = express.Router();
 
@@ -29,11 +28,11 @@ router.get("/courses/:courseResolvable", generalLimiter, sendPublished, asyncWra
 
 // CURRENTLY USED
 // All topics with question ids, numbers, published status. OLD VERSION: All topics for a specific course, no other relations (getCourseTopics)
-router.get("/courses/:courseResolvable/topics", generalLimiter, sendPublished, asyncWrapper(getCourseTopicsWithBasicQuestionInfo));
+router.get("/courses/:courseResolvable/topics", generalLimiter, sendPublished, asyncWrapper(getCourseTopics));
 
 // All questions with topics included for a specific topic in a course.
 // Includes questions from other courses.
-router.get("/courses/:courseResolvable/topics/questions", generalLimiter, sendPublished, asyncWrapper(getCourseTopicsWithBasicQuestionInfo));
+router.get("/courses/:courseResolvable/topics/questions", generalLimiter, sendPublished, asyncWrapper(getCourseTopics));
 
 // CURRENTLY USED
 // All exams with question ids, numbers, published status. OLD VERSION: All exams with semester (no questions) (getCourseExams)

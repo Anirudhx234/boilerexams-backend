@@ -7,6 +7,92 @@ import {
     UpdateExamScheme
 } from "../prisma/schema.js";
 import FlagEncoder from "../helpers/encoder.js";
+import Formatter from "../helpers/formatter.js";
+
+export async function getExam(req: Request, res: Response) {
+    const { examResolvable, courseResolvable } = req.params;
+
+    const exam = await prisma.exam.findUniqueOrThrow({
+        where: await Resolver.exam(examResolvable, courseResolvable),
+        include: {
+            resources: true,
+            questions: {
+                select: {
+                    id: true,
+                    number: true,
+                    flags: true
+                }
+            }
+        }
+    });
+
+    if (!req.sendUnpublished && !exam.flags.published) {
+        throw new NotFoundError("Exam not found");
+    }
+
+    res.status(200).send(Formatter.exam(exam, req.sendUnpublished));
+}
+
+export async function getAllExams(req: Request, res: Response) {
+    const exams = await prisma.exam.findMany({
+        include: {
+            resources: true,
+            questions: {
+                select: {
+                    id: true,
+                    number: true,
+                    flags: true
+                }
+            }
+        }
+    });
+
+    res.status(200).send(Formatter.exams(exams, req.sendUnpublished));
+}
+
+export async function getExamQuestions(req: Request, res: Response) {
+    const { examResolvable, courseResolvable } = req.params;
+
+    const exam = await prisma.exam.findUniqueOrThrow({
+        where: await Resolver.exam(examResolvable, courseResolvable),
+    });
+
+    if (!req.sendUnpublished && !exam.flags.published) {
+        throw new NotFoundError("Exam not found");
+    }
+
+    const questions = await prisma.question.findMany({
+        where: {
+            examId: exam.id
+        },
+        include: {
+            resources: true,
+                explanation: true,
+                children: {
+                include: {
+                    resources: true,
+                        answerChoices: {
+                        include: {
+                            resources: true
+                        }
+                    }
+                }
+            },
+            topics: {
+                include: {
+                    topic: true
+                }
+            },
+            answerChoices: {
+                include: {
+                    resources: true
+                }
+            }
+        }
+    });
+
+    res.status(200).send(Formatter.questions(questions, req.sendUnpublished));
+}
 
 export async function createExam(req: Request, res: Response)  {
     const { courseResolvable } = req.params;
