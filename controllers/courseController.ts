@@ -11,15 +11,11 @@ import Resolver from "../helpers/resolver.js";
 import FlagEncoder from "../helpers/encoder.js";
 import questions from "../routes/questions.js";
 import Formatter from "../helpers/formatter.js";
+import { z } from "zod";
 
-// ToDo handle multiple graphic resource uploads that are file-based
-export async function uploadGraphic(graphicLink?: string, file?: any) {
-    if (file) {
-        const data = await uploadFileToS3(file.buffer, file.mimetype);
-        return data.Location;
-    }
-    return graphicLink;
-}
+export const CourseFlags = z.object({
+    published: z.boolean().default(false),
+});
 
 export async function getSubjects(req: Request, res: Response) {
     const courses = await prisma.course.findMany({

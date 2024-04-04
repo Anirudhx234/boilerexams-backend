@@ -2,6 +2,9 @@ import { z } from "zod";
 import { FeedbackStatus, FeedbackType, QuestionType, Season, StudyMode } from "@prisma/client";
 import { randomUUID } from "node:crypto";
 import { CreateTopic, UpdateTopic } from "../controllers/topicController.js";
+import { CourseFlags } from "../controllers/courseController.js";
+import { ExamFlags } from "../controllers/examController.js";
+import { QuestionFlags } from "../controllers/questionController.js";
 
 const coerceBigIntSafely = (input) => {
     if (input !== undefined) {
@@ -40,91 +43,13 @@ export const ShortAnswerSubmissionData = FreeResponseSubmissionData;
 
 export const FillInBlankSubmissionData = FillInBlankQuestionData;
 
-export const UrlResourceData = z.object({
-    url:        z.string().url(),
-    key:        z.string().optional(),
-    index:      z.number().optional(),
-    altText:    z.string().optional()
-});
-
-export const CodeResourceData = z.object({
-    language:   z.enum([ "C", "JAVA", "PYTHON", "TEXT" ]),
-    content:    z.string(),
-    index:      z.number().optional()
-});
-
-export const CourseFlagsScheme = z.object({
-    published: z.boolean().optional(),
-});
-
-export const ExamFlagsScheme = z.object({
-    published:  z.boolean().optional(),
-    practice:   z.boolean().optional(),
-});
-
-export const QuestionFlagsScheme = z.object({
-    published:              z.boolean().optional(),
-    disableRandomAnswers:   z.boolean().optional(),
-    answersStartHidden:     z.boolean().optional()
-});
-
-export const CourseResolvable = z.union([
-    z.object({
-        id: z.string().uuid()
-    }),
-    z.object({
-        abbreviation_number: z.object({
-            abbreviation:   z.string(),
-            number:         z.number().min(10000).max(99999)
-        })
-    })
-]);
-
-export const ExamResolvable = z.union([
-    z.object({
-        id: z.string().uuid(),
-    }),
-    z.object({
-        number_year_season_courseId: z.object({
-            number:     z.number().min(0).max(5),
-            year:       z.number().min(1970).max(2070),
-            season:     z.nativeEnum(Season),
-            courseId:   z.string().uuid()
-        })
-    })
-]);
-
-export const TopicResolvable = z.union([
-    z.object({
-        id: z.string().uuid(),
-    }),
-    z.object({
-        name_courseId: z.object({
-            name:       z.string(),
-            courseId:   z.string().uuid()
-        })
-    })
-]);
-
-export const QuestionResolvable = z.union([
-    z.object({
-        id: z.string().uuid()
-    }),
-    z.object({
-        number_examId: z.object({
-            number: z.number().min(1),
-            examId: z.string().uuid(),
-        })
-    })
-]);
-
 export const CreateCourseScheme = z.object({
     abbreviation:   z.string(),
     number:         z.number(),
     color:          z.string().optional(),
     disclaimer:     z.string().optional(),
     studyModes:     z.array(z.nativeEnum(StudyMode)).default([ StudyMode.EXAM, StudyMode.TIMED_EXAM, StudyMode.TOPIC ]),
-    flags:          CourseFlagsScheme.optional().default({  }),
+    flags:          CourseFlags.optional().default({  }),
 });
 
 export const UpdateCourseScheme = CreateCourseScheme;
@@ -134,7 +59,7 @@ export const CreateExamScheme = z.object({
     year:       z.number(),
     season:     z.nativeEnum(Season),
     disclaimer: z.string().optional(),
-    flags:      ExamFlagsScheme.optional().default({  })
+    flags:      ExamFlags.optional().default({  })
 });
 
 export const UpdateExamScheme = CreateExamScheme;
@@ -150,7 +75,7 @@ export const CreateQuestionScheme = z.object({
     number:     z.number().min(1),
     disclaimer: z.string().optional(),
     parentId:   z.string().uuid().optional(),
-    flags:      QuestionFlagsScheme.optional().default({  }),
+    flags:      QuestionFlags.optional().default({  }),
 });
 
 export const UpdateQuestionScheme = CreateQuestionScheme.extend({

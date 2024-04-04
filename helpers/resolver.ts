@@ -1,6 +1,57 @@
-import { CourseResolvable, ExamResolvable, QuestionResolvable, TopicResolvable } from "../prisma/schema.js";
 import { APIError } from "../middleware/errors/index.js";
 import prisma from "../prisma/prisma.js";
+import { z } from "zod";
+import { Season } from "@prisma/client";
+
+export const CourseResolvable = z.union([
+    z.object({
+        id: z.string().uuid()
+    }),
+    z.object({
+        abbreviation_number: z.object({
+            abbreviation:   z.string(),
+            number:         z.number().min(10000).max(99999)
+        })
+    })
+]);
+
+export const ExamResolvable = z.union([
+    z.object({
+        id: z.string().uuid(),
+    }),
+    z.object({
+        number_year_season_courseId: z.object({
+            number:     z.number().min(0).max(5),
+            year:       z.number().min(1970).max(2070),
+            season:     z.nativeEnum(Season),
+            courseId:   z.string().uuid()
+        })
+    })
+]);
+
+export const TopicResolvable = z.union([
+    z.object({
+        id: z.string().uuid(),
+    }),
+    z.object({
+        name_courseId: z.object({
+            name:       z.string(),
+            courseId:   z.string().uuid()
+        })
+    })
+]);
+
+export const QuestionResolvable = z.union([
+    z.object({
+        id: z.string().uuid()
+    }),
+    z.object({
+        number_examId: z.object({
+            number: z.number().min(1),
+            examId: z.string().uuid(),
+        })
+    })
+]);
 
 export default class Resolver {
     private static uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i; // uuid

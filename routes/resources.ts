@@ -1,22 +1,19 @@
 import express from "express";
+import asyncWrapper from "../middleware/wrappers/asyncWrapper.js";
+import { createResource, deleteResource, getResource, updateResource } from "../controllers/resourceController.js";
+import upload from "../middleware/multer/pdf.js";
+
 
 const router = express.Router();
 
-/*
+
 router.get("/:resourceId", asyncWrapper(getResource));
 
-router.post("/images", upload.single("image"), asyncWrapper(createImageResource));
+router.post("/", upload.single("image"), asyncWrapper(createResource));
 
-router.post("/images/link", asyncWrapper(createImageResourceFromLink));
-
-router.post("/codes", asyncWrapper(createCodeResource));
-
-router.put("/:resourceId/image", asyncWrapper(updateImageResource));
-
-router.put("/:resourceId/code", asyncWrapper(updateCodeResource));
+router.put("/:resourceId", upload.single("image"), asyncWrapper(updateResource));
 
 router.delete("/:resourceId", asyncWrapper(deleteResource));
 
- */
 
 export default router;

@@ -11,6 +11,12 @@ import {
 import { object, z } from "zod";
 import FlagEncoder from "../helpers/encoder.js";
 
+export const QuestionFlags = z.object({
+    published:              z.boolean().default(false),
+    disableRandomAnswers:   z.boolean().default(true),
+    answersStartHidden:     z.boolean().default(true)
+});
+
 export async function createQuestion(req: Request, res: Response) {
     const { e, c } = req.params;
 

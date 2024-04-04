@@ -1,9 +1,11 @@
 import { z } from "zod";
-import { CourseFlagsScheme, ExamFlagsScheme, QuestionFlagsScheme } from "../prisma/schema.js";
+import { CourseFlags } from "../controllers/courseController.js";
+import { ExamFlags } from "../controllers/examController.js";
+import { QuestionFlags } from "../controllers/questionController.js";
 
 export default class FlagEncoder {
 
-    public static course(flags: z.infer<typeof CourseFlagsScheme>) {
+    public static course(flags: z.infer<typeof CourseFlags>) {
         let encodedFlags = 0;
 
         if (flags.published)    encodedFlags |= (1 << 0);
@@ -11,7 +13,7 @@ export default class FlagEncoder {
         return encodedFlags;
     }
 
-    public static exam(flags: z.infer<typeof ExamFlagsScheme>) {
+    public static exam(flags: z.infer<typeof ExamFlags>) {
         let encodedFlags = 0;
 
         if (flags.published)    encodedFlags |= (1 << 0);
@@ -20,7 +22,7 @@ export default class FlagEncoder {
         return encodedFlags;
     }
 
-    public static question(flags: z.infer<typeof QuestionFlagsScheme>) {
+    public static question(flags: z.infer<typeof QuestionFlags>) {
         let encodedFlags = 0;
 
         if (flags.published)            encodedFlags |= (1 << 0);

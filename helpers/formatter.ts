@@ -64,10 +64,7 @@ export default class Formatter {
         return {
             ...relation,
             topic: relation.topic ? Formatter.topic(relation.topic, sendUnpublished) : undefined,
-            question: relation.question? Formatter.question({
-                ...relation.question,
-                number: relation.number
-            }, sendUnpublished) : undefined
+            question: relation.question? Formatter.question(relation.question, sendUnpublished) : undefined
         }
     }
 

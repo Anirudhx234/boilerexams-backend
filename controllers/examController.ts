@@ -8,6 +8,12 @@ import {
 } from "../prisma/schema.js";
 import FlagEncoder from "../helpers/encoder.js";
 import Formatter from "../helpers/formatter.js";
+import { z } from "zod";
+
+export const ExamFlags = z.object({
+    published:  z.boolean().default(false),
+    practice:   z.boolean().default(false),
+});
 
 export async function getExam(req: Request, res: Response) {
     const { e, c } = req.params;

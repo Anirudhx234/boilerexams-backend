@@ -1,11 +1,11 @@
 import { PrismaClient, ResourceType } from "@prisma/client";
 import FlagDecoder from "../helpers/decoder.js";
-import uploadFileToS3 from "../utils/uploadFileToS3.js";
-import { Epoch, UrlResourceData } from "./schema.js";
+import { Epoch } from "./schema.js";
 import { courseStats } from "../helpers/stats/courseStats.js";
 import { examStats } from "../helpers/stats/examStats.js";
 import { questionStats } from "../helpers/stats/questionStats.js";
 import { submissionStats } from "../helpers/stats/submissionStats.js";
+import { UrlResourceData } from "../controllers/resourceController.js";
 
 const prisma = new PrismaClient();
 
@@ -19,11 +19,11 @@ export default prisma
                         // ToDo Test if this works
 
                         const file = args.data.data as any;
-                        const { Location, Key} = await uploadFileToS3(file.buffer, file.mimetype);
-                        args.data.data = {
-                            url: Location,
-                            key: Key
-                        };
+                        //const { Location, Key} = await uploadFileToS3(file.buffer, file.mimetype);
+                        //args.data.data = {
+                        //    url: Location,
+                        //    key: Key
+                        //};
                         args.data.type = ResourceType.IMAGE;
                     }
 
