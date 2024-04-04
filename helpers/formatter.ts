@@ -76,6 +76,7 @@ export default class Formatter {
 
 interface FormattedCourse {
     flags:      CourseFlags
+    subject?:   string
     exams?:     FormattedExam[]
     topics?:    FormattedTopic[]
     questions?: FormattedQuestion[]
@@ -101,8 +102,6 @@ interface FormattedQuestionToTopic {
     topic?:     FormattedTopic
     question?:  FormattedQuestion
 }
-
-
 
 interface PotentialQuestionToTopic {
     topic?:    PotentialTopic
