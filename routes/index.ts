@@ -19,28 +19,26 @@ const router = express.Router();
 // Global rate limit for all routes
 router.use(globalLimiter);
 
-// Standard user routes (has stricter rate limit)
 router.use("/auth", generalLimiter, auth);
 
 router.use("/stats", generalLimiter, stats);
 
 router.use("/feedback", feedbackLimiter, feedback);
 
-// Content routes (uses global rate limit)
-router.use("/questions", questions);
-
-router.use("/users", users);
-
-router.use("/events", events);
-
-router.use("/resources", resources);
-
-router.use("/parser", parsing);
-
 router.use("/courses", courses);
 
 router.use("/exams", exams);
 
 router.use("/topics", topics);
+
+router.use("/questions", questions);
+
+router.use("/resources", resources);
+
+router.use("/users", users);
+
+router.use("/events", events);
+
+router.use("/parser", parsing);
 
 export default router;

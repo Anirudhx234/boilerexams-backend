@@ -27,7 +27,7 @@ router.get("/video-feedback/exams/:e", authHandler(Role.CONTENT), asyncWrapper(g
 
 router.get("/video-feedback/", authHandler(Role.CONTENT), asyncWrapper(getAllVideoFeedback));
 
-router.get("/course-requests", asyncWrapper(getAllCourseRequests));
+router.get("/course-requests", authHandler(Role.CONTENT), asyncWrapper(getAllCourseRequests));
 
 router.post("/bug-reports", asyncWrapper(reportBug));
 

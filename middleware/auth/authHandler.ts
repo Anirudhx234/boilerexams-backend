@@ -13,8 +13,9 @@ const authHandler = (role: string) =>
         const levels = {
             [Role.USER]: 1,
             [Role.PROFESSOR]: 2,
-            [Role.CONTENT]: 3,
-            [Role.ADMIN]: 4,
+            [Role.GRAPHIC]: 3,
+            [Role.CONTENT]: 4,
+            [Role.ADMIN]: 5,
         };
 
         if (isWhitelisted(req)) {
