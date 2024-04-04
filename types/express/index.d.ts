@@ -1,8 +1,11 @@
 declare namespace Express {
+    // @ts-ignore
     type User = import("@prisma/client").User;
     export interface Request {
-        published: { published: boolean }[];
+        sendUnpublished: boolean;
+        // @ts-ignore
         user: User;
+        // @ts-ignore
         logOut: any;
     }
 }

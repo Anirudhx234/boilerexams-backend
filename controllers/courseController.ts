@@ -83,17 +83,19 @@ export async function getSubjects(req: Request, res: Response) {
         }
     });
 
-    const subjects = courses.reduce((acc, course) => {
-        const subjectName = course.subject;
-        if (!acc[subjectName]) {
-            acc[subjectName] = {
-                subject: subjectName,
-                courses: []
-            };
-        }
-        acc[subjectName].courses.push(course);
-        return acc;
-    }, {} as {  });
+    const subjects = courses
+        .filter(course => req.sendUnpublished || course.flags.published)
+        .reduce((acc, course) => {
+            const subjectName = course.subject;
+            if (!acc[subjectName]) {
+                acc[subjectName] = {
+                    subject: subjectName,
+                    courses: []
+                };
+            }
+            acc[subjectName].courses.push(course);
+            return acc;
+        }, {} as {  });
 
     const uniqueSubjects: Subject[] = Object.values(subjects);
 

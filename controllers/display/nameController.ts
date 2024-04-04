@@ -67,7 +67,7 @@ const getCourseTopicsWithBasicQuestionInfo = async (req: Request, res: Response)
         },
     });
 
-    if (course.flags.published) {
+    if (!req.sendUnpublished && !course.flags.published) {
         throw new NotFoundError("Course not found");
     }
 
@@ -78,7 +78,7 @@ const getCourseTopicsWithBasicQuestionInfo = async (req: Request, res: Response)
                 ...topic,
                 questions: topic.questions
                     .map(relation => relation.question)
-                    .filter(question => question.flags.published)
+                    .filter(question => req.sendUnpublished || question.flags.published)
             };
         })
     });
@@ -103,11 +103,11 @@ const getCourseExamsWithBasicQuestionInfo = async (req: Request, res: Response) 
         }
     });
 
-    if (course.flags.published) {
+    if (!req.sendUnpublished && !course.flags.published) {
         throw new NotFoundError("Course not found");
     }
 
-    const exams = course.exams.filter(exam => exam.flags.published);
+    const exams = course.exams.filter(exam => req.sendUnpublished || exam.flags.published);
 
     const sortedExams = _.orderBy(
         exams,
@@ -118,7 +118,7 @@ const getCourseExamsWithBasicQuestionInfo = async (req: Request, res: Response) 
     res.status(200).send(sortedExams.map(exam => {
         return {
             ...exam,
-            questions: exam.questions.filter(question => question.flags.published)
+            questions: exam.questions.filter(question => req.sendUnpublished || question.flags.published)
         };
     }));
 };
@@ -145,7 +145,7 @@ const getCourseTopicWithBasicQuestionInfo = async (req: Request, res: Response) 
         ...topic,
         questions: Promise.all(topic.questions
             .map(relation => relation.question)
-            .filter(question => question.flags.published)
+            .filter(question => req.sendUnpublished || question.flags.published)
         )
     });
 };
@@ -186,7 +186,7 @@ const getCourseTopicWithFullQuestionInfo = async (req: Request, res: Response) =
         ...topic,
         questions: await Promise.all(topic.questions
             .map(relation => relation.question)
-            .filter(question => question.flags.published)
+            .filter(question => req.sendUnpublished || question.flags.published)
             .map(async (question) => {
                 return {
                     ...question,
@@ -218,14 +218,14 @@ const getCourseExamWithBasicQuestionInfo = async (req: Request, res: Response) =
         }
     });
 
-    if (!exam.flags.published) {
+    if (!req.sendUnpublished && !exam.flags.published) {
         throw new NotFoundError("Exam not found");
     }
 
     res.status(200).send({
         ...exam,
         questions: exam.questions
-            .filter(question => question.flags.published)
+            .filter(question => req.sendUnpublished || question.flags.published)
             .map(question => {
                 return {
                     ...question,
@@ -258,14 +258,14 @@ const getCourseExamWithFullQuestionInfo = async (req: Request, res: Response) =>
         }
     });
 
-    if (exam.flags.published) {
+    if (!req.sendUnpublished && !exam.flags.published) {
         throw new NotFoundError("Exam not found");
     }
 
     res.status(200).send({
         ...exam,
         questions: await Promise.all(exam.questions
-            .filter(question => question.flags.published)
+            .filter(question => req.sendUnpublished || question.flags.published)
             .map(async (question) => {
                 return {
                     ...question,
