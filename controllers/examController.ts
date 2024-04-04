@@ -39,7 +39,11 @@ export async function getExam(req: Request, res: Response) {
         throw new NotFoundError("Exam not found");
     }
 
-    res.status(200).send(Formatter.exam(exam, req.sendUnpublished));
+    res.status(200).send(await Formatter.exam({
+        data: exam,
+        sendUnpublished: req.sendUnpublished,
+        computeStats: true
+    }));
 }
 
 export async function getAllExams(req: Request, res: Response) {
@@ -61,7 +65,11 @@ export async function getAllExams(req: Request, res: Response) {
         ]
     });
 
-    res.status(200).send(Formatter.exams(exams, req.sendUnpublished));
+    res.status(200).send(await Formatter.exams({
+        data: exams,
+        sendUnpublished: req.sendUnpublished,
+        computeStats: true
+    }));
 }
 
 export async function getExamQuestions(req: Request, res: Response) {
@@ -113,7 +121,11 @@ export async function getExamQuestions(req: Request, res: Response) {
         }
     });
 
-    res.status(200).send(Formatter.questions(questions, req.sendUnpublished));
+    res.status(200).send(await Formatter.questions({
+        data: questions,
+        sendUnpublished: req.sendUnpublished,
+        computeStats: true
+    }));
 }
 
 export async function createExam(req: Request, res: Response)  {
@@ -167,7 +179,11 @@ export async function updateExam(req: Request, res: Response) {
         }
     });
 
-    res.status(200).send(Formatter.exam(exam, req.sendUnpublished));
+    res.status(200).send(await Formatter.exam({
+        data: exam,
+        sendUnpublished: req.sendUnpublished,
+        computeStats: true
+    }));
 }
 
 export async function reorderQuestions(req: Request, res: Response) {
@@ -203,7 +219,11 @@ export async function reorderQuestions(req: Request, res: Response) {
         });
     }));
 
-    res.status(200).send(Formatter.questions(questions, req.sendUnpublished));
+    res.status(200).send(await Formatter.questions({
+        data: questions,
+        sendUnpublished: req.sendUnpublished,
+        computeStats: true
+    }));
 }
 
 export async function toggleExamPublished(req: Request, res: Response) {

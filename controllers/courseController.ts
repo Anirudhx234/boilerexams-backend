@@ -1,5 +1,4 @@
 import prisma from "../prisma/prisma.js";
-import uploadFileToS3 from "../utils/uploadFileToS3.js";
 import type { Request, Response } from "express";
 import { APIError, NotFoundError } from "../middleware/errors/index.js";
 import { PurdueIoAPI } from "../services/purdue.io.js";
@@ -9,9 +8,9 @@ import {
 } from "../prisma/schema.js";
 import Resolver from "../helpers/resolver.js";
 import FlagEncoder from "../helpers/encoder.js";
-import questions from "../routes/questions.js";
 import Formatter from "../helpers/formatter.js";
 import { z } from "zod";
+import courses from "../routes/courses.js";
 
 export const CourseFlags = z.object({
     published: z.boolean().default(false),
@@ -32,7 +31,13 @@ export async function getSubjects(req: Request, res: Response) {
         }
     });
 
-    const subjects = Formatter.courses(courses, req.sendUnpublished)
+    const formattedCourses = await Formatter.courses({
+        data: courses,
+        sendUnpublished: req.sendUnpublished,
+        computeStats: true
+    });
+
+    const subjects = formattedCourses
         ?.reduce((acc, course) => {
             const subjectName = course.subject;
             if (!subjectName) throw new APIError("Subject Name Missing", 500)
@@ -75,7 +80,11 @@ export async function getCourse(req: Request, res: Response) {
         throw new NotFoundError("Course not found");
     }
 
-    res.status(200).send(Formatter.course(course, req.sendUnpublished));
+    res.status(200).send(await Formatter.course({
+        data: course,
+        sendUnpublished: req.sendUnpublished,
+        computeStats: true
+    }));
 }
 
 export async function getAllCourses(req: Request, res: Response) {
@@ -98,7 +107,11 @@ export async function getAllCourses(req: Request, res: Response) {
         },
     });
 
-    res.status(200).send(Formatter.courses(courses, req.sendUnpublished));
+    res.status(200).send(await Formatter.courses({
+        data: courses,
+        sendUnpublished: req.sendUnpublished,
+        computeStats: true
+    }));
 }
 
 export async function getCourseExams(req: Request, res: Response) {
@@ -137,7 +150,11 @@ export async function getCourseExams(req: Request, res: Response) {
         ]
     });
 
-    res.status(200).send(Formatter.exams(exams, req.sendUnpublished));
+    res.status(200).send(await Formatter.exams({
+        data: exams,
+        sendUnpublished: req.sendUnpublished,
+        computeStats: true
+    }));
 }
 
 export async function getCourseTopics(req: Request, res: Response) {
@@ -179,7 +196,11 @@ export async function getCourseTopics(req: Request, res: Response) {
         },
     });
 
-    res.status(200).send(Formatter.topics(topics, req.sendUnpublished));
+    res.status(200).send(await Formatter.topics({
+        data: topics,
+        sendUnpublished: req.sendUnpublished,
+        computeStats: true
+    }));
 }
 
 export async function createCourse(req: Request, res: Response) {
@@ -203,7 +224,11 @@ export async function createCourse(req: Request, res: Response) {
         },
     });
 
-    res.status(200).send(Formatter.course(course, req.sendUnpublished));
+    res.status(200).send(await Formatter.course({
+        data: course,
+        sendUnpublished: req.sendUnpublished,
+        computeStats: true
+    }));
 }
 
 export async function updateCourse(req: Request, res: Response) {
@@ -224,7 +249,11 @@ export async function updateCourse(req: Request, res: Response) {
         }
     });
 
-    res.status(200).send(Formatter.course(course, req.sendUnpublished));
+    res.status(200).send(await Formatter.course({
+        data: course,
+        sendUnpublished: req.sendUnpublished,
+        computeStats: true
+    }));
 }
 
 export async function toggleCoursePublished(req: Request, res: Response) {

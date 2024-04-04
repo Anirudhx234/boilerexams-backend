@@ -1,4 +1,4 @@
-import { PrismaClient, ResourceType } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 import FlagDecoder from "../helpers/decoder.js";
 import { Epoch } from "./schema.js";
 import { courseStats } from "../helpers/stats/courseStats.js";
@@ -12,6 +12,38 @@ import { answerChoiceStats } from "../helpers/stats/answerChoiceStats.js";
 const prisma = new PrismaClient();
 
 export default prisma
+    .$extends({
+        model: {
+            course: {
+                async stats(data: { before?: Date, after?: Date }) {
+                    const before = data.before ?? new Date();
+                    const after = data.after ?? Epoch;
+                    return courseStats(before, after);
+                }
+            },
+            exam: {
+                async stats(data: { before?: Date, after?: Date }) {
+                    const before = data.before ?? new Date();
+                    const after = data.after ?? Epoch;
+                    return examStats(before, after);
+                }
+            },
+            question: {
+                async stats(data: { before?: Date, after?: Date }) {
+                    const before = data.before ?? new Date();
+                    const after = data.after ?? Epoch;
+                    return questionStats(before, after);
+                }
+            },
+            submission: {
+                async stats(data: { before?: Date, after?: Date }) {
+                    const before = data.before ?? new Date();
+                    const after = data.after ?? Epoch;
+                    return submissionStats(before, after);
+                }
+            }
+        },
+    })
     .$extends({
         query: {
             resource: {
@@ -110,35 +142,3 @@ export default prisma
             }
         }
     })
-    .$extends({
-        model: {
-            course: {
-                async stats(data: { before?: Date, after?: Date }) {
-                    const before = data.before ?? new Date();
-                    const after = data.after ?? Epoch;
-                    return courseStats(before, after);
-                }
-            },
-            exam: {
-                async stats(data: { before?: Date, after?: Date }) {
-                    const before = data.before ?? new Date();
-                    const after = data.after ?? Epoch;
-                    return examStats(before, after);
-                }
-            },
-            question: {
-                async stats(data: { before?: Date, after?: Date }) {
-                    const before = data.before ?? new Date();
-                    const after = data.after ?? Epoch;
-                    return questionStats(before, after);
-                }
-            },
-            submission: {
-                async stats(data: { before?: Date, after?: Date }) {
-                    const before = data.before ?? new Date();
-                    const after = data.after ?? Epoch;
-                    return submissionStats(before, after);
-                }
-            }
-        },
-    });

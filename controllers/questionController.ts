@@ -10,6 +10,7 @@ import {
 } from "../prisma/schema.js";
 import { object, z } from "zod";
 import FlagEncoder from "../helpers/encoder.js";
+import Formatter from "../helpers/formatter.js";
 
 export const QuestionFlags = z.object({
     published:              z.boolean().default(false),
@@ -39,7 +40,11 @@ export async function createQuestion(req: Request, res: Response) {
         }
     });
 
-    res.status(200).send(question);
+    res.status(200).send(await Formatter.question({
+        data: question,
+        sendUnpublished: req.sendUnpublished,
+        computeStats: false
+    }));
 }
 
 export async function getQuestion(req: Request, res: Response) {
@@ -67,32 +72,17 @@ export async function getQuestion(req: Request, res: Response) {
                 }
             }
         },
-    })
-    .then(async (question) => {
-        if (!question) return undefined;
-        return {
-            ...question,
-            answerChoices: undefined,
-            stats: await question.stats,
-            topics: question.topics.map((relation: { topic: object }) => relation.topic),
-            data: {
-                // @ts-expect-error Fuck me
-                ...question.data,
-                answerChoices: await Promise.all(question.answerChoices.map(async (answerChoice) => {
-                    return {
-                        ...answerChoice,
-                        stats: await answerChoice.stats
-                    };
-                }))
-            }
-        };
     });
 
     if (!question) {
         throw new NotFoundError("Question not found");
     }
 
-    res.status(200).send(question);
+    res.status(200).send(await Formatter.question({
+        data: question,
+        sendUnpublished: req.sendUnpublished,
+        computeStats: true
+    }));
 }
 
 export async function updateQuestion(req: Request, res: Response) {
@@ -183,10 +173,11 @@ export async function updateQuestion(req: Request, res: Response) {
         }
     });
 
-    res.status(200).send({
-        ...updatedQuestion,
-        topics: updatedQuestion.topics.map(relation => relation.topic),
-    });
+    res.status(200).send(await Formatter.question({
+        data: updatedQuestion,
+        sendUnpublished: req.sendUnpublished,
+        computeStats: false
+    }));
 }
 
 export async function toggleQuestionPublished(req: Request, res: Response) {

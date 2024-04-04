@@ -1,8 +1,6 @@
-import prisma from "../../prisma/prisma.js";
-import { NotFoundError } from "../../middleware/errors/index.js";
-import type { Request, Response } from "express";
-import _ from "lodash";
-import Resolver from "../../helpers/resolver.js";
+// Todo DEPRECATED - KEEP UNTIL WE KNOW WE DONT NEED TO REFERENCE THESE QUERIES
+
+/*
 
 // All topics for a specific course, no other relations
 const getCourseTopics = async (req: Request, res: Response) => {
@@ -211,3 +209,5 @@ const getCourseExamWithFullQuestionInfo = async (req: Request, res: Response) =>
             }))
     });
 };
+
+ */

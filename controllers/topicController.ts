@@ -30,7 +30,11 @@ export async function getAllTopics(req: Request, res: Response) {
         },
     });
 
-    res.status(200).send(Formatter.topics(topics, req.sendUnpublished));
+    res.status(200).send(await Formatter.topics({
+        data: topics,
+        sendUnpublished: req.sendUnpublished,
+        computeStats: true
+    }));
 }
 
 export async function getTopic(req: Request, res: Response) {
@@ -47,7 +51,11 @@ export async function getTopic(req: Request, res: Response) {
         },
     });
 
-    res.status(200).send(Formatter.topic(topic, req.sendUnpublished));
+    res.status(200).send(await Formatter.topic({
+        data: topic,
+        sendUnpublished: req.sendUnpublished,
+        computeStats: true
+    }));
 }
 
 export async function getTopicQuestions(req: Request, res: Response) {
@@ -91,9 +99,13 @@ export async function getTopicQuestions(req: Request, res: Response) {
         }
     });
 
-    res.status(200).send(Formatter.questionsToTopics(relations, req.sendUnpublished)
-        ?.map(relation => relation.question)
-    );
+    const formattedQuestionToTopics = await Formatter.questionsToTopics({
+        data: relations,
+        sendUnpublished: req.sendUnpublished,
+        computeStats: true
+    });
+
+    res.status(200).send(formattedQuestionToTopics?.map(relation => relation.question));
 }
 
 export async function createTopic(req: Request, res: Response) {
