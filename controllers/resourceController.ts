@@ -18,7 +18,8 @@ export const UrlResourceData = z.object({
     altText:    z.string().optional()
 });
 
-export const CreateResource = z.object({
+export const UpsertResource = z.object({
+    id:             z.string().uuid().optional(),
     courseId:       z.string().uuid().optional(),
     examId:         z.string().uuid().optional(),
     questionId:     z.string().uuid().optional(),
@@ -26,10 +27,6 @@ export const CreateResource = z.object({
     answerChoiceId: z.string().uuid().optional(),
     type:           z.nativeEnum(ResourceType),
     data:           z.union([CodeResourceData, UrlResourceData])
-});
-
-export const UpdateResource = CreateResource.extend({
-    id:     z.string().uuid(),
 });
 
 const fileBasedResources: ResourceType[] = [ ResourceType.LOGO, ResourceType.IMAGE, ResourceType.PDF ];
@@ -46,8 +43,8 @@ export async function getResource(req: Request, res: Response) {
     res.status(200).send(resource);
 }
 
-export async function createResource(req: Request, res: Response) {
-    const options = CreateResource.parse(req.body);
+export async function upsertResource(req: Request, res: Response) {
+    const options = UpsertResource.parse(req.body);
 
     if (fileBasedResources.includes(options.type)) {
         if (req.file) {
@@ -76,51 +73,15 @@ export async function createResource(req: Request, res: Response) {
         }
     }
 
-    const resource = await prisma.resource.create({
-        data: {
-            ...options
-        }
-    });
-
-    res.status(200).send(resource);
-}
-
-export async function updateResource(req: Request, res: Response) {
-    const options = UpdateResource.parse(req.body);
-
-    if (fileBasedResources.includes(options.type)) {
-        if (req.file) {
-            const s3Data = await uploadFileToS3(req.file.buffer, req.file.mimetype);
-            const data = UrlResourceData.parse(options.data);
-            data.key = s3Data.Key;
-            data.url = s3Data.Location;
-            options.data = data;
-        } else {
-            const data = UrlResourceData.parse(options.data);
-            const image = await axios.get(data.url, {
-                responseType: "arraybuffer",
-                maxContentLength: 1000 * 1024,
-            });
-
-            const contentType = image.headers["content-type"];
-
-            if (contentType !== "image/png" && contentType !== "image/jpeg") {
-                throw new APIError("Image upload failed, link must be JPEG or PNG", 415);
-            }
-
-            const s3Data = await uploadFileToS3(image.data, contentType);
-            data.key = s3Data.Key;
-            data.url = s3Data.Location;
-            options.data = data;
-        }
-    }
-
-    const resource = await prisma.resource.update({
+    const resource = await prisma.resource.upsert({
         where: {
             id: options.id
         },
-        data: {
-            ...options,
+        create: {
+            ...options
+        },
+        update: {
+            ...options
         }
     });
 
