@@ -47,7 +47,16 @@ export async function getTopic(req: Request, res: Response) {
         },
     });
 
-    console.log(topic);
+    console.log(topic.questions[0]);
+
+    const topic2 = await prisma.topic.findUniqueOrThrow({
+        where: await Resolver.topic(t, c),
+        include: {
+            questions: true
+        },
+    });
+
+    console.log(topic2.questions[0]);
 
     res.status(200).send(Formatter.topic(topic, req.sendUnpublished));
 }
