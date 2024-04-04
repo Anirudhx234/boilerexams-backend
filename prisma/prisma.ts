@@ -7,6 +7,7 @@ import { questionStats } from "../helpers/stats/questionStats.js";
 import { submissionStats } from "../helpers/stats/submissionStats.js";
 import { UrlResourceData } from "../controllers/resourceController.js";
 import { deleteFileFromS3 } from "../utils/uploadFileToS3.js";
+import { answerChoiceStats } from "../helpers/stats/answerChoiceStats.js";
 
 const prisma = new PrismaClient();
 
@@ -101,16 +102,9 @@ export default prisma
             },
             answerChoice: {
                 stats: {
-                    needs: { id: true, questionId: true, index: true },
+                    needs: { questionId: true, index: true },
                     async compute(answerChoice) {
-                        return prisma.submission.count({
-                            where: {
-                                questionId: answerChoice.questionId,
-                                userSolution: {
-                                    array_contains: answerChoice.index
-                                }
-                            }
-                        });
+                        return answerChoiceStats(answerChoice.questionId, answerChoice.index);
                     }
                 }
             }

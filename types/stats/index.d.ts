@@ -1,3 +1,7 @@
+interface AnswerChoiceStats {
+    count:  number
+}
+
 interface SubmissionStats {
     count:          number;
     timeSpent:      bigint;
