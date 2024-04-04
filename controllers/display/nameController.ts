@@ -103,6 +103,8 @@ const getCourseExamsWithBasicQuestionInfo = async (req: Request, res: Response) 
         }
     });
 
+    console.log(`SEND UNPUBLISHED: ${req.sendUnpublished}`);
+
     if (!req.sendUnpublished && !course.flags.published) {
         throw new NotFoundError("Course not found");
     }
