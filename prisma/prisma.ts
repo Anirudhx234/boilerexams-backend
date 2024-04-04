@@ -6,6 +6,7 @@ import { examStats } from "../helpers/stats/examStats.js";
 import { questionStats } from "../helpers/stats/questionStats.js";
 import { submissionStats } from "../helpers/stats/submissionStats.js";
 import { UrlResourceData } from "../controllers/resourceController.js";
+import { deleteFileFromS3 } from "../utils/uploadFileToS3.js";
 
 const prisma = new PrismaClient();
 
@@ -13,33 +14,38 @@ export default prisma
     .$extends({
         query: {
             resource: {
-                // Hook into resource create query
-                async create({ query, args}) {
-                    if (args.data.type == ResourceType.IMAGE) {
-                        // ToDo Test if this works
+                async update({ query, args }) {
+                    const oldResource = await prisma.resource.findUniqueOrThrow({
+                        where: {
+                            id: args.where.id
+                        }
+                    });
+                    const newResource = await query(args);
 
-                        const file = args.data.data as any;
-                        //const { Location, Key} = await uploadFileToS3(file.buffer, file.mimetype);
-                        //args.data.data = {
-                        //    url: Location,
-                        //    key: Key
-                        //};
-                        args.data.type = ResourceType.IMAGE;
+                    const oldResult = UrlResourceData.safeParse(oldResource.data);
+                    const newResult = UrlResourceData.safeParse(newResource.data);
+
+                    if (oldResult.success && newResult.success) {
+                        const oldData = oldResult.data;
+                        const newData = newResult.data;
+
+                        if (oldData.key != newData.key) {
+                            if (oldData.key) {
+                                // ToDo Check if this works
+                                await deleteFileFromS3(oldData.key);
+                            }
+                        }
                     }
-
-                    return query(args);
                 },
                 // Hook into resource delete query
                 async delete({ query, args }) {
                     const resource = await query(args);
+                    const result = UrlResourceData.safeParse(resource.data);
 
-                    if (resource.type == ResourceType.IMAGE) {
-                        const result = UrlResourceData.safeParse(resource.data);
-
-                        if (result.success) {
-                            if (result.data.key) {
-                                // ToDo Delete file from S3
-                            }
+                    if (result.success) {
+                        if (result.data.key) {
+                            // ToDo Check if this works
+                            await deleteFileFromS3(result.data.key);
                         }
                     }
 

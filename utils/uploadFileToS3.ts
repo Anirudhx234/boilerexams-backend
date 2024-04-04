@@ -3,7 +3,7 @@ import { APIError } from "../middleware/errors/index.js";
 import { Upload } from "@aws-sdk/lib-storage";
 import { S3 } from "@aws-sdk/client-s3";
 
-const uploadFileToS3 = async (buffer: Buffer, contentType: string) => {
+export async function uploadFileToS3(buffer: Buffer, contentType: string) {
     if (!buffer) {
         throw new APIError("No file attached", 400);
     }
