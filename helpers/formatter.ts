@@ -64,7 +64,10 @@ export default class Formatter {
         return {
             ...relation,
             topic: relation.topic ? Formatter.topic(relation.topic, sendUnpublished) : undefined,
-            question: relation.question? Formatter.question(relation.question, sendUnpublished) : undefined
+            question: relation.question? Formatter.question({
+                ...relation.question,
+                number: relation.number
+            }, sendUnpublished) : undefined
         }
     }
 
@@ -94,6 +97,7 @@ interface FormattedTopic {
 
 interface FormattedQuestion {
     flags:      QuestionFlags
+    number?:    number
     children?:  FormattedQuestion[]
     topics?:    FormattedTopic[]
 }
@@ -104,12 +108,14 @@ interface FormattedQuestionToTopic {
 }
 
 interface PotentialQuestionToTopic {
-    topic?:    PotentialTopic
-    question?: PotentialQuestion
+    number?:    number,
+    topic?:     PotentialTopic
+    question?:  PotentialQuestion
 }
 
 interface PotentialQuestion {
     flags:          QuestionFlags
+    number?:        number,
     children?:      PotentialQuestion[]
     topics?:        PotentialQuestionToTopic[]
 }
