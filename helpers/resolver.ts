@@ -79,8 +79,7 @@ export default class Resolver {
         }
 
         if (courseResolvable) {
-            // If input matches "Spring-2022-Final" format, extract parts and return object
-            const name = topicResolvable.replace('_', '-').replace(' ', '-');
+            const name = topicResolvable;
 
             const course = await prisma.course.findUnique({
                 where: Resolver.course(courseResolvable)

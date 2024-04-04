@@ -11,7 +11,7 @@ import upload from "../middleware/multer/image.js";
 import sendPublished from "../middleware/auth/sendPublished.js";
 import {
     createExam,
-    deleteExam,
+    deleteExam, getExam,
     getExamQuestions,
     toggleExamPublished,
     updateExam
@@ -19,7 +19,7 @@ import {
 import authHandler from "../middleware/auth/authHandler.js";
 import { createQuestion, updateQuestion } from "../controllers/questionController.js";
 import { Role } from "@prisma/client";
-import { createTopic, getTopicQuestions } from "../controllers/topicController.js";
+import { createTopic, getTopic, getTopicQuestions } from "../controllers/topicController.js";
 
 const router = express.Router();
 
@@ -32,9 +32,13 @@ router.get("/:c", sendPublished, asyncWrapper(getCourse));
 
 router.get("/:c/topics", sendPublished, asyncWrapper(getCourseTopics));
 
+router.get("/:c/topics/:t", sendPublished, asyncWrapper(getTopic));
+
 router.get("/:c/topics/:t/questions", sendPublished, asyncWrapper(getTopicQuestions));
 
 router.get("/:c/exams", sendPublished, asyncWrapper(getCourseExams));
+
+router.get("/:c/exams/:e", sendPublished, asyncWrapper(getExam));
 
 router.get("/:c/exams/:e/questions", sendPublished, asyncWrapper(getExamQuestions));
 
