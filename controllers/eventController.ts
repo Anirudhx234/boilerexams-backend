@@ -18,14 +18,14 @@ const getEvent = async (req: Request, res: Response) => {
 };
 
 const getEvents = async (req: Request, res: Response) => {
-    const { courseId, after } = req.query;
+    const { c, after } = req.query;
 
     // Define an empty where object
     const where = {};
 
     // Add courseId condition if it exists
-    if (courseId) {
-        where["courseId"] = courseId;
+    if (c) {
+        where["courseId"] = c;
     }
 
     // Add start condition if after exists

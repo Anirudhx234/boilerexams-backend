@@ -2,42 +2,63 @@ import express from "express";
 import {
     createCourse,
     deleteCourse, getAllCourses,
-    getCourse, getCourseExams,
+    getCourse, getCourseExams, getCourseTopics, getSubjects,
     toggleCoursePublished,
     updateCourse
 } from "../controllers/courseController.js";
 import asyncWrapper from "../middleware/wrappers/asyncWrapper.js";
 import upload from "../middleware/multer/image.js";
 import sendPublished from "../middleware/auth/sendPublished.js";
-import { getCourseTopics } from "../controllers/display/nameController.js";
-import { createExam, deleteExam, toggleExamPublished, updateExam } from "../controllers/examController.js";
+import {
+    createExam,
+    deleteExam,
+    getExamQuestions,
+    toggleExamPublished,
+    updateExam
+} from "../controllers/examController.js";
+import authHandler from "../middleware/auth/authHandler.js";
+import { createQuestion, updateQuestion } from "../controllers/questionController.js";
+import { Role } from "@prisma/client";
+import { createTopic, getTopicQuestions } from "../controllers/topicController.js";
 
 const router = express.Router();
 
+
 router.get("/", sendPublished, asyncWrapper(getAllCourses));
 
-router.get("/:courseResolvable", sendPublished, asyncWrapper(getCourse));
+router.get("/subjects", sendPublished, asyncWrapper(getSubjects));
 
-router.get("/courses/:courseResolvable/topics", asyncWrapper(getCourseTopics));
+router.get("/:c", sendPublished, asyncWrapper(getCourse));
 
-router.get("/courses/:courseResolvable/exams", asyncWrapper(getCourseExams));
+router.get("/:c/topics", sendPublished, asyncWrapper(getCourseTopics));
 
-router.post("/courses", upload.single("image"), asyncWrapper(createCourse));
+router.get("/:c/topics/:t/questions", sendPublished, asyncWrapper(getTopicQuestions));
 
-router.put("/courses/:courseResolvable", upload.single("image"), asyncWrapper(updateCourse));
+router.get("/:c/exams", sendPublished, asyncWrapper(getCourseExams));
 
-router.put("/courses/:courseResolvable/togglePublished", asyncWrapper(toggleCoursePublished));
+router.get("/:c/exams/:e/questions", sendPublished, asyncWrapper(getExamQuestions));
 
+router.put("/:c", upload.single("image"), authHandler(Role.CONTENT), asyncWrapper(updateCourse));
 
+router.put("/:c/togglePublished", authHandler(Role.CONTENT), asyncWrapper(toggleCoursePublished));
 
-router.post("/courses/:courseResolvable/exams", asyncWrapper(createExam));
+router.put("/:c/exams/:e", authHandler(Role.CONTENT), asyncWrapper(updateExam));
 
-router.put("/courses/:courseId/exams/:examId", asyncWrapper(updateExam));
+router.put("/:c/exams/:e/togglePublished", authHandler(Role.CONTENT), asyncWrapper(toggleExamPublished));
 
-router.put("/courses/:courseId/exams/:examId/togglePublished", asyncWrapper(toggleExamPublished));
+router.put("/courses/:c/exams/:e/questions/:q", authHandler(Role.CONTENT), asyncWrapper(updateQuestion));
 
-router.delete("/courses/:courseId/exams/:examId/hardDelete", asyncWrapper(deleteExam));
+router.post("/", upload.single("image"), authHandler(Role.CONTENT), asyncWrapper(createCourse));
 
-router.delete("/courses/:courseResolvable/hardDelete", asyncWrapper(deleteCourse));
+router.post("/:c/exams", authHandler(Role.CONTENT), asyncWrapper(createExam));
+
+router.post("/courses/:c/topics", authHandler(Role.CONTENT), asyncWrapper(createTopic));
+
+router.post("/courses/:c/exams/:e/questions", authHandler(Role.CONTENT), asyncWrapper(createQuestion));
+
+router.delete("/:c/hardDelete", authHandler(Role.CONTENT), asyncWrapper(deleteCourse));
+
+router.delete("/:c/exams/:e/hardDelete", authHandler(Role.CONTENT), asyncWrapper(deleteExam));
+
 
 export default router;

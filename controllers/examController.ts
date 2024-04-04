@@ -10,10 +10,10 @@ import FlagEncoder from "../helpers/encoder.js";
 import Formatter from "../helpers/formatter.js";
 
 export async function getExam(req: Request, res: Response) {
-    const { examResolvable, courseResolvable } = req.params;
+    const { e, c } = req.params;
 
     const exam = await prisma.exam.findUniqueOrThrow({
-        where: await Resolver.exam(examResolvable, courseResolvable),
+        where: await Resolver.exam(e, c),
         include: {
             resources: true,
             questions: {
@@ -21,7 +21,10 @@ export async function getExam(req: Request, res: Response) {
                     id: true,
                     number: true,
                     flags: true
-                }
+                },
+                orderBy: [
+                    { number: "asc" }
+                ]
             }
         }
     });
@@ -44,17 +47,22 @@ export async function getAllExams(req: Request, res: Response) {
                     flags: true
                 }
             }
-        }
+        },
+        orderBy: [
+            { year: "asc" },
+            { season: "asc" },
+            { number: "asc" }
+        ]
     });
 
     res.status(200).send(Formatter.exams(exams, req.sendUnpublished));
 }
 
 export async function getExamQuestions(req: Request, res: Response) {
-    const { examResolvable, courseResolvable } = req.params;
+    const { e, c } = req.params;
 
     const exam = await prisma.exam.findUniqueOrThrow({
-        where: await Resolver.exam(examResolvable, courseResolvable),
+        where: await Resolver.exam(e, c),
     });
 
     if (!req.sendUnpublished && !exam.flags.published) {
@@ -67,8 +75,8 @@ export async function getExamQuestions(req: Request, res: Response) {
         },
         include: {
             resources: true,
-                explanation: true,
-                children: {
+            explanation: true,
+            children: {
                 include: {
                     resources: true,
                         answerChoices: {
@@ -81,11 +89,19 @@ export async function getExamQuestions(req: Request, res: Response) {
             topics: {
                 include: {
                     topic: true
+                },
+                orderBy: {
+                    topic: {
+                        name: "asc"
+                    }
                 }
             },
             answerChoices: {
                 include: {
                     resources: true
+                },
+                orderBy: {
+                    index: "asc"
                 }
             }
         }
@@ -95,11 +111,11 @@ export async function getExamQuestions(req: Request, res: Response) {
 }
 
 export async function createExam(req: Request, res: Response)  {
-    const { courseResolvable } = req.params;
+    const { c } = req.params;
     const options = CreateExamScheme.parse(req.body);
 
     const course = await prisma.course.findUnique({
-        where: Resolver.course(courseResolvable)
+        where: Resolver.course(c)
     });
 
     if (!course) throw new APIError(`Course not found`, 404);
@@ -119,7 +135,7 @@ export async function createExam(req: Request, res: Response)  {
 }
 
 export async function updateExam(req: Request, res: Response) {
-    const { courseResolvable, examResolvable } = req.params;
+    const { c, e } = req.params;
     const options = UpdateExamScheme.parse(req.body);
 
     /* // ToDo update/create pdf
@@ -138,21 +154,21 @@ export async function updateExam(req: Request, res: Response) {
      */
 
     const exam = await prisma.exam.update({
-        where: await Resolver.exam(examResolvable, courseResolvable),
+        where: await Resolver.exam(e, c),
         data: {
             ...options,
             flags: FlagEncoder.exam(options.flags)
         }
     });
 
-    res.status(200).send(exam);
+    res.status(200).send(Formatter.exam(exam, req.sendUnpublished));
 }
 
 export async function reorderQuestions(req: Request, res: Response) {
-    const { examResolvable, courseResolvable } = req.params;
+    const { e, c } = req.params;
 
     const exam = await prisma.exam.findUnique({
-        where: await Resolver.exam(examResolvable, courseResolvable),
+        where: await Resolver.exam(e, c),
         select: {
             id: true,
             questions: {
@@ -165,7 +181,7 @@ export async function reorderQuestions(req: Request, res: Response) {
     });
 
     if (!exam) {
-        throw new NotFoundError(`Exam not found: ${examResolvable}`);
+        throw new NotFoundError(`Exam not found: ${e}`);
     }
 
     const options = ReorderQuestions.parse(req.body);
@@ -181,14 +197,14 @@ export async function reorderQuestions(req: Request, res: Response) {
         });
     }));
 
-    res.status(200).send(questions);
+    res.status(200).send(Formatter.questions(questions, req.sendUnpublished));
 }
 
 export async function toggleExamPublished(req: Request, res: Response) {
-    const { courseResolvable, examResolvable } = req.params;
+    const { c, e } = req.params;
 
     const exam = await prisma.exam.findUnique({
-        where: await Resolver.exam(examResolvable, courseResolvable),
+        where: await Resolver.exam(e, c),
         select: {
             id: true,
             flags: true
@@ -219,10 +235,10 @@ export async function toggleExamPublished(req: Request, res: Response) {
 }
 
 export async function deleteExam(req: Request, res: Response) {
-    const { courseResolvable, examResolvable } = req.params;
+    const { c, e } = req.params;
 
     const exam = await prisma.exam.delete({
-        where: await Resolver.exam(examResolvable, courseResolvable)
+        where: await Resolver.exam(e, c)
     });
 
     if (!exam) {

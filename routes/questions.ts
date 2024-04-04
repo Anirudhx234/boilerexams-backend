@@ -13,17 +13,13 @@ import sendPublished from "../middleware/auth/sendPublished.js";
 
 const router = express.Router();
 
-router.get("/id/questions/:questionResolvable", sendPublished, asyncWrapper(getQuestion));
+router.get("/:q", sendPublished, asyncWrapper(getQuestion));
 
-router.post("/courses/:courseResolvable/exams/:examResolvable/questions", authHandler(Role.CONTENT), asyncWrapper(createQuestion));
+router.put("/questions/:q/togglePublished", authHandler(Role.CONTENT), asyncWrapper(toggleQuestionPublished));
 
-router.put("/courses/:courseResolvable/exams/:examResolvable/questions/:questionResolvable", authHandler(Role.CONTENT), asyncWrapper(updateQuestion));
+router.delete("/courses/:c/exams/:e/questions/:q", authHandler(Role.CONTENT), asyncWrapper(deleteQuestion));
 
-router.put("/questions/:questionResolvable/togglePublished", authHandler(Role.CONTENT), asyncWrapper(toggleQuestionPublished));
-
-router.delete("/courses/:courseResolvable/exams/:examResolvable/questions/:questionResolvable", authHandler(Role.CONTENT), asyncWrapper(deleteQuestion));
-
-router.post("/questions/:questionResolvable/submit", generalLimiter, asyncWrapper(createSubmission));
+router.post("/questions/:q/submit", generalLimiter, asyncWrapper(createSubmission));
 
 router.post("/submissions/batch", generalLimiter, asyncWrapper(batchCreateSubmission));
 

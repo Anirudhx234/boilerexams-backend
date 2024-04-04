@@ -4,24 +4,12 @@ import type { Request, Response } from "express";
 import _ from "lodash";
 import Resolver from "../../helpers/resolver.js";
 
-
-// All topics metadata, no relations
-const getAllTopics = async (req: Request, res: Response) => {
-    const topics = await prisma.topic.findMany();
-
-    if (topics.length < 1) {
-        throw new NotFoundError("No topics found");
-    }
-
-    res.status(200).send(topics);
-};
-
 // All topics for a specific course, no other relations
 const getCourseTopics = async (req: Request, res: Response) => {
-    const { courseResolvable } = req.params;
+    const { c } = req.params;
 
     const course = await prisma.course.findUniqueOrThrow({
-        where: Resolver.course(courseResolvable),
+        where: Resolver.course(c),
         select: {
             topics: {
                 orderBy: {
@@ -36,10 +24,10 @@ const getCourseTopics = async (req: Request, res: Response) => {
 
 // All exams with question ids and numbers
 const getCourseExamsWithBasicQuestionInfo = async (req: Request, res: Response) => {
-    const { courseResolvable } = req.params;
+    const { c } = req.params;
 
     const course = await prisma.course.findUniqueOrThrow({
-        where: Resolver.course((courseResolvable)),
+        where: Resolver.course((c)),
         include: {
             exams: {
                 include: {
@@ -74,10 +62,10 @@ const getCourseExamsWithBasicQuestionInfo = async (req: Request, res: Response) 
 
 // Basic question information for specific topic
 const getCourseTopicWithBasicQuestionInfo = async (req: Request, res: Response) => {
-    const { topicResolvable, courseResolvable } = req.params;
+    const { t, c } = req.params;
 
     const topic = await prisma.topic.findUniqueOrThrow({
-        where: await Resolver.topic(topicResolvable, courseResolvable),
+        where: await Resolver.topic(t, c),
         include: {
             questions: {
                 include: {
@@ -101,10 +89,10 @@ const getCourseTopicWithBasicQuestionInfo = async (req: Request, res: Response) 
 
 // Full question information for specific topic
 const getCourseTopicWithFullQuestionInfo = async (req: Request, res: Response) => {
-    const { topicResolvable, courseResolvable } = req.params;
+    const { t, c } = req.params;
 
     const topic = await prisma.topic.findUniqueOrThrow({
-        where: await Resolver.topic(topicResolvable, courseResolvable),
+        where: await Resolver.topic(t, c),
         include: {
             questions: {
                 include: {
@@ -147,10 +135,10 @@ const getCourseTopicWithFullQuestionInfo = async (req: Request, res: Response) =
 
 // All questions with id, number, and topics for an exam
 const getCourseExamWithBasicQuestionInfo = async (req: Request, res: Response) => {
-    const { examResolvable, courseResolvable } = req.params;
+    const { e, c } = req.params;
 
     const exam = await prisma.exam.findUniqueOrThrow({
-        where: await Resolver.exam(examResolvable, courseResolvable),
+        where: await Resolver.exam(e, c),
         include: {
             questions: {
                 include: {
@@ -186,10 +174,10 @@ const getCourseExamWithBasicQuestionInfo = async (req: Request, res: Response) =
 
 // All questions for a specific exam, includes topics within questions.
 const getCourseExamWithFullQuestionInfo = async (req: Request, res: Response) => {
-    const { examResolvable, courseResolvable } = req.params;
+    const { e, c } = req.params;
 
     const exam = await prisma.exam.findUniqueOrThrow({
-        where: await Resolver.exam(examResolvable, courseResolvable),
+        where: await Resolver.exam(e, c),
         include: {
             questions: {
                 include: {
@@ -222,14 +210,4 @@ const getCourseExamWithFullQuestionInfo = async (req: Request, res: Response) =>
                 };
             }))
     });
-};
-
-export {
-    getAllTopics,
-    getCourseTopics,
-    getCourseExamsWithBasicQuestionInfo,
-    getCourseTopicWithBasicQuestionInfo,
-    getCourseTopicWithFullQuestionInfo,
-    getCourseExamWithBasicQuestionInfo,
-    getCourseExamWithFullQuestionInfo,
 };

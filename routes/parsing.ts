@@ -11,6 +11,6 @@ router.post("/convert-file", upload.single("pdf"), asyncWrapper(parseFromFile));
 
 router.post("/convert-id", asyncWrapper(getIdResults));
 
-router.post("/exams/:examId/attachPDF", upload.single("pdf"), asyncWrapper(attachPDFToExam));
+router.post("/exams/:e/attachPDF", upload.single("pdf"), asyncWrapper(attachPDFToExam));
 
 export default router;

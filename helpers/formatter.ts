@@ -1,31 +1,3 @@
-interface PotentialExam {
-    flags:      ExamFlags
-    questions?: PotentialQuestion[]
-}
-
-interface PotentialTopic {
-    name:       string
-    questions?: PotentialQuestionToTopic[]
-}
-
-interface PotentialQuestionToTopic {
-    topic?:    PotentialTopic
-    question?: PotentialQuestion
-}
-
-interface PotentialQuestion {
-    flags:          QuestionFlags
-    children?:      PotentialQuestion[]
-    topics?:        PotentialQuestionToTopic[]
-}
-
-interface PotentialCourse {
-    flags:      CourseFlags
-    exams?:     PotentialExam[]
-    topics?:    PotentialTopic[]
-    questions?: PotentialQuestion[]
-}
-
 export default class Formatter {
     public static course(course: PotentialCourse, sendUnpublished: boolean) {
         return {
@@ -100,4 +72,33 @@ export default class Formatter {
         if (!relations) return undefined;
         return relations.map(relation => Formatter.questionToTopic(relation, sendUnpublished));
     }
+}
+
+interface PotentialQuestionToTopic {
+    topic?:    PotentialTopic
+    question?: PotentialQuestion
+}
+
+interface PotentialQuestion {
+    flags:          QuestionFlags
+    children?:      PotentialQuestion[]
+    topics?:        PotentialQuestionToTopic[]
+}
+
+interface PotentialExam {
+    flags:      ExamFlags
+    questions?: PotentialQuestion[]
+}
+
+interface PotentialTopic {
+    name:       string
+    questions?: PotentialQuestionToTopic[]
+}
+
+interface PotentialCourse {
+    flags:      CourseFlags
+    subject?:   string
+    exams?:     PotentialExam[]
+    topics?:    PotentialTopic[]
+    questions?: PotentialQuestion[]
 }

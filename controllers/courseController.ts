@@ -1,7 +1,7 @@
 import prisma from "../prisma/prisma.js";
 import uploadFileToS3 from "../utils/uploadFileToS3.js";
 import type { Request, Response } from "express";
-import { NotFoundError } from "../middleware/errors/index.js";
+import { APIError, NotFoundError } from "../middleware/errors/index.js";
 import { PurdueIoAPI } from "../services/purdue.io.js";
 import {
     CreateCourseScheme,
@@ -36,10 +36,10 @@ export async function getSubjects(req: Request, res: Response) {
         }
     });
 
-    const subjects = courses
-        .filter(course => req.sendUnpublished || course.flags.published)
-        .reduce((acc, course) => {
+    const subjects = Formatter.courses(courses, req.sendUnpublished)
+        ?.reduce((acc, course) => {
             const subjectName = course.subject;
+            if (!subjectName) throw new APIError("Subject Name Missing", 500)
             if (!acc[subjectName]) {
                 acc[subjectName] = {
                     subject: subjectName,
@@ -50,6 +50,8 @@ export async function getSubjects(req: Request, res: Response) {
             return acc;
         }, {} as {  });
 
+    if (!subjects) throw new APIError("No Subjects", 404);
+
     const uniqueSubjects: Subject[] = Object.values(subjects);
 
     uniqueSubjects.sort((a, b) => b.courses.length - a.courses.length);
@@ -59,10 +61,10 @@ export async function getSubjects(req: Request, res: Response) {
 }
 
 export async function getCourse(req: Request, res: Response) {
-    const { courseResolvable } = req.params;
+    const { c } = req.params;
 
     const course = await prisma.course.findUniqueOrThrow({
-        where: Resolver.course(courseResolvable),
+        where: Resolver.course(c),
         include: {
             events: {
                 orderBy: {
@@ -77,10 +79,7 @@ export async function getCourse(req: Request, res: Response) {
         throw new NotFoundError("Course not found");
     }
 
-    res.status(200).send({
-        ...course,
-        stats: await course.stats
-    });
+    res.status(200).send(Formatter.course(course, req.sendUnpublished));
 }
 
 export async function getAllCourses(req: Request, res: Response) {
@@ -103,14 +102,14 @@ export async function getAllCourses(req: Request, res: Response) {
         },
     });
 
-    res.status(200).send(courses.map(course => Formatter.course(course, req.sendUnpublished)));
+    res.status(200).send(Formatter.courses(courses, req.sendUnpublished));
 }
 
 export async function getCourseExams(req: Request, res: Response) {
-    const { courseResolvable } = req.params;
+    const { c } = req.params;
 
     const course = await prisma.course.findUniqueOrThrow({
-        where: Resolver.course(courseResolvable),
+        where: Resolver.course(c),
         select: {
             id: true,
             flags: true,
@@ -134,17 +133,22 @@ export async function getCourseExams(req: Request, res: Response) {
                     flags: true
                 }
             }
-        }
+        },
+        orderBy: [
+            { year: "asc" },
+            { season: "asc" },
+            { number: "asc" }
+        ]
     });
 
-    res.status(200).send(exams.map(exam => Formatter.exam(exam, req.sendUnpublished)));
+    res.status(200).send(Formatter.exams(exams, req.sendUnpublished));
 }
 
 export async function getCourseTopics(req: Request, res: Response) {
-    const { courseResolvable } = req.params;
+    const { c } = req.params;
 
     const course = await prisma.course.findUniqueOrThrow({
-        where: Resolver.course(courseResolvable),
+        where: Resolver.course(c),
         select: {
             id: true,
             flags: true,
@@ -203,11 +207,11 @@ export async function createCourse(req: Request, res: Response) {
         },
     });
 
-    res.status(200).send(course);
+    res.status(200).send(Formatter.course(course, req.sendUnpublished));
 }
 
 export async function updateCourse(req: Request, res: Response) {
-    const { courseResolvable } = req.params;
+    const { c } = req.params;
     const options = UpdateCourseScheme.parse(req.body);
 
     // PurdueIO confirms existence of course and standardizes name and subject fields
@@ -215,7 +219,7 @@ export async function updateCourse(req: Request, res: Response) {
     const purdueIoCourse = await PurdueIoAPI.getCourse(purdueIoSubject, options.number);
 
     const course = await prisma.course.update({
-        where: Resolver.course(courseResolvable),
+        where: Resolver.course(c),
         data: {
             ...options,
             name: purdueIoCourse.Title,
@@ -224,14 +228,14 @@ export async function updateCourse(req: Request, res: Response) {
         }
     });
 
-    res.status(200).send(course);
+    res.status(200).send(Formatter.course(course, req.sendUnpublished));
 }
 
 export async function toggleCoursePublished(req: Request, res: Response) {
-    const { courseResolvable } = req.params;
+    const { c } = req.params;
 
     const course = await prisma.course.findUnique({
-        where: Resolver.course(courseResolvable),
+        where: Resolver.course(c),
         select: {
             id: true,
             name: true,
@@ -263,10 +267,10 @@ export async function toggleCoursePublished(req: Request, res: Response) {
 }
 
 export async function deleteCourse(req: Request, res: Response) {
-    const { courseResolvable } = req.params;
+    const { c } = req.params;
 
     const course = await prisma.course.delete({
-        where: Resolver.course(courseResolvable)
+        where: Resolver.course(c)
     });
 
     if (!course) {

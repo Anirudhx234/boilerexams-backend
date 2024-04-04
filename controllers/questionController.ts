@@ -12,10 +12,10 @@ import { object, z } from "zod";
 import FlagEncoder from "../helpers/encoder.js";
 
 export async function createQuestion(req: Request, res: Response) {
-    const { examResolvable, courseResolvable } = req.params;
+    const { e, c } = req.params;
 
     const exam = await prisma.exam.findUnique({
-        where: await Resolver.exam(examResolvable, courseResolvable)
+        where: await Resolver.exam(e, c)
     });
 
     if (!exam) {
@@ -37,10 +37,10 @@ export async function createQuestion(req: Request, res: Response) {
 }
 
 export async function getQuestion(req: Request, res: Response) {
-    const { questionResolvable, topicResolvable, examResolvable, courseResolvable } = req.params;
+    const { q, t, e, c } = req.params;
 
     const question = await prisma.question.findUnique({
-        where: await Resolver.question(questionResolvable, topicResolvable, examResolvable, courseResolvable),
+        where: await Resolver.question(q, t, e, c),
         include: {
             course: true,
             exam: true,
@@ -90,14 +90,14 @@ export async function getQuestion(req: Request, res: Response) {
 }
 
 export async function updateQuestion(req: Request, res: Response) {
-    const { questionResolvable, topicResolvable, examResolvable, courseResolvable } = req.params;
+    const { q, t, e, c } = req.params;
     const options = UpdateQuestionScheme.parse(req.body);
 
     const question = await prisma.question.findUnique({
-        where: await Resolver.question(questionResolvable, topicResolvable, examResolvable, courseResolvable)
+        where: await Resolver.question(q, t, e, c)
     });
 
-    if (!question) throw new APIError(`Question not found: ${questionResolvable}`, 404);
+    if (!question) throw new APIError(`Question not found: ${q}`, 404);
 
     const topicOptions = options.topics.map(topic => {
         return {
@@ -184,11 +184,11 @@ export async function updateQuestion(req: Request, res: Response) {
 }
 
 export async function toggleQuestionPublished(req: Request, res: Response) {
-    const { questionResolvable, topicResolvable, examResolvable, courseResolvable } = req.params;
+    const { q, t, e, c } = req.params;
 
     // Need to hack since we can't force uniqueness on question numbers
     const question = await prisma.question.findUnique({
-        where: await Resolver.question(questionResolvable, topicResolvable, examResolvable, courseResolvable),
+        where: await Resolver.question(q, t, e, c),
         select: {
             id: true,
             exam: {
@@ -228,29 +228,29 @@ export async function toggleQuestionPublished(req: Request, res: Response) {
 }
 
 export async function deleteQuestion(req: Request, res: Response) {
-    const { questionResolvable, topicResolvable, examResolvable, courseResolvable } = req.params;
+    const { q, t, e, c } = req.params;
 
     // More hacks because question number is not unique
     const question = await prisma.question.delete({
-        where: await Resolver.question(questionResolvable, topicResolvable, examResolvable, courseResolvable),
+        where: await Resolver.question(q, t, e, c),
     });
 
     if (!question) {
-        throw new NotFoundError(`Question not found: ${questionResolvable}`);
+        throw new NotFoundError(`Question not found: ${q}`);
     }
     res.status(200).send(question);
 }
 
 export async function createSubmission(req: Request, res: Response) {
-    const { questionResolvable, topicResolvable, examResolvable, courseResolvable } = req.params;
+    const { q, t, e, c } = req.params;
     const options = CreateSubmissionScheme.parse(req.body);
 
     const question = await prisma.question.findUnique({
-        where: await Resolver.question(questionResolvable, topicResolvable, examResolvable, courseResolvable)
+        where: await Resolver.question(q, t, e, c)
     });
 
     if (!question) {
-        throw new NotFoundError(`Question not found: ${questionResolvable}`);
+        throw new NotFoundError(`Question not found: ${q}`);
     }
 
     const submission = await prisma.submission.create({

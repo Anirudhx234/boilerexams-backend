@@ -1,15 +1,22 @@
 import express from "express";
-import { createTopic, deleteTopic, setTopicQuestions, updateTopic } from "../controllers/topicController.js";
+import {
+    createTopic,
+    deleteTopic,
+    getAllTopics,
+    setTopicQuestions,
+    updateTopic
+} from "../controllers/topicController.js";
 import asyncWrapper from "../middleware/wrappers/asyncWrapper.js";
+import sendPublished from "../middleware/auth/sendPublished.js";
 
 const router = express.Router();
 
-router.post("/courses/:courseId/topics", asyncWrapper(createTopic));
+router.get("/", sendPublished, asyncWrapper(getAllTopics));
 
-router.put("/topics/:topicId", asyncWrapper(updateTopic));
+router.put("/:t", asyncWrapper(updateTopic));
 
-router.put("/topics/:topicId/setQuestions", asyncWrapper(setTopicQuestions));
+router.put("/:t/setQuestions", asyncWrapper(setTopicQuestions));
 
-router.delete("/topics/:topicId", asyncWrapper(deleteTopic));
+router.delete("/:t", asyncWrapper(deleteTopic));
 
 export default router;

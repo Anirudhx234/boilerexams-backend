@@ -70,10 +70,10 @@ export async function getFeedback(req: Request, res: Response) {
 }
 
 export async function getVideoFeedbackByCourse(req: Request, res: Response) {
-    const { courseResolvable } = req.params;
+    const { c } = req.params;
 
     const course = await prisma.course.findUnique({
-        where: Resolver.course(courseResolvable),
+        where: Resolver.course(c),
         include: {
             feedback: {
                 include: {
@@ -95,10 +95,10 @@ export async function getVideoFeedbackByCourse(req: Request, res: Response) {
 }
 
 export async function getVideoFeedbackByExam(req: Request, res: Response) {
-    const { examResolvable, courseResolvable } = req.params;
+    const { e, c } = req.params;
 
     const exam = await prisma.exam.findUnique({
-        where: await Resolver.exam(examResolvable, courseResolvable),
+        where: await Resolver.exam(e, c),
         include: {
             course: true,
             feedback: {
@@ -216,11 +216,11 @@ export async function reportBug(req: Request, res: Response) {
 }
 
 export async function reportQuestion(req: Request, res: Response) {
-    const { questionResolvable, topicResolvable, examResolvable, courseResolvable } = req.params;
+    const { q, t, e, c } = req.params;
     const options = QuestionReportData.parse(req.body);
 
     const question = await prisma.question.findUnique({
-        where: await Resolver.question(questionResolvable, topicResolvable, examResolvable, courseResolvable),
+        where: await Resolver.question(q, t, e, c),
         include: {
             course: {
                 select: {
@@ -288,11 +288,11 @@ export async function requestFeature(req: Request, res: Response) {
 }
 
 export async function createVideoFeedback(req: Request, res: Response) {
-    const { questionResolvable, topicResolvable, examResolvable, courseResolvable } = req.params;
+    const { q, t, e, c } = req.params;
     const options = VideoFeedbackData.parse(req.body);
 
     const question = await prisma.question.findUnique({
-        where: await Resolver.question(questionResolvable, topicResolvable, examResolvable, courseResolvable),
+        where: await Resolver.question(q, t, e, c),
         select: {
             id: true,
             examId: true,

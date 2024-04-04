@@ -5,6 +5,7 @@ import Resolver from "../helpers/resolver.js";
 import { ReorderQuestions} from "../prisma/schema.js";
 import { z } from "zod";
 import { randomUUID } from "node:crypto";
+import Formatter from "../helpers/formatter.js";
 
 export const CreateTopic = z.object({
     id:     z.string().uuid().default(randomUUID),
@@ -15,12 +16,95 @@ export const UpdateTopic= CreateTopic.extend({
     id: z.string().uuid(),
 });
 
+export async function getAllTopics(req: Request, res: Response) {
+    const topics = await prisma.topic.findMany({
+        include: {
+            questions: {
+                include: {
+                    question: true
+                },
+                orderBy: {
+                    number: "asc"
+                },
+            },
+        },
+    });
+
+    res.status(200).send(Formatter.topics(topics, req.sendUnpublished));
+}
+
+export async function getTopic(req: Request, res: Response) {
+    const { t, c } = req.params;
+
+    const topic = await prisma.topic.findUniqueOrThrow({
+        where: await Resolver.topic(t, c),
+        include: {
+            questions: {
+                include: {
+                    question: true
+                },
+                orderBy: {
+                    number: "asc"
+                },
+            },
+        },
+    });
+
+    res.status(200).send(Formatter.topic(topic, req.sendUnpublished));
+}
+
+export async function getTopicQuestions(req: Request, res: Response) {
+    const { t, c } = req.params;
+
+    const topic = await prisma.topic.findUniqueOrThrow({
+        where: await Resolver.topic(t, c)
+    });
+
+    const relations = await prisma.questionToTopic.findMany({
+        where: {
+            topicId: topic.id
+        },
+        include: {
+            question: {
+                include: {
+                    resources: true,
+                    explanation: true,
+                    children: {
+                        include: {
+                            resources: true,
+                            answerChoices: {
+                                include: {
+                                    resources: true
+                                }
+                            }
+                        }
+                    },
+                    topics: {
+                        include: {
+                            topic: true
+                        }
+                    },
+                    answerChoices: {
+                        include: {
+                            resources: true
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    res.status(200).send(Formatter.questionsToTopics(relations, req.sendUnpublished)
+        ?.map(relation => relation.question)
+    );
+}
+
 export async function createTopic(req: Request, res: Response) {
-    const { courseResolvable } = req.params;
+    const { c } = req.params;
     const options = CreateTopic.parse(req.body);
 
     const course = await prisma.course.findUnique({
-        where: Resolver.course(courseResolvable)
+        where: Resolver.course(c)
     });
 
     if (!course) throw new APIError(`Course not found`, 404);
@@ -46,11 +130,11 @@ export async function createTopic(req: Request, res: Response) {
 }
 
 export async function updateTopic(req: Request, res: Response) {
-    const { topicResolvable, courseResolvable } = req.params;
+    const { t, c } = req.params;
     const options = UpdateTopic.parse(req.body);
 
     const topic = await prisma.topic.update({
-        where: await Resolver.topic(topicResolvable, courseResolvable),
+        where: await Resolver.topic(t, c),
         data: {
             ...options
         }
@@ -60,10 +144,10 @@ export async function updateTopic(req: Request, res: Response) {
 }
 
 export async function reorderQuestions(req: Request, res: Response) {
-    const { topicResolvable, courseResolvable } = req.params;
+    const { t, c } = req.params;
 
     const topic = await prisma.topic.findUnique({
-        where: await Resolver.topic(topicResolvable, courseResolvable),
+        where: await Resolver.topic(t, c),
         select: {
             id: true,
             questions: true
@@ -71,7 +155,7 @@ export async function reorderQuestions(req: Request, res: Response) {
     });
 
     if (!topic) {
-        throw new NotFoundError(`Topic not found: ${topicResolvable} ${courseResolvable}`);
+        throw new NotFoundError(`Topic not found: ${t} ${c}`);
     }
 
     const options = ReorderQuestions.parse(req.body);

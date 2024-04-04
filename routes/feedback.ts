@@ -19,11 +19,11 @@ const router = express.Router();
 
 router.get("/:feedbackId", authHandler(Role.CONTENT), asyncWrapper(getFeedback));
 
-router.get("/video-feedback/courses/:courseResolvable/exams/:examResolvable", authHandler(Role.CONTENT), asyncWrapper(getVideoFeedbackByExam));
+router.get("/video-feedback/courses/:c/exams/:e", authHandler(Role.CONTENT), asyncWrapper(getVideoFeedbackByExam));
 
-router.get("/video-feedback/courses/:courseResolvable", authHandler(Role.CONTENT), asyncWrapper(getVideoFeedbackByCourse));
+router.get("/video-feedback/courses/:c", authHandler(Role.CONTENT), asyncWrapper(getVideoFeedbackByCourse));
 
-router.get("/video-feedback/exams/:examResolvable", authHandler(Role.CONTENT), asyncWrapper(getVideoFeedbackByExam));
+router.get("/video-feedback/exams/:e", authHandler(Role.CONTENT), asyncWrapper(getVideoFeedbackByExam));
 
 router.get("/video-feedback/", authHandler(Role.CONTENT), asyncWrapper(getAllVideoFeedback));
 
@@ -31,11 +31,11 @@ router.get("/course-requests", asyncWrapper(getAllCourseRequests));
 
 router.post("/bug-reports", asyncWrapper(reportBug));
 
-router.post("/question-reports/:questionResolvable", asyncWrapper(reportQuestion));
+router.post("/question-reports/:q", asyncWrapper(reportQuestion));
 
 router.post("/feature-requests", asyncWrapper(requestFeature));
 
-router.post("/video-feedback/:questionResolvable", asyncWrapper(createVideoFeedback));
+router.post("/video-feedback/:q", asyncWrapper(createVideoFeedback));
 
 router.post("/course-requests", asyncWrapper(requestCourse));
 
