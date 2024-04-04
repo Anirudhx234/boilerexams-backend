@@ -1,5 +1,5 @@
 export default class Formatter {
-    public static course(course: PotentialCourse, sendUnpublished: boolean) {
+    public static course(course: PotentialCourse, sendUnpublished: boolean): FormattedCourse {
         return {
             ...course,
             exams: Formatter.exams(course.exams, sendUnpublished),
@@ -15,7 +15,7 @@ export default class Formatter {
             .map(course => Formatter.course(course, sendUnpublished));
     }
 
-    public static exam(exam: PotentialExam, sendUnpublished: boolean) {
+    public static exam(exam: PotentialExam, sendUnpublished: boolean): FormattedExam {
         return {
             ...exam,
             questions: Formatter.questions(exam.questions, sendUnpublished)
@@ -29,12 +29,12 @@ export default class Formatter {
             .map(exam => Formatter.exam(exam, sendUnpublished));
     }
 
-    public static topic(topic: PotentialTopic | undefined, sendUnpublished: boolean) {
-        if (!topic) return undefined;
+    public static topic(topic: PotentialTopic, sendUnpublished: boolean): FormattedTopic {
         return {
             ...topic,
             questions: Formatter.questionsToTopics(topic.questions, sendUnpublished)
-                ?.map(relation => relation.questions)
+                ?.map(relation => relation.question)
+                ?.filter(question => question) as FormattedQuestion[]
         }
     }
 
@@ -43,13 +43,13 @@ export default class Formatter {
         return topics.map(topic => Formatter.topic(topic, sendUnpublished));
     }
 
-    public static question(question: PotentialQuestion | undefined, sendUnpublished: boolean) {
-        if (!question) return undefined;
+    public static question(question: PotentialQuestion, sendUnpublished: boolean): FormattedQuestion {
         return {
             ...question,
             children: Formatter.questions(question.children, sendUnpublished),
             topics: Formatter.questionsToTopics(question.topics, sendUnpublished)
-                ?.map(relation => relation.topics)
+                ?.map(relation => relation.topic)
+                ?.filter(topic => topic) as FormattedTopic[]
         }
     }
 
@@ -60,11 +60,11 @@ export default class Formatter {
             .map(question => Formatter.question(question, sendUnpublished));
     }
 
-    public static questionToTopic(relation: PotentialQuestionToTopic, sendUnpublished: boolean) {
+    public static questionToTopic(relation: PotentialQuestionToTopic, sendUnpublished: boolean): FormattedQuestionToTopic {
         return {
             ...relation,
-            topic: Formatter.topic(relation.topic, sendUnpublished),
-            question: Formatter.question(relation.question, sendUnpublished)
+            topic: relation.topic ? Formatter.topic(relation.topic, sendUnpublished) : undefined,
+            question: relation.question? Formatter.question(relation.question, sendUnpublished) : undefined
         }
     }
 
@@ -73,6 +73,36 @@ export default class Formatter {
         return relations.map(relation => Formatter.questionToTopic(relation, sendUnpublished));
     }
 }
+
+interface FormattedCourse {
+    flags:      CourseFlags
+    exams?:     FormattedExam[]
+    topics?:    FormattedTopic[]
+    questions?: FormattedQuestion[]
+}
+
+interface FormattedExam {
+    flags:      ExamFlags
+    questions?: FormattedQuestion[]
+}
+
+interface FormattedTopic {
+    name:       string
+    questions?: FormattedQuestion[]
+}
+
+interface FormattedQuestion {
+    flags:      QuestionFlags
+    children?:  FormattedQuestion[]
+    topics?:    FormattedTopic[]
+}
+
+interface FormattedQuestionToTopic {
+    topic?:     FormattedTopic
+    question?:  FormattedQuestion
+}
+
+
 
 interface PotentialQuestionToTopic {
     topic?:    PotentialTopic
@@ -85,19 +115,18 @@ interface PotentialQuestion {
     topics?:        PotentialQuestionToTopic[]
 }
 
-interface PotentialExam {
-    flags:      ExamFlags
-    questions?: PotentialQuestion[]
-}
-
 interface PotentialTopic {
     name:       string
     questions?: PotentialQuestionToTopic[]
 }
 
+interface PotentialExam {
+    flags:      ExamFlags
+    questions?: PotentialQuestion[]
+}
+
 interface PotentialCourse {
     flags:      CourseFlags
-    subject?:   string
     exams?:     PotentialExam[]
     topics?:    PotentialTopic[]
     questions?: PotentialQuestion[]
