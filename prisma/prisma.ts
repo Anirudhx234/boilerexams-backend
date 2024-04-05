@@ -112,9 +112,7 @@ export default prisma
                         const newB = Math.min(255, b + lightnessFactor);
 
                         // Convert back to hex
-                        return`#${(1 << 24) + (newR << 16) + (newG << 8) + newB
-                            .toString(16)
-                            .slice(1)}`;
+                        return `#${((1 << 24) + (newR << 16) + (newG << 8) + newB).toString(16).slice(1)}`;
                     }
                 },
                 stats: {
