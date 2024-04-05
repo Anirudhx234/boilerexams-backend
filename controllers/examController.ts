@@ -23,6 +23,13 @@ export async function getExam(req: Request, res: Response) {
         include: {
             resources: true,
             questions: {
+                include: {
+                    topics: {
+                        include: {
+                            topic: true
+                        }
+                    }
+                },
                 select: {
                     id: true,
                     number: true,
