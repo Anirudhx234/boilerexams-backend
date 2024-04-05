@@ -8,6 +8,7 @@ import { submissionStats } from "../helpers/stats/submissionStats.js";
 import { UrlResourceData } from "../controllers/resourceController.js";
 import { deleteFileFromS3 } from "../utils/uploadFileToS3.js";
 import { answerChoiceStats } from "../helpers/stats/answerChoiceStats.js";
+import corsOptions from "../utils/corsOptions.js";
 
 const prisma = new PrismaClient();
 
@@ -94,6 +95,28 @@ export default prisma
                         return FlagDecoder.course(course.flags); // Overwrite flag field with computed flags
                     }
                 },
+                secondaryColor: { // Compute secondaryColor
+                    needs: { color: true },
+                    compute (course) {
+                        if (!course.color) return;
+
+                        const color = course.color.slice(1);
+
+                        const r = parseInt(color.substring(0, 2), 16);
+                        const g = parseInt(color.substring(2, 4), 16);
+                        const b = parseInt(color.substring(4, 6), 16);
+
+                        const lightnessFactor: number = 30; // Increase this value for lighter colors
+                        const newR = Math.min(255, r + lightnessFactor);
+                        const newG = Math.min(255, g + lightnessFactor);
+                        const newB = Math.min(255, b + lightnessFactor);
+
+                        // Convert back to hex
+                        return`#${(1 << 24) + (newR << 16) + (newG << 8) + newB
+                            .toString(16)
+                            .slice(1)}`;
+                    }
+                },
                 stats: {
                     needs: { id: true },
                     async compute(course) {
@@ -159,4 +182,4 @@ export default prisma
                 }
             }
         }
-    })
+    });

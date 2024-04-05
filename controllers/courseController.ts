@@ -16,14 +16,14 @@ export const CourseFlags = z.object({
 export const CreateCourse = z.object({
     abbreviation:   z.string(),
     number:         z.number(),
-    color:          z.string().optional(),
+    color:          z.string().min(4).max(9).regex(/^#/).optional(),
     disclaimer:     z.string().optional(),
     studyModes:     z.array(z.nativeEnum(StudyMode)).default([ StudyMode.EXAM, StudyMode.TIMED_EXAM, StudyMode.TOPIC ]),
     flags:          CourseFlags.optional().default({  }),
 });
 
 export const UpdateCourse = z.object({
-    color:      z.string().optional(),
+    color:      z.string().min(4).max(9).regex(/^#/).optional(),
     disclaimer: z.string().optional(),
     studyModes: z.array(z.nativeEnum(StudyMode)).optional(),
     flags:      CourseFlags.optional(),
