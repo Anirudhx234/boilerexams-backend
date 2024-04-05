@@ -7,22 +7,23 @@ export async function questionStats(before: Date, after: Date, id?: string): Pro
             FROM "Question" q
             WHERE (
                 q.id = ${ id}
+                    OR q."parentId" = ${  id}
                     OR ${ id} = ${ undefined}
                 )
               AND q.flags & 1 = 1
-        ) AS "count"
-             ,SUM(CASE
+        ) AS "count",
+             SUM(CASE
                       WHEN s."timeSpent" BETWEEN 0 AND 36000000
                           THEN s."timeSpent"
                       ELSE 0
-            END) AS "timeSpent"
-             ,SUM(CASE
+            END) AS "timeSpent",
+                SUM(CASE
                       WHEN s."timeSpentVideo" BETWEEN 0 AND 36000000
                           THEN s."timeSpentVideo"
                       ELSE 0
-            END) AS "timeSpentVideo"
-             ,COUNT(s.id) AS "submissions"
-             ,SUM(CASE
+            END) AS "timeSpentVideo",
+                COUNT(s.id) AS "submissions",
+                SUM(CASE
                       WHEN s.correct = TRUE
                           THEN 1
                       ELSE 0

@@ -44,17 +44,14 @@ export async function createSubmission(req: Request, res: Response) {
     const { q, t, e, c } = req.params;
     const options = CreateSubmissionScheme.parse(req.body);
 
-    const question = await prisma.question.findUnique({
+    const question = await prisma.question.findFirstOrThrow({
         where: await Resolver.question(q, t, e, c)
     });
-
-    if (!question) {
-        throw new NotFoundError(`Question not found: ${q}`);
-    }
 
     const submission = await prisma.submission.create({
         data: {
             ...options,
+            questionId: question.id,
         },
         include: {
             question: true
