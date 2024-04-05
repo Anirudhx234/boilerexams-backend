@@ -50,6 +50,11 @@ export default class Formatter {
         const topics = await Formatter.questionsToTopics({ ...options, data: options.data.topics});
         return {
             ...options.data,
+            data: {
+                ...options.data.data,
+                answerChoices: options.data.answerChoices
+            },
+            answerChoices: undefined,
             children: await Formatter.questions({ ...options, data: options.data.children }),
             stats: options.computeStats ? await options.data.stats : undefined,
             topics: topics
@@ -106,11 +111,13 @@ interface FormattedTopic {
 }
 
 interface FormattedQuestion {
-    flags:      QuestionFlags
-    number?:    number
-    children?:  FormattedQuestion[]
-    topics?:    FormattedTopic[]
-    stats?:     QuestionStats
+    data?:          object
+    flags:          QuestionFlags
+    number?:        number
+    answerChoices:  undefined
+    children?:      FormattedQuestion[]
+    topics?:        FormattedTopic[]
+    stats?:         QuestionStats
 }
 
 interface FormattedQuestionToTopic {
@@ -125,11 +132,13 @@ interface PotentialQuestionToTopic {
 }
 
 interface PotentialQuestion {
-    flags:      QuestionFlags
-    number?:    number,
-    children?:  PotentialQuestion[]
-    topics?:    PotentialQuestionToTopic[]
-    stats?:     Promise<QuestionStats>
+    data?:          object
+    flags:          QuestionFlags
+    number?:        number,
+    children?:      PotentialQuestion[]
+    answerChoices?: object[]
+    topics?:        PotentialQuestionToTopic[]
+    stats?:         Promise<QuestionStats>
 }
 
 interface PotentialTopic {
