@@ -17,7 +17,7 @@ import {
     updateExam
 } from "../controllers/examController.js";
 import authHandler from "../middleware/auth/authHandler.js";
-import { createQuestion, updateQuestion } from "../controllers/questionController.js";
+import { createQuestion, getQuestion, updateQuestion } from "../controllers/questionController.js";
 import { Role } from "@prisma/client";
 import { createTopic, getTopic, getTopicQuestions } from "../controllers/topicController.js";
 
@@ -41,6 +41,8 @@ router.get("/:c/exams", sendPublished, asyncWrapper(getCourseExams));
 router.get("/:c/exams/:e", sendPublished, asyncWrapper(getExam));
 
 router.get("/:c/exams/:e/questions", sendPublished, asyncWrapper(getExamQuestions));
+
+router.get("/:c/exams/:e/questions/:q", sendPublished, asyncWrapper(getQuestion));
 
 router.get("/:c/events", sendPublished, asyncWrapper(getCourseEvents));
 

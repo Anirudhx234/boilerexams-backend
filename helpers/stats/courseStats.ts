@@ -4,21 +4,49 @@ import prisma from "../../prisma/prisma.js";
 
 export async function courseStats(before: Date, after: Date, id?: string): Promise<CourseStats[]> {
     return await prisma.$queryRaw`
-        SELECT
-            (SELECT COUNT(*) FROM "Question" q WHERE q."courseId" = c.id AND q.flags & 1 = 1)   AS "questions",
-            (SELECT COUNT(*) FROM "Exam" e WHERE e."courseId" = c.id AND e.flags & 1 = 1)       AS "exams",
-            SUM(s."timeSpent")                                                                  AS "timeSpent",
-            SUM(s."timeSpentVideo")                                                             AS "timeSpentVideo",
-            COUNT(s.id)                                                                         AS "submissions",
-            SUM(CASE WHEN s.correct = TRUE THEN 1 ELSE 0 END)                                   AS "submissionsCorrect"
+        SELECT (
+                   SELECT COUNT(*)
+                   FROM "Question" q
+                   WHERE q."courseId" = c.id
+                     AND q.flags & 1 = 1
+               ) AS "questions",
+               (
+                   SELECT COUNT(*)
+                   FROM "Exam" e
+                   WHERE e."courseId" = c.id
+                     AND e.flags & 1 = 1
+               ) AS "exams",
+               SUM(CASE
+                       WHEN s."timeSpent" BETWEEN 0 AND 36000000
+                           THEN s."timeSpent"
+                       ELSE 0
+                   END) AS "timeSpent",
+               SUM(CASE
+                       WHEN s."timeSpentVideo" BETWEEN 0 AND 36000000
+                           THEN s."timeSpentVideo"
+                       ELSE 0
+                   END) AS "timeSpentVideo",
+               COUNT(s.id) AS "submissions",
+               SUM(CASE
+                       WHEN s.correct = TRUE
+                           THEN 1
+                       ELSE 0
+                   END) AS "submissionsCorrect"
         FROM "Course" c
                  JOIN "Question" q ON c.id = q."courseId"
                  JOIN "Submission" s ON q.ID = s."questionId"
-        WHERE 
-            (c.id = ${id} OR ${id} = ${undefined}) AND 
-            c.flags & 1 = 1 AND q.flags & 1 = 1 AND 
-            (s."timeStarted" BETWEEN SYMMETRIC ${after} AND ${before})
+        WHERE (
+            c.id = ${ id}
+                OR ${ id} = ${ undefined}
+            )
+          AND c.flags & 1 = 1
+          AND q.flags & 1 = 1
+          AND (
+            s."timeStarted" BETWEEN SYMMETRIC ${ after}
+                AND ${ before}
+            )
         GROUP BY c.id;
+
     `;
     /*
     {

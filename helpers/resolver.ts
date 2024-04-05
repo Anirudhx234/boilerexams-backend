@@ -1,7 +1,7 @@
 import { APIError } from "../middleware/errors/index.js";
-import prisma from "../prisma/prisma.js";
-import { z } from "zod";
 import { Season } from "@prisma/client";
+import { z } from "zod";
+import prisma from "../prisma/prisma.js";
 
 export const CourseResolvable = z.union([
     z.object({
@@ -46,10 +46,9 @@ export const QuestionResolvable = z.union([
         id: z.string().uuid()
     }),
     z.object({
-        number_examId: z.object({
-            number: z.number().min(1),
-            examId: z.string().uuid(),
-        })
+        number:     z.number().min(1),
+        examId:     z.string().uuid(),
+        parentId:   z.string().uuid().nullable().default(null),
     })
 ]);
 

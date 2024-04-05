@@ -92,7 +92,7 @@ export async function createQuestion(req: Request, res: Response) {
 export async function getQuestion(req: Request, res: Response) {
     const { q, t, e, c } = req.params;
 
-    const question = await prisma.question.findUniqueOrThrow({
+    const question = await prisma.question.findFirstOrThrow({
         where: await Resolver.question(q, t, e, c),
         include: {
             course: true,
@@ -131,7 +131,7 @@ export async function updateQuestion(req: Request, res: Response) {
     const { q, t, e, c } = req.params;
     const options = UpdateQuestionScheme.parse(req.body);
 
-    const question = await prisma.question.findUnique({
+    const question = await prisma.question.findFirstOrThrow({
         where: await Resolver.question(q, t, e, c)
     });
 
@@ -226,7 +226,7 @@ export async function toggleQuestionPublished(req: Request, res: Response) {
     const { q, t, e, c } = req.params;
 
     // Need to hack since we can't force uniqueness on question numbers
-    const question = await prisma.question.findUnique({
+    const question = await prisma.question.findFirstOrThrow({
         where: await Resolver.question(q, t, e, c),
         select: {
             id: true,
@@ -267,15 +267,17 @@ export async function toggleQuestionPublished(req: Request, res: Response) {
 }
 
 export async function deleteQuestion(req: Request, res: Response) {
-    const { q, t, e, c } = req.params;
+    const { questionId } = req.params;
 
     // More hacks because question number is not unique
     const question = await prisma.question.delete({
-        where: await Resolver.question(q, t, e, c),
+        where: {
+            id: questionId
+        }
     });
 
     if (!question) {
-        throw new NotFoundError(`Question not found: ${q}`);
+        throw new NotFoundError(`Question not found: ${questionId}`);
     }
     res.status(200).send(question);
 }

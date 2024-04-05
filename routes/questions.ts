@@ -21,6 +21,6 @@ router.put("/:q/togglePublished", authHandler(Role.CONTENT), asyncWrapper(toggle
 
 router.post("/:q/submit", generalLimiter, asyncWrapper(createSubmission));
 
-router.delete("/:q", authHandler(Role.CONTENT), asyncWrapper(deleteQuestion));
+router.delete("/:questionId", authHandler(Role.CONTENT), asyncWrapper(deleteQuestion));
 
 export default router;
