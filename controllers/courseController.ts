@@ -7,6 +7,7 @@ import Resolver from "../helpers/resolver.js";
 import FlagEncoder from "../helpers/encoder.js";
 import Formatter from "../helpers/formatter.js";
 import { z } from "zod";
+import { EventQueryParams } from "./eventController.js";
 
 export const CourseFlags = z.object({
     published: z.boolean().default(false),
@@ -214,6 +215,35 @@ export async function getCourseTopics(req: Request, res: Response) {
         sendUnpublished: req.sendUnpublished,
         computeStats: false
     }));
+}
+
+export async function getCourseEvents(req: Request, res: Response) {
+    const { c } = req.params;
+    const options = EventQueryParams.parse(req.query);
+
+    const course = await prisma.course.findUniqueOrThrow({
+        where: Resolver.course(c),
+        select: {
+            id: true,
+            flags: true,
+        },
+    });
+
+    if (!req.sendUnpublished && !course.flags.published) {
+        throw new NotFoundError("Course not found");
+    }
+
+    const events = await prisma.event.findMany({
+        where: {
+            ...options,
+            courseId: course.id
+        },
+        orderBy: {
+            start: "asc",
+        },
+    });
+
+    res.status(200).send(events);
 }
 
 export async function createCourse(req: Request, res: Response) {

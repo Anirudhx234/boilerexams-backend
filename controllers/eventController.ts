@@ -1,8 +1,43 @@
 import prisma from "../prisma/prisma.js";
-import { Request, Response } from "express";
+import e, { Request, Response } from "express";
 import { NotFoundError } from "../middleware/errors/index.js";
+import { EventType } from "@prisma/client";
+import { z } from "zod";
 
-const getEvent = async (req: Request, res: Response) => {
+export const CreateEvent = z.object({
+    type:           z.nativeEnum(EventType),
+    title:          z.string().optional(),
+    description:    z.string().optional(),
+    location:       z.string().optional(),
+    start:          z.coerce.date(),
+    end:            z.coerce.date(),
+    courseId:       z.string().uuid().optional()
+}).refine(data => {
+    return data.start < data.end;
+}, "Event must start before it ends");
+
+export const UpdateEvent = z.object({
+    type:           z.nativeEnum(EventType).optional(),
+    title:          z.string().optional(),
+    description:    z.string().optional(),
+    location:       z.string().optional(),
+    start:          z.coerce.date().optional(),
+    end:            z.coerce.date().optional(),
+    courseId:       z.string().uuid().optional()
+}).refine(data => {
+    if (data.start && data.end) {
+        return data.start < data.end;
+    }
+    return true;
+}, "Event must start before it ends");
+
+export const EventQueryParams = z.object({
+    type:   z.nativeEnum(EventType).optional(),
+    before: z.preprocess(coerceDateSafely, z.date()).optional(),
+    after:  z.preprocess(coerceDateSafely, z.date()).optional(),
+})
+
+export async function getEvent(req: Request, res: Response) {
     const { eventId } = req.params;
 
     const event = await prisma.event.findUnique({
@@ -10,33 +45,27 @@ const getEvent = async (req: Request, res: Response) => {
             id: eventId,
         },
     });
+
     if (!event) {
         throw new NotFoundError("Event not found");
     }
 
     res.status(200).send(event);
-};
+}
 
-const getEvents = async (req: Request, res: Response) => {
-    const { c, after } = req.query;
-
-    // Define an empty where object
-    const where = {};
-
-    // Add courseId condition if it exists
-    if (c) {
-        where["courseId"] = c;
-    }
-
-    // Add start condition if after exists
-    if (after) {
-        where["start"] = {
-            gte: new Date(Number.parseInt(after as string)),
-        };
-    }
+export async function getEvents(req: Request, res: Response) {
+    const options = EventQueryParams.parse(req.query);
 
     const events = await prisma.event.findMany({
-        where: where,
+        where: {
+            type: options.type,
+            start: {
+                gte: options.after,
+            },
+            end: {
+                lte: options.before
+            }
+        },
         orderBy: [
             {
                 start: "asc",
@@ -45,35 +74,34 @@ const getEvents = async (req: Request, res: Response) => {
     });
 
     res.status(200).send(events);
-};
+}
 
-const createEvents = async (req: Request, res: Response) => {
-    const { events }: { events: NewEvent[] } = req.body;
+export async function createEvent(req: Request, res: Response) {
+    const options = CreateEvent.parse(req.body);
 
-    const courses = await prisma.course.findMany();
-    const createdEvents = await prisma.event.createMany({
-        data: events
-            .map(event => { // This maps events to their respective courses and table schema
-                const courseId = courses.find(course => {
-                    return course.abbreviation == event.subject && course.number == event.number;
-                })?.id;
-                return {
-                    courseId: courseId,
-                    title: event.title,
-                    description: event.description,
-                    type: event.type,
-                    start: new Date(event.start),
-                    end: new Date(event.end),
-                    location: event.location
-                };
-            })
-            .filter(event => !!event.courseId)
+    const event = await prisma.event.create({
+        data: {
+            ...options
+        }
     });
 
-    res.status(200).send(createdEvents);
-};
+    res.status(200).send(event);
+}
 
-const updateEvent = async (req: Request, res: Response) => {
+export async function batchCreateEvent(req: Request, res: Response) {
+    const events = await prisma.$transaction(req.body.map((body: unknown) => {
+        const options = CreateEvent.parse(body);
+        return prisma.event.create({
+            data: {
+                ...options
+            },
+        });
+    }))
+
+    res.status(200).send(events);
+}
+
+export async function updateEvent(req: Request, res: Response) {
     const { eventId } = req.body;
 
     const event = await prisma.event.update({
@@ -87,9 +115,9 @@ const updateEvent = async (req: Request, res: Response) => {
     }
 
     res.status(200).send(event);
-};
+}
 
-const deleteEvent = async (req: Request, res: Response) => {
+export async function deleteEvent(req: Request, res: Response) {
     const { eventId } = req.params;
 
     const event = await prisma.event.delete({
@@ -102,12 +130,16 @@ const deleteEvent = async (req: Request, res: Response) => {
     }
 
     res.status(200).send(event);
-};
+}
 
-const deleteAllEvents = async (req: Request, res: Response) => {
+export async function deleteAllEvents(req: Request, res: Response) {
     const events = await prisma.event.deleteMany();
 
     return res.status(200).send(events);
-};
+}
 
-export { createEvents, getEvent, getEvents, updateEvent, deleteEvent, deleteAllEvents };
+function coerceDateSafely(input?: unknown) {
+    if (!input) return;
+    const number = Number.parseInt(input as string);
+    return new Date(number);
+}

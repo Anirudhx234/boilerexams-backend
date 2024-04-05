@@ -53,11 +53,11 @@ export default class Formatter {
         const topics = await Formatter.questionsToTopics({ ...options, data: options.data.topics});
         return {
             ...options.data,
-            data: {
+            data: options.data.data ? {
                 ...(options.data.data as object),
                 explanationText: undefined, // ToDo temporary fix
                 answerChoices: await Formatter.answerChoices({ ...options, data: options.data.answerChoices })
-            },
+            } : undefined,
             answerChoices: undefined,
             children: await Formatter.questions({ ...options, data: options.data.children }),
             stats: options.computeStats ? await options.data.stats : undefined,

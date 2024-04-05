@@ -2,7 +2,7 @@ import express from "express";
 import {
     createCourse,
     deleteCourse, getAllCourses,
-    getCourse, getCourseExams, getCourseTopics, getSubjects,
+    getCourse, getCourseEvents, getCourseExams, getCourseTopics, getSubjects,
     toggleCoursePublished,
     updateCourse
 } from "../controllers/courseController.js";
@@ -41,6 +41,8 @@ router.get("/:c/exams", sendPublished, asyncWrapper(getCourseExams));
 router.get("/:c/exams/:e", sendPublished, asyncWrapper(getExam));
 
 router.get("/:c/exams/:e/questions", sendPublished, asyncWrapper(getExamQuestions));
+
+router.get("/:c/events", sendPublished, asyncWrapper(getCourseEvents));
 
 router.put("/:c", upload.array("images", 10), authHandler(Role.CONTENT), asyncWrapper(updateCourse));
 

@@ -15,26 +15,26 @@ export const ShortAnswerSubmissionData = FreeResponseSubmissionData;
 export const FillInBlankSubmissionData = FreeResponseSubmissionData;
 
 export const UpdateSubmissionScheme = z.object({
-    correct: z.boolean().optional(),
-    timeStarted: z.coerce.date().min(Epoch).optional(),
-    timeEnded: z.coerce.date().refine(date => date < new Date()).optional(),
-    timeSpent: z.preprocess(coerceBigIntSafely, z.bigint()).optional(),
+    correct:        z.boolean().optional(),
+    timeStarted:    z.coerce.date().min(Epoch).optional(),
+    timeEnded:      z.coerce.date().refine(date => date < new Date()).optional(),
+    timeSpent:      z.preprocess(coerceBigIntSafely, z.bigint()).optional(),
     timeSpentVideo: z.preprocess(coerceBigIntSafely, z.bigint()).optional(),
     timeSpentModal: z.preprocess(coerceBigIntSafely, z.bigint()).optional(),
 });
 
 export const CreateSubmissionScheme = z.object({
     type:           z.nativeEnum(QuestionType),
-    userSolution:           z.union([
+    userSolution:   z.union([
         MultipleChoiceSubmissionData,
         FreeResponseSubmissionData,
         ShortAnswerSubmissionData,
         FillInBlankSubmissionData
     ]),
-    correct: z.boolean(),
-    timeStarted: z.coerce.date().min(Epoch),
-    timeEnded: z.coerce.date().refine(date => date < new Date()),
-    timeSpent: z.preprocess(coerceBigIntSafely, z.bigint()),
+    correct:        z.boolean(),
+    timeStarted:    z.coerce.date().min(Epoch),
+    timeEnded:      z.coerce.date().refine(date => date < new Date()),
+    timeSpent:      z.preprocess(coerceBigIntSafely, z.bigint()),
     timeSpentVideo: z.preprocess(coerceBigIntSafely, z.bigint()),
     timeSpentModal: z.preprocess(coerceBigIntSafely, z.bigint()),
     osFamily:       z.string().optional(),
@@ -68,16 +68,13 @@ export async function batchCreateSubmission(req: Request, res: Response) {
         return CreateSubmissionScheme.parse(option);
     });
 
-    const submissions = await prisma.$transaction(
-        options.map((option) => {
-                return prisma.submission.create({
-                    data: {
-                        ...option,
-                    },
-                });
+    const submissions = await prisma.$transaction(options.map((option) => {
+        return prisma.submission.create({
+            data: {
+                ...option,
             },
-        ),
-    );
+        });
+    }));
 
     res.status(200).send(submissions);
 }
