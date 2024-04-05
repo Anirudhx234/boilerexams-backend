@@ -11,11 +11,11 @@ export async function questionStats(before: Date, after: Date, id?: string): Pro
             COUNT(s.id)                                         AS "submissions",
             SUM(CASE WHEN s.correct = TRUE THEN 1 ELSE 0 END)   AS "submissionsCorrect"
         FROM "Question" q
-                 JOIN "Submission" s ON q.id = s."questionId"
+                 JOIN "Submission" s ON q.id = s."questionId" OR s."questionId" = ANY(SELECT id FROM "Question" WHERE "parentId" = q.id)
         WHERE
             (q.id = ${id} OR ${id} = ${undefined}) AND
             q.flags & 1 = 1 AND
             (s."timeStarted" BETWEEN SYMMETRIC ${after} AND ${before})
-        GROUP BY q.id
+        GROUP BY COALESCE(q."parentId", q."id")  -- Group by parentId if it exists, otherwise by id
     `;
 }

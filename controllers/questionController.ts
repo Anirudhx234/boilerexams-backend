@@ -14,6 +14,11 @@ export const QuestionFlags = z.object({
     answersStartHidden:     z.boolean().default(true)
 });
 
+export const ParentQuestionData = z.object({
+    body:           z.string().optional(),
+    numberingType:  z.enum([ "LOWERCASE", "UPPERCASE", "ROMAN_LOWERCASE", "ROMAN_UPPERCASE", "NUMBER" ])
+})
+
 export const MultipleChoiceQuestionData = z.object({
     body:           z.string().optional(),
     solution:       z.array(z.number()),
@@ -31,14 +36,15 @@ export const FillInBlankQuestionData = FreeResponseQuestionData;
 export const CreateQuestionScheme = z.object({
     type:       z.nativeEnum(QuestionType).default(QuestionType.MULTIPLE_CHOICE),
     data:       z.union([
+        ParentQuestionData,
         MultipleChoiceQuestionData,
         ShortAnswerQuestionData,
         FillInBlankQuestionData,
         FreeResponseQuestionData
     ]),
     number:     z.number().min(1),
-    courseId:   z.string().uuid(),
-    examId:     z.string().uuid(),
+    courseId:   z.string().uuid().optional(),
+    examId:     z.string().uuid().optional(),
     parentId:   z.string().uuid().optional(),
     flags:      QuestionFlags.optional().default({  }),
 });

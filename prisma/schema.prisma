@@ -67,7 +67,7 @@ model Question {
   resources     Resource[]
   answerChoices AnswerChoice[]
 
-  @@unique([number, examId])
+  @@unique([number, examId, parentId])
 }
 
 model Explanation {
@@ -226,6 +226,7 @@ model QuestionToTopic {
 }
 
 enum QuestionType {
+  PARENT
   MULTIPLE_CHOICE
   FREE_RESPONSE
   SHORT_ANSWER
