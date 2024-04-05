@@ -35,6 +35,13 @@ export const ShortAnswerQuestionData = FreeResponseQuestionData;
 
 export const FillInBlankQuestionData = FreeResponseQuestionData;
 
+export const QuestionData = z.union([
+    MultipleChoiceQuestionData,
+    FreeResponseQuestionData,
+    ShortAnswerQuestionData,
+    FillInBlankQuestionData
+])
+
 export const MultipleChoiceSubmissionData = z.array(z.number());
 
 export const FreeResponseSubmissionData = z.string().optional();
@@ -42,6 +49,7 @@ export const FreeResponseSubmissionData = z.string().optional();
 export const ShortAnswerSubmissionData = FreeResponseSubmissionData;
 
 export const FillInBlankSubmissionData = FillInBlankQuestionData;
+
 
 export const CreateExamScheme = z.object({
     number:     z.number(),

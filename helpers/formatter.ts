@@ -1,3 +1,7 @@
+import { JsonValue } from "@prisma/client/runtime/library.js";
+import { APIError } from "../middleware/errors/index.js";
+import { QuestionData } from "../prisma/schema.js";
+
 export default class Formatter {
     public static async course(options: FormatterOptions<PotentialCourse>): Promise<FormattedCourse> {
         return {
@@ -47,11 +51,13 @@ export default class Formatter {
     }
 
     public static async question(options: FormatterOptions<PotentialQuestion>): Promise<FormattedQuestion> {
+
         const topics = await Formatter.questionsToTopics({ ...options, data: options.data.topics});
         return {
             ...options.data,
             data: {
-                ...options.data.data,
+                ...(options.data.data as object),
+                explanationText: undefined, // ToDo temporary fix
                 answerChoices: options.data.answerChoices
             },
             answerChoices: undefined,
@@ -132,7 +138,7 @@ interface PotentialQuestionToTopic {
 }
 
 interface PotentialQuestion {
-    data?:          object
+    data?:          JsonValue
     flags:          QuestionFlags
     number?:        number,
     children?:      PotentialQuestion[]
