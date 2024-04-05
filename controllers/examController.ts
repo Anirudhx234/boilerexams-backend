@@ -23,17 +23,15 @@ export async function getExam(req: Request, res: Response) {
         include: {
             resources: true,
             questions: {
-                include: {
+                select: {
+                    id: true,
+                    number: true,
+                    flags: true,
                     topics: {
                         include: {
                             topic: true
                         }
                     }
-                },
-                select: {
-                    id: true,
-                    number: true,
-                    flags: true
                 },
                 orderBy: [
                     { number: "asc" }

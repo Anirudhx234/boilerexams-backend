@@ -46,7 +46,10 @@ export async function getTopic(req: Request, res: Response) {
             questions: {
                 include: {
                     question: {
-                        include: {
+                        select: {
+                            id: true,
+                            number: true,
+                            flags: true,
                             exam: true
                         }
                     }
