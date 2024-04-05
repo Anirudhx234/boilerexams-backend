@@ -43,17 +43,6 @@ export const ShortAnswerSubmissionData = FreeResponseSubmissionData;
 
 export const FillInBlankSubmissionData = FillInBlankQuestionData;
 
-export const CreateCourseScheme = z.object({
-    abbreviation:   z.string(),
-    number:         z.number(),
-    color:          z.string().optional(),
-    disclaimer:     z.string().optional(),
-    studyModes:     z.array(z.nativeEnum(StudyMode)).default([ StudyMode.EXAM, StudyMode.TIMED_EXAM, StudyMode.TOPIC ]),
-    flags:          CourseFlags.optional().default({  }),
-});
-
-export const UpdateCourseScheme = CreateCourseScheme;
-
 export const CreateExamScheme = z.object({
     number:     z.number(),
     year:       z.number(),

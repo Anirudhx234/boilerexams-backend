@@ -50,7 +50,7 @@ export async function createQuestion(req: Request, res: Response) {
 export async function getQuestion(req: Request, res: Response) {
     const { q, t, e, c } = req.params;
 
-    const question = await prisma.question.findUnique({
+    const question = await prisma.question.findUniqueOrThrow({
         where: await Resolver.question(q, t, e, c),
         include: {
             course: true,
@@ -74,7 +74,7 @@ export async function getQuestion(req: Request, res: Response) {
         },
     });
 
-    if (!question) {
+    if (!question.flags.published && !req.sendUnpublished) {
         throw new NotFoundError("Question not found");
     }
 

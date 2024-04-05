@@ -42,7 +42,7 @@ router.get("/:c/exams/:e", sendPublished, asyncWrapper(getExam));
 
 router.get("/:c/exams/:e/questions", sendPublished, asyncWrapper(getExamQuestions));
 
-router.put("/:c", upload.single("image"), authHandler(Role.CONTENT), asyncWrapper(updateCourse));
+router.put("/:c", upload.array("images", 10), authHandler(Role.CONTENT), asyncWrapper(updateCourse));
 
 router.put("/:c/togglePublished", authHandler(Role.CONTENT), asyncWrapper(toggleCoursePublished));
 
@@ -52,7 +52,7 @@ router.put("/:c/exams/:e/togglePublished", authHandler(Role.CONTENT), asyncWrapp
 
 router.put("/courses/:c/exams/:e/questions/:q", authHandler(Role.CONTENT), asyncWrapper(updateQuestion));
 
-router.post("/", upload.single("image"), authHandler(Role.CONTENT), asyncWrapper(createCourse));
+router.post("/", upload.array("images", 10), authHandler(Role.CONTENT), asyncWrapper(createCourse));
 
 router.post("/:c/exams", authHandler(Role.CONTENT), asyncWrapper(createExam));
 

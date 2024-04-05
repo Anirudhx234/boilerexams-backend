@@ -98,7 +98,14 @@ export default prisma
                     needs: { id: true },
                     async compute(course) {
                         const stats = await courseStats(new Date(), Epoch, course.id);
-                        return stats[0];
+                        return stats[0] ?? {
+                            questions: "0",
+                            exams: "0",
+                            timeSpent: "0",
+                            timeSpentVideo: "0",
+                            submissions: "0",
+                            submissionsCorrect: "0"
+                        };
                     }
                 }
             },
@@ -113,7 +120,13 @@ export default prisma
                     needs: { id: true },
                     async compute(exam) {
                         const stats = await examStats(new Date(), Epoch, exam.id);
-                        return stats[0];
+                        return stats[0] ?? {
+                            questions: "0",
+                            timeSpent: "0",
+                            timeSpentVideo: "0",
+                            submissions: "0",
+                            submissionsCorrect: "0"
+                        };
                     }
                 }
             },
@@ -128,7 +141,12 @@ export default prisma
                     needs: { id: true },
                     async compute(question) {
                         const stats = await questionStats(new Date(), Epoch, question.id);
-                        return stats[0];
+                        return stats[0] ?? {
+                            timeSpent: "0",
+                            timeSpentVideo: "0",
+                            submissions: "0",
+                            submissionsCorrect: "0"
+                        };
                     }
                 }
             },

@@ -1,7 +1,5 @@
 import prisma from "../../prisma/prisma.js";
 
-// ToDo Rework
-
 export async function questionStats(before: Date, after: Date, id?: string): Promise<QuestionStats[]> {
     return await prisma.$queryRaw`
         SELECT

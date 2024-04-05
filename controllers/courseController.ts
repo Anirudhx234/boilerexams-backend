@@ -2,19 +2,32 @@ import prisma from "../prisma/prisma.js";
 import type { Request, Response } from "express";
 import { APIError, NotFoundError } from "../middleware/errors/index.js";
 import { PurdueIoAPI } from "../services/purdue.io.js";
-import {
-    CreateCourseScheme,
-    UpdateCourseScheme
-} from "../prisma/schema.js";
+import { StudyMode } from "@prisma/client";
 import Resolver from "../helpers/resolver.js";
 import FlagEncoder from "../helpers/encoder.js";
 import Formatter from "../helpers/formatter.js";
 import { z } from "zod";
-import courses from "../routes/courses.js";
 
 export const CourseFlags = z.object({
     published: z.boolean().default(false),
 });
+
+export const CreateCourse = z.object({
+    abbreviation:   z.string(),
+    number:         z.number(),
+    color:          z.string().optional(),
+    disclaimer:     z.string().optional(),
+    studyModes:     z.array(z.nativeEnum(StudyMode)).default([ StudyMode.EXAM, StudyMode.TIMED_EXAM, StudyMode.TOPIC ]),
+    flags:          CourseFlags.optional().default({  }),
+});
+
+export const UpdateCourse = z.object({
+    color:      z.string().optional(),
+    disclaimer: z.string().optional(),
+    studyModes: z.array(z.nativeEnum(StudyMode)).optional(),
+    flags:      CourseFlags.optional(),
+});
+
 
 export async function getSubjects(req: Request, res: Response) {
     const courses = await prisma.course.findMany({
@@ -204,7 +217,7 @@ export async function getCourseTopics(req: Request, res: Response) {
 }
 
 export async function createCourse(req: Request, res: Response) {
-    const options = CreateCourseScheme.parse(req.body);
+    const options = CreateCourse.parse(req.body);
 
     // PurdueIO confirms existence of course and standardizes name and subject fields
     const purdueIoSubject = await PurdueIoAPI.getSubject(options.abbreviation);
@@ -233,19 +246,13 @@ export async function createCourse(req: Request, res: Response) {
 
 export async function updateCourse(req: Request, res: Response) {
     const { c } = req.params;
-    const options = UpdateCourseScheme.parse(req.body);
-
-    // PurdueIO confirms existence of course and standardizes name and subject fields
-    const purdueIoSubject = await PurdueIoAPI.getSubject(options.abbreviation);
-    const purdueIoCourse = await PurdueIoAPI.getCourse(purdueIoSubject, options.number);
+    const options = UpdateCourse.parse(req.body);
 
     const course = await prisma.course.update({
         where: Resolver.course(c),
         data: {
             ...options,
-            name: purdueIoCourse.Title,
-            subject: purdueIoSubject.Name,
-            flags: FlagEncoder.course(options.flags),
+            flags: options.flags ? FlagEncoder.course(options.flags) : undefined,
         }
     });
 
