@@ -6,6 +6,7 @@
         "strict": true,
         "lib": ["ESNext"],
         "allowSyntheticDefaultImports": true,
+        "esModuleInterop": true,
         "noImplicitAny": false,
         "forceConsistentCasingInFileNames": true,
         "composite": true,

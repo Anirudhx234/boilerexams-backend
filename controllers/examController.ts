@@ -191,7 +191,7 @@ export async function updateExam(req: Request, res: Response) {
     }));
 }
 
-export async function reorderQuestions(req: Request, res: Response) {
+export async function reorderExamQuestions(req: Request, res: Response) {
     const { e, c } = req.params;
 
     const exam = await prisma.exam.findUnique({
@@ -246,7 +246,7 @@ export async function toggleExamPublished(req: Request, res: Response) {
         throw new NotFoundError("Exam not found");
     }
 
-    const status = !(exam.flags as any).published;
+    const status = !exam.flags.published;
 
     await prisma.exam.update({
         where: {
@@ -254,7 +254,7 @@ export async function toggleExamPublished(req: Request, res: Response) {
         },
         data: {
             flags: FlagEncoder.exam({
-                ...(exam.flags as any),
+                ...exam.flags,
                 published: status
             })
         },

@@ -1,55 +1,10 @@
 import { z } from "zod";
-import { FeedbackStatus, FeedbackType, QuestionType, Season, StudyMode } from "@prisma/client";
+import { FeedbackStatus, FeedbackType, Season, } from "@prisma/client";
 import { randomUUID } from "node:crypto";
-import { CreateTopic, UpdateTopic } from "../controllers/topicController.js";
-import { CourseFlags } from "../controllers/courseController.js";
 import { ExamFlags } from "../controllers/examController.js";
-import { QuestionFlags } from "../controllers/questionController.js";
 
-const coerceBigIntSafely = (input) => {
-    if (input !== undefined) {
-        return BigInt(input);
-    }
-    return input;
-};
 
 export const Epoch = new Date(2019, 10);
-
-export const MultipleChoiceAnswerChoice = z.object({
-    index:  z.number(),
-    body:   z.string().optional(),
-});
-
-export const MultipleChoiceQuestionData = z.object({
-    body:           z.string().optional(),
-    answerChoices:  z.array(MultipleChoiceAnswerChoice),
-    solution:       z.array(z.number()),
-});
-
-export const FreeResponseQuestionData = z.object({
-    body:       z.string().optional(),
-    solution:   z.string().optional(),
-});
-
-export const ShortAnswerQuestionData = FreeResponseQuestionData;
-
-export const FillInBlankQuestionData = FreeResponseQuestionData;
-
-export const QuestionData = z.union([
-    MultipleChoiceQuestionData,
-    FreeResponseQuestionData,
-    ShortAnswerQuestionData,
-    FillInBlankQuestionData
-])
-
-export const MultipleChoiceSubmissionData = z.array(z.number());
-
-export const FreeResponseSubmissionData = z.string().optional();
-
-export const ShortAnswerSubmissionData = FreeResponseSubmissionData;
-
-export const FillInBlankSubmissionData = FillInBlankQuestionData;
-
 
 export const CreateExamScheme = z.object({
     number:     z.number(),
@@ -60,50 +15,6 @@ export const CreateExamScheme = z.object({
 });
 
 export const UpdateExamScheme = CreateExamScheme;
-
-export const CreateQuestionScheme = z.object({
-    type:       z.nativeEnum(QuestionType),
-    data:       z.union([
-        MultipleChoiceQuestionData,
-        ShortAnswerQuestionData,
-        FillInBlankQuestionData,
-        FreeResponseQuestionData
-    ]),
-    number:     z.number().min(1),
-    disclaimer: z.string().optional(),
-    parentId:   z.string().uuid().optional(),
-    flags:      QuestionFlags.optional().default({  }),
-});
-
-export const UpdateQuestionScheme = CreateQuestionScheme.extend({
-    topics:     z.array(z.union([ CreateTopic, UpdateTopic ])),
-});
-
-export const UpdateSubmissionScheme = z.object({
-    correct: z.boolean().optional(),
-    timeStarted: z.coerce.date().min(Epoch).optional(),
-    timeEnded: z.coerce.date().refine(date => date < new Date()).optional(),
-    timeSpent: z.preprocess(coerceBigIntSafely, z.bigint()).optional(),
-    timeSpentVideo: z.preprocess(coerceBigIntSafely, z.bigint()).optional(),
-    timeSpentModal: z.preprocess(coerceBigIntSafely, z.bigint()).optional(),
-});
-
-export const CreateSubmissionScheme = z.object({
-    type:           z.nativeEnum(QuestionType),
-    userSolution:           z.union([
-        MultipleChoiceSubmissionData,
-        FreeResponseSubmissionData,
-        ShortAnswerSubmissionData,
-        FillInBlankSubmissionData
-    ]),
-    correct: z.boolean(),
-    timeStarted: z.coerce.date().min(Epoch),
-    timeEnded: z.coerce.date().refine(date => date < new Date()),
-    timeSpent: z.preprocess(coerceBigIntSafely, z.bigint()),
-    timeSpentVideo: z.preprocess(coerceBigIntSafely, z.bigint()),
-    timeSpentModal: z.preprocess(coerceBigIntSafely, z.bigint()),
-    osFamily:       z.string().optional(),
-});
 
 export const ReorderQuestions = z.array(z.string().uuid());
 

@@ -98,4 +98,4 @@ export async function deleteResource(req: Request, res: Response) {
     });
 
     res.status(200).send(resource);
-};
+}

@@ -2,21 +2,57 @@ import prisma from "../prisma/prisma.js";
 import type { Request, Response } from "express";
 import { APIError, NotFoundError } from "../middleware/errors/index.js";
 import Resolver from "../helpers/resolver.js";
-import {
-    CreateQuestionScheme,
-    UpdateQuestionScheme,
-    CreateSubmissionScheme,
-    UpdateSubmissionScheme
-} from "../prisma/schema.js";
-import { object, z } from "zod";
+import { z } from "zod";
 import FlagEncoder from "../helpers/encoder.js";
 import Formatter from "../helpers/formatter.js";
+import { QuestionType } from "@prisma/client";
+import { CreateTopic, UpdateTopic } from "./topicController.js";
 
 export const QuestionFlags = z.object({
     published:              z.boolean().default(false),
     disableRandomAnswers:   z.boolean().default(true),
     answersStartHidden:     z.boolean().default(true)
 });
+
+export const MultipleChoiceQuestionData = z.object({
+    body:           z.string().optional(),
+    solution:       z.array(z.number()),
+});
+
+export const FreeResponseQuestionData = z.object({
+    body:       z.string().optional(),
+    solution:   z.string().optional(),
+});
+
+export const ShortAnswerQuestionData = FreeResponseQuestionData;
+
+export const FillInBlankQuestionData = FreeResponseQuestionData;
+
+export const CreateQuestionScheme = z.object({
+    type:       z.nativeEnum(QuestionType).default(QuestionType.MULTIPLE_CHOICE),
+    data:       z.union([
+        MultipleChoiceQuestionData,
+        ShortAnswerQuestionData,
+        FillInBlankQuestionData,
+        FreeResponseQuestionData
+    ]),
+    number:     z.number().min(1),
+    courseId:   z.string().uuid(),
+    examId:     z.string().uuid(),
+    parentId:   z.string().uuid().optional(),
+    flags:      QuestionFlags.optional().default({  }),
+});
+
+export const UpdateQuestionScheme = CreateQuestionScheme.extend({
+    topics:     z.array(z.union([ CreateTopic, UpdateTopic ])),
+});
+
+export const QuestionData = z.union([
+    MultipleChoiceQuestionData,
+    FreeResponseQuestionData,
+    ShortAnswerQuestionData,
+    FillInBlankQuestionData
+])
 
 export async function createQuestion(req: Request, res: Response) {
     const { e, c } = req.params;
@@ -201,11 +237,11 @@ export async function toggleQuestionPublished(req: Request, res: Response) {
         throw new NotFoundError("Question not found");
     }
 
-    if (!(question.exam.flags as any).published) {
+    if (!question.exam.flags.published) {
         throw new APIError("Exam must be published", 409);
     }
 
-    const status = !(question.flags as any).published;
+    const status = !question.flags.published;
 
     await prisma.question.update({
         where: {
@@ -213,7 +249,7 @@ export async function toggleQuestionPublished(req: Request, res: Response) {
         },
         data: {
             flags: FlagEncoder.question({
-                ...(question.flags as any),
+                ...question.flags,
                 published: status
             })
         },
@@ -236,62 +272,4 @@ export async function deleteQuestion(req: Request, res: Response) {
         throw new NotFoundError(`Question not found: ${q}`);
     }
     res.status(200).send(question);
-}
-
-export async function createSubmission(req: Request, res: Response) {
-    const { q, t, e, c } = req.params;
-    const options = CreateSubmissionScheme.parse(req.body);
-
-    const question = await prisma.question.findUnique({
-        where: await Resolver.question(q, t, e, c)
-    });
-
-    if (!question) {
-        throw new NotFoundError(`Question not found: ${q}`);
-    }
-
-    const submission = await prisma.submission.create({
-        data: {
-            ...options,
-        },
-        include: {
-            question: true
-        }
-    });
-    res.status(200).send(submission);
-}
-
-export async function batchCreateSubmission(req: Request, res: Response) {
-    const options: z.infer<typeof CreateSubmissionScheme>[] = req.body.map((option: unknown) => {
-        return CreateSubmissionScheme.parse(option);
-    });
-
-    const submissions = await prisma.$transaction(
-        options.map((option) => {
-                return prisma.submission.create({
-                    data: {
-                        ...option,
-                    },
-                });
-            },
-        ),
-    );
-
-    res.status(200).send(submissions);
-}
-
-export async function updateSubmission(req: Request, res: Response) {
-    const { submissionId } = req.params;
-    const options = UpdateSubmissionScheme.parse(req.body);
-
-    const submission = await prisma.submission.update({
-        where: {
-            id: submissionId,
-        },
-        data: {
-            ...options
-        },
-    });
-
-    res.status(200).send(submission);
 }

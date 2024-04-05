@@ -1,6 +1,4 @@
 import { JsonValue } from "@prisma/client/runtime/library.js";
-import { APIError } from "../middleware/errors/index.js";
-import { QuestionData } from "../prisma/schema.js";
 
 export default class Formatter {
     public static async course(options: FormatterOptions<PotentialCourse>): Promise<FormattedCourse> {
@@ -13,9 +11,9 @@ export default class Formatter {
         };
     }
 
-    public static courses(options: FormatterOptions<PotentialCourse[] | undefined>) {
+    public static async courses(options: FormatterOptions<PotentialCourse[] | undefined>) {
         if (!options.data) return undefined
-        return Promise.all(options.data
+        return await Promise.all(options.data
             .filter(course => options.sendUnpublished || course.flags.published)
             .map(course => Formatter.course({ ...options, data: course })));
     }
@@ -31,7 +29,7 @@ export default class Formatter {
     public static async exams(options: FormatterOptions<PotentialExam[] | undefined>) {
         if (!options.data) return undefined;
         return await Promise.all(options.data
-            .filter(exam => options.sendUnpublished || exam.flags.published, options.computeStats)
+            .filter(exam => options.sendUnpublished || exam.flags.published)
             .map(async exam => await Formatter.exam({ ...options, data: exam })));
     }
 
@@ -58,7 +56,7 @@ export default class Formatter {
             data: {
                 ...(options.data.data as object),
                 explanationText: undefined, // ToDo temporary fix
-                answerChoices: options.data.answerChoices
+                answerChoices: await Formatter.answerChoices({ ...options, data: options.data.answerChoices })
             },
             answerChoices: undefined,
             children: await Formatter.questions({ ...options, data: options.data.children }),
@@ -74,6 +72,19 @@ export default class Formatter {
         return await Promise.all(options.data
             .filter(question => options.sendUnpublished || question.flags.published)
             .map(async question => await Formatter.question({ ...options, data: question })));
+    }
+
+    public static async answerChoice(options: FormatterOptions<PotentialAnswerChoice>): Promise<FormattedAnswerChoice> {
+        return {
+            ...options.data,
+            stats: options.computeStats ? await options.data.stats : undefined,
+            questions: await Formatter.questions({ ...options, data: options.data.questions })
+        }
+    }
+
+    public static async answerChoices(options: FormatterOptions<PotentialAnswerChoice[] | undefined>) {
+        if (!options.data) return undefined;
+        return await Promise.all(options.data.map(async answerChoice => await Formatter.answerChoice({ ...options, data: answerChoice})));
     }
 
     public static async questionToTopic(options: FormatterOptions<PotentialQuestionToTopic>): Promise<FormattedQuestionToTopic> {
@@ -126,6 +137,11 @@ interface FormattedQuestion {
     stats?:         QuestionStats
 }
 
+interface FormattedAnswerChoice {
+    questions?: FormattedQuestion[]
+    stats?:     AnswerChoiceStats
+}
+
 interface FormattedQuestionToTopic {
     topic?:     FormattedTopic
     question?:  FormattedQuestion
@@ -137,12 +153,17 @@ interface PotentialQuestionToTopic {
     question?:  PotentialQuestion
 }
 
+interface PotentialAnswerChoice {
+    questions?: PotentialQuestion[]
+    stats?:     Promise<AnswerChoiceStats>
+}
+
 interface PotentialQuestion {
     data?:          JsonValue
     flags:          QuestionFlags
-    number?:        number,
+    number?:        number
     children?:      PotentialQuestion[]
-    answerChoices?: object[]
+    answerChoices?: PotentialAnswerChoice[]
     topics?:        PotentialQuestionToTopic[]
     stats?:         Promise<QuestionStats>
 }

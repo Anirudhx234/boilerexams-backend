@@ -50,15 +50,15 @@ router.put("/:c/exams/:e", authHandler(Role.CONTENT), asyncWrapper(updateExam));
 
 router.put("/:c/exams/:e/togglePublished", authHandler(Role.CONTENT), asyncWrapper(toggleExamPublished));
 
-router.put("/courses/:c/exams/:e/questions/:q", authHandler(Role.CONTENT), asyncWrapper(updateQuestion));
+router.put("/:c/exams/:e/questions/:q", authHandler(Role.CONTENT), asyncWrapper(updateQuestion));
 
 router.post("/", upload.array("images", 10), authHandler(Role.CONTENT), asyncWrapper(createCourse));
 
 router.post("/:c/exams", authHandler(Role.CONTENT), asyncWrapper(createExam));
 
-router.post("/courses/:c/topics", authHandler(Role.CONTENT), asyncWrapper(createTopic));
+router.post("/:c/topics", authHandler(Role.CONTENT), asyncWrapper(createTopic));
 
-router.post("/courses/:c/exams/:e/questions", authHandler(Role.CONTENT), asyncWrapper(createQuestion));
+router.post("/:c/exams/:e/questions", authHandler(Role.CONTENT), asyncWrapper(createQuestion));
 
 router.delete("/:c/hardDelete", authHandler(Role.CONTENT), asyncWrapper(deleteCourse));
 

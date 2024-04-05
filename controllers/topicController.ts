@@ -159,7 +159,7 @@ export async function updateTopic(req: Request, res: Response) {
     res.status(200).send(topic);
 }
 
-export async function reorderQuestions(req: Request, res: Response) {
+export async function reorderTopicQuestions(req: Request, res: Response) {
     const { t, c } = req.params;
 
     const topic = await prisma.topic.findUnique({

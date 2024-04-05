@@ -1,21 +1,25 @@
 import multer from "multer";
+import { Express } from "express"; // Don't remove this
 import { APIError } from "../errors/index.js";
 
 const storage = multer.memoryStorage();
 
-const fileFilter = (req, file, cb) => {
+const kilobyte = 1000;
+const megabyte = kilobyte * kilobyte;
+
+function fileFilter(_req: Express.Request, file: Express.Multer.File, callback: multer.FileFilterCallback) {
     if (file.mimetype === "application/pdf") {
-        cb(null, true);
+        callback(null, true);
     } else {
-        cb(new APIError("File type must be PDF", 415));
+        callback(new APIError("File type must be PDF", 415));
     }
-};
+}
 
 const upload = multer({
     storage: storage,
     fileFilter: fileFilter,
     limits: {
-        fileSize: 5 * 1024 * 1024,
+        fileSize: 5 * megabyte,
     },
 });
 

@@ -47,7 +47,7 @@ export async function getSubjects(req: Request, res: Response) {
     const formattedCourses = await Formatter.courses({
         data: courses,
         sendUnpublished: req.sendUnpublished,
-        computeStats: true
+        computeStats: false
     });
 
     const subjects = formattedCourses
@@ -123,7 +123,7 @@ export async function getAllCourses(req: Request, res: Response) {
     res.status(200).send(await Formatter.courses({
         data: courses,
         sendUnpublished: req.sendUnpublished,
-        computeStats: true
+        computeStats: false
     }));
 }
 
@@ -166,7 +166,7 @@ export async function getCourseExams(req: Request, res: Response) {
     res.status(200).send(await Formatter.exams({
         data: exams,
         sendUnpublished: req.sendUnpublished,
-        computeStats: true
+        computeStats: false
     }));
 }
 
@@ -212,7 +212,7 @@ export async function getCourseTopics(req: Request, res: Response) {
     res.status(200).send(await Formatter.topics({
         data: topics,
         sendUnpublished: req.sendUnpublished,
-        computeStats: true
+        computeStats: false
     }));
 }
 
@@ -240,7 +240,7 @@ export async function createCourse(req: Request, res: Response) {
     res.status(200).send(await Formatter.course({
         data: course,
         sendUnpublished: req.sendUnpublished,
-        computeStats: true
+        computeStats: false
     }));
 }
 
@@ -259,7 +259,7 @@ export async function updateCourse(req: Request, res: Response) {
     res.status(200).send(await Formatter.course({
         data: course,
         sendUnpublished: req.sendUnpublished,
-        computeStats: true
+        computeStats: false
     }));
 }
 
