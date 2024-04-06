@@ -94,15 +94,26 @@ export async function getTopicQuestions(req: Request, res: Response) {
                     topics: {
                         include: {
                             topic: true
+                        },
+                        orderBy: {
+                            topic: {
+                                name: "asc"
+                            }
                         }
                     },
                     answerChoices: {
                         include: {
                             resources: true
+                        },
+                        orderBy: {
+                            index: "asc"
                         }
                     }
                 }
             }
+        },
+        orderBy: {
+            number: "asc"
         }
     });
 
