@@ -17,7 +17,7 @@ export const QuestionFlags = z.object({
 export const ParentQuestionData = z.object({
     body:           z.string().optional(),
     numberingType:  z.enum([ "LOWERCASE", "UPPERCASE", "ROMAN_LOWERCASE", "ROMAN_UPPERCASE", "NUMBER" ])
-})
+});
 
 export const MultipleChoiceQuestionData = z.object({
     body:           z.string().optional(),
@@ -111,6 +111,27 @@ export async function getQuestion(req: Request, res: Response) {
             topics: {
                 include: {
                     topic: true
+                }
+            },
+            children: {
+                select: {
+                    flags: true,
+                    resources: true,
+                    explanation: {
+                        include: {
+                            resources: true
+                        }
+                    },
+                    answerChoices: {
+                        include: {
+                            resources: true
+                        }
+                    },
+                    topics: {
+                        include: {
+                            topic: true
+                        }
+                    },
                 }
             }
         },

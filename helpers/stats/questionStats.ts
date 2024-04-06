@@ -7,7 +7,6 @@ export async function questionStats(before: Date, after: Date, id?: string): Pro
             FROM "Question" q
             WHERE (
                 q.id = ${ id}
-                    OR q."parentId" = ${  id}
                     OR ${ id} = ${ undefined}
                 )
               AND q.flags & 1 = 1
@@ -39,7 +38,6 @@ export async function questionStats(before: Date, after: Date, id?: string): Pro
             s."timeStarted" BETWEEN SYMMETRIC ${ after}
                 AND ${ before}
             )
-        GROUP BY COALESCE(q."parentId", q."id");
-        -- Group by parentId if it exists, otherwise by id
+        GROUP BY q.id;
     `;
 }

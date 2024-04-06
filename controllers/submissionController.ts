@@ -4,7 +4,6 @@ import { QuestionType } from "@prisma/client";
 import type { Request, Response } from "express";
 import prisma from "../prisma/prisma.js";
 import Resolver from "../helpers/resolver.js";
-import { NotFoundError } from "../middleware/errors/index.js";
 
 export const MultipleChoiceSubmissionData = z.array(z.number());
 
@@ -13,6 +12,16 @@ export const FreeResponseSubmissionData = z.string().optional();
 export const ShortAnswerSubmissionData = FreeResponseSubmissionData;
 
 export const FillInBlankSubmissionData = FreeResponseSubmissionData;
+
+export const ParentSubmissionData = z.array(z.object({
+    id:             z.string().uuid(),
+    userSolution:   z.union([
+        MultipleChoiceSubmissionData,
+        FreeResponseSubmissionData,
+        ShortAnswerSubmissionData,
+        FillInBlankSubmissionData
+    ])
+}));
 
 export const UpdateSubmissionScheme = z.object({
     correct:        z.boolean().optional(),
@@ -26,6 +35,7 @@ export const UpdateSubmissionScheme = z.object({
 export const CreateSubmissionScheme = z.object({
     type:           z.nativeEnum(QuestionType),
     userSolution:   z.union([
+        ParentSubmissionData,
         MultipleChoiceSubmissionData,
         FreeResponseSubmissionData,
         ShortAnswerSubmissionData,

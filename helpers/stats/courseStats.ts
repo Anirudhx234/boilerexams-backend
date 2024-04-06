@@ -8,6 +8,7 @@ export async function courseStats(before: Date, after: Date, id?: string): Promi
                    SELECT COUNT(*)
                    FROM "Question" q
                    WHERE q."courseId" = c.id
+                     AND q."parentId" IS NULL
                      AND q.flags & 1 = 1
                ) AS "questions",
                (
@@ -33,7 +34,7 @@ export async function courseStats(before: Date, after: Date, id?: string): Promi
                        ELSE 0
                    END) AS "submissionsCorrect"
         FROM "Course" c
-                 JOIN "Question" q ON c.id = q."courseId"
+                 JOIN "Question" q ON c.id = q."courseId" AND q."parentId" IS NULL
                  JOIN "Submission" s ON q.ID = s."questionId"
         WHERE (
             c.id = ${ id}

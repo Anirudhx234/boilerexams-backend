@@ -8,8 +8,7 @@ import { APIError } from "../middleware/errors/index.js";
 
 export const CodeResourceData = z.object({
     language:   z.enum([ "C", "JAVA", "PYTHON", "TEXT" ]),
-    content:    z.string(),
-    index:      z.number().optional()
+    content:    z.string()
 });
 
 export const UrlResourceData = z.object({
