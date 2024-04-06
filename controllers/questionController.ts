@@ -114,8 +114,7 @@ export async function getQuestion(req: Request, res: Response) {
                 }
             },
             children: {
-                select: {
-                    flags: true,
+                include: {
                     resources: true,
                     explanation: {
                         include: {
