@@ -123,6 +123,9 @@ export async function getExamQuestions(req: Request, res: Response) {
                     index: "asc"
                 }
             }
+        },
+        orderBy: {
+            number: "asc"
         }
     });
 
