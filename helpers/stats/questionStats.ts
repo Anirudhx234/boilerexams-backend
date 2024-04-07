@@ -3,7 +3,7 @@ import prisma from "../../prisma/prisma.js";
 export async function questionStats(before: Date, after: Date, id?: string): Promise<QuestionStats[]> {
     return await prisma.$queryRaw`
         SELECT 
-            1 :: INTEGER AS "count",
+             1::INTEGER AS "count",
              SUM(CASE
                       WHEN s."timeSpent" BETWEEN 0 AND 36000000
                           THEN s."timeSpent"

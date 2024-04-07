@@ -2,7 +2,7 @@ import prisma from "../../prisma/prisma.js";
 
 export async function answerChoiceStats(questionId: string, index: number): Promise<AnswerChoiceStats> {
     return await prisma.$queryRaw`
-        SELECT COUNT(*) AS count
+        SELECT COUNT(*)::INTEGER AS count
         FROM "Submission"
         WHERE "userSolution" IS NOT NULL
           AND jsonb_typeof("userSolution") = 'array'
