@@ -121,12 +121,12 @@ export default prisma
                     async compute(course) {
                         const stats = await courseStats(new Date(), Epoch, course.id);
                         return stats[0] ?? {
-                            questions: "0",
-                            exams: "0",
+                            questions: 0,
+                            exams: 0,
+                            submissions: 0,
+                            submissionsCorrect: 0,
                             timeSpent: "0",
                             timeSpentVideo: "0",
-                            submissions: "0",
-                            submissionsCorrect: "0"
                         };
                     }
                 }
@@ -143,11 +143,11 @@ export default prisma
                     async compute(exam) {
                         const stats = await examStats(new Date(), Epoch, exam.id);
                         return stats[0] ?? {
-                            questions: "0",
+                            questions: 0,
+                            submissions: 0,
+                            submissionsCorrect: 0,
                             timeSpent: "0",
                             timeSpentVideo: "0",
-                            submissions: "0",
-                            submissionsCorrect: "0"
                         };
                     }
                 }
@@ -164,10 +164,10 @@ export default prisma
                     async compute(question) {
                         const stats = await questionStats(new Date(), Epoch, question.id);
                         return stats[0] ?? {
+                            submissions: 0,
+                            submissionsCorrect: 0,
                             timeSpent: "0",
                             timeSpentVideo: "0",
-                            submissions: "0",
-                            submissionsCorrect: "0"
                         };
                     }
                 }
@@ -176,7 +176,13 @@ export default prisma
                 stats: {
                     needs: { questionId: true, index: true },
                     async compute(answerChoice) {
-                        return answerChoiceStats(answerChoice.questionId, answerChoice.index);
+                        const stats = await answerChoiceStats(answerChoice.questionId, answerChoice.index);
+                        return stats[0] ?? {
+                            submissions: 0,
+                            submissionsCorrect: 0,
+                            timeSpent: "0",
+                            timeSpentVideo: "0",
+                        };
                     }
                 }
             }
