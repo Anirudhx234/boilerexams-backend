@@ -1,6 +1,6 @@
+import Boilerexams from "../server.js";
 import { PrismaClient } from "@prisma/client";
 import FlagDecoder from "../helpers/decoder.js";
-import { Epoch } from "./schema.js";
 import { courseStats } from "../helpers/stats/courseStats.js";
 import { examStats } from "../helpers/stats/examStats.js";
 import { questionStats } from "../helpers/stats/questionStats.js";
@@ -8,7 +8,7 @@ import { submissionStats } from "../helpers/stats/submissionStats.js";
 import { UrlResourceData } from "../controllers/resourceController.js";
 import { deleteFileFromS3 } from "../utils/uploadFileToS3.js";
 import { answerChoiceStats } from "../helpers/stats/answerChoiceStats.js";
-import corsOptions from "../utils/corsOptions.js";
+
 
 const prisma = new PrismaClient();
 
@@ -18,28 +18,28 @@ export default prisma
             course: {
                 async stats(data: { before?: Date, after?: Date }) {
                     const before = data.before ?? new Date();
-                    const after = data.after ?? Epoch;
+                    const after = data.after ?? Boilerexams.Epoch;
                     return courseStats(before, after);
                 }
             },
             exam: {
                 async stats(data: { before?: Date, after?: Date }) {
                     const before = data.before ?? new Date();
-                    const after = data.after ?? Epoch;
+                    const after = data.after ?? Boilerexams.Epoch;
                     return examStats(before, after);
                 }
             },
             question: {
                 async stats(data: { before?: Date, after?: Date }) {
                     const before = data.before ?? new Date();
-                    const after = data.after ?? Epoch;
+                    const after = data.after ?? Boilerexams.Epoch;
                     return questionStats(before, after);
                 }
             },
             submission: {
                 async stats(data: { before?: Date, after?: Date }) {
                     const before = data.before ?? new Date();
-                    const after = data.after ?? Epoch;
+                    const after = data.after ?? Boilerexams.Epoch;
                     return submissionStats(before, after);
                 }
             }
@@ -106,7 +106,7 @@ export default prisma
                         const g = parseInt(color.substring(2, 4), 16);
                         const b = parseInt(color.substring(4, 6), 16);
 
-                        const lightnessFactor: number = 30; // Increase this value for lighter colors
+                        const lightnessFactor = 30; // Increase this value for lighter colors
                         const newR = Math.min(255, r + lightnessFactor);
                         const newG = Math.min(255, g + lightnessFactor);
                         const newB = Math.min(255, b + lightnessFactor);
@@ -118,7 +118,7 @@ export default prisma
                 stats: {
                     needs: { id: true },
                     async compute(course) {
-                        const stats = await courseStats(new Date(), Epoch, course.id);
+                        const stats = await courseStats(new Date(), Boilerexams.Epoch, course.id);
                         return stats[0] ?? {
                             questions: "0",
                             exams: "0",
@@ -140,7 +140,7 @@ export default prisma
                 stats: {
                     needs: { id: true },
                     async compute(exam) {
-                        const stats = await examStats(new Date(), Epoch, exam.id);
+                        const stats = await examStats(new Date(), Boilerexams.Epoch, exam.id);
                         return stats[0] ?? {
                             questions: "0",
                             timeSpent: "0",
@@ -161,7 +161,7 @@ export default prisma
                 stats: {
                     needs: { id: true },
                     async compute(question) {
-                        const stats = await questionStats(new Date(), Epoch, question.id);
+                        const stats = await questionStats(new Date(), Boilerexams.Epoch, question.id);
                         return stats[0] ?? {
                             timeSpent: "0",
                             timeSpentVideo: "0",

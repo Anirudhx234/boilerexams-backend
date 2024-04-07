@@ -1,10 +1,11 @@
 // ToDo Fix All
+import Boilerexams from "../server.js";
 import prisma from "../prisma/prisma.js";
 import { Request, Response } from "express";
 import Resolver from "../helpers/resolver.js";
-import { NotFoundError } from "../middleware/errors/index.js";
 import { courseStats } from "../helpers/stats/courseStats.js";
-import { Epoch } from "../prisma/schema.js";
+import { examStats } from "../helpers/stats/examStats.js";
+import { questionStats } from "../helpers/stats/questionStats.js";
 
 export async function generalStats(req: Request, res: Response) {
     const courseStats = await prisma.course.stats({  });
@@ -32,156 +33,71 @@ export async function generalStats(req: Request, res: Response) {
     });
 }
 
-
-const getCourseStats = async (req: Request, res: Response) => {
-    const { courseResolvable } = req.params;
+export async function getCourseStats(req: Request, res: Response) {
+    const { c } = req.params;
     const before = req.query.before ? new Date(Number.parseInt(<string>req.query.before)) : new Date();
-    const after = req.query.after ? new Date(Number.parseInt(<string>req.query.before)) : Epoch;
+    const after = req.query.after ? new Date(Number.parseInt(<string>req.query.before)) : Boilerexams.Epoch;
 
-    const course = await prisma.course.findUniqueOrThrow({
-        where: Resolver.course(courseResolvable)
+    const course = await prisma.course.findUnique({
+        where: Resolver.course(c)
     });
 
-    if (!course) throw new NotFoundError(`Course not found: ${courseResolvable}`);
-    const stats = await courseStats(before, after, course.id);
+    const stats = await courseStats(before, after, course?.id);
 
-    res.status(200).json(stats[0]);
-};
-/*
+    res.status(200).json(stats.reduce((a, b) => {
+        return {
+            count: a.count + b.count,
+            exams: a.exams + b.exams,
+            questions: a.questions + b.questions,
+            submissions: a.submissions + b.submissions,
+            submissionsCorrect: a.submissionsCorrect + b.submissionsCorrect,
+            timeSpent: a.timeSpent + b.timeSpent,
+            timeSpentVideo: a.timeSpentVideo + b.timeSpentVideo
+        };
+    }));
+}
 
-const getCourseStatsAll = async (req: Request, res: Response) => {
-    const before = req.query.before ? Number.parseInt(<string>req.query.before) : Date.now();
-    const after = req.query.after ? Number.parseInt(<string>req.query.after) : 0;
-    const stats = await allCoursesStats(new Date(before), new Date(after));
+export async function getExamStats(req: Request, res: Response) {
+    const { e, c  } = req.params;
+    const before = req.query.before ? new Date(Number.parseInt(<string>req.query.before)) : new Date();
+    const after = req.query.after ? new Date(Number.parseInt(<string>req.query.before)) : Boilerexams.Epoch;
 
-    res.status(200).json(stats);
-};
-
-const getCourseExamsStats = async (req: Request, res: Response) => {
-    const { courseId } = req.params;
-
-    const promises: Promise<any>[] = [];
-
-    const course = await prisma.course.findFirst({
-        where: {
-            id: courseId,
-            published: true,
-        },
-        select: {
-            exams: {
-                where: {
-                    published: true,
-                },
-                select: {
-                    id: true,
-                    number: true,
-                    semester: true,
-                },
-            },
-        },
-    });
-    if (!course) {
-        throw new NotFoundError("Course not found");
-    }
-
-    const examsStats: any = [];
-
-    for (const exam of course.exams) {
-        promises.push(examStats(exam.id));
-    }
-
-    const resolved = await Promise.all(promises);
-
-    let i = 0;
-    for (const exam of course.exams) {
-        examsStats.push({
-            id: exam.id,
-            number: exam.number,
-            semester: exam.semester,
-            ...resolved[i],
-        });
-        i++;
-    }
-
-    res.status(200).json(examsStats);
-};
-
-const getExamStats = async (req: Request, res: Response) => {
-    const { examId } = req.params;
-
-    const stats = await examStats(examId);
-
-    res.status(200).json(stats);
-};
-
-const getQuestionStats = async (req: Request, res: Response) => {
-    const { questionId } = req.params;
-
-    const mainStats = await questionStats(questionId);
-
-    //const answerStats = await answerChoiceStats(questionId);
-
-    const stats = {
-        questionStats: mainStats,
-        answerChoiceStats: answerStats,
-    };
-
-    res.status(200).json(stats);
-};
-
-const getSubmissionStats = async (req: Request, res: Response) => {
-    const submissions = await prisma.submission.aggregate({
-        where: {
-            question: {
-                published: true,
-            },
-            timeSpent: {
-                gte: minimumValidSubmissionTime,
-            },
-        },
-        _sum: {
-            timeSpent: true,
-        },
-        _avg: {
-            timeSpent: true,
-        },
-        _count: true,
+    const exam = await prisma.exam.findUnique({
+        where: await Resolver.exam(e, c)
     });
 
-    const correctSubmissions = await prisma.submission.count({
-        where: {
-            correct: true,
-            question: {
-                published: true,
-            },
-            timeSpent: {
-                gte: minimumValidSubmissionTime,
-            },
-        },
+    const stats = await examStats(before, after, exam?.id);
+
+    res.status(200).json(stats.reduce((a, b) => {
+        return {
+            count: a.count + b.count,
+            questions: a.questions + b.questions,
+            submissions: a.submissions + b.submissions,
+            submissionsCorrect: a.submissionsCorrect + b.submissionsCorrect,
+            timeSpent: a.timeSpent + b.timeSpent,
+            timeSpentVideo: a.timeSpentVideo + b.timeSpentVideo
+        };
+    }));
+}
+
+export async function getQuestionStats(req: Request, res: Response) {
+    const { q, t, e, c  } = req.params;
+    const before = req.query.before ? new Date(Number.parseInt(<string>req.query.before)) : new Date();
+    const after = req.query.after ? new Date(Number.parseInt(<string>req.query.before)) : Boilerexams.Epoch;
+
+    const question = await prisma.question.findFirst({
+        where: await Resolver.question(q, t, e, c)
     });
 
-    const totalSubmissions = submissions._count + OLD_SUBMISSIONS;
+    const stats = await questionStats(before, after, question?.id);
 
-    let timeSpent = submissions._sum.timeSpent;
-    if (!timeSpent) {
-        timeSpent = 0;
-    }
-
-    const totalTimeSpent = msToHMS(timeSpent + OLD_TIME_SPENT_HRS * 3600000);
-    const averageTimeSpent = msToHMS(submissions._avg.timeSpent);
-    const percentCorrect = 100.0 * ((correctSubmissions + OLD_PERCENT_CORRECT * OLD_SUBMISSIONS) / totalSubmissions);
-
-    const submissionsStats = {
-        totalSubmissions: submissions._count + OLD_SUBMISSIONS,
-        totalTimeSpent: totalTimeSpent,
-        averageTimeSpent: averageTimeSpent,
-        percentCorrect: percentCorrect,
-    };
-    res.status(200).json(submissionsStats);
-};
-
-
-//export { getGeneralStats, getCourseExamsStats, getQuestionStats, getExamStats, getCourseStats, getCourseStatsAll, getSubmissionStats };
-
-
- */
+    res.status(200).json(stats.reduce((a, b) => {
+        return {
+            count: a.count + b.count,
+            submissions: a.submissions + b.submissions,
+            submissionsCorrect: a.submissionsCorrect + b.submissionsCorrect,
+            timeSpent: a.timeSpent + b.timeSpent,
+            timeSpentVideo: a.timeSpentVideo + b.timeSpentVideo
+        };
+    }));
+}

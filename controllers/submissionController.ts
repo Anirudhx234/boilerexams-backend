@@ -1,9 +1,10 @@
+import Boilerexams from "../server.js";
 import { z } from "zod";
-import { Epoch } from "../prisma/schema.js";
 import { QuestionType } from "@prisma/client";
 import type { Request, Response } from "express";
 import prisma from "../prisma/prisma.js";
 import Resolver from "../helpers/resolver.js";
+
 
 export const MultipleChoiceSubmissionData = z.array(z.number());
 
@@ -25,7 +26,7 @@ export const ParentSubmissionData = z.array(z.object({
 
 export const UpdateSubmissionScheme = z.object({
     correct:        z.boolean().optional(),
-    timeStarted:    z.coerce.date().min(Epoch).optional(),
+    timeStarted:    z.coerce.date().min(Boilerexams.Epoch).optional(),
     timeEnded:      z.coerce.date().refine(date => date < new Date()).optional(),
     timeSpent:      z.preprocess(coerceBigIntSafely, z.bigint()).optional(),
     timeSpentVideo: z.preprocess(coerceBigIntSafely, z.bigint()).optional(),
@@ -42,7 +43,7 @@ export const CreateSubmissionScheme = z.object({
         FillInBlankSubmissionData
     ]),
     correct:        z.boolean(),
-    timeStarted:    z.coerce.date().min(Epoch),
+    timeStarted:    z.coerce.date().min(Boilerexams.Epoch),
     timeEnded:      z.coerce.date().refine(date => date < new Date()),
     timeSpent:      z.preprocess(coerceBigIntSafely, z.bigint()),
     timeSpentVideo: z.preprocess(coerceBigIntSafely, z.bigint()),

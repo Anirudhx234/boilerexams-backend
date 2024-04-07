@@ -9,6 +9,7 @@ import {
 import FlagEncoder from "../helpers/encoder.js";
 import Formatter from "../helpers/formatter.js";
 import { z } from "zod";
+import { FullQuestionInclude, PartialQuestionSelect } from "./questionController.js";
 
 export const ExamFlags = z.object({
     published:  z.boolean().default(false),
@@ -23,16 +24,10 @@ export async function getExam(req: Request, res: Response) {
         include: {
             resources: true,
             questions: {
-                select: {
-                    id: true,
-                    number: true,
-                    flags: true,
-                    topics: {
-                        include: {
-                            topic: true
-                        }
-                    }
+                where : {
+                    parentId: null
                 },
+                select: PartialQuestionSelect,
                 orderBy: [
                     { number: "asc" }
                 ]
@@ -92,38 +87,7 @@ export async function getExamQuestions(req: Request, res: Response) {
         where: {
             examId: exam.id
         },
-        include: {
-            resources: true,
-            explanation: true,
-            children: {
-                include: {
-                    resources: true,
-                        answerChoices: {
-                        include: {
-                            resources: true
-                        }
-                    }
-                }
-            },
-            topics: {
-                include: {
-                    topic: true
-                },
-                orderBy: {
-                    topic: {
-                        name: "asc"
-                    }
-                }
-            },
-            answerChoices: {
-                include: {
-                    resources: true
-                },
-                orderBy: {
-                    index: "asc"
-                }
-            }
-        },
+        include: FullQuestionInclude,
         orderBy: {
             number: "asc"
         }
@@ -131,6 +95,54 @@ export async function getExamQuestions(req: Request, res: Response) {
 
     res.status(200).send(await Formatter.questions({
         data: questions,
+        sendUnpublished: req.sendUnpublished,
+        computeStats: true
+    }));
+}
+
+export async function getExamTopics(req: Request, res: Response) {
+    const { e, c } = req.params;
+
+    const exam = await prisma.exam.findUniqueOrThrow({
+        where: await Resolver.exam(e, c),
+    });
+
+    if (!req.sendUnpublished && !exam.flags.published) {
+        throw new NotFoundError("Exam not found");
+    }
+
+    const topics = await prisma.topic.findMany({
+        where: {
+            questions: {
+                some: {
+                    question: {
+                        examId: exam.id
+                    }
+                }
+            }
+        },
+        include: {
+            questions: {
+                include: {
+                    question: {
+                        select: {
+                            id: true,
+                            flags: true,
+                        }
+                    }
+                },
+                orderBy: {
+                    number: "asc"
+                }
+            }
+        },
+        orderBy: {
+            name: "asc",
+        },
+    });
+
+    res.status(200).send(await Formatter.topics({
+        data: topics,
         sendUnpublished: req.sendUnpublished,
         computeStats: true
     }));

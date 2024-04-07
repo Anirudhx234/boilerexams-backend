@@ -1,12 +1,13 @@
-import prisma from "../prisma/prisma.js";
-import type { Request, Response } from "express";
 import { APIError, NotFoundError } from "../middleware/errors/index.js";
-import Resolver from "../helpers/resolver.js";
-import { z } from "zod";
+import type { Request, Response } from "express";
+import { QuestionType, Topic } from "@prisma/client";
+import { undefined, z } from "zod";
 import FlagEncoder from "../helpers/encoder.js";
 import Formatter from "../helpers/formatter.js";
-import { QuestionType } from "@prisma/client";
-import { CreateTopic, UpdateTopic } from "./topicController.js";
+import Resolver from "../helpers/resolver.js";
+import prisma from "../prisma/prisma.js";
+import { UpsertResource } from "./resourceController.js";
+import { UpsertTopic } from "./topicController.js";
 
 export const QuestionFlags = z.object({
     published:              z.boolean().default(false),
@@ -14,89 +15,105 @@ export const QuestionFlags = z.object({
     answersStartHidden:     z.boolean().default(true)
 });
 
-export const ParentQuestionData = z.object({
+export const ParentData = z.object({
     body:           z.string().optional(),
     numberingType:  z.enum([ "LOWERCASE", "UPPERCASE", "ROMAN_LOWERCASE", "ROMAN_UPPERCASE", "NUMBER" ])
 });
 
-export const MultipleChoiceQuestionData = z.object({
+export const MultipleChoiceData = z.object({
     body:           z.string().optional(),
     solution:       z.array(z.number()),
 });
 
-export const FreeResponseQuestionData = z.object({
+export const FreeResponseData = z.object({
     body:       z.string().optional(),
     solution:   z.string().optional(),
 });
 
-export const ShortAnswerQuestionData = FreeResponseQuestionData;
+export const ShortAnswerData = FreeResponseData;
 
-export const FillInBlankQuestionData = FreeResponseQuestionData;
-
-export const CreateQuestionScheme = z.object({
-    type:       z.nativeEnum(QuestionType).default(QuestionType.MULTIPLE_CHOICE),
-    data:       z.union([
-        ParentQuestionData,
-        MultipleChoiceQuestionData,
-        ShortAnswerQuestionData,
-        FillInBlankQuestionData,
-        FreeResponseQuestionData
-    ]),
-    number:     z.number().min(1),
-    courseId:   z.string().uuid().optional(),
-    examId:     z.string().uuid().optional(),
-    parentId:   z.string().uuid().optional(),
-    flags:      QuestionFlags.optional().default({  }),
-});
-
-export const UpdateQuestionScheme = CreateQuestionScheme.extend({
-    topics:     z.array(z.union([ CreateTopic, UpdateTopic ])),
-});
+export const FillInBlankData = FreeResponseData;
 
 export const QuestionData = z.union([
-    MultipleChoiceQuestionData,
-    FreeResponseQuestionData,
-    ShortAnswerQuestionData,
-    FillInBlankQuestionData
-])
+    ParentData, MultipleChoiceData, FreeResponseData, ShortAnswerData, FillInBlankData
+]);
 
-export async function createQuestion(req: Request, res: Response) {
-    const { e, c } = req.params;
-
-    const exam = await prisma.exam.findUnique({
-        where: await Resolver.exam(e, c)
-    });
-
-    if (!exam) {
-        throw new APIError("Exam not found", 404);
+export const CreateQuestion = z.object({
+    type:       z.nativeEnum(QuestionType).default(QuestionType.MULTIPLE_CHOICE),
+    data:       QuestionData,
+    number:     z.number().min(1),
+    courseId:   z.string().uuid(),
+    examId:     z.string().uuid(),
+    parentId:   z.string().uuid().optional(),
+    flags:      QuestionFlags.optional().default({  }),
+}).refine(data => {
+    switch (data.type) {
+        case QuestionType.PARENT: {
+            ParentData.parse(data.data);
+        } break;
+        case QuestionType.MULTIPLE_CHOICE: {
+            MultipleChoiceData.parse(data.data);
+        } break;
+        case QuestionType.FREE_RESPONSE: {
+            FreeResponseData.parse(data.data);
+        } break;
+        case QuestionType.SHORT_ANSWER: {
+            ShortAnswerData.parse(data.data);
+        } break;
+        case QuestionType.FILL_IN_BLANK: {
+            FillInBlankData.parse(data.data);
+        } break;
     }
+});
 
-    const options = CreateQuestionScheme.parse(req.body);
-
-    const question = await prisma.question.create({
-        data: {
-            ...options,
-            examId: exam.id,
-            courseId: exam.courseId,
-            flags: FlagEncoder.question(options.flags),
+export const UpdateQuestion = z.object({
+    type:       z.nativeEnum(QuestionType).optional(),
+    data:       QuestionData.optional(),
+    number:     z.number().min(1).optional(),
+    flags:      QuestionFlags.optional(),
+    topics:     z.array(UpsertTopic).optional(),
+    resources:  z.array(UpsertResource).optional(),
+}).refine(data => {
+    if (data.type && data.data) {
+        switch (data.type) {
+            case QuestionType.PARENT: {
+                ParentData.parse(data.data);
+            } break;
+            case QuestionType.MULTIPLE_CHOICE: {
+                MultipleChoiceData.parse(data.data);
+            } break;
+            case QuestionType.FREE_RESPONSE: {
+                FreeResponseData.parse(data.data);
+            } break;
+            case QuestionType.SHORT_ANSWER: {
+                ShortAnswerData.parse(data.data);
+            } break;
+            case QuestionType.FILL_IN_BLANK: {
+                FillInBlankData.parse(data.data);
+            } break;
         }
-    });
+    }
+});
 
-    res.status(200).send(await Formatter.question({
-        data: question,
-        sendUnpublished: req.sendUnpublished,
-        computeStats: false
-    }));
-}
-
-export async function getQuestion(req: Request, res: Response) {
-    const { q, t, e, c } = req.params;
-
-    const question = await prisma.question.findFirstOrThrow({
-        where: await Resolver.question(q, t, e, c),
+export const FullQuestionInclude = {
+    resources: true,
+    explanation: {
         include: {
-            course: true,
-            exam: true,
+            resources: true
+        }
+    },
+    answerChoices: {
+        include: {
+            resources: true
+        }
+    },
+    topics: {
+        include: {
+            topic: true
+        }
+    },
+    children: {
+        include: {
             resources: true,
             explanation: {
                 include: {
@@ -113,27 +130,44 @@ export async function getQuestion(req: Request, res: Response) {
                     topic: true
                 }
             },
-            children: {
-                include: {
-                    resources: true,
-                    explanation: {
-                        include: {
-                            resources: true
-                        }
-                    },
-                    answerChoices: {
-                        include: {
-                            resources: true
-                        }
-                    },
-                    topics: {
-                        include: {
-                            topic: true
-                        }
-                    },
-                }
-            }
-        },
+        }
+    }
+};
+
+export const PartialQuestionSelect = {
+    id: true,
+    number: true,
+    flags: true,
+    topics: {
+        include: {
+            topic: true
+        }
+    }
+};
+
+export async function createQuestion(req: Request, res: Response) {
+    const options = CreateQuestion.parse(req.body);
+
+    const question = await prisma.question.create({
+        data: {
+            ...options,
+            flags: FlagEncoder.question(options.flags),
+        }
+    });
+
+    res.status(200).send(await Formatter.question({
+        data: question,
+        sendUnpublished: req.sendUnpublished,
+        computeStats: false
+    }));
+}
+
+export async function getQuestion(req: Request, res: Response) {
+    const { q, t, e, c } = req.params;
+
+    const question = await prisma.question.findFirstOrThrow({
+        where: await Resolver.question(q, t, e, c),
+        include: FullQuestionInclude
     });
 
     if (!question.flags.published && !req.sendUnpublished) {
@@ -149,81 +183,47 @@ export async function getQuestion(req: Request, res: Response) {
 
 export async function updateQuestion(req: Request, res: Response) {
     const { q, t, e, c } = req.params;
-    const options = UpdateQuestionScheme.parse(req.body);
+    const options = UpdateQuestion.parse(req.body);
 
     const question = await prisma.question.findFirstOrThrow({
         where: await Resolver.question(q, t, e, c)
     });
 
-    if (!question) throw new APIError(`Question not found: ${q}`, 404);
+    const topics = options.topics ? await prisma.$transaction(options.topics.map(topic => {
+        return prisma.topic.upsert({
+            where: {
+                id: topic.id
+            },
+            create: {
+                ...topic,
+                courseId: question.courseId
+            },
+            update: {  }
+        });
+    })) : options.topics;
 
-    const topicOptions = options.topics.map(topic => {
-        return {
-            where: { // Unique topic to question
+    if (topics) await prisma.$transaction(topics?.map(topic => {
+        return prisma.questionToTopic.upsert({
+            where: {
                 questionId_topicId: {
                     questionId: question.id,
                     topicId: topic.id
                 }
             },
-            create: { // Create a new QuestionToTopic relation
-                topic: {
-                    connectOrCreate: {
-                        where: { // Connect to existing topic
-                            id: topic.id,
-                        },
-                        create: { // Create new topic and connect
-                            ...topic,
-                            courseId: question.courseId
-                        }
-                    }
-                }
-            }
-        };
-    });
-
-    /* ToDo Work on Resources
-    const resourceOptions = options.resources.map(resource => {
-        return {
-            where: {
-                id: resource.id
+            create : {
+                questionId: question.id,
+                topicId: topic.id
             },
-            create: {
-                ...resource
-            }
-        };
-    });
-
-     */
+            update: {  }
+        });
+    }));
 
     const updatedQuestion = await prisma.question.update({
         where: {
             id: question.id
         },
         data: {
-            ...options,
-            flags: FlagEncoder.question(options.flags),
-            topics: {
-                connectOrCreate: {
-                    ...topicOptions
-                },
-                deleteMany: {
-                    topicId: {
-                        notIn: options.topics.map(topic => topic.id)
-                    }
-                }
-            },
-            /* ToDo Work on Resources
-            resources: {
-                connectOrCreate: {
-                    ...resourceOptions
-                },
-                deleteMany: {
-                    id: {
-                        notIn: options.resources.map(resource => resource.id)
-                    }
-                }
-            },
-            */
+            flags: options.flags ? FlagEncoder.question(options.flags) : options.flags,
         },
         include: {
             topics: {

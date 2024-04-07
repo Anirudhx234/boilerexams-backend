@@ -1,19 +1,15 @@
-import prisma from "../prisma/prisma.js";
-import type { Request, Response } from "express";
 import { APIError, NotFoundError } from "../middleware/errors/index.js";
-import Resolver from "../helpers/resolver.js";
+import type { Request, Response } from "express";
 import { ReorderQuestions} from "../prisma/schema.js";
 import { z } from "zod";
-import { randomUUID } from "node:crypto";
 import Formatter from "../helpers/formatter.js";
+import Resolver from "../helpers/resolver.js";
+import prisma from "../prisma/prisma.js";
+import { FullQuestionInclude, PartialQuestionSelect } from "./questionController.js";
 
-export const CreateTopic = z.object({
-    id:     z.string().uuid().default(randomUUID),
+export const UpsertTopic = z.object({
+    id:     z.string().uuid().optional(),
     name:   z.string().max(50, "Topic name must be <= 50 characters"),
-});
-
-export const UpdateTopic= CreateTopic.extend({
-    id: z.string().uuid(),
 });
 
 export async function getAllTopics(req: Request, res: Response) {
@@ -44,16 +40,7 @@ export async function getTopic(req: Request, res: Response) {
         where: await Resolver.topic(t, c),
         include: {
             questions: {
-                include: {
-                    question: {
-                        select: {
-                            id: true,
-                            number: true,
-                            flags: true,
-                            exam: true
-                        }
-                    }
-                },
+                select: PartialQuestionSelect
             }
         },
     });
@@ -78,38 +65,7 @@ export async function getTopicQuestions(req: Request, res: Response) {
         },
         include: {
             question: {
-                include: {
-                    resources: true,
-                    explanation: true,
-                    children: {
-                        include: {
-                            resources: true,
-                            answerChoices: {
-                                include: {
-                                    resources: true
-                                }
-                            }
-                        }
-                    },
-                    topics: {
-                        include: {
-                            topic: true
-                        },
-                        orderBy: {
-                            topic: {
-                                name: "asc"
-                            }
-                        }
-                    },
-                    answerChoices: {
-                        include: {
-                            resources: true
-                        },
-                        orderBy: {
-                            index: "asc"
-                        }
-                    }
-                }
+                include: FullQuestionInclude
             }
         },
         orderBy: {
@@ -128,7 +84,7 @@ export async function getTopicQuestions(req: Request, res: Response) {
 
 export async function createTopic(req: Request, res: Response) {
     const { c } = req.params;
-    const options = CreateTopic.parse(req.body);
+    const options = UpsertTopic.parse(req.body);
 
     const course = await prisma.course.findUnique({
         where: Resolver.course(c)
@@ -158,7 +114,7 @@ export async function createTopic(req: Request, res: Response) {
 
 export async function updateTopic(req: Request, res: Response) {
     const { t, c } = req.params;
-    const options = UpdateTopic.parse(req.body);
+    const options = UpsertTopic.parse(req.body);
 
     const topic = await prisma.topic.update({
         where: await Resolver.topic(t, c),

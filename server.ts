@@ -15,40 +15,46 @@ import prisma from "./prisma/prisma.js";
     return this.toString();
 };
 
+// eslint-disable-next-line @typescript-eslint/no-namespace
+namespace Boilerexams {
+    export const Epoch = new Date(2019, 10);
+    export const app = express();
+}
+
 console.log("Hello, world!");
 
-const app = express();
+
 
 async function main() {
-    app.use(cors(corsOptions));
+    Boilerexams.app.use(cors(corsOptions));
 
     initializePassport(passport);
 
-    app.use("/favicon.ico", express.static("images/favicon.ico"));
+    Boilerexams.app.use("/favicon.ico", express.static("images/favicon.ico"));
 
-    app.use(cookieParser());
-    app.use(express.json());
+    Boilerexams.app.use(cookieParser());
+    Boilerexams.app.use(express.json());
 
     if (process.env["REMOTE"] === "enabled") {
-        app.set("trust proxy", 1);
+        Boilerexams.app.set("trust proxy", 1);
     }
 
-    app.use(session(sessionOptions));
-    app.use(passport.initialize());
-    app.use(passport.session());
+    Boilerexams.app.use(session(sessionOptions));
+    Boilerexams.app.use(passport.initialize());
+    Boilerexams.app.use(passport.session());
 
-    app.get("/", (req: Request, res: Response) => {
+    Boilerexams.app.get("/", (req: Request, res: Response) => {
         res.send("Working");
     });
 
-    app.use(routes);
+    Boilerexams.app.use(routes);
 
-    app.use(errorHandler2);
+    Boilerexams.app.use(errorHandler2);
 
 
     const PORT = process.env["PORT"]
 
-    app.listen(PORT, () => {
+    Boilerexams.app.listen(PORT, () => {
         console.log(`Server is running at port ${PORT}`);
     });
 }
@@ -62,6 +68,4 @@ main()
         await prisma.$disconnect();
     });
 
-
-
-export default app;
+export default Boilerexams;

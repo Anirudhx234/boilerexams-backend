@@ -1,8 +1,7 @@
 import express from "express";
-import { generalStats } from "../controllers/statsController.js";
+import { generalStats, getCourseStats, getExamStats, getQuestionStats } from "../controllers/statsController.js";
 import asyncWrapper from "../middleware/wrappers/asyncWrapper.js";
 import cache from "../cache/caching.js";
-
 
 const router = express.Router();
 
@@ -10,23 +9,14 @@ const router = express.Router();
 
 router.get("/", cache(600), asyncWrapper(generalStats));
 
-/*
-router.get("/courses/all", cache(600), asyncWrapper(getCourseStatsAll));
+router.get("/courses", cache(600), asyncWrapper(getCourseStats));
 
-//app.get("/courses/:courseId/after/:after/before/:before", cache(600), asyncWrapper(getCourseStats));
+router.get("/courses/:c", cache(600), asyncWrapper(getCourseStats));
 
-//app.get("/courses/:courseId/after/:after/", cache(600), asyncWrapper(getCourseStats));
+router.get("/courses/:c/exams/:e", cache(600), asyncWrapper(getExamStats));
 
-router.get("/courses/:courseId", cache(600), asyncWrapper(getCourseStats));
+router.get("/exams/:e", cache(600), asyncWrapper(getExamStats));
 
-router.get("/courses/:courseId/exams/all", cache(600), asyncWrapper(getCourseExamsStats));
-
-router.get("/exams/:examId", cache(600), asyncWrapper(getExamStats));
-
-router.get("/questions/:questionId", cache(600), asyncWrapper(getQuestionStats));
-
-router.get("/submissions", cache(600), asyncWrapper(getSubmissionStats));
-
- */
+router.get("/questions/:q", cache(600), asyncWrapper(getQuestionStats));
 
 export default router;
