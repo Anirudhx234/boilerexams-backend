@@ -19,14 +19,14 @@ export async function generalStats(req: Request, res: Response) {
     });
 
     res.status(200).send({
-        students:       10000,
-        courses:        combinedCourseStats.count,
-        exams:          combinedCourseStats.exams,
-        questions:      combinedCourseStats.questions,
-        submissions:    combinedCourseStats.submissions,
-        timeSpent:      combinedCourseStats.timeSpent,
-        timeSpentVideo: combinedCourseStats.timeSpentVideo,
-        percentCorrect: 100 * combinedCourseStats.submissionsCorrect / combinedCourseStats.submissions,
+        students:           10000,
+        courses:            combinedCourseStats.count,
+        exams:              combinedCourseStats.exams,
+        questions:          combinedCourseStats.questions,
+        submissions:        combinedCourseStats.submissions,
+        submissionsCorrect: combinedCourseStats.submissionsCorrect,
+        timeSpent:          combinedCourseStats.timeSpent,
+        timeSpentVideo:     combinedCourseStats.timeSpentVideo,
     });
 }
 
