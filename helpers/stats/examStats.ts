@@ -11,7 +11,7 @@ export async function examStats(before: Date, after: Date, id?: string): Promise
                    FROM "Question" q
                    WHERE q."examId" = e.id
                      AND q.flags & 1 = 1
-               ) AS "questions",
+               )::INTEGER AS "questions",
                SUM(CASE
                        WHEN s."timeSpent" BETWEEN 0 AND 36000000
                            THEN s."timeSpent"
