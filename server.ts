@@ -7,58 +7,48 @@ import passport from "passport";
 import corsOptions from "./utils/corsOptions.js";
 import sessionOptions from "./utils/sessionOptions.js";
 import initializePassport from "./middleware/auth/passport/index.js";
+import swaggerUi from 'swagger-ui-express';
+import docs from "./docs/index.js";
 import routes from "./routes/index.js";
-import errorHandler2 from "./middleware/errorHandler.js";
-import prisma from "./prisma/prisma.js";
+import errorHandler from "./middleware/errorHandler.js";
 
 (BigInt.prototype as any).toJSON = function () {
     return this.toString();
 };
 
-console.log("Hello, world!");
-
 const app = express();
 
-async function main() {
-    app.use(cors(corsOptions));
+app.use(cors(corsOptions));
 
-    initializePassport(passport);
+initializePassport(passport);
 
-    app.use("/favicon.ico", express.static("images/favicon.ico"));
+app.use("/favicon.ico", express.static("images/favicon.ico"));
 
-    app.use(cookieParser());
-    app.use(express.json());
+app.use(cookieParser());
+app.use(express.json());
 
-    if (process.env["REMOTE"] === "enabled") {
-        app.set("trust proxy", 1);
-    }
-
-    app.use(session(sessionOptions));
-    app.use(passport.initialize());
-    app.use(passport.session());
-
-    app.get("/", (req: Request, res: Response) => {
-        res.send("Working");
-    });
-
-    app.use(routes);
-
-    app.use(errorHandler2);
-
-    const PORT = process.env["PORT"];
-
-    app.listen(PORT, () => {
-        console.log(`Server is running at port ${PORT}`);
-    });
+if (process.env["REMOTE"] === "enabled") {
+    app.set("trust proxy", 1);
 }
 
-main()
-    .then(async () => {
-        await prisma.$disconnect();
-    })
-    .catch(async (e) => {
-        console.log(e);
-        await prisma.$disconnect();
-    });
+app.use(session(sessionOptions));
+app.use(passport.initialize());
+app.use(passport.session());
+
+app.get("/", (req: Request, res: Response) => {
+    res.send("Working");
+});
+
+app.use("/docs", swaggerUi.serve, swaggerUi.setup(docs));
+
+app.use(routes);
+
+app.use(errorHandler);
+
+const PORT = process.env["PORT"]
+
+app.listen(PORT, () => {
+    console.log(`Server is running at port ${PORT}`);
+});
 
 export default app;

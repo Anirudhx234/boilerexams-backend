@@ -1,7 +1,7 @@
 import express from "express";
 import { generalStats, getCourseStats, getExamStats, getQuestionStats } from "../controllers/statsController.js";
 import asyncWrapper from "../middleware/wrappers/asyncWrapper.js";
-import cache from "../cache/caching.js";
+import cache from "../middleware/cache/caching.js";
 
 const router = express.Router();
 
