@@ -1,9 +1,6 @@
-// ToDo Fix All
 import prisma from "../prisma/prisma.js";
 import { Request, Response } from "express";
 import Resolver from "../helpers/resolver.js";
-import { examStats } from "../helpers/stats/examStats.js";
-import { questionStats } from "../helpers/stats/questionStats.js";
 import { Epoch } from "../prisma/schema.js";
 
 export async function generalStats(req: Request, res: Response) {
@@ -11,7 +8,7 @@ export async function generalStats(req: Request, res: Response) {
 
     const combinedCourseStats = courseStats?.reduce((a, b) => {
         return {
-            count: a.count,
+            count: a.count + b.count,
             exams: a.exams + b.exams,
             questions: a.questions + b.questions,
             submissions: a.submissions + b.submissions,

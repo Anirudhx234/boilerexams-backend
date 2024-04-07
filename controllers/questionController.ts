@@ -1,7 +1,7 @@
 import { APIError, NotFoundError } from "../middleware/errors/index.js";
 import type { Request, Response } from "express";
-import { QuestionType, Topic } from "@prisma/client";
-import { undefined, z } from "zod";
+import { QuestionType,  } from "@prisma/client";
+import { z } from "zod";
 import FlagEncoder from "../helpers/encoder.js";
 import Formatter from "../helpers/formatter.js";
 import Resolver from "../helpers/resolver.js";
