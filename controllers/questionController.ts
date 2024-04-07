@@ -167,7 +167,7 @@ export async function getQuestion(req: Request, res: Response) {
 
     const question = await prisma.question.findFirstOrThrow({
         where: await Resolver.question(q, t, e, c),
-        include: FullQuestionInclude
+        include: {...FullQuestionInclude, exam: true}
     });
 
     if (!question.flags.published && !req.sendUnpublished) {
