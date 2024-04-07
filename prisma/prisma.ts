@@ -8,6 +8,7 @@ import { submissionStats } from "../helpers/stats/submissionStats.js";
 import { UrlResourceData } from "../controllers/resourceController.js";
 import { deleteFileFromS3 } from "../utils/uploadFileToS3.js";
 import { answerChoiceStats } from "../helpers/stats/answerChoiceStats.js";
+import { Epoch } from "./schema.js";
 
 
 const prisma = new PrismaClient();
@@ -18,28 +19,28 @@ export default prisma
             course: {
                 async stats(data: { before?: Date, after?: Date }) {
                     const before = data.before ?? new Date();
-                    const after = data.after ?? Boilerexams.Epoch;
+                    const after = data.after ?? Epoch;
                     return courseStats(before, after);
                 }
             },
             exam: {
                 async stats(data: { before?: Date, after?: Date }) {
                     const before = data.before ?? new Date();
-                    const after = data.after ?? Boilerexams.Epoch;
+                    const after = data.after ?? Epoch;
                     return examStats(before, after);
                 }
             },
             question: {
                 async stats(data: { before?: Date, after?: Date }) {
                     const before = data.before ?? new Date();
-                    const after = data.after ?? Boilerexams.Epoch;
+                    const after = data.after ?? Epoch;
                     return questionStats(before, after);
                 }
             },
             submission: {
                 async stats(data: { before?: Date, after?: Date }) {
                     const before = data.before ?? new Date();
-                    const after = data.after ?? Boilerexams.Epoch;
+                    const after = data.after ?? Epoch;
                     return submissionStats(before, after);
                 }
             }
@@ -118,7 +119,7 @@ export default prisma
                 stats: {
                     needs: { id: true },
                     async compute(course) {
-                        const stats = await courseStats(new Date(), Boilerexams.Epoch, course.id);
+                        const stats = await courseStats(new Date(), Epoch, course.id);
                         return stats[0] ?? {
                             questions: "0",
                             exams: "0",
@@ -140,7 +141,7 @@ export default prisma
                 stats: {
                     needs: { id: true },
                     async compute(exam) {
-                        const stats = await examStats(new Date(), Boilerexams.Epoch, exam.id);
+                        const stats = await examStats(new Date(), Epoch, exam.id);
                         return stats[0] ?? {
                             questions: "0",
                             timeSpent: "0",
@@ -161,7 +162,7 @@ export default prisma
                 stats: {
                     needs: { id: true },
                     async compute(question) {
-                        const stats = await questionStats(new Date(), Boilerexams.Epoch, question.id);
+                        const stats = await questionStats(new Date(), Epoch, question.id);
                         return stats[0] ?? {
                             timeSpent: "0",
                             timeSpentVideo: "0",

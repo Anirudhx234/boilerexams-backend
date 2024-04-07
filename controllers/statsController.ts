@@ -6,6 +6,7 @@ import Resolver from "../helpers/resolver.js";
 import { courseStats } from "../helpers/stats/courseStats.js";
 import { examStats } from "../helpers/stats/examStats.js";
 import { questionStats } from "../helpers/stats/questionStats.js";
+import { Epoch } from "../prisma/schema.js";
 
 export async function generalStats(req: Request, res: Response) {
     const courseStats = await prisma.course.stats({  });
@@ -36,7 +37,7 @@ export async function generalStats(req: Request, res: Response) {
 export async function getCourseStats(req: Request, res: Response) {
     const { c } = req.params;
     const before = req.query.before ? new Date(Number.parseInt(<string>req.query.before)) : new Date();
-    const after = req.query.after ? new Date(Number.parseInt(<string>req.query.before)) : Boilerexams.Epoch;
+    const after = req.query.after ? new Date(Number.parseInt(<string>req.query.before)) : Epoch;
 
     const course = await prisma.course.findUnique({
         where: Resolver.course(c)
@@ -60,7 +61,7 @@ export async function getCourseStats(req: Request, res: Response) {
 export async function getExamStats(req: Request, res: Response) {
     const { e, c  } = req.params;
     const before = req.query.before ? new Date(Number.parseInt(<string>req.query.before)) : new Date();
-    const after = req.query.after ? new Date(Number.parseInt(<string>req.query.before)) : Boilerexams.Epoch;
+    const after = req.query.after ? new Date(Number.parseInt(<string>req.query.before)) : Epoch;
 
     const exam = await prisma.exam.findUnique({
         where: await Resolver.exam(e, c)
@@ -83,7 +84,7 @@ export async function getExamStats(req: Request, res: Response) {
 export async function getQuestionStats(req: Request, res: Response) {
     const { q, t, e, c  } = req.params;
     const before = req.query.before ? new Date(Number.parseInt(<string>req.query.before)) : new Date();
-    const after = req.query.after ? new Date(Number.parseInt(<string>req.query.before)) : Boilerexams.Epoch;
+    const after = req.query.after ? new Date(Number.parseInt(<string>req.query.before)) : Epoch;
 
     const question = await prisma.question.findFirst({
         where: await Resolver.question(q, t, e, c)

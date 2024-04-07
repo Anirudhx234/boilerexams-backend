@@ -6,12 +6,64 @@ import prisma from "../prisma/prisma.js";
 import uploadFileToS3 from "../utils/uploadFileToS3.js";
 import { FeedbackStatus, FeedbackType, ResourceType } from "@prisma/client";
 import Resolver from "../helpers/resolver.js";
-import {
-    BugReportData,
-    QuestionReportData,
-    FeatureRequestData,
-    VideoFeedbackData, CourseRequestScheme
-} from "../prisma/schema.js";
+import { z } from "zod";
+import { randomUUID } from "node:crypto";
+
+export const FeatureRequestData = z.object({
+    title:      z.string(),
+    content:    z.string().max(2000),
+    contact:    z.string().max(50).optional(),
+});
+
+export const QuestionReportData = FeatureRequestData.extend({
+    userAgent:  z.string().optional(),
+});
+
+export const BugReportData = QuestionReportData.extend({
+    location:   z.string(),
+});
+
+export const VideoFeedbackData = z.object({
+    explanationQuality: z.number().min(1).max(5),
+    productionQuality:  z.number().min(1).max(5),
+    recommended:        z.boolean(),
+    content:            z.string().optional()
+});
+
+export const BaseFeedbackScheme = z.object({
+    id:         z.string().uuid().default(randomUUID),
+    type:       z.nativeEnum(FeedbackType),
+    status:     z.nativeEnum(FeedbackStatus).default(FeedbackStatus.OPEN),
+    data:       z.object({}),
+    userId:     z.string().uuid().optional(),
+    questionId: z.string().uuid().optional(),
+});
+
+export const BugReportScheme = BaseFeedbackScheme.extend({
+    type:   z.literal(FeedbackType.BUG_REPORT),
+    data:   BugReportData
+});
+
+export const QuestionReportScheme = BaseFeedbackScheme.extend({
+    type:   z.literal(FeedbackType.QUESTION_REPORT),
+    data:   QuestionReportData
+});
+
+export const FeatureRequestScheme = BaseFeedbackScheme.extend({
+    type:   z.literal(FeedbackType.FEATURE_REQUEST),
+    data:   FeatureRequestData
+});
+
+export const VideoFeedbackScheme = BaseFeedbackScheme.extend({
+    type:   z.literal(FeedbackType.VIDEO_FEEDBACK),
+    data:   VideoFeedbackData
+});
+
+export const CourseRequestScheme = BaseFeedbackScheme.extend({
+    abbreviation:   z.string().toUpperCase(),
+    number:         z.number().min(100).max(99999)
+});
+
 
 export async function getAllVideoFeedback(req: Request, res: Response) {
     const videoFeedback = await prisma.feedback.findMany({

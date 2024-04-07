@@ -3,18 +3,28 @@ import Resolver from "../helpers/resolver.js";
 import { Request, Response } from "express";
 import { APIError, NotFoundError } from "../middleware/errors/index.js";
 import {
-    CreateExamScheme, ReorderQuestions,
-    UpdateExamScheme
+    ReorderQuestions,
 } from "../prisma/schema.js";
 import FlagEncoder from "../helpers/encoder.js";
 import Formatter from "../helpers/formatter.js";
 import { z } from "zod";
 import { FullQuestionInclude, PartialQuestionSelect } from "./questionController.js";
+import { Season } from "@prisma/client";
 
 export const ExamFlags = z.object({
     published:  z.boolean().default(false),
     practice:   z.boolean().default(false),
 });
+
+export const CreateExamScheme = z.object({
+    number:     z.number(),
+    year:       z.number(),
+    season:     z.nativeEnum(Season),
+    disclaimer: z.string().optional(),
+    flags:      ExamFlags.optional().default({  })
+});
+
+export const UpdateExamScheme = CreateExamScheme;
 
 export async function getExam(req: Request, res: Response) {
     const { e, c } = req.params;
