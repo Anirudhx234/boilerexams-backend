@@ -112,6 +112,7 @@ export const FullQuestionInclude = {
             topic: true
         }
     },
+    exam: true,
     children: {
         include: {
             resources: true,
