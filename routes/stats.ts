@@ -15,7 +15,11 @@ router.get("/courses/:c", cache(600), asyncWrapper(getCourseStats));
 
 router.get("/courses/:c/exams/:e", cache(600), asyncWrapper(getExamStats));
 
+router.get("/exams", cache(600), asyncWrapper(getExamStats));
+
 router.get("/exams/:e", cache(600), asyncWrapper(getExamStats));
+
+router.get("/questions", cache(600), asyncWrapper(getQuestionStats));
 
 router.get("/questions/:q", cache(600), asyncWrapper(getQuestionStats));
 

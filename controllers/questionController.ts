@@ -112,6 +112,13 @@ export const FullQuestionInclude = {
             topic: true
         }
     },
+    exam: {
+        select: {
+            year: true,
+            season: true,
+            number: true,
+        }
+    },
     children: {
         include: {
             resources: true,
@@ -141,6 +148,13 @@ export const PartialQuestionSelect = {
     topics: {
         include: {
             topic: true
+        }
+    },
+    exam: {
+        select: {
+            year: true,
+            season: true,
+            number: true,
         }
     }
 };

@@ -4,15 +4,17 @@ import prisma from "../../prisma/prisma.js";
 
 export async function courseStats(before: Date, after: Date, id?: string): Promise<CourseStats[]> {
     return await prisma.$queryRaw`
-        SELECT (
-                   SELECT COUNT(*)
+        SELECT 
+            1 :: INTEGER AS "count",
+               (
+                   SELECT COUNT(*)::INTEGER
                    FROM "Question" q
                    WHERE q."courseId" = c.id
                      AND q."parentId" IS NULL
                      AND q.flags & 1 = 1
                ) AS "questions",
                (
-                   SELECT COUNT(*)
+                   SELECT COUNT(*)::INTEGER
                    FROM "Exam" e
                    WHERE e."courseId" = c.id
                      AND e.flags & 1 = 1
@@ -21,24 +23,24 @@ export async function courseStats(before: Date, after: Date, id?: string): Promi
                        WHEN s."timeSpent" BETWEEN 0 AND 36000000
                            THEN s."timeSpent"
                        ELSE 0
-                   END) AS "timeSpent",
+                   END)::BIGINT AS "timeSpent",
                SUM(CASE
                        WHEN s."timeSpentVideo" BETWEEN 0 AND 36000000
                            THEN s."timeSpentVideo"
                        ELSE 0
-                   END) AS "timeSpentVideo",
-               COUNT(s.id) AS "submissions",
+                   END)::BIGINT AS "timeSpentVideo",
+               COUNT(s.id)::INTEGER AS "submissions",
                SUM(CASE
                        WHEN s.correct = TRUE
                            THEN 1
                        ELSE 0
-                   END) AS "submissionsCorrect"
+                   END)::INTEGER AS "submissionsCorrect"
         FROM "Course" c
                  JOIN "Question" q ON c.id = q."courseId" AND q."parentId" IS NULL
                  JOIN "Submission" s ON q.ID = s."questionId"
         WHERE (
             c.id = ${ id}
-                OR ${ id} = ${ undefined}
+                OR ${!id} = ${ true}
             )
           AND c.flags & 1 = 1
           AND q.flags & 1 = 1

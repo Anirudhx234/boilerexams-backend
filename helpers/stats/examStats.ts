@@ -4,15 +4,8 @@ import prisma from "../../prisma/prisma.js";
 
 export async function examStats(before: Date, after: Date, id?: string): Promise<ExamStats[]> {
     return await prisma.$queryRaw`
-        SELECT (
-                   SELECT COUNT(*)
-                   FROM "Exam" e
-                   WHERE (
-                       e.id = ${ id}
-                           OR ${ id} = ${ undefined}
-                       )
-                     AND e.flags & 1 = 1
-               ) AS "count",
+        SELECT
+            1 :: INTEGER AS "count",
                (
                    SELECT COUNT(*)
                    FROM "Question" q
@@ -23,24 +16,24 @@ export async function examStats(before: Date, after: Date, id?: string): Promise
                        WHEN s."timeSpent" BETWEEN 0 AND 36000000
                            THEN s."timeSpent"
                        ELSE 0
-                   END) AS "timeSpent",
+                   END)::BIGINT AS "timeSpent",
                SUM(CASE
                        WHEN s."timeSpentVideo" BETWEEN 0 AND 36000000
                            THEN s."timeSpentVideo"
                        ELSE 0
-                   END) AS "timeSpentVideo",
-               COUNT(s.id) AS "submissions",
+                   END)::BIGINT AS "timeSpentVideo",
+               COUNT(s.id)::INTEGER AS "submissions",
                SUM(CASE
                        WHEN s.correct = TRUE
                            THEN 1
                        ELSE 0
-                   END) AS "submissionsCorrect"
+                   END)::INTEGER AS "submissionsCorrect"
         FROM "Exam" e
                  JOIN "Question" q ON e.id = q."examId"
                  JOIN "Submission" s ON q.id = s."questionId"
         WHERE (
             e.id = ${ id}
-                OR ${ id} = ${ undefined}
+                OR ${!id} = ${ true}
             )
           AND e.flags & 1 = 1
           AND q.flags & 1 = 1
