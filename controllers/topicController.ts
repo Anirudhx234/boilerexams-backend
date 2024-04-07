@@ -40,7 +40,11 @@ export async function getTopic(req: Request, res: Response) {
         where: await Resolver.topic(t, c),
         include: {
             questions: {
-                select: PartialQuestionSelect
+                include: {
+                    question: {
+                        select: PartialQuestionSelect
+                    }
+                }
             }
         },
     });
