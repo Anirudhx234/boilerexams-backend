@@ -106,6 +106,7 @@ export const UpdateQuestion = z.object({
             } break;
         }
     }
+    return true;
 }, "Data type must match specified type");
 
 export const FullQuestion = {
