@@ -1,5 +1,5 @@
 import express from "express";
-import { generalStats, getCourseStats, getExamStats, getQuestionStats } from "../controllers/statsController.js";
+import { generalStats, getAllSubmissionTimeStats, getCourseStats, getCourseSubmissionTimeStats, getExamStats, getQuestionStats } from "../controllers/statsController.js";
 import asyncWrapper from "../middleware/wrappers/asyncWrapper.js";
 import cache from "../middleware/cache/caching.js";
 
@@ -24,5 +24,9 @@ router.get("/exams/:e", cache(10 * minute), asyncWrapper(getExamStats));
 router.get("/questions", cache(10 * minute), asyncWrapper(getQuestionStats));
 
 router.get("/questions/:q", cache(10 * minute), asyncWrapper(getQuestionStats));
+
+router.get("/submissions/time", cache(10 * minute), asyncWrapper(getAllSubmissionTimeStats));
+
+router.get("/submissions/time/:c", cache(10 * minute), asyncWrapper(getCourseSubmissionTimeStats));
 
 export default router;
