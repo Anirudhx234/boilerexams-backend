@@ -198,7 +198,7 @@ export async function updateQuestion(req: Request, res: Response) {
         where: await Resolver.question(q, t, e, c),
     });
 
-    const questionToTopics = options.topics?.map(topic => {
+    const topics = options.topics?.map(topic => {
         return {
             where: {
                 questionId_topicId: {
@@ -222,7 +222,7 @@ export async function updateQuestion(req: Request, res: Response) {
         };
     });
 
-    const answerChoices = options.answerChoices ? await Promise.all(options.answerChoices.map(async ac => {
+    const answerChoices = options.answerChoices?.map(ac => {
         const resources = ac.resources?.map(resource => {
             return {
                 where: {
@@ -243,7 +243,7 @@ export async function updateQuestion(req: Request, res: Response) {
                 }
             }
         };
-    })) : undefined;
+    });
 
     const resources = options.resources?.map(resource => {
         return {
@@ -261,7 +261,7 @@ export async function updateQuestion(req: Request, res: Response) {
         data: {
             flags: options.flags ? FlagEncoder.question(options.flags) : options.flags,
             topics: {
-                connectOrCreate: questionToTopics
+                connectOrCreate: topics
             },
             resources: {
                 connectOrCreate: resources
