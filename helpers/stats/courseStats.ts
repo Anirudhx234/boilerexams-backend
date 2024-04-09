@@ -1,4 +1,8 @@
 import prisma from "../../prisma/prisma.js";
+import { examStats } from "./examStats.js";
+import { Epoch } from "../../prisma/schema.js";
+import { questionStats } from "./questionStats.js";
+import { answerChoiceStats } from "./answerChoiceStats.js";
 
 // ToDo Working on this
 
@@ -49,8 +53,8 @@ export async function courseStats(before: Date, after: Date, id?: string): Promi
                 AND ${ before}
             )
         GROUP BY c.id;
-
     `;
+}
     /*
     {
 
@@ -79,7 +83,6 @@ export async function courseStats(before: Date, after: Date, id?: string): Promi
           AND (submission."timeStarted" BETWEEN SYMMETRIC ${after} AND ${before});
     `;
      */
-}
 
 /*
 const allCoursesStats = async (before?: Date, after?: Date) => {

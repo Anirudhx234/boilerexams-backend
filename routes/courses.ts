@@ -20,31 +20,35 @@ import authHandler from "../middleware/auth/authHandler.js";
 import { createQuestion, getQuestion, updateQuestion } from "../controllers/questionController.js";
 import { Role } from "@prisma/client";
 import { createTopic, getTopic, getTopicQuestions } from "../controllers/topicController.js";
+import cache from "../middleware/cache/caching.js";
 
 const router = express.Router();
 
+const minute = 60;
 
-router.get("/", sendPublished, asyncWrapper(getAllCourses));
+router.get("/", sendPublished, cache(minute), asyncWrapper(getAllCourses));
 
-router.get("/subjects", sendPublished, asyncWrapper(getSubjects));
+router.get("/subjects", sendPublished, cache(minute), asyncWrapper(getSubjects));
 
-router.get("/:c", sendPublished, asyncWrapper(getCourse));
+router.get("/:c", sendPublished, cache(minute), asyncWrapper(getCourse));
 
-router.get("/:c/topics", sendPublished, asyncWrapper(getCourseTopics));
+router.get("/:c/topics", sendPublished, cache(minute), asyncWrapper(getCourseTopics));
 
-router.get("/:c/topics/:t", sendPublished, asyncWrapper(getTopic));
+router.get("/:c/topics/:t", sendPublished, cache(minute), asyncWrapper(getTopic));
 
-router.get("/:c/topics/:t/questions", sendPublished, asyncWrapper(getTopicQuestions));
+router.get("/:c/topics/:t/questions", sendPublished, cache(minute), asyncWrapper(getTopicQuestions));
 
-router.get("/:c/exams", sendPublished, asyncWrapper(getCourseExams));
+router.get("/:c/exams", sendPublished, cache(minute), asyncWrapper(getCourseExams));
 
-router.get("/:c/exams/:e", sendPublished, asyncWrapper(getExam));
+router.get("/:c/exams/:e", sendPublished, cache(minute), asyncWrapper(getExam));
 
-router.get("/:c/exams/:e/questions", sendPublished, asyncWrapper(getExamQuestions));
+router.get("/:c/exams/:e/questions", sendPublished, cache(minute), asyncWrapper(getExamQuestions));
 
-router.get("/:c/exams/:e/questions/:q", sendPublished, asyncWrapper(getQuestion));
+router.get("/:c/exams/:e/questions/:q", sendPublished, cache(minute), asyncWrapper(getQuestion));
 
-router.get("/:c/events", sendPublished, asyncWrapper(getCourseEvents));
+router.get("/:c/events", sendPublished, cache(minute), asyncWrapper(getCourseEvents));
+
+// Content Only Beyond this point
 
 router.put("/:c", upload.array("images", 10), authHandler(Role.CONTENT), asyncWrapper(updateCourse));
 

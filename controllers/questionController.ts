@@ -95,8 +95,9 @@ export const UpdateQuestion = z.object({
     }
 });
 
-export const FullQuestionInclude = {
+export const FullQuestion = {
     resources: true,
+    exam: true,
     explanation: {
         include: {
             resources: true
@@ -115,6 +116,7 @@ export const FullQuestionInclude = {
     children: {
         include: {
             resources: true,
+            exam: true,
             explanation: {
                 include: {
                     resources: true
@@ -129,12 +131,12 @@ export const FullQuestionInclude = {
                 include: {
                     topic: true
                 }
-            },
+            }
         }
     }
 };
 
-export const PartialQuestionSelect = {
+export const PartialQuestion = {
     id: true,
     number: true,
     flags: true,
@@ -155,10 +157,9 @@ export async function createQuestion(req: Request, res: Response) {
         }
     });
 
-    res.status(200).send(await Formatter.question({
+    res.status(200).send(Formatter.question({
         data: question,
-        sendUnpublished: req.sendUnpublished,
-        computeStats: false
+        sendUnpublished: req.sendUnpublished
     }));
 }
 
@@ -167,17 +168,16 @@ export async function getQuestion(req: Request, res: Response) {
 
     const question = await prisma.question.findFirstOrThrow({
         where: await Resolver.question(q, t, e, c),
-        include: {...FullQuestionInclude, exam: true}
+        include: FullQuestion
     });
 
     if (!question.flags.published && !req.sendUnpublished) {
         throw new NotFoundError("Question not found");
     }
 
-    res.status(200).send(await Formatter.question({
+    res.status(200).send(Formatter.question({
         data: question,
-        sendUnpublished: req.sendUnpublished,
-        computeStats: true
+        sendUnpublished: req.sendUnpublished
     }));
 }
 
@@ -235,10 +235,9 @@ export async function updateQuestion(req: Request, res: Response) {
         }
     });
 
-    res.status(200).send(await Formatter.question({
+    res.status(200).send(Formatter.question({
         data: updatedQuestion,
-        sendUnpublished: req.sendUnpublished,
-        computeStats: false
+        sendUnpublished: req.sendUnpublished
     }));
 }
 

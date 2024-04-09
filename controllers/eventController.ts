@@ -1,5 +1,5 @@
 import prisma from "../prisma/prisma.js";
-import e, { Request, Response } from "express";
+import { Request, Response } from "express";
 import { NotFoundError } from "../middleware/errors/index.js";
 import { EventType } from "@prisma/client";
 import { z } from "zod";

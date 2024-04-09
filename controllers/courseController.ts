@@ -45,16 +45,15 @@ export async function getSubjects(req: Request, res: Response) {
         }
     });
 
-    const formattedCourses = await Formatter.courses({
+    const formattedCourses = Formatter.courses({
         data: courses,
-        sendUnpublished: req.sendUnpublished,
-        computeStats: false
+        sendUnpublished: req.sendUnpublished
     });
 
     const subjects = formattedCourses
         ?.reduce((acc, course) => {
             const subjectName = course.subject;
-            if (!subjectName) throw new APIError("Subject Name Missing", 500)
+            if (!subjectName) throw new APIError("Subject Name Missing", 500);
             if (!acc[subjectName]) {
                 acc[subjectName] = {
                     subject: subjectName,
@@ -63,7 +62,7 @@ export async function getSubjects(req: Request, res: Response) {
             }
             acc[subjectName].courses.push(course);
             return acc;
-        }, {} as {  });
+        }, {} as object);
 
     if (!subjects) throw new APIError("No Subjects", 404);
 
@@ -94,10 +93,9 @@ export async function getCourse(req: Request, res: Response) {
         throw new NotFoundError("Course not found");
     }
 
-    res.status(200).send(await Formatter.course({
+    res.status(200).send(Formatter.course({
         data: course,
-        sendUnpublished: req.sendUnpublished,
-        computeStats: true
+        sendUnpublished: req.sendUnpublished
     }));
 }
 
@@ -121,10 +119,9 @@ export async function getAllCourses(req: Request, res: Response) {
         },
     });
 
-    res.status(200).send(await Formatter.courses({
+    res.status(200).send(Formatter.courses({
         data: courses,
-        sendUnpublished: req.sendUnpublished,
-        computeStats: false
+        sendUnpublished: req.sendUnpublished
     }));
 }
 
@@ -164,10 +161,9 @@ export async function getCourseExams(req: Request, res: Response) {
         ]
     });
 
-    res.status(200).send(await Formatter.exams({
+    res.status(200).send(Formatter.exams({
         data: exams,
-        sendUnpublished: req.sendUnpublished,
-        computeStats: false
+        sendUnpublished: req.sendUnpublished
     }));
 }
 
@@ -210,10 +206,9 @@ export async function getCourseTopics(req: Request, res: Response) {
         },
     });
 
-    res.status(200).send(await Formatter.topics({
+    res.status(200).send(Formatter.topics({
         data: topics,
-        sendUnpublished: req.sendUnpublished,
-        computeStats: false
+        sendUnpublished: req.sendUnpublished
     }));
 }
 
@@ -267,10 +262,9 @@ export async function createCourse(req: Request, res: Response) {
         },
     });
 
-    res.status(200).send(await Formatter.course({
+    res.status(200).send(Formatter.course({
         data: course,
-        sendUnpublished: req.sendUnpublished,
-        computeStats: false
+        sendUnpublished: req.sendUnpublished
     }));
 }
 
@@ -286,10 +280,9 @@ export async function updateCourse(req: Request, res: Response) {
         }
     });
 
-    res.status(200).send(await Formatter.course({
+    res.status(200).send(Formatter.course({
         data: course,
-        sendUnpublished: req.sendUnpublished,
-        computeStats: false
+        sendUnpublished: req.sendUnpublished
     }));
 }
 

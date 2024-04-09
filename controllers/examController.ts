@@ -8,7 +8,7 @@ import {
 import FlagEncoder from "../helpers/encoder.js";
 import Formatter from "../helpers/formatter.js";
 import { z } from "zod";
-import { FullQuestionInclude, PartialQuestionSelect } from "./questionController.js";
+import { FullQuestion, PartialQuestion } from "./questionController.js";
 import { Season } from "@prisma/client";
 
 export const ExamFlags = z.object({
@@ -37,7 +37,7 @@ export async function getExam(req: Request, res: Response) {
                 where : {
                     parentId: null
                 },
-                select: PartialQuestionSelect,
+                select: PartialQuestion,
                 orderBy: [
                     { number: "asc" }
                 ]
@@ -49,10 +49,9 @@ export async function getExam(req: Request, res: Response) {
         throw new NotFoundError("Exam not found");
     }
 
-    res.status(200).send(await Formatter.exam({
+    res.status(200).send(Formatter.exam({
         data: exam,
-        sendUnpublished: req.sendUnpublished,
-        computeStats: true
+        sendUnpublished: req.sendUnpublished
     }));
 }
 
@@ -65,6 +64,9 @@ export async function getAllExams(req: Request, res: Response) {
                     id: true,
                     number: true,
                     flags: true
+                },
+                orderBy: {
+                    number: "asc"
                 }
             }
         },
@@ -75,10 +77,9 @@ export async function getAllExams(req: Request, res: Response) {
         ]
     });
 
-    res.status(200).send(await Formatter.exams({
+    res.status(200).send(Formatter.exams({
         data: exams,
-        sendUnpublished: req.sendUnpublished,
-        computeStats: true
+        sendUnpublished: req.sendUnpublished
     }));
 }
 
@@ -97,16 +98,15 @@ export async function getExamQuestions(req: Request, res: Response) {
         where: {
             examId: exam.id
         },
-        include: FullQuestionInclude,
+        include: FullQuestion,
         orderBy: {
             number: "asc"
         }
     });
 
-    res.status(200).send(await Formatter.questions({
+    res.status(200).send(Formatter.questions({
         data: questions,
-        sendUnpublished: req.sendUnpublished,
-        computeStats: true
+        sendUnpublished: req.sendUnpublished
     }));
 }
 
@@ -151,10 +151,9 @@ export async function getExamTopics(req: Request, res: Response) {
         },
     });
 
-    res.status(200).send(await Formatter.topics({
+    res.status(200).send(Formatter.topics({
         data: topics,
-        sendUnpublished: req.sendUnpublished,
-        computeStats: true
+        sendUnpublished: req.sendUnpublished
     }));
 }
 
@@ -209,10 +208,9 @@ export async function updateExam(req: Request, res: Response) {
         }
     });
 
-    res.status(200).send(await Formatter.exam({
+    res.status(200).send(Formatter.exam({
         data: exam,
-        sendUnpublished: req.sendUnpublished,
-        computeStats: true
+        sendUnpublished: req.sendUnpublished
     }));
 }
 
@@ -249,10 +247,9 @@ export async function reorderExamQuestions(req: Request, res: Response) {
         });
     }));
 
-    res.status(200).send(await Formatter.questions({
+    res.status(200).send(Formatter.questions({
         data: questions,
-        sendUnpublished: req.sendUnpublished,
-        computeStats: true
+        sendUnpublished: req.sendUnpublished
     }));
 }
 

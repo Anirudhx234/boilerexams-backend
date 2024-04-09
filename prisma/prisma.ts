@@ -1,4 +1,3 @@
-import Boilerexams from "../server.js";
 import { PrismaClient } from "@prisma/client";
 import FlagDecoder from "../helpers/decoder.js";
 import { courseStats } from "../helpers/stats/courseStats.js";
@@ -9,7 +8,19 @@ import { UrlResourceData } from "../controllers/resourceController.js";
 import { deleteFileFromS3 } from "../utils/uploadFileToS3.js";
 import { answerChoiceStats } from "../helpers/stats/answerChoiceStats.js";
 import { Epoch } from "./schema.js";
-
+import {
+    defaultAnswerChoiceStats,
+    defaultCourseStats,
+    defaultExamStats,
+    defaultQuestionStats
+} from "../helpers/stats/updateStats.js";
+import {
+    AnswerChoiceStats,
+    CourseStats,
+    ExamStats,
+    QuestionStats,
+    TopicStats
+} from "../controllers/statsController.js";
 
 const prisma = new PrismaClient();
 
@@ -117,17 +128,9 @@ export default prisma
                     }
                 },
                 stats: {
-                    needs: { id: true },
-                    async compute(course) {
-                        const stats = await courseStats(new Date(), Epoch, course.id);
-                        return stats[0] ?? {
-                            questions: 0,
-                            exams: 0,
-                            submissions: 0,
-                            submissionsCorrect: 0,
-                            timeSpent: "0",
-                            timeSpentVideo: "0",
-                        };
+                    needs: { stats: true },
+                    compute(course) {
+                        return CourseStats.parse(course.stats ?? {});
                     }
                 }
             },
@@ -139,16 +142,9 @@ export default prisma
                     }
                 },
                 stats: {
-                    needs: { id: true },
-                    async compute(exam) {
-                        const stats = await examStats(new Date(), Epoch, exam.id);
-                        return stats[0] ?? {
-                            questions: 0,
-                            submissions: 0,
-                            submissionsCorrect: 0,
-                            timeSpent: "0",
-                            timeSpentVideo: "0",
-                        };
+                    needs: { stats: true },
+                    compute(exam) {
+                        return ExamStats.parse(exam.stats ?? {});
                     }
                 }
             },
@@ -160,29 +156,25 @@ export default prisma
                     }
                 },
                 stats: {
-                    needs: { id: true },
-                    async compute(question) {
-                        const stats = await questionStats(new Date(), Epoch, question.id);
-                        return stats[0] ?? {
-                            submissions: 0,
-                            submissionsCorrect: 0,
-                            timeSpent: "0",
-                            timeSpentVideo: "0",
-                        };
+                    needs: { stats: true },
+                    compute(question) {
+                        return QuestionStats.parse(question.stats ?? {});
+                    }
+                }
+            },
+            topic: {
+                stats: {
+                    needs: { stats: true },
+                    compute(topic) {
+                        return TopicStats.parse(topic.stats ?? {});
                     }
                 }
             },
             answerChoice: {
                 stats: {
-                    needs: { questionId: true, index: true },
-                    async compute(answerChoice) {
-                        const stats = await answerChoiceStats(answerChoice.questionId, answerChoice.index);
-                        return stats[0] ?? {
-                            submissions: 0,
-                            submissionsCorrect: 0,
-                            timeSpent: "0",
-                            timeSpentVideo: "0",
-                        };
+                    needs: { stats: true },
+                    compute(answerChoice) {
+                        return AnswerChoiceStats.parse(answerChoice.stats ?? {});
                     }
                 }
             }

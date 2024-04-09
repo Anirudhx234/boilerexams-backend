@@ -11,10 +11,13 @@ import swaggerUi from 'swagger-ui-express';
 import docs from "./docs/index.js";
 import routes from "./routes/index.js";
 import errorHandler from "./middleware/errorHandler.js";
+import { scheduleUpdateStats } from "./helpers/stats/updateStats.js";
+
 
 (BigInt.prototype as any).toJSON = function () {
     return this.toString();
 };
+
 
 const app = express();
 
@@ -45,10 +48,15 @@ app.use(routes);
 
 app.use(errorHandler);
 
-const PORT = process.env["PORT"]
+const PORT = process.env["PORT"];
+
+scheduleUpdateStats();
 
 app.listen(PORT, () => {
     console.log(`Server is running at port ${PORT}`);
 });
 
+
+
 export default app;
+

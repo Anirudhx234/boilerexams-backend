@@ -2,7 +2,7 @@ import prisma from "../../prisma/prisma.js";
 
 // ToDo Working on this
 
-export async function examStats(before: Date, after: Date, id?: string): Promise<ExamStats[]> {
+export async function examStats(before: Date, after: Date, id?: string): Promise<ExamOrTopicStats[]> {
     return await prisma.$queryRaw`
         SELECT
             1 :: INTEGER AS "count",

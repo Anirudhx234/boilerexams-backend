@@ -1,5 +1,5 @@
 interface AnswerChoiceStats {
-    count:  number
+    count: number
 }
 
 interface SubmissionStats {
@@ -13,25 +13,12 @@ interface QuestionStats extends SubmissionStats {
     submissionsCorrect: number;
 }
 
-interface ExamStats extends QuestionStats {
+interface ExamOrTopicStats extends QuestionStats {
     questions:          number;
 }
 
-interface CourseStats extends ExamStats {
+interface CourseStats extends ExamOrTopicStats {
     exams:              number;
-}
-
-interface GeneralQuestionStats extends QuestionStats {
-    total:  number;
-}
-
-
-interface GeneralExamStats extends ExamStats {
-    total:  number;
-}
-
-interface GeneralCourseStats extends CourseStats {
-    total:  number;
 }
 
 type CourseMapData = {

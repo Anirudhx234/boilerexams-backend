@@ -5,7 +5,7 @@ import { z } from "zod";
 import Formatter from "../helpers/formatter.js";
 import Resolver from "../helpers/resolver.js";
 import prisma from "../prisma/prisma.js";
-import { FullQuestionInclude, PartialQuestionSelect } from "./questionController.js";
+import { FullQuestion, PartialQuestion } from "./questionController.js";
 
 export const UpsertTopic = z.object({
     id:     z.string().uuid().optional(),
@@ -26,10 +26,9 @@ export async function getAllTopics(req: Request, res: Response) {
         },
     });
 
-    res.status(200).send(await Formatter.topics({
+    res.status(200).send(Formatter.topics({
         data: topics,
-        sendUnpublished: req.sendUnpublished,
-        computeStats: true
+        sendUnpublished: req.sendUnpublished
     }));
 }
 
@@ -42,17 +41,16 @@ export async function getTopic(req: Request, res: Response) {
             questions: {
                 include: {
                     question: {
-                        select: PartialQuestionSelect
+                        select: PartialQuestion
                     }
                 }
             }
         },
     });
 
-    res.status(200).send(await Formatter.topic({
+    res.status(200).send(Formatter.topic({
         data: topic,
-        sendUnpublished: req.sendUnpublished,
-        computeStats: true
+        sendUnpublished: req.sendUnpublished
     }));
 }
 
@@ -69,7 +67,7 @@ export async function getTopicQuestions(req: Request, res: Response) {
         },
         include: {
             question: {
-                include: FullQuestionInclude
+                include: FullQuestion
             }
         },
         orderBy: {
@@ -77,10 +75,9 @@ export async function getTopicQuestions(req: Request, res: Response) {
         }
     });
 
-    const formattedQuestionToTopics = await Formatter.questionsToTopics({
+    const formattedQuestionToTopics = Formatter.questionsToTopics({
         data: relations,
-        sendUnpublished: req.sendUnpublished,
-        computeStats: true
+        sendUnpublished: req.sendUnpublished
     });
 
     res.status(200).send(formattedQuestionToTopics?.map(relation => relation.question));
