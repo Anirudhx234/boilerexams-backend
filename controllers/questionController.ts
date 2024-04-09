@@ -234,7 +234,10 @@ export async function updateQuestion(req: Request, res: Response) {
                 where: {
                     id: resource.id
                 },
-                create: resource
+                create: {
+                    type: resource.type,
+                    data: resource.data,
+                }
             };
         });
 
@@ -243,7 +246,8 @@ export async function updateQuestion(req: Request, res: Response) {
                 id: ac.id
             },
             create: {
-                ...ac,
+                index: ac.index,
+                body: ac.body,
                 resources: {
                     connectOrCreate: resources
                 }
@@ -256,7 +260,10 @@ export async function updateQuestion(req: Request, res: Response) {
             where: {
                 id: resource.id
             },
-            create: resource
+            create: {
+                type: resource.type,
+                data: resource.data,
+            }
         };
     });
 
