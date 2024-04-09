@@ -77,7 +77,7 @@ export const CreateQuestion = z.object({
         } break;
     }
     return true;
-});
+}, "Data type must match specified type");
 
 export const UpdateQuestion = z.object({
     type:           z.nativeEnum(QuestionType).optional(),
@@ -265,6 +265,7 @@ export async function updateQuestion(req: Request, res: Response) {
             id: question.id
         },
         data: {
+            ...options,
             flags: options.flags ? FlagEncoder.question(options.flags) : options.flags,
             topics: {
                 connectOrCreate: topics
