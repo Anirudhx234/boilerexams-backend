@@ -26,6 +26,7 @@ model Course {
   topics       Topic[]
   resources    Resource[]
   users        User[]      @relation("CourseToUser")
+  stats        Json?
 
   @@unique([abbreviation, number])
 }
@@ -42,6 +43,7 @@ model Exam {
   feedback   Feedback[]
   questions  Question[]
   resources  Resource[]
+  stats      Json?
 
   @@unique([number, year, season, courseId])
 }
@@ -66,6 +68,7 @@ model Question {
   submissions   Submission[]
   resources     Resource[]
   answerChoices AnswerChoice[]
+  stats         Json?
 
   @@unique([number, examId, parentId])
 }
@@ -85,6 +88,7 @@ model AnswerChoice {
   questionId String
   question   Question   @relation(fields: [questionId], references: [id], onDelete: Cascade)
   resources  Resource[]
+  stats      Json?
 
   @@unique([index, questionId])
 }
@@ -128,6 +132,7 @@ model Topic {
   courseId  String
   course    Course            @relation(fields: [courseId], references: [id], onDelete: Cascade)
   questions QuestionToTopic[]
+  stats     Json?
 
   @@unique([name, courseId])
 }
