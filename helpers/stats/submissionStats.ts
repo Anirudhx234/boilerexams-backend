@@ -1,6 +1,6 @@
 import prisma from "../../prisma/prisma.js";
 import { z } from "zod";
-import { SubmissionStats } from "../../controllers/statsController.js";
+import { HourlyStats, SubmissionStats } from "../../controllers/statsController.js";
 
 export async function submissionStats(before: Date, after: Date, id?: string): Promise<z.infer<typeof SubmissionStats>[]> {
     return await prisma.$queryRaw`
@@ -26,50 +26,19 @@ export async function submissionStats(before: Date, after: Date, id?: string): P
     `;
 }
 
-
-type TimedSubmissionQueryData = {
-    submission_hour: Date;
-    submissions_count: number;
-};
-
-export async function allSubmissionTimeStats() {
-    const stats: TimedSubmissionQueryData[] = await prisma.$queryRaw`
-        SELECT date_trunc('hour', S."timeEnded") AS submission_hour, COUNT(*) AS submissions_count FROM "Submission" S WHERE S."timeEnded" >= now() - INTERVAL '6 months' GROUP BY submission_hour ORDER BY submission_hour;
+export async function hourlySubmissionStats(before: Date, after: Date, courseId?: string): Promise<z.infer<typeof HourlyStats>[]> {
+    return prisma.$queryRaw`
+        SELECT   Date_trunc('hour', s."timeEnded") AS x,
+                 Count(*)                          AS y
+        FROM     "Submission" S
+                     JOIN     "Question" Q
+                              ON       s."questionId" = q.id
+                     JOIN     "Course" C
+                              ON       c.id = q."courseId"
+        WHERE    s."timeStarted" BETWEEN SYMMETRIC ${ after} AND ${ before}
+          AND    (c.id = ${ courseId} OR ${!courseId} = ${ true})
+          AND    c.flags & 1 = 1
+        GROUP BY x
+        ORDER BY y;
     `;
-    const chartData = stats.map((stat) => {
-        return {
-            x: stat.submission_hour,
-            y: stat.submissions_count,
-        };
-    });
-    return chartData;
-}
-
-export async function courseSubmissionTimeStats(courseId: string) {
-    const stats: TimedSubmissionQueryData[] = await prisma.$queryRaw`
-    SELECT
-        date_trunc('hour', S."timeEnded") AS submission_hour,
-        COUNT(*) AS submissions_count
-    FROM
-        "Submission" S
-    JOIN
-        "Question" Q ON S."questionId" = Q.ID
-    JOIN 
-        "Course" C ON C.id = Q."courseId"
-    WHERE
-        S."timeEnded" >= now() - INTERVAL '6 months'
-        AND (CONCAT(c."abbreviation", CAST(c."number" as VARCHAR)) = ${courseId}
-            OR c."id" = ${courseId})
-    GROUP BY
-        submission_hour
-    ORDER BY
-        submission_hour;
-  `;
-    const chartData = stats.map((stat) => {
-        return {
-            x: stat.submission_hour,
-            y: stat.submissions_count,
-        };
-    });
-    return chartData;
 }
