@@ -6,6 +6,7 @@ import { courseStats } from "../helpers/stats/courseStats.js";
 import { examStats } from "../helpers/stats/examStats.js";
 import { questionStats } from "../helpers/stats/questionStats.js";
 import { z }from "zod";
+import { allSubmissionTimeStats, courseSubmissionTimeStats } from "../helpers/stats/submissionStats.js";
 
 export const AnswerChoiceStats = z.object({
     count:  z.number().default(0),
@@ -154,4 +155,18 @@ export async function getQuestionStats(req: Request, res: Response) {
             timeSpentVideo: a.timeSpentVideo + b.timeSpentVideo
         };
     }));
+}
+
+export async function getAllSubmissionTimeStats(req: Request, res: Response) {
+    const stats = await allSubmissionTimeStats();
+
+    res.status(200).json(stats);
+}
+
+export async function getCourseSubmissionTimeStats(req: Request, res: Response) {
+    const { c } = req.params;
+
+    const stats = await courseSubmissionTimeStats(c);
+
+    res.status(200).json(stats);
 }
