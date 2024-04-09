@@ -19,7 +19,7 @@ export const UrlResourceData = z.object({
 });
 
 export const UpsertResource = z.object({
-    id:             z.string().uuid().nullable().optional(),
+    id:             z.string().uuid().optional(),
     courseId:       z.string().uuid().nullable().optional(),
     examId:         z.string().uuid().nullable().optional(),
     questionId:     z.string().uuid().nullable().optional(),

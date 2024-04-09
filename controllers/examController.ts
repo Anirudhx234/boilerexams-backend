@@ -214,14 +214,9 @@ export async function updateExam(req: Request, res: Response) {
         data: {
             ...options,
             flags: options.flags ? FlagEncoder.exam(options.flags) : options.flags,
-            resources: resources ? {
+            resources: {
                 connectOrCreate: resources,
-                deleteMany: {
-                    id: {
-                        notIn: exam.resources.map(resource => resource.id)
-                    }
-                }
-            }: undefined
+            }
         },
         include: {
             resources: true

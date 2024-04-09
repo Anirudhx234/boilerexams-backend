@@ -1,6 +1,7 @@
 import express from "express";
 import { Role } from "@prisma/client";
 import {
+    deleteAnswerChoice,
     deleteQuestion,
     getQuestion,
     toggleQuestionPublished, updateQuestion
@@ -22,5 +23,7 @@ router.put("/:q/togglePublished", authHandler(Role.CONTENT), asyncWrapper(toggle
 router.post("/:q/submit", generalLimiter, asyncWrapper(createSubmission));
 
 router.delete("/:questionId", authHandler(Role.CONTENT), asyncWrapper(deleteQuestion));
+
+router.delete("/answerChoices/:answerChoiceId", authHandler(Role.CONTENT), asyncWrapper(deleteAnswerChoice));
 
 export default router;

@@ -8,6 +8,7 @@ import FlagEncoder from "../helpers/encoder.js";
 import Formatter from "../helpers/formatter.js";
 import { z } from "zod";
 import { EventQueryParams } from "./eventController.js";
+import { UpsertResource } from "./resourceController.js";
 
 export const CourseFlags = z.object({
     published: z.boolean().default(false),
@@ -26,6 +27,7 @@ export const UpdateCourse = z.object({
     color:      z.string().min(4).max(9).regex(/^#/).optional(),
     disclaimer: z.string().optional(),
     studyModes: z.array(z.nativeEnum(StudyMode)).optional(),
+    resources:  z.array(UpsertResource).optional(),
     flags:      CourseFlags.optional(),
 });
 
@@ -272,11 +274,23 @@ export async function updateCourse(req: Request, res: Response) {
     const { c } = req.params;
     const options = UpdateCourse.parse(req.body);
 
+    const resources = options.resources?.map(resource => {
+        return {
+            where: {
+                id: resource.id
+            },
+            create: resource
+        };
+    });
+
     const course = await prisma.course.update({
         where: Resolver.course(c),
         data: {
             ...options,
             flags: options.flags ? FlagEncoder.course(options.flags) : undefined,
+            resources: {
+                connectOrCreate: resources
+            }
         }
     });
 

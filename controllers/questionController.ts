@@ -196,11 +196,6 @@ export async function updateQuestion(req: Request, res: Response) {
 
     const question = await prisma.question.findFirstOrThrow({
         where: await Resolver.question(q, t, e, c),
-        include: {
-            resources: true,
-            answerChoices: true,
-            children: true
-        },
     });
 
     const questionToTopics = options.topics?.map(topic => {
@@ -228,15 +223,6 @@ export async function updateQuestion(req: Request, res: Response) {
     });
 
     const answerChoices = options.answerChoices ? await Promise.all(options.answerChoices.map(async ac => {
-        const answerChoice = await prisma.answerChoice.findUnique({
-            where: {
-                id: ac.id
-            },
-            include: {
-                resources: true
-            }
-        });
-
         const resources = ac.resources?.map(resource => {
             return {
                 where: {
@@ -246,22 +232,15 @@ export async function updateQuestion(req: Request, res: Response) {
             };
         });
 
-        const resourceOptions = {
-            connectOrCreate: resources,
-            deleteMany: answerChoice ? {
-                id: {
-                    notIn: answerChoice.resources.map(resource => resource.id)
-                }
-            } : undefined
-        };
-
         return {
             where: {
                 id: ac.id
             },
             create: {
                 ...ac,
-                resources: resourceOptions
+                resources: {
+                    connectOrCreate: resources
+                }
             }
         };
     })) : undefined;
@@ -284,22 +263,12 @@ export async function updateQuestion(req: Request, res: Response) {
             topics: {
                 connectOrCreate: questionToTopics
             },
-            resources: resources ? {
-                connectOrCreate: resources,
-                deleteMany: {
-                    id: {
-                        notIn: question.resources.map(resource => resource.id)
-                    }
-                }
-            } : undefined,
-            answerChoices: answerChoices ? {
+            resources: {
+                connectOrCreate: resources
+            },
+            answerChoices: {
                 connectOrCreate: answerChoices,
-                deleteMany: {
-                    id: {
-                        notIn: question.answerChoices.map(answerChoice => answerChoice.id)
-                    }
-                }
-            } : undefined
+            }
         },
         include: {
             topics: {
@@ -376,4 +345,20 @@ export async function deleteQuestion(req: Request, res: Response) {
         throw new NotFoundError(`Question not found: ${questionId}`);
     }
     res.status(200).send(question);
+}
+
+export async function deleteAnswerChoice(req: Request, res: Response) {
+    const { answerChoiceId } = req.params;
+
+    const answerChoice = await prisma.answerChoice.delete({
+        where: {
+            id: answerChoiceId
+        }
+    });
+
+    if (!answerChoice) {
+        throw new NotFoundError(`AnswerChoice not found: ${answerChoice}`);
+    }
+
+    res.status(200).send(answerChoice);
 }
