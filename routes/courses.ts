@@ -68,9 +68,9 @@ router.post("/:c/topics", authHandler(Role.CONTENT), asyncWrapper(createTopic));
 
 router.post("/:c/exams/:e/questions", authHandler(Role.CONTENT), asyncWrapper(createQuestion));
 
-router.delete("/:c/hardDelete", authHandler(Role.CONTENT), asyncWrapper(deleteCourse));
+router.delete("/:c", authHandler(Role.CONTENT), asyncWrapper(deleteCourse));
 
-router.delete("/:c/exams/:e/hardDelete", authHandler(Role.CONTENT), asyncWrapper(deleteExam));
+router.delete("/:c/exams/:e", authHandler(Role.CONTENT), asyncWrapper(deleteExam));
 
 
 export default router;

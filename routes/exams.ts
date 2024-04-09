@@ -18,6 +18,6 @@ router.get("/:e", sendPublished, asyncWrapper(getExam));
 
 router.get("/:e/questions", asyncWrapper(getExamQuestions));
 
-router.delete("/:e/hardDelete", authHandler(Role.CONTENT), asyncWrapper(deleteCourse));
+router.delete("/:e", authHandler(Role.CONTENT), asyncWrapper(deleteCourse));
 
 export default router;

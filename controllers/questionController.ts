@@ -46,6 +46,10 @@ export const UpsertAnswerChoice = z.object({
     resources:  z.array(UpsertResource).optional(),
 });
 
+export const UpsertExplanation = z.object({
+
+});
+
 export const CreateQuestion = z.object({
     type:       z.nativeEnum(QuestionType).default(QuestionType.MULTIPLE_CHOICE),
     data:       QuestionData,
@@ -102,7 +106,7 @@ export const UpdateQuestion = z.object({
             } break;
         }
     }
-});
+}, "Data type must match specified type");
 
 export const FullQuestion = {
     resources: true,
