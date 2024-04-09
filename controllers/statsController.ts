@@ -2,11 +2,10 @@ import prisma from "../prisma/prisma.js";
 import { Request, Response } from "express";
 import Resolver from "../helpers/resolver.js";
 import { Epoch } from "../prisma/schema.js";
-import { z }from "zod";
 import { courseStats } from "../helpers/stats/courseStats.js";
 import { examStats } from "../helpers/stats/examStats.js";
 import { questionStats } from "../helpers/stats/questionStats.js";
-import { topicStats } from "../helpers/stats/topicStats.js";
+import { z }from "zod";
 
 export const AnswerChoiceStats = z.object({
     count:  z.number().default(0),
@@ -79,7 +78,9 @@ export async function getCourseStats(req: Request, res: Response) {
             before: before, after: after
         });
 
-    res.status(200).json(stats.reduce((a, b) => {
+    res.status(200).json(stats.reduce((c, d) => {
+        const a = c as CourseStats;
+        const b = d as CourseStats;
         return {
             count: a.count + b.count,
             exams: a.exams + b.exams,
@@ -110,37 +111,9 @@ export async function getExamStats(req: Request, res: Response) {
             before: before, after: after
         });
 
-    res.status(200).json(stats.reduce((a, b) => {
-        return {
-            count: a.count + b.count,
-            questions: a.questions + b.questions,
-            submissions: a.submissions + b.submissions,
-            submissionsCorrect: a.submissionsCorrect + b.submissionsCorrect,
-            timeSpent: a.timeSpent + b.timeSpent,
-            timeSpentVideo: a.timeSpentVideo + b.timeSpentVideo
-        };
-    }));
-}
-
-export async function getTopicStats(req: Request, res: Response) {
-    const { t, c } = req.params;
-    const now = new Date();
-    const before = req.query.before ? new Date(Number.parseInt(<string>req.query.before)) : now;
-    const after = req.query.after ? new Date(Number.parseInt(<string>req.query.before)) : Epoch;
-
-    const topic = t ? await prisma.topic.findUnique({
-        where: await Resolver.topic(t, c)
-    }) : undefined;
-
-    const stats = topic ?
-        before == now && after == Epoch ?
-            [ topic.stats ] :
-            await topicStats(before, after, topic.id) :
-        await prisma.topic.stats({
-            before: before, after: after
-        });
-
-    res.status(200).json(stats.reduce((a, b) => {
+    res.status(200).json(stats.reduce((c, d) => {
+        const a = c as ExamOrTopicStats;
+        const b = d as ExamOrTopicStats;
         return {
             count: a.count + b.count,
             questions: a.questions + b.questions,
@@ -170,7 +143,9 @@ export async function getQuestionStats(req: Request, res: Response) {
             before: before, after: after
         });
 
-    res.status(200).json(stats.reduce((a, b) => {
+    res.status(200).json(stats.reduce((c, d) => {
+        const a = c as QuestionStats;
+        const b = d as QuestionStats;
         return {
             count: a.count + b.count,
             submissions: a.submissions + b.submissions,

@@ -25,3 +25,51 @@ export async function submissionStats(before: Date, after: Date, id?: string): P
         GROUP BY s.id;
     `;
 }
+
+
+type TimedSubmissionQueryData = {
+    submission_hour: Date;
+    submissions_count: number;
+};
+
+export async function allSubmissionTimeStats() {
+    const stats: TimedSubmissionQueryData[] = await prisma.$queryRaw`
+        SELECT date_trunc('hour', S."timeEnded") AS submission_hour, COUNT(*) AS submissions_count FROM "Submission" S WHERE S."timeEnded" >= now() - INTERVAL '6 months' GROUP BY submission_hour ORDER BY submission_hour;
+    `;
+    const chartData = stats.map((stat) => {
+        return {
+            x: stat.submission_hour,
+            y: stat.submissions_count,
+        };
+    });
+    return chartData;
+}
+
+export async function courseSubmissionTimeStats(courseId: string) {
+    const stats: TimedSubmissionQueryData[] = await prisma.$queryRaw`
+    SELECT
+        date_trunc('hour', S."timeEnded") AS submission_hour,
+        COUNT(*) AS submissions_count
+    FROM
+        "Submission" S
+    JOIN
+        "Question" Q ON S."questionId" = Q.ID
+    JOIN 
+        "Course" C ON C.id = Q."courseId"
+    WHERE
+        S."timeEnded" >= now() - INTERVAL '6 months'
+        AND (CONCAT(c."abbreviation", CAST(c."number" as VARCHAR)) = ${courseId}
+            OR c."id" = ${courseId})
+    GROUP BY
+        submission_hour
+    ORDER BY
+        submission_hour;
+  `;
+    const chartData = stats.map((stat) => {
+        return {
+            x: stat.submission_hour,
+            y: stat.submissions_count,
+        };
+    });
+    return chartData;
+}
