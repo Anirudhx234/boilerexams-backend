@@ -39,6 +39,6 @@ export async function hourlySubmissionStats(before: Date, after: Date, courseId?
           AND    (c.id = ${ courseId} OR ${!courseId} = ${ true})
           AND    c.flags & 1 = 1
         GROUP BY x
-        ORDER BY y;
+        ORDER BY x;
     `;
 }
