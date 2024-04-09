@@ -84,7 +84,7 @@ model Explanation {
 model AnswerChoice {
   id         String     @id @default(uuid())
   index      Int
-  body       String
+  body       String?
   questionId String
   question   Question   @relation(fields: [questionId], references: [id], onDelete: Cascade)
   resources  Resource[]

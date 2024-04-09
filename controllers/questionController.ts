@@ -1,13 +1,14 @@
+import { z } from "zod";
+import { QuestionType,  } from "@prisma/client";
+import { UpsertResource } from "./resourceController.js";
+import { UpsertTopic } from "./topicController.js";
 import { APIError, NotFoundError } from "../middleware/errors/index.js";
 import type { Request, Response } from "express";
-import { QuestionType,  } from "@prisma/client";
-import { z } from "zod";
 import FlagEncoder from "../helpers/encoder.js";
 import Formatter from "../helpers/formatter.js";
 import Resolver from "../helpers/resolver.js";
 import prisma from "../prisma/prisma.js";
-import { UpsertResource } from "./resourceController.js";
-import { UpsertTopic } from "./topicController.js";
+import { randomUUID } from "node:crypto";
 
 export const QuestionFlags = z.object({
     published:              z.boolean().default(false),
@@ -38,6 +39,13 @@ export const QuestionData = z.union([
     ParentData, MultipleChoiceData, FreeResponseData, ShortAnswerData, FillInBlankData
 ]);
 
+export const UpsertAnswerChoice = z.object({
+    id:         z.string().default(randomUUID),
+    index:      z.number(),
+    body:       z.string().optional(),
+    resources:  z.array(UpsertResource).optional(),
+});
+
 export const CreateQuestion = z.object({
     type:       z.nativeEnum(QuestionType).default(QuestionType.MULTIPLE_CHOICE),
     data:       QuestionData,
@@ -67,12 +75,13 @@ export const CreateQuestion = z.object({
 });
 
 export const UpdateQuestion = z.object({
-    type:       z.nativeEnum(QuestionType).optional(),
-    data:       QuestionData.optional(),
-    number:     z.number().min(1).optional(),
-    flags:      QuestionFlags.optional(),
-    topics:     z.array(UpsertTopic).optional(),
-    resources:  z.array(UpsertResource).optional(),
+    type:           z.nativeEnum(QuestionType).optional(),
+    data:           QuestionData.optional(),
+    number:         z.number().min(1).optional(),
+    flags:          QuestionFlags.optional(),
+    topics:         z.array(UpsertTopic).optional(),
+    resources:      z.array(UpsertResource).optional(),
+    answerChoices:  z.array(UpsertAnswerChoice).optional()
 }).refine(data => {
     if (data.type && data.data) {
         switch (data.type) {
@@ -186,37 +195,85 @@ export async function updateQuestion(req: Request, res: Response) {
     const options = UpdateQuestion.parse(req.body);
 
     const question = await prisma.question.findFirstOrThrow({
-        where: await Resolver.question(q, t, e, c)
+        where: await Resolver.question(q, t, e, c),
+        include: {
+            resources: true,
+            answerChoices: true,
+            children: true
+        },
     });
 
-    const topics = options.topics ? await prisma.$transaction(options.topics.map(topic => {
-        return prisma.topic.upsert({
-            where: {
-                id: topic.id
-            },
-            create: {
-                ...topic,
-                courseId: question.courseId
-            },
-            update: {  }
-        });
-    })) : options.topics;
-
-    if (topics) await prisma.$transaction(topics?.map(topic => {
-        return prisma.questionToTopic.upsert({
+    const questionToTopics = options.topics?.map(topic => {
+        return {
             where: {
                 questionId_topicId: {
                     questionId: question.id,
                     topicId: topic.id
                 }
             },
-            create : {
-                questionId: question.id,
-                topicId: topic.id
+            create: {
+                topic: {
+                    connectOrCreate: {
+                        where: {
+                            id: topic.id
+                        },
+                        create: {
+                            name: topic.name,
+                            courseId: question.courseId
+                        }
+                    }
+                }
+            }
+        };
+    });
+
+    const answerChoices = options.answerChoices ? await Promise.all(options.answerChoices.map(async ac => {
+        const answerChoice = await prisma.answerChoice.findUnique({
+            where: {
+                id: ac.id
             },
-            update: {  }
+            include: {
+                resources: true
+            }
         });
-    }));
+
+        const resources = ac.resources?.map(resource => {
+            return {
+                where: {
+                    id: resource.id
+                },
+                create: resource
+            };
+        });
+
+        const resourceOptions = {
+            connectOrCreate: resources,
+            deleteMany: answerChoice ? {
+                id: {
+                    notIn: answerChoice.resources.map(resource => resource.id)
+                }
+            } : undefined
+        };
+
+        return {
+            where: {
+                id: ac.id
+            },
+            create: {
+                ...ac,
+                resources: resourceOptions
+            }
+        };
+    })) : undefined;
+
+    const resources = options.resources?.map(resource => {
+        return {
+            where: {
+                id: resource.id
+            },
+            create: resource
+        };
+    });
 
     const updatedQuestion = await prisma.question.update({
         where: {
@@ -224,6 +281,25 @@ export async function updateQuestion(req: Request, res: Response) {
         },
         data: {
             flags: options.flags ? FlagEncoder.question(options.flags) : options.flags,
+            topics: {
+                connectOrCreate: questionToTopics
+            },
+            resources: resources ? {
+                connectOrCreate: resources,
+                deleteMany: {
+                    id: {
+                        notIn: question.resources.map(resource => resource.id)
+                    }
+                }
+            } : undefined,
+            answerChoices: answerChoices ? {
+                connectOrCreate: answerChoices,
+                deleteMany: {
+                    id: {
+                        notIn: question.answerChoices.map(answerChoice => answerChoice.id)
+                    }
+                }
+            } : undefined
         },
         include: {
             topics: {
@@ -231,6 +307,7 @@ export async function updateQuestion(req: Request, res: Response) {
                     topic: true
                 }
             },
+            answerChoices: true,
             resources: true,
         }
     });

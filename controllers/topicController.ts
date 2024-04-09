@@ -6,9 +6,10 @@ import Formatter from "../helpers/formatter.js";
 import Resolver from "../helpers/resolver.js";
 import prisma from "../prisma/prisma.js";
 import { FullQuestion, PartialQuestion } from "./questionController.js";
+import { randomUUID } from "node:crypto";
 
 export const UpsertTopic = z.object({
-    id:     z.string().uuid().optional(),
+    id:     z.string().uuid().default(randomUUID),
     name:   z.string().max(50, "Topic name must be <= 50 characters"),
 });
 

@@ -144,11 +144,13 @@ interface PotentialQuestionToTopic {
 }
 
 interface PotentialAnswerChoice {
+    id?:        string
     question?:  PotentialQuestion
     resources?: unknown[],
 }
 
 interface PotentialQuestion {
+    id?:            string
     flags:          QuestionFlags
     data?:          JsonValue
     children?:      PotentialQuestion[]
@@ -158,17 +160,20 @@ interface PotentialQuestion {
 }
 
 interface PotentialTopic {
+    id?:        string
     name:       string
     questions?: PotentialQuestionToTopic[]
 }
 
 interface PotentialExam {
+    id?:        string
     flags:      ExamFlags
     resources?: unknown[],
     questions?: PotentialQuestion[]
 }
 
 interface PotentialCourse {
+    id?:        string
     flags:      CourseFlags
     exams?:     PotentialExam[]
     topics?:    PotentialTopic[]
