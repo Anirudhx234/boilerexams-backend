@@ -21,6 +21,7 @@ import {
     QuestionStats,
     TopicStats
 } from "../controllers/statsController.js";
+import { topicStats } from "../helpers/stats/topicStats.js";
 
 const prisma = new PrismaClient();
 
@@ -39,6 +40,13 @@ export default prisma
                     const before = data.before ?? new Date();
                     const after = data.after ?? Epoch;
                     return examStats(before, after);
+                }
+            },
+            topic: {
+                async stats(data: { before?: Date, after?: Date }) {
+                    const before = data.before ?? new Date();
+                    const after = data.after ?? Epoch;
+                    return topicStats(before, after);
                 }
             },
             question: {

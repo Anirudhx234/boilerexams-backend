@@ -1,6 +1,8 @@
 import prisma from "../../prisma/prisma.js";
+import { z } from "zod";
+import { QuestionStats } from "../../controllers/statsController.js";
 
-export async function questionStats(before: Date, after: Date, id?: string): Promise<QuestionStats[]> {
+export async function questionStats(before: Date, after: Date, id?: string): Promise<z.infer<typeof QuestionStats>[]> {
     return await prisma.$queryRaw`
         SELECT 
              1::INTEGER AS "count",

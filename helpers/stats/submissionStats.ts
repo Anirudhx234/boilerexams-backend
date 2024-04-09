@@ -1,6 +1,8 @@
 import prisma from "../../prisma/prisma.js";
+import { z } from "zod";
+import { SubmissionStats } from "../../controllers/statsController.js";
 
-export async function submissionStats(before: Date, after: Date, id?: string): Promise<SubmissionStats[]> {
+export async function submissionStats(before: Date, after: Date, id?: string): Promise<z.infer<typeof SubmissionStats>[]> {
     return await prisma.$queryRaw`
         SELECT 1::INTEGER AS "count",
                SUM(s."timeSpent")::BIGINT AS "timeSpent",

@@ -1,12 +1,8 @@
 import prisma from "../../prisma/prisma.js";
-import { examStats } from "./examStats.js";
-import { Epoch } from "../../prisma/schema.js";
-import { questionStats } from "./questionStats.js";
-import { answerChoiceStats } from "./answerChoiceStats.js";
+import { z } from "zod";
+import { CourseStats } from "../../controllers/statsController.js";
 
-// ToDo Working on this
-
-export async function courseStats(before: Date, after: Date, id?: string): Promise<CourseStats[]> {
+export async function courseStats(before: Date, after: Date, id?: string): Promise<z.infer<typeof CourseStats>[]> {
     return await prisma.$queryRaw`
         SELECT 
             1 :: INTEGER AS "count",

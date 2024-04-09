@@ -1,8 +1,8 @@
 import prisma from "../../prisma/prisma.js";
+import { z } from "zod";
+import { ExamStats } from "../../controllers/statsController.js";
 
-// ToDo Working on this
-
-export async function examStats(before: Date, after: Date, id?: string): Promise<ExamOrTopicStats[]> {
+export async function examStats(before: Date, after: Date, id?: string): Promise<z.infer<typeof ExamStats>[]> {
     return await prisma.$queryRaw`
         SELECT
             1 :: INTEGER AS "count",
@@ -44,50 +44,3 @@ export async function examStats(before: Date, after: Date, id?: string): Promise
         GROUP BY e.id;
     `;
 }
-
-// ToDo Rework
-/*
-const examStats = async (examId: string) => {
-    const submissions = await prisma.submission.aggregate({
-        where: {
-            question: {
-                examId: examId,
-            },
-            timeSpent: {
-                gte: minimumValidSubmissionTime,
-            },
-        },
-        _count: true,
-        _sum: {
-            timeSpent: true,
-            timeSpentVideo: true,
-        },
-    });
-
-    const correctSubmissions = await prisma.submission.count({
-        where: {
-            question: {
-                examId: examId,
-            },
-            timeSpent: {
-                gte: minimumValidSubmissionTime,
-            },
-            correct: true,
-        },
-    });
-
-    const totalTimeSpent = msToHMS(submissions._sum.timeSpent);
-    const totalVideoWatchTime = msToHMS(submissions._sum.timeSpentVideo);
-
-    const examStats = {
-        totalTimeSpent: totalTimeSpent,
-        totalVideoWatchTime: totalVideoWatchTime,
-        totalSubmissions: submissions._count,
-        totalCorrectSubmissions: correctSubmissions,
-    };
-    return examStats;
-};
-
-export default examStats;
-
- */
