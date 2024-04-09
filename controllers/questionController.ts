@@ -76,6 +76,7 @@ export const CreateQuestion = z.object({
             FillInBlankData.parse(data.data);
         } break;
     }
+    return true;
 });
 
 export const UpdateQuestion = z.object({
