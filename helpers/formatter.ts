@@ -104,6 +104,7 @@ interface FormatterOptions<T> {
 }
 
 interface FormattedCourse {
+    subject?:   string
     flags:      CourseFlags
     exams?:     FormattedExam[]
     topics?:    FormattedTopic[]
