@@ -10,6 +10,7 @@ import Formatter from "../helpers/formatter.js";
 import { z } from "zod";
 import { FullQuestion, PartialQuestion } from "./questionController.js";
 import { Season } from "@prisma/client";
+import { UpsertResource } from "./resourceController.js";
 
 export const ExamFlags = z.object({
     published:  z.boolean().default(false),
@@ -24,7 +25,14 @@ export const CreateExamScheme = z.object({
     flags:      ExamFlags.optional().default({  })
 });
 
-export const UpdateExamScheme = CreateExamScheme;
+export const UpdateExamScheme = z.object({
+    number:     z.number().optional(),
+    year:       z.number().optional(),
+    season:     z.nativeEnum(Season).optional(),
+    disclaimer: z.string().optional(),
+    flags:      ExamFlags.optional(),
+    resources:  z.array(UpsertResource).optional(),
+});
 
 export async function getExam(req: Request, res: Response) {
     const { e, c } = req.params;
@@ -182,34 +190,46 @@ export async function createExam(req: Request, res: Response)  {
 }
 
 export async function updateExam(req: Request, res: Response) {
-    const { c, e } = req.params;
+    const { e, c } = req.params;
     const options = UpdateExamScheme.parse(req.body);
 
-    /* // ToDo update/create pdf
-    const pdf = options.pdf ? await prisma.resource.upsert({
-        where: {
-            id: options.pdf?.id
-        },
-        create: {
-            ...options.pdf
-        },
-        update: {
-            ...options.pdf
+    const exam = await prisma.exam.findUniqueOrThrow({
+        where: await Resolver.exam(e, c),
+        include: {
+            resources: true
         }
-    }) : undefined;
+    });
 
-     */
+    const resources = options.resources?.map(resource => {
+        return {
+            where: {
+                id: resource.id
+            },
+            create: resource
+        };
+    });
 
-    const exam = await prisma.exam.update({
+    const updatedExam = await prisma.exam.update({
         where: await Resolver.exam(e, c),
         data: {
             ...options,
-            flags: FlagEncoder.exam(options.flags)
+            flags: options.flags ? FlagEncoder.exam(options.flags) : options.flags,
+            resources: resources ? {
+                connectOrCreate: resources,
+                deleteMany: {
+                    id: {
+                        notIn: exam.resources.map(resource => resource.id)
+                    }
+                }
+            }: undefined
+        },
+        include: {
+            resources: true
         }
     });
 
     res.status(200).send(Formatter.exam({
-        data: exam,
+        data: updatedExam,
         sendUnpublished: req.sendUnpublished
     }));
 }

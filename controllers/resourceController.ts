@@ -19,12 +19,13 @@ export const UrlResourceData = z.object({
 });
 
 export const UpsertResource = z.object({
-    id:             z.string().uuid().optional(),
-    courseId:       z.string().uuid().optional(),
-    examId:         z.string().uuid().optional(),
-    questionId:     z.string().uuid().optional(),
-    explanationId:  z.string().uuid().optional(),
-    answerChoiceId: z.string().uuid().optional(),
+    id:             z.string().uuid().nullable().optional(),
+    courseId:       z.string().uuid().nullable().optional(),
+    examId:         z.string().uuid().nullable().optional(),
+    questionId:     z.string().uuid().nullable().optional(),
+    explanationId:  z.string().uuid().nullable().optional(),
+    answerChoiceId: z.string().uuid().nullable().optional(),
+    applicationId:  z.string().uuid().nullable().optional(),
     type:           z.nativeEnum(ResourceType),
     data:           z.union([CodeResourceData, UrlResourceData])
 });
