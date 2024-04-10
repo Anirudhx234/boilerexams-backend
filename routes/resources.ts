@@ -15,7 +15,7 @@ const router = express.Router();
 
 router.get("/:resourceId", asyncWrapper(getResource));
 
-router.post("/file", upload.single("file"), authHandler(Role.GRAPHIC), asyncWrapper(uploadFile));
+router.post("/files", upload.single("file"), authHandler(Role.GRAPHIC), asyncWrapper(uploadFile));
 
 router.put("/", upload.single("image"), authHandler(Role.GRAPHIC), asyncWrapper(upsertResource));
 
