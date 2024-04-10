@@ -195,3 +195,32 @@ export async function deleteTopic(req: Request, res: Response) {
 
     res.status(200).send(topic);
 }
+
+export function upsertTopics(questionId: string, courseId: string, topics?: z.infer<typeof UpsertTopic>[]) {
+    return {
+        connectOrCreate: topics?.map(topic => {
+            return {
+                where: {
+                    questionId_topicId: {
+                        questionId: questionId,
+                        topicId: topic.id
+                    }
+                },
+                create: {
+                    topic: {
+                        connectOrCreate: {
+                            where: {
+                                id: topic.id
+                            },
+                            create: {
+                                name: topic.name,
+                                courseId: courseId
+                            }
+                        }
+                    }
+                }
+            };
+        })
+    };
+
+}

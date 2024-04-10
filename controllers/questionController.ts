@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { QuestionType,  } from "@prisma/client";
-import { UpsertResource } from "./resourceController.js";
-import { UpsertTopic } from "./topicController.js";
+import { upsertResources, UpsertResource, connectOrCreateResources } from "./resourceController.js";
+import { upsertTopics, UpsertTopic } from "./topicController.js";
 import { APIError, NotFoundError } from "../middleware/errors/index.js";
 import type { Request, Response } from "express";
 import FlagEncoder from "../helpers/encoder.js";
@@ -204,69 +204,6 @@ export async function updateQuestion(req: Request, res: Response) {
         where: await Resolver.question(q, t, e, c),
     });
 
-    const topics = options.topics?.map(topic => {
-        return {
-            where: {
-                questionId_topicId: {
-                    questionId: question.id,
-                    topicId: topic.id
-                }
-            },
-            create: {
-                topic: {
-                    connectOrCreate: {
-                        where: {
-                            id: topic.id
-                        },
-                        create: {
-                            name: topic.name,
-                            courseId: question.courseId
-                        }
-                    }
-                }
-            }
-        };
-    });
-
-    const answerChoices = options.answerChoices?.map(ac => {
-        const resources = ac.resources?.map(resource => {
-            return {
-                where: {
-                    id: resource.id
-                },
-                create: {
-                    type: resource.type,
-                    data: resource.data,
-                }
-            };
-        });
-
-        return {
-            where: {
-                id: ac.id
-            },
-            create: {
-                index: ac.index,
-                body: ac.body,
-                resources: {
-                    connectOrCreate: resources
-                }
-            }
-        };
-    });
-
-    const resources = options.resources?.map(resource => {
-        return {
-            where: {
-                id: resource.id
-            },
-            create: {
-                type: resource.type,
-                data: resource.data,
-            }
-        };
-    });
-
     const updatedQuestion = await prisma.question.update({
         where: {
             id: question.id
@@ -274,15 +211,9 @@ export async function updateQuestion(req: Request, res: Response) {
         data: {
             ...options,
             flags: options.flags ? FlagEncoder.question(options.flags) : options.flags,
-            topics: {
-                connectOrCreate: topics
-            },
-            resources: {
-                connectOrCreate: resources
-            },
-            answerChoices: {
-                connectOrCreate: answerChoices,
-            }
+            topics: upsertTopics(question.id, question.courseId, options.topics),
+            resources: upsertResources(options.resources),
+            answerChoices: upsertAnswerChoices(options.answerChoices)
         },
         include: {
             topics: {
@@ -375,4 +306,26 @@ export async function deleteAnswerChoice(req: Request, res: Response) {
     }
 
     res.status(200).send(answerChoice);
+}
+
+function upsertAnswerChoices(answerChoices?: z.infer<typeof UpsertAnswerChoice>[]) {
+    return {
+        upsert: answerChoices?.map(ac => {
+            return {
+                where: {
+                    id: ac.id
+                },
+                create: {
+                    index: ac.index,
+                    body: ac.body,
+                    resources: connectOrCreateResources(ac.resources)
+                },
+                update: {
+                    index: ac.index,
+                    body: ac.body,
+                    resources: upsertResources(ac.resources)
+                }
+            };
+        })
+    };
 }

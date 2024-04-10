@@ -100,3 +100,40 @@ export async function deleteResource(req: Request, res: Response) {
 
     res.status(200).send(resource);
 }
+
+export function connectOrCreateResources(resources?: z.infer<typeof UpsertResource>[]) {
+    return {
+        connectOrCreate: resources?.map(resource => {
+            return {
+                where: {
+                    id: resource.id
+                },
+                create: {
+                    type: resource.type,
+                    data: resource.data,
+                }
+            };
+        })
+    };
+}
+
+export function upsertResources(resources?: z.infer<typeof UpsertResource>[]) {
+    return {
+        upsert: resources?.map(resource => {
+            return {
+                where: {
+                    id: resource.id
+                },
+                create: {
+                    type: resource.type,
+                    data: resource.data,
+                },
+                update: {
+                    type: resource.type,
+                    data: resource.data,
+                }
+            };
+        })
+    };
+}
+

@@ -10,7 +10,7 @@ import Formatter from "../helpers/formatter.js";
 import { z } from "zod";
 import { FullQuestion, PartialQuestion } from "./questionController.js";
 import { Season } from "@prisma/client";
-import { UpsertResource } from "./resourceController.js";
+import { UpsertResource, upsertResources } from "./resourceController.js";
 
 export const ExamFlags = z.object({
     published:  z.boolean().default(false),
@@ -193,30 +193,12 @@ export async function updateExam(req: Request, res: Response) {
     const { e, c } = req.params;
     const options = UpdateExamScheme.parse(req.body);
 
-    const exam = await prisma.exam.findUniqueOrThrow({
-        where: await Resolver.exam(e, c),
-        include: {
-            resources: true
-        }
-    });
-
-    const resources = options.resources?.map(resource => {
-        return {
-            where: {
-                id: resource.id
-            },
-            create: resource
-        };
-    });
-
     const updatedExam = await prisma.exam.update({
         where: await Resolver.exam(e, c),
         data: {
             ...options,
             flags: options.flags ? FlagEncoder.exam(options.flags) : options.flags,
-            resources: {
-                connectOrCreate: resources,
-            }
+            resources: upsertResources(options.resources)
         },
         include: {
             resources: true
