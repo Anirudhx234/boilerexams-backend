@@ -4,8 +4,7 @@ import { Request, Response } from "express";
 import prisma from "../prisma/prisma.js";
 import uploadFileToS3 from "../utils/uploadFileToS3.js";
 import axios from "axios";
-import { APIError } from "../middleware/errors/index.js";
-import { File } from "node:buffer";
+import { APIError, NotFoundError } from "../middleware/errors/index.js";
 
 export const CodeResourceData = z.object({
     language:   z.enum([ "C", "JAVA", "PYTHON", "TEXT" ]),
@@ -13,7 +12,7 @@ export const CodeResourceData = z.object({
 });
 
 export const UrlResourceData = z.object({
-    url:        z.string().url().default("https://www.boilerexams.com/boilerexams-logo.png"),
+    url:        z.string().url(),
     key:        z.string().optional(),
     mathpixId:  z.string().optional(),
     altText:    z.string().optional()
@@ -33,6 +32,18 @@ export const UpsertResource = z.object({
 
 const fileBasedResources: ResourceType[] = [ ResourceType.LOGO, ResourceType.IMAGE, ResourceType.PDF ];
 
+export async function uploadFile(req: Request, res: Response) {
+    const file = req.file;
+
+    if (!file) {
+        throw new NotFoundError("File missing from request");
+    }
+
+    const data = await uploadFileToS3(file.buffer, file.mimetype);
+
+    res.status(200).send({ url: data.Location, key: data.Key });
+}
+
 export async function getResource(req: Request, res: Response) {
     const { resourceId } = req.params;
 
@@ -49,23 +60,22 @@ export async function upsertResource(req: Request, res: Response) {
     const options = UpsertResource.parse(req.body);
 
     if (fileBasedResources.includes(options.type)) {
-        if (req.file) {
-            const s3Data = await uploadFileToS3(req.file.buffer, req.file.mimetype);
-            const data = UrlResourceData.parse(options.data);
-            data.key = s3Data.Key;
-            data.url = s3Data.Location;
-            options.data = data;
-        } else {
-            const data = UrlResourceData.parse(options.data);
+        const kilobyte = 1000;
+        const megabyte = kilobyte * kilobyte;
+        const validFileTypes = [ "image/jpeg", "image/png", "application/pdf" ];
+
+        const data = UrlResourceData.parse(options.data);
+
+        if (!data.key) {
             const image = await axios.get(data.url, {
                 responseType: "arraybuffer",
-                maxContentLength: 1000 * 1000,
+                maxContentLength: 5 * megabyte,
             });
 
             const contentType = image.headers["content-type"];
 
-            if (contentType !== "image/png" && contentType !== "image/jpeg") {
-                throw new APIError("Image upload failed, link must be JPEG or PNG", 415);
+            if (!validFileTypes.includes(contentType)) {
+                throw new APIError("Image upload failed, link must be JPEG or PNG or PDF", 415);
             }
 
             const s3Data = await uploadFileToS3(image.data, contentType);
@@ -137,4 +147,3 @@ export function upsertResources(resources?: z.infer<typeof UpsertResource>[]) {
         })
     };
 }
-

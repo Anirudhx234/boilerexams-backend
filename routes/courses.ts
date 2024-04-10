@@ -1,4 +1,3 @@
-import express from "express";
 import {
     createCourse,
     deleteCourse, getAllCourses,
@@ -6,9 +5,6 @@ import {
     toggleCoursePublished,
     updateCourse
 } from "../controllers/courseController.js";
-import asyncWrapper from "../middleware/wrappers/asyncWrapper.js";
-import upload from "../middleware/multer/image.js";
-import sendPublished from "../middleware/auth/sendPublished.js";
 import {
     createExam,
     deleteExam, getExam,
@@ -16,11 +12,15 @@ import {
     toggleExamPublished,
     updateExam
 } from "../controllers/examController.js";
-import authHandler from "../middleware/auth/authHandler.js";
 import { createQuestion, getQuestion, updateQuestion } from "../controllers/questionController.js";
-import { Role } from "@prisma/client";
 import { createTopic, getTopic, getTopicQuestions } from "../controllers/topicController.js";
+import { Role } from "@prisma/client";
+import asyncWrapper from "../middleware/wrappers/asyncWrapper.js";
+import authHandler from "../middleware/auth/authHandler.js";
 import cache from "../middleware/cache/caching.js";
+import express from "express";
+import sendPublished from "../middleware/auth/sendPublished.js";
+
 
 const router = express.Router();
 
@@ -50,7 +50,7 @@ router.get("/:c/events", sendPublished, cache(minute), asyncWrapper(getCourseEve
 
 // Content Only Beyond this point
 
-router.put("/:c", upload.array("images", 10), authHandler(Role.CONTENT), asyncWrapper(updateCourse));
+router.put("/:c", authHandler(Role.CONTENT), asyncWrapper(updateCourse));
 
 router.put("/:c/togglePublished", authHandler(Role.CONTENT), asyncWrapper(toggleCoursePublished));
 
@@ -60,7 +60,7 @@ router.put("/:c/exams/:e/togglePublished", authHandler(Role.CONTENT), asyncWrapp
 
 router.put("/:c/exams/:e/questions/:q", authHandler(Role.CONTENT), asyncWrapper(updateQuestion));
 
-router.post("/", upload.array("images", 10), authHandler(Role.CONTENT), asyncWrapper(createCourse));
+router.post("/", authHandler(Role.CONTENT), asyncWrapper(createCourse));
 
 router.post("/:c/exams", authHandler(Role.CONTENT), asyncWrapper(createExam));
 

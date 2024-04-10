@@ -10,7 +10,7 @@ import {
     requestFeature, updateFeedbackStatus
 } from "../controllers/feedbackController.js";
 import asyncWrapper from "../middleware/wrappers/asyncWrapper.js";
-import upload from "../middleware/multer/pdf.js";
+import upload from "../middleware/multer/file.js";
 import express from "express";
 import authHandler from "../middleware/auth/authHandler.js";
 import {Role} from "@prisma/client";

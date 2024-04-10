@@ -19,9 +19,15 @@ router.get("/courses", cache(10 * minute), asyncWrapper(getCourseStats));
 
 router.get("/courses/:c", cache(10 * minute), asyncWrapper(getCourseStats));
 
+router.get("/courses/:c/exams/", cache(10 * minute), asyncWrapper(getExamStats));
+
 router.get("/courses/:c/exams/:e", cache(10 * minute), asyncWrapper(getExamStats));
 
+router.get("/courses/:c/topics/", cache(10 * minute), asyncWrapper(getTopicStats));
+
 router.get("/courses/:c/topics/:t", cache(10 * minute), asyncWrapper(getTopicStats));
+
+router.get("/courses/:c/questions/", cache(10 * minute), asyncWrapper(getExamStats));
 
 router.get("/exams", cache(10 * minute), asyncWrapper(getExamStats));
 

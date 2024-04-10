@@ -1,7 +1,7 @@
 import express from "express";
 import asyncWrapper from "../middleware/wrappers/asyncWrapper.js";
 import { attachPDFToExam, getIdResults, parseFromFile, parseFromLink } from "../controllers/parsingController.js";
-import upload from "../middleware/multer/pdf.js";
+import upload from "../middleware/multer/file.js";
 import authHandler from "../middleware/auth/authHandler.js";
 import { Role } from "@prisma/client";
 

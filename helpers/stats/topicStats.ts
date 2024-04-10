@@ -6,6 +6,7 @@ export async function topicStats(before: Date, after: Date, id?: string): Promis
     return await prisma.$queryRaw`
         SELECT
             1 :: INTEGER AS "count",
+            t.name::VARCHAR as "name",
                (
                    SELECT COUNT(*)
                    FROM "QuestionToTopic" qtt
