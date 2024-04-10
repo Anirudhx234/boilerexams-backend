@@ -5,7 +5,7 @@ const serverCache = new NodeCache();
 
 const cache = (duration: number) => {
     return async (req: Request, res: Response, next: NextFunction) => {
-        if (req.user != undefined) {
+        if (req.user != undefined && !req.originalUrl.startsWith("/stats")) {
             return next();
         }
 
