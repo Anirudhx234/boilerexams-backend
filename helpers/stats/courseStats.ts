@@ -20,12 +20,12 @@ export async function courseStats(before: Date, after: Date, id?: string): Promi
                      AND e.flags & 1 = 1
                ) AS "exams",
                SUM(CASE
-                       WHEN s."timeSpent" BETWEEN 0 AND 36000000
+                       WHEN s."timeSpent" BETWEEN 0 AND 3600000
                            THEN s."timeSpent"
                        ELSE 0
                    END)::BIGINT AS "timeSpent",
                SUM(CASE
-                       WHEN s."timeSpentVideo" BETWEEN 0 AND 36000000
+                       WHEN s."timeSpentVideo" BETWEEN 0 AND 3600000
                            THEN s."timeSpentVideo"
                        ELSE 0
                    END)::BIGINT AS "timeSpentVideo",

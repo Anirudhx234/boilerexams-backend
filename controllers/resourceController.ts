@@ -1,10 +1,11 @@
-import { z } from "zod";
-import { ResourceType } from "@prisma/client";
 import { Request, Response } from "express";
+import { APIError, NotFoundError } from "../middleware/errors/index.js";
+import { ResourceType } from "@prisma/client";
+import { randomUUID } from "node:crypto";
+import { z } from "zod";
+import axios from "axios";
 import prisma from "../prisma/prisma.js";
 import uploadFileToS3 from "../utils/uploadFileToS3.js";
-import axios from "axios";
-import { APIError, NotFoundError } from "../middleware/errors/index.js";
 
 export const CodeResourceData = z.object({
     language:   z.enum([ "C", "JAVA", "PYTHON", "TEXT" ]),
@@ -19,7 +20,7 @@ export const UrlResourceData = z.object({
 });
 
 export const UpsertResource = z.object({
-    id:             z.string().uuid().optional(),
+    id:             z.string().uuid().default(randomUUID),
     courseId:       z.string().uuid().nullable().optional(),
     examId:         z.string().uuid().nullable().optional(),
     questionId:     z.string().uuid().nullable().optional(),
