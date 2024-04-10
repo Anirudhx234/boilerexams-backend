@@ -85,9 +85,7 @@ export async function getCourseStats(req: Request, res: Response) {
             before: before, after: after
         });
 
-    res.status(200).json(stats.reduce((c, d) => {
-        const a = c as CourseStats;
-        const b = d as CourseStats;
+    res.status(200).json(stats.reduce((a, b) => {
         return {
             count: a.count + b.count,
             exams: a.exams + b.exams,
@@ -118,9 +116,7 @@ export async function getExamStats(req: Request, res: Response) {
             before: before, after: after
         });
 
-    res.status(200).json(stats.reduce((c, d) => {
-        const a = c as ExamOrTopicStats;
-        const b = d as ExamOrTopicStats;
+    res.status(200).json(stats.reduce((a, b) => {
         return {
             count: a.count + b.count,
             questions: a.questions + b.questions,

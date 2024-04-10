@@ -12,13 +12,13 @@ export async function courseStats(before: Date, after: Date, id?: string): Promi
                    WHERE q."courseId" = c.id
                      AND q."parentId" IS NULL
                      AND q.flags & 1 = 1
-               ) AS "questions",
+               )::INTEGER AS "questions",
                (
                    SELECT COUNT(*)::INTEGER
                    FROM "Exam" e
                    WHERE e."courseId" = c.id
                      AND e.flags & 1 = 1
-               ) AS "exams",
+               )::INTEGER AS "exams",
                SUM(CASE
                        WHEN s."timeSpent" BETWEEN 0 AND 3600000
                            THEN s."timeSpent"

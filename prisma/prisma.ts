@@ -6,14 +6,7 @@ import { questionStats } from "../helpers/stats/questionStats.js";
 import { submissionStats } from "../helpers/stats/submissionStats.js";
 import { UrlResourceData } from "../controllers/resourceController.js";
 import { deleteFileFromS3 } from "../utils/uploadFileToS3.js";
-import { answerChoiceStats } from "../helpers/stats/answerChoiceStats.js";
 import { Epoch } from "./schema.js";
-import {
-    defaultAnswerChoiceStats,
-    defaultCourseStats,
-    defaultExamStats,
-    defaultQuestionStats
-} from "../helpers/stats/updateStats.js";
 import {
     AnswerChoiceStats,
     CourseStats,

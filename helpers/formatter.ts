@@ -151,6 +151,7 @@ interface PotentialAnswerChoice {
 
 interface PotentialQuestion {
     id?:            string
+    parentId?:      string | null
     flags:          QuestionFlags
     data?:          JsonValue
     children?:      PotentialQuestion[]
