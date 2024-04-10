@@ -8,9 +8,8 @@ export async function topicStats(before: Date, after: Date, id?: string): Promis
             1 :: INTEGER AS "count",
                (
                    SELECT COUNT(*)
-                   FROM "QuestionToTopic" t
-                   WHERE t."topicId" = t.id
-                     AND q.flags & 1 = 1
+                   FROM "QuestionToTopic" qtt
+                   WHERE qtt."topicId" = t.id
                )::INTEGER AS "questions",
                SUM(CASE
                        WHEN s."timeSpent" BETWEEN 0 AND 36000000

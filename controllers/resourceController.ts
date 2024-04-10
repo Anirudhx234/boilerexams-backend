@@ -5,6 +5,7 @@ import prisma from "../prisma/prisma.js";
 import uploadFileToS3 from "../utils/uploadFileToS3.js";
 import axios from "axios";
 import { APIError } from "../middleware/errors/index.js";
+import { File } from "node:buffer";
 
 export const CodeResourceData = z.object({
     language:   z.enum([ "C", "JAVA", "PYTHON", "TEXT" ]),
@@ -12,7 +13,7 @@ export const CodeResourceData = z.object({
 });
 
 export const UrlResourceData = z.object({
-    url:        z.string().url(),
+    url:        z.string().url().default("https://www.boilerexams.com/boilerexams-logo.png"),
     key:        z.string().optional(),
     mathpixId:  z.string().optional(),
     altText:    z.string().optional()
@@ -27,7 +28,7 @@ export const UpsertResource = z.object({
     answerChoiceId: z.string().uuid().nullable().optional(),
     applicationId:  z.string().uuid().nullable().optional(),
     type:           z.nativeEnum(ResourceType),
-    data:           z.union([CodeResourceData, UrlResourceData])
+    data:           z.union([ CodeResourceData, UrlResourceData ])
 });
 
 const fileBasedResources: ResourceType[] = [ ResourceType.LOGO, ResourceType.IMAGE, ResourceType.PDF ];
@@ -58,7 +59,7 @@ export async function upsertResource(req: Request, res: Response) {
             const data = UrlResourceData.parse(options.data);
             const image = await axios.get(data.url, {
                 responseType: "arraybuffer",
-                maxContentLength: 1000 * 1024,
+                maxContentLength: 1000 * 1000,
             });
 
             const contentType = image.headers["content-type"];
