@@ -8,7 +8,7 @@ import FlagEncoder from "../helpers/encoder.js";
 import Formatter from "../helpers/formatter.js";
 import { z } from "zod";
 import { EventQueryParams } from "./eventController.js";
-import { UpsertResource, upsertResources } from "./resourceController.js";
+import { connectOrCreateResources, UpsertResource, upsertResources } from "./resourceController.js";
 
 export const CourseFlags = z.object({
     published: z.boolean().default(false),
@@ -20,6 +20,7 @@ export const CreateCourse = z.object({
     color:          z.string().min(4).max(9).regex(/^#/).optional(),
     disclaimer:     z.string().optional(),
     studyModes:     z.array(z.nativeEnum(StudyMode)).default([ StudyMode.EXAM, StudyMode.TIMED_EXAM, StudyMode.TOPIC ]),
+    resources:      z.array(UpsertResource).optional(),
     flags:          CourseFlags.optional().default({  }),
 });
 
@@ -30,7 +31,6 @@ export const UpdateCourse = z.object({
     resources:  z.array(UpsertResource).optional(),
     flags:      CourseFlags.optional(),
 });
-
 
 export async function getSubjects(req: Request, res: Response) {
     const courses = await prisma.course.findMany({
@@ -256,11 +256,13 @@ export async function createCourse(req: Request, res: Response) {
             name: purdueIoCourse.Title,
             subject: purdueIoSubject.Name,
             flags: FlagEncoder.course(options.flags),
+            resources: connectOrCreateResources(options.resources)
         },
         include: {
             exams: true,
             topics: true,
             questions: true,
+            resources: true,
         },
     });
 

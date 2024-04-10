@@ -162,6 +162,13 @@ export const PartialQuestion = {
         include: {
             topic: true
         }
+    },
+    children: {
+        select: {
+            id: true,
+            number: true,
+            flags: true,
+        }
     }
 };
 

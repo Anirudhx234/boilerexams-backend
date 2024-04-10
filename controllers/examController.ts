@@ -9,7 +9,7 @@ import FlagEncoder from "../helpers/encoder.js";
 import Formatter from "../helpers/formatter.js";
 import { z } from "zod";
 import { FullQuestion, PartialQuestion } from "./questionController.js";
-import { Season } from "@prisma/client";
+import { QuestionType, Season } from "@prisma/client";
 import { UpsertResource, upsertResources } from "./resourceController.js";
 
 export const ExamFlags = z.object({
@@ -42,9 +42,6 @@ export async function getExam(req: Request, res: Response) {
         include: {
             resources: true,
             questions: {
-                where : {
-                    parentId: null
-                },
                 select: PartialQuestion,
                 orderBy: [
                     { number: "asc" }
