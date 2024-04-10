@@ -3,13 +3,12 @@ import { QuestionType,  } from "@prisma/client";
 import { upsertResources, UpsertResource, connectOrCreateResources } from "./resourceController.js";
 import { upsertTopics, UpsertTopic } from "./topicController.js";
 import { APIError, NotFoundError } from "../middleware/errors/index.js";
-import e, { Request, Response } from "express";
+import { Request, Response } from "express";
 import FlagEncoder from "../helpers/encoder.js";
 import Formatter from "../helpers/formatter.js";
 import Resolver from "../helpers/resolver.js";
 import prisma from "../prisma/prisma.js";
 import { randomUUID } from "node:crypto";
-import exp from "node:constants";
 
 export const QuestionFlags = z.object({
     published:              z.boolean().default(false),
