@@ -29,9 +29,9 @@ export const UpdateSubmissionScheme = z.object({
     correct:        z.boolean().optional(),
     timeStarted:    z.coerce.date().min(Epoch).optional(),
     timeEnded:      z.coerce.date().refine(date => date < new Date()).optional(),
-    timeSpent:      z.preprocess(coerceBigIntSafely, z.bigint()).optional(),
-    timeSpentVideo: z.preprocess(coerceBigIntSafely, z.bigint()).optional(),
-    timeSpentModal: z.preprocess(coerceBigIntSafely, z.bigint()).optional(),
+    timeSpent:      z.preprocess(coerceBigIntSafely, z.bigint().optional()),
+    timeSpentVideo: z.preprocess(coerceBigIntSafely, z.bigint().optional()),
+    timeSpentModal: z.preprocess(coerceBigIntSafely, z.bigint().optional()),
 });
 
 export const CreateSubmissionScheme = z.object({
@@ -47,7 +47,7 @@ export const CreateSubmissionScheme = z.object({
     timeStarted:    z.coerce.date().min(Epoch),
     timeEnded:      z.coerce.date().refine(date => date < new Date()),
     timeSpent:      z.preprocess(coerceBigIntSafely, z.bigint()),
-    timeSpentVideo: z.preprocess(coerceBigIntSafely, z.bigint()).default(0n),
+    timeSpentVideo: z.preprocess(coerceBigIntSafely, z.bigint().default(0n)),
     timeSpentModal: z.preprocess(coerceBigIntSafely, z.bigint()),
     osFamily:       z.string().optional(),
 });
