@@ -48,7 +48,7 @@ export const CreateSubmissionScheme = z.object({
     timeEnded:      z.coerce.date().refine(date => date < new Date()),
     timeSpent:      z.preprocess(coerceBigIntSafely, z.bigint()),
     timeSpentVideo: z.preprocess(coerceBigIntSafely, z.bigint().default(0n)),
-    timeSpentModal: z.preprocess(coerceBigIntSafely, z.bigint()),
+    timeSpentModal: z.preprocess(coerceBigIntSafely, z.bigint().default(0n)),
     osFamily:       z.string().optional(),
 });
 
