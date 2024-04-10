@@ -103,11 +103,13 @@ const assignUserCourses = async (req: Request, res: Response) => {
 
 const deleteUser = async (req: Request, res: Response) => {
     const { userId } = req.params;
+
     const user = prisma.user.delete({
         where: {
             id: userId,
         },
     });
+
     res.status(200).send(user);
 };
 

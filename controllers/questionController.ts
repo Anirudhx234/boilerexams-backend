@@ -3,12 +3,13 @@ import { QuestionType,  } from "@prisma/client";
 import { upsertResources, UpsertResource, connectOrCreateResources } from "./resourceController.js";
 import { upsertTopics, UpsertTopic } from "./topicController.js";
 import { APIError, NotFoundError } from "../middleware/errors/index.js";
-import type { Request, Response } from "express";
+import e, { Request, Response } from "express";
 import FlagEncoder from "../helpers/encoder.js";
 import Formatter from "../helpers/formatter.js";
 import Resolver from "../helpers/resolver.js";
 import prisma from "../prisma/prisma.js";
 import { randomUUID } from "node:crypto";
+import exp from "node:constants";
 
 export const QuestionFlags = z.object({
     published:              z.boolean().default(false),
@@ -47,7 +48,9 @@ export const UpsertAnswerChoice = z.object({
 });
 
 export const UpsertExplanation = z.object({
-
+    id:         z.string().uuid().default(randomUUID),
+    body:       z.string().optional(),
+    resources:  z.array(UpsertResource).optional()
 });
 
 export const CreateQuestion = z.object({
@@ -86,7 +89,8 @@ export const UpdateQuestion = z.object({
     flags:          QuestionFlags.optional(),
     topics:         z.array(UpsertTopic).optional(),
     resources:      z.array(UpsertResource).optional(),
-    answerChoices:  z.array(UpsertAnswerChoice).optional()
+    answerChoices:  z.array(UpsertAnswerChoice).optional().optional(),
+    explanation:    UpsertExplanation.optional()
 }).refine(data => {
     if (data.type && data.data) {
         switch (data.type) {
@@ -213,7 +217,8 @@ export async function updateQuestion(req: Request, res: Response) {
             flags: options.flags ? FlagEncoder.question(options.flags) : options.flags,
             topics: upsertTopics(question.id, question.courseId, options.topics),
             resources: upsertResources(options.resources),
-            answerChoices: upsertAnswerChoices(options.answerChoices)
+            answerChoices: upsertAnswerChoices(options.answerChoices),
+            explanation: upsertExplanation(options.explanation)
         },
         include: {
             topics: {
@@ -223,6 +228,7 @@ export async function updateQuestion(req: Request, res: Response) {
             },
             answerChoices: true,
             resources: true,
+            explanation: true,
         }
     });
 
@@ -328,4 +334,22 @@ function upsertAnswerChoices(answerChoices?: z.infer<typeof UpsertAnswerChoice>[
             };
         })
     };
+}
+
+function upsertExplanation(explanation?: z.infer<typeof UpsertExplanation>) {
+    return explanation ? {
+        upsert: {
+            where: {
+                id: explanation.id
+            },
+            create: {
+                body: explanation.body,
+                resources: connectOrCreateResources(explanation.resources)
+            },
+            update: {
+                body: explanation.body,
+                resources: upsertResources(explanation.resources)
+            }
+        }
+    } : explanation;
 }
