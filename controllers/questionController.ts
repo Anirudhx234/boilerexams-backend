@@ -265,8 +265,7 @@ export async function toggleQuestionPublished(req: Request, res: Response) {
 export async function deleteQuestion(req: Request, res: Response) {
     const { questionId } = req.params;
 
-    // More hacks because question number is not unique
-    const question = await prisma.question.delete({
+    const question = await prisma.question.findUnique({
         where: {
             id: questionId
         }
@@ -275,8 +274,35 @@ export async function deleteQuestion(req: Request, res: Response) {
     if (!question) {
         throw new NotFoundError(`Question not found: ${questionId}`);
     }
+
+    await prisma.$transaction(async (prisma) => {
+        // Delete the question
+        await prisma.question.delete({
+            where: {
+                id: questionId
+            }
+        });
+
+        // Update question numbers for remaining questions in the same exam and with the same parent
+        await prisma.question.updateMany({
+            where: {
+                examId: question.examId,
+                parentId: question.parentId,
+                number: {
+                    gt: question.number
+                }
+            },
+            data: {
+                number: {
+                    decrement: 1
+                }
+            }
+        });
+    });
+
     res.status(200).send(question);
 }
+
 
 export async function deleteAnswerChoice(req: Request, res: Response) {
     const { answerChoiceId } = req.params;

@@ -32,6 +32,7 @@ export const ExamStats = QuestionStats.extend({
 });
 
 export const TopicStats = QuestionStats.extend({
+    name:       z.string().optional(),
     questions:  z.number().default(0)
 });
 

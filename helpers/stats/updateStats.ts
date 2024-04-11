@@ -85,6 +85,7 @@ async function updateStats() {
                 stats: {
                     ...TopicStats.parse(stat),
                     count: undefined,
+                    name: undefined,
                     id: undefined,
                 } as object
             }

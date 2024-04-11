@@ -4,9 +4,9 @@ import { TopicStats } from "../../controllers/statsController.js";
 
 export async function topicStats(options: TopicStatsOptions): Promise<z.infer<typeof TopicStats>[]> {
     return await prisma.$queryRaw`
-        SELECT
-            1::INTEGER AS "count",
-            t.id::VARCHAR as "id",
+        SELECT t.id::VARCHAR as "id",
+               t.name::VARCHAR as "name",
+               1::INTEGER AS "count",
                (SELECT COUNT(*) FROM "QuestionToTopic" qtt WHERE qtt."topicId" = t.id
                )::INTEGER AS "questions",
                SUM(CASE WHEN s."timeSpent" BETWEEN 0 AND 36000000 THEN s."timeSpent" ELSE 0 END)::BIGINT 

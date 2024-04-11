@@ -153,6 +153,9 @@ export async function getCourseExams(req: Request, res: Response) {
                     id: true,
                     number: true,
                     flags: true
+                },
+                orderBy: {
+                    number: "asc"
                 }
             }
         },
