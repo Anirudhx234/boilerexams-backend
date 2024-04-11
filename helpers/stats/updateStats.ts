@@ -34,7 +34,7 @@ export function scheduleUpdateStats() {
 
 async function updateStats() {
     const before = new Date();
-    const options = { before: before, after: Epoch, order: "asc", skip: 0 };
+    const options = { before: before, after: Epoch, sort: "asc", skip: 0 };
     const cStats = await courseStats(options);
     const eStats = await examStats(options);
     const tStats = await topicStats(options);
