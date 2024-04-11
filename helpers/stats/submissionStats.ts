@@ -2,9 +2,11 @@ import prisma from "../../prisma/prisma.js";
 import { z } from "zod";
 import { HourlyStats, SubmissionStats } from "../../controllers/statsController.js";
 
-export async function submissionStats(before: Date, after: Date, id?: string): Promise<z.infer<typeof SubmissionStats>[]> {
+export async function submissionStats(options: SubmissionStatsOptions): Promise<z.infer<typeof SubmissionStats>[]> {
     return await prisma.$queryRaw`
-        SELECT 1::INTEGER AS "count",
+        SELECT 
+               1::INTEGER AS "count",
+               s.id as "id",
                SUM(s."timeSpent")::BIGINT AS "timeSpent",
                SUM(s."timeSpentVideo")::BIGINT AS "timeSpentVideo",
                COUNT(s.id)::INTEGER AS "submissions",
@@ -15,12 +17,12 @@ export async function submissionStats(before: Date, after: Date, id?: string): P
                    END)::INTEGER AS "submissionsCorrect"
         FROM "Submission" s
         WHERE (
-            s.id = ${ id}
-                OR ${ id} = ${ undefined}
+            s.id = ${options.id}
+                OR ${!options.id} = ${true}
             )
           AND (
-            s."timeStarted" BETWEEN SYMMETRIC ${ after}
-                AND ${ before}
+            s."timeStarted" BETWEEN SYMMETRIC ${ options.before}
+                AND ${ options.after}
             )
         GROUP BY s.id;
     `;

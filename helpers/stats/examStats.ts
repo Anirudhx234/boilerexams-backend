@@ -2,10 +2,11 @@ import prisma from "../../prisma/prisma.js";
 import { z } from "zod";
 import { ExamStats } from "../../controllers/statsController.js";
 
-export async function examStats(before: Date, after: Date, id?: string): Promise<z.infer<typeof ExamStats>[]> {
+export async function examStats(options: ExamStatsOptions): Promise<z.infer<typeof ExamStats>[]> {
     return await prisma.$queryRaw`
         SELECT
-            1 :: INTEGER AS "count",
+            1 AS "count",
+            e.id as "id",
                (
                    SELECT COUNT(*)
                    FROM "Question" q
@@ -31,16 +32,11 @@ export async function examStats(before: Date, after: Date, id?: string): Promise
         FROM "Exam" e
                  JOIN "Question" q ON e.id = q."examId"
                  JOIN "Submission" s ON q.id = s."questionId"
-        WHERE (
-            e.id = ${ id}
-                OR ${!id} = ${ true}
-            )
-          AND e.flags & 1 = 1
+        WHERE e.flags & 1 = 1
           AND q.flags & 1 = 1
-          AND (
-            s."timeStarted" BETWEEN SYMMETRIC ${ after}
-                AND ${ before}
-            )
+          AND (${!options.id} = ${ true} OR e.id = ${ options.id})
+          AND (${!options.courseId} = ${ true} OR e."courseId" = ${ options.courseId})
+          AND (s."timeStarted" BETWEEN SYMMETRIC ${ options.after} AND ${ options.before})
         GROUP BY e.id;
     `;
 }

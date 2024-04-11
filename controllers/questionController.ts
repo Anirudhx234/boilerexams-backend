@@ -18,6 +18,7 @@ export const QuestionFlags = z.object({
 
 export const ParentData = z.object({
     body:           z.string().optional(),
+    solution:       z.undefined(),
     numberingType:  z.enum([ "LOWERCASE", "UPPERCASE", "ROMAN_LOWERCASE", "ROMAN_UPPERCASE", "NUMBER" ])
 });
 
@@ -60,26 +61,7 @@ export const CreateQuestion = z.object({
     examId:     z.string().uuid(),
     parentId:   z.string().uuid().optional(),
     flags:      QuestionFlags.optional().default({  }),
-}).refine(data => {
-    switch (data.type) {
-        case QuestionType.PARENT: {
-            ParentData.parse(data.data);
-        } break;
-        case QuestionType.MULTIPLE_CHOICE: {
-            MultipleChoiceData.parse(data.data);
-        } break;
-        case QuestionType.FREE_RESPONSE: {
-            FreeResponseData.parse(data.data);
-        } break;
-        case QuestionType.SHORT_ANSWER: {
-            ShortAnswerData.parse(data.data);
-        } break;
-        case QuestionType.FILL_IN_BLANK: {
-            FillInBlankData.parse(data.data);
-        } break;
-    }
-    return true;
-}, "Data type must match specified type");
+});
 
 export const UpdateQuestion = z.object({
     type:           z.nativeEnum(QuestionType).optional(),
@@ -90,28 +72,7 @@ export const UpdateQuestion = z.object({
     resources:      z.array(UpsertResource).optional(),
     answerChoices:  z.array(UpsertAnswerChoice).optional().optional(),
     explanation:    UpsertExplanation.optional()
-}).refine(data => {
-    if (data.type && data.data) {
-        switch (data.type) {
-            case QuestionType.PARENT: {
-                ParentData.parse(data.data);
-            } break;
-            case QuestionType.MULTIPLE_CHOICE: {
-                MultipleChoiceData.parse(data.data);
-            } break;
-            case QuestionType.FREE_RESPONSE: {
-                FreeResponseData.parse(data.data);
-            } break;
-            case QuestionType.SHORT_ANSWER: {
-                ShortAnswerData.parse(data.data);
-            } break;
-            case QuestionType.FILL_IN_BLANK: {
-                FillInBlankData.parse(data.data);
-            } break;
-        }
-    }
-    return true;
-}, "Data type must match specified type");
+});
 
 export const FullQuestion = {
     resources: true,
@@ -175,11 +136,33 @@ export const PartialQuestion = {
 export async function createQuestion(req: Request, res: Response) {
     const options = CreateQuestion.parse(req.body);
 
-    const question = await prisma.question.create({
-        data: {
-            ...options,
-            flags: FlagEncoder.question(options.flags),
-        }
+    const question = await prisma.$transaction(async (prisma) => {
+        // 1. Insert the new question
+        const question = await prisma.question.create({
+            data: {
+                ...options,
+                flags: FlagEncoder.question(options.flags),
+            },
+            include: FullQuestion
+        });
+
+        // 2. Update existing questions
+        await prisma.question.updateMany({
+            where: {
+                examId: question.examId,
+                parentId: question.parentId,
+                number: {
+                    gte: question.number
+                }
+            },
+            data: {
+                number: {
+                    increment: 1
+                }
+            }
+        });
+
+        return question;
     });
 
     res.status(200).send(Formatter.question({
@@ -226,16 +209,7 @@ export async function updateQuestion(req: Request, res: Response) {
             answerChoices: upsertAnswerChoices(options.answerChoices),
             explanation: upsertExplanation(options.explanation)
         },
-        include: {
-            topics: {
-                include: {
-                    topic: true
-                }
-            },
-            answerChoices: true,
-            resources: true,
-            explanation: true,
-        }
+        include: FullQuestion
     });
 
     res.status(200).send(Formatter.question({

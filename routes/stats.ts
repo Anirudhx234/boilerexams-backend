@@ -2,7 +2,8 @@ import express from "express";
 import {
     generalStats,
     getCourseStats,
-    getExamStats, getHourlySubmissionStats,
+    getExamStats,
+    getHourlySubmissionStats,
     getQuestionStats,
     getTopicStats
 } from "../controllers/statsController.js";
@@ -23,19 +24,37 @@ router.get("/courses/:c/exams/", cache(10 * minute), asyncWrapper(getExamStats))
 
 router.get("/courses/:c/exams/:e", cache(10 * minute), asyncWrapper(getExamStats));
 
+router.get("/courses/:c/exams/:e/questions", cache(10 * minute), asyncWrapper(getQuestionStats));
+
+router.get("/courses/:c/exams/:e/questions/:q", cache(10 * minute), asyncWrapper(getQuestionStats));
+
 router.get("/courses/:c/topics/", cache(10 * minute), asyncWrapper(getTopicStats));
 
 router.get("/courses/:c/topics/:t", cache(10 * minute), asyncWrapper(getTopicStats));
 
-router.get("/courses/:c/questions/", cache(10 * minute), asyncWrapper(getExamStats));
+router.get("/courses/:c/topics/:t/questions", cache(10 * minute), asyncWrapper(getQuestionStats));
+
+router.get("/courses/:c/topics/:t/questions/:q", cache(10 * minute), asyncWrapper(getQuestionStats));
+
+router.get("/courses/:c/questions/", cache(10 * minute), asyncWrapper(getQuestionStats));
+
+router.get("/courses/:c/questions/:q", cache(10 * minute), asyncWrapper(getQuestionStats));
 
 router.get("/exams", cache(10 * minute), asyncWrapper(getExamStats));
 
 router.get("/exams/:e", cache(10 * minute), asyncWrapper(getExamStats));
 
+router.get("/exams/:e/questions", cache(10 * minute), asyncWrapper(getQuestionStats));
+
+router.get("/exams/:e/questions/:q", cache(10 * minute), asyncWrapper(getQuestionStats));
+
 router.get("/topics", cache(10 * minute), asyncWrapper(getTopicStats));
 
 router.get("/topics/:t", cache(10 * minute), asyncWrapper(getTopicStats));
+
+router.get("/topics/:t/questions", cache(10 * minute), asyncWrapper(getQuestionStats));
+
+router.get("/topics/:t/questions/:q", cache(10 * minute), asyncWrapper(getQuestionStats));
 
 router.get("/questions", cache(10 * minute), asyncWrapper(getQuestionStats));
 

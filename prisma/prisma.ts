@@ -1,12 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 import FlagDecoder from "../helpers/decoder.js";
-import { courseStats } from "../helpers/stats/courseStats.js";
-import { examStats } from "../helpers/stats/examStats.js";
-import { questionStats } from "../helpers/stats/questionStats.js";
-import { submissionStats } from "../helpers/stats/submissionStats.js";
 import { UrlResourceData } from "../controllers/resourceController.js";
 import { deleteFileFromS3 } from "../utils/uploadFileToS3.js";
-import { Epoch } from "./schema.js";
 import {
     AnswerChoiceStats,
     CourseStats,
@@ -14,48 +9,13 @@ import {
     QuestionStats,
     TopicStats
 } from "../controllers/statsController.js";
-import { topicStats } from "../helpers/stats/topicStats.js";
 
 const prisma = new PrismaClient();
 
 export default prisma
     .$extends({
         model: {
-            course: {
-                async stats(data: { before?: Date, after?: Date }) {
-                    const before = data.before ?? new Date();
-                    const after = data.after ?? Epoch;
-                    return courseStats(before, after);
-                }
-            },
-            exam: {
-                async stats(data: { before?: Date, after?: Date }) {
-                    const before = data.before ?? new Date();
-                    const after = data.after ?? Epoch;
-                    return examStats(before, after);
-                }
-            },
-            topic: {
-                async stats(data: { before?: Date, after?: Date }) {
-                    const before = data.before ?? new Date();
-                    const after = data.after ?? Epoch;
-                    return topicStats(before, after);
-                }
-            },
-            question: {
-                async stats(data: { before?: Date, after?: Date }) {
-                    const before = data.before ?? new Date();
-                    const after = data.after ?? Epoch;
-                    return questionStats(before, after);
-                }
-            },
-            submission: {
-                async stats(data: { before?: Date, after?: Date }) {
-                    const before = data.before ?? new Date();
-                    const after = data.after ?? Epoch;
-                    return submissionStats(before, after);
-                }
-            }
+
         },
     })
     .$extends({

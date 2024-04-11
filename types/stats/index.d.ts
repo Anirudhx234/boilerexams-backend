@@ -1,27 +1,26 @@
-interface AnswerChoiceStats {
-    count: number
+interface CourseStatsOptions {
+    before: Date,
+    after:  Date,
+    id?:    string
 }
 
-interface SubmissionStats {
-    count:          number;
-    timeSpent:      bigint;
-    timeSpentVideo: bigint;
+interface ExamStatsOptions extends CourseStatsOptions {
+    courseId?:  string
 }
 
-interface QuestionStats extends SubmissionStats {
-    submissions:        number;
-    submissionsCorrect: number;
+interface TopicStatsOptions extends CourseStatsOptions {
+    courseId?:  string
 }
 
-interface ExamOrTopicStats extends QuestionStats {
-    questions:          number;
+interface QuestionStatsOptions extends ExamStatsOptions {
+    examId?:    string,
+    topicId?:   string,
 }
 
-interface CourseStats extends ExamOrTopicStats {
-    exams:              number;
+interface SubmissionStatsOptions extends QuestionStatsOptions {
+    questionId?:    string
 }
 
-type CourseMapData = {
-    id: string;
-    questionStats: QuestionStats[];
-};
+interface AnswerChoiceStatsOptions extends CourseStatsOptions {
+    questionId?:    string
+}

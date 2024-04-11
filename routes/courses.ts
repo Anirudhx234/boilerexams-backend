@@ -8,7 +8,7 @@ import {
 import {
     createExam,
     deleteExam, getExam,
-    getExamQuestions,
+    getExamQuestions, reorderExamQuestions,
     toggleExamPublished,
     updateExam
 } from "../controllers/examController.js";
@@ -66,7 +66,11 @@ router.post("/:c/exams", authHandler(Role.CONTENT), asyncWrapper(createExam));
 
 router.post("/:c/topics", authHandler(Role.CONTENT), asyncWrapper(createTopic));
 
+router.post("/:c/exams/:e/reorderQuestions", authHandler(Role.CONTENT), asyncWrapper(reorderExamQuestions));
+
 router.post("/:c/exams/:e/questions", authHandler(Role.CONTENT), asyncWrapper(createQuestion));
+
+router.post("/:c/topics/:t/reorderQuestions", authHandler(Role.CONTENT), asyncWrapper(createTopic));
 
 router.delete("/:c", authHandler(Role.CONTENT), asyncWrapper(deleteCourse));
 

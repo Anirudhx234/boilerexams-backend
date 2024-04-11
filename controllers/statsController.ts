@@ -2,7 +2,7 @@ import prisma from "../prisma/prisma.js";
 import { Request, Response } from "express";
 import Resolver from "../helpers/resolver.js";
 import { Epoch } from "../prisma/schema.js";
-import { number, z } from "zod";
+import { z } from "zod";
 import { courseStats } from "../helpers/stats/courseStats.js";
 import { examStats } from "../helpers/stats/examStats.js";
 import { questionStats } from "../helpers/stats/questionStats.js";
@@ -10,10 +10,14 @@ import { topicStats } from "../helpers/stats/topicStats.js";
 import { hourlySubmissionStats } from "../helpers/stats/submissionStats.js";
 
 export const AnswerChoiceStats = z.object({
+    id:     z.string().uuid(),
+    index:  z.number().int(),
     count:  z.number().default(0),
 });
 
-export const SubmissionStats = AnswerChoiceStats.extend({
+export const SubmissionStats = z.object({
+    id:             z.string().uuid().optional(),
+    count:          z.number().default(1),
     timeSpent:      z.coerce.bigint().default(0n),
     timeSpentVideo: z.coerce.bigint().default(0n),
 });
@@ -41,9 +45,10 @@ export const HourlyStats = z.object({
 });
 
 export async function generalStats(req: Request, res: Response) {
-    const courseStats = await prisma.course.stats({  });
+    const options = parseBeforeAndAfter(req);
+    const stats = await courseStats(options);
 
-    const combinedCourseStats = courseStats?.reduce((a, b) => {
+    const combinedStats = stats?.reduce((a, b) => {
         return {
             count: a.count + b.count,
             exams: a.exams + b.exams,
@@ -57,143 +62,94 @@ export async function generalStats(req: Request, res: Response) {
 
     res.status(200).send({
         students:           10000,
-        courses:            combinedCourseStats.count,
-        exams:              combinedCourseStats.exams,
-        questions:          combinedCourseStats.questions,
-        submissions:        combinedCourseStats.submissions,
-        submissionsCorrect: combinedCourseStats.submissionsCorrect,
-        timeSpent:          combinedCourseStats.timeSpent,
-        timeSpentVideo:     combinedCourseStats.timeSpentVideo,
+        courses:            combinedStats.count,
+        exams:              combinedStats.exams,
+        questions:          combinedStats.questions,
+        submissions:        combinedStats.submissions,
+        submissionsCorrect: combinedStats.submissionsCorrect,
+        timeSpent:          combinedStats.timeSpent,
+        timeSpentVideo:     combinedStats.timeSpentVideo,
     });
 }
 
 export async function getCourseStats(req: Request, res: Response) {
     const { c } = req.params;
-    const now = new Date();
-    const before = req.query.before ? new Date(Number.parseInt(<string>req.query.before)) : now;
-    const after = req.query.after ? new Date(Number.parseInt(<string>req.query.before)) : Epoch;
+    const options = parseBeforeAndAfter(req);
 
-    const course = c ? await prisma.course.findUnique({
+    const course = c ? await prisma.course.findUniqueOrThrow({
         where: Resolver.course(c)
     }) : undefined;
 
-    const stats = course ?
-        before == now && after == Epoch ?
-            [ course.stats ] :
-            await courseStats(before, after, course.id) :
-        await prisma.course.stats({
-            before: before, after: after
-        });
-
-    res.status(200).json(stats.reduce((a, b) => {
-        return {
-            count: a.count + b.count,
-            exams: a.exams + b.exams,
-            questions: a.questions + b.questions,
-            submissions: a.submissions + b.submissions,
-            submissionsCorrect: a.submissionsCorrect + b.submissionsCorrect,
-            timeSpent: a.timeSpent + b.timeSpent,
-            timeSpentVideo: a.timeSpentVideo + b.timeSpentVideo
-        };
-    }));
+    const stats = await courseStats({ ...options, id: course?.id });
+    res.status(200).json(stats);
 }
 
 export async function getExamStats(req: Request, res: Response) {
     const { e, c } = req.params;
-    const now = new Date();
-    const before = req.query.before ? new Date(Number.parseInt(<string>req.query.before)) : now;
-    const after = req.query.after ? new Date(Number.parseInt(<string>req.query.before)) : Epoch;
+    const options = parseBeforeAndAfter(req);
 
-    const exam = e ? await prisma.exam.findUnique({
+    const exam = e ? await prisma.exam.findUniqueOrThrow({
         where: await Resolver.exam(e, c)
     }) : undefined;
 
-    const stats = exam ?
-        before == now && after == Epoch ?
-            [ exam.stats ] :
-            await examStats(before, after, exam.id) :
-        await prisma.exam.stats({
-            before: before, after: after
-        });
+    const course = c ? await prisma.course.findUniqueOrThrow({
+        where: Resolver.course(c)
+    }) : undefined;
 
-    res.status(200).json(stats.reduce((a, b) => {
-        return {
-            count: a.count + b.count,
-            questions: a.questions + b.questions,
-            submissions: a.submissions + b.submissions,
-            submissionsCorrect: a.submissionsCorrect + b.submissionsCorrect,
-            timeSpent: a.timeSpent + b.timeSpent,
-            timeSpentVideo: a.timeSpentVideo + b.timeSpentVideo
-        };
-    }));
+    const stats = await examStats({ ...options, id: exam?.id, courseId: course?.id });
+    res.status(200).json(stats);
 }
 
 export async function getTopicStats(req: Request, res: Response) {
     const { t, c } = req.params;
-    const now = new Date();
-    const before = req.query.before ? new Date(Number.parseInt(<string>req.query.before)) : now;
-    const after = req.query.after ? new Date(Number.parseInt(<string>req.query.before)) : Epoch;
+    const options = parseBeforeAndAfter(req);
 
-    const topic = t ? await prisma.topic.findUnique({
+    const topic = t ? await prisma.topic.findUniqueOrThrow({
         where: await Resolver.topic(t, c)
     }) : undefined;
 
-    const stats = topic ?
-        before == now && after == Epoch ?
-            [ topic.stats ] :
-            await topicStats(before, after, topic.id) :
-        await prisma.topic.stats({
-            before: before, after: after
-        });
+    const course = c ? await prisma.course.findUniqueOrThrow({
+        where: Resolver.course(c)
+    }) : undefined;
 
-    res.status(200).json(stats.reduce((a, b) => {
-        return {
-            count: a.count + b.count,
-            questions: a.questions + b.questions,
-            submissions: a.submissions + b.submissions,
-            submissionsCorrect: a.submissionsCorrect + b.submissionsCorrect,
-            timeSpent: a.timeSpent + b.timeSpent,
-            timeSpentVideo: a.timeSpentVideo + b.timeSpentVideo
-        };
-    }));
+    const stats = await topicStats({ ...options, id: topic?.id, courseId: course?.id });
+    res.status(200).send(stats);
 }
 
 export async function getQuestionStats(req: Request, res: Response) {
     const { q, t, e, c } = req.params;
-    const now = new Date();
-    const before = req.query.before ? new Date(Number.parseInt(<string>req.query.before)) : now;
-    const after = req.query.after ? new Date(Number.parseInt(<string>req.query.before)) : Epoch;
+    const options = parseBeforeAndAfter(req);
 
-    const question = e ? await prisma.question.findFirst({
+    const question = q ? await prisma.question.findFirstOrThrow({
         where: await Resolver.question(q, t, e, c)
     }) : undefined;
 
-    const stats = question ?
-        before == now && after == Epoch ?
-            [ question.stats ] :
-            await questionStats(before, after, question.id) :
-        await prisma.course.stats({
-            before: before, after: after
-        });
+    const topic = t ? await prisma.topic.findUniqueOrThrow({
+        where: await Resolver.topic(t, c)
+    }) : undefined;
 
-    res.status(200).json(stats.reduce((c, d) => {
-        const a = c as QuestionStats;
-        const b = d as QuestionStats;
-        return {
-            count: a.count + b.count,
-            submissions: a.submissions + b.submissions,
-            submissionsCorrect: a.submissionsCorrect + b.submissionsCorrect,
-            timeSpent: a.timeSpent + b.timeSpent,
-            timeSpentVideo: a.timeSpentVideo + b.timeSpentVideo
-        };
-    }));
+    const exam = e ? await prisma.exam.findUniqueOrThrow({
+        where: await Resolver.exam(e, c)
+    }) : undefined;
+
+    const course = c ? await prisma.course.findUniqueOrThrow({
+        where: Resolver.course(c)
+    }) : undefined;
+
+    const stats = await questionStats({
+        ...options,
+        id: question?.id,
+        topicId: topic?.id,
+        examId: exam?.id,
+        courseId: course?.id
+    });
+
+    res.status(200).send(stats);
 }
 
 export async function getHourlySubmissionStats(req: Request, res: Response) {
     const { c } = req.params;
-    const now = new Date();
-    const before = req.query.before ? new Date(Number.parseInt(<string>req.query.before)) : now;
-    const after = req.query.after ? new Date(Number.parseInt(<string>req.query.before)) : addMonths(now, -6);
+    const { before, after } = parseBeforeAndAfter(req);
 
     const course = c ? await prisma.course.findUnique({
         where: Resolver.course(c)
@@ -202,6 +158,16 @@ export async function getHourlySubmissionStats(req: Request, res: Response) {
     const stats = await hourlySubmissionStats(before, after, course?.id);
 
     res.status(200).json(stats);
+}
+
+function parseBeforeAndAfter(req: Request) {
+    const now = new Date();
+    const before = req.query.before ? new Date(Number.parseInt(<string>req.query.before)) : now;
+    const after = req.query.after ? new Date(Number.parseInt(<string>req.query.before)) : Epoch;
+    return {
+        before: before,
+        after: after
+    };
 }
 
 function getDaysInMonth(year: number, month: number) {

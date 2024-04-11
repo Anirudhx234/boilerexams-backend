@@ -5,108 +5,109 @@ import { examStats } from "./examStats.js";
 import { questionStats } from "./questionStats.js";
 import { courseStats } from "./courseStats.js";
 import Scheduler from "../scheduler.js";
+import { topicStats } from "./topicStats.js";
 
 
 export function scheduleUpdateStats() {
-    const now = new Date(); // Current date and time
+    const date = new Date(); // Current date and time
     const second = 1000;
     const minute = 60 * second;
     const hour = 60 * minute;
-    const day = 24 * hour;
 
-    const targetTime = new Date(now);
-    targetTime.setHours(4, 0, 0, 0);
-
-    const difference = Math.abs(now.getTime() - targetTime.getTime());
-    const delay = Math.abs(day - difference);
-
-    // Schedule at 4am every day
-    Scheduler.schedule(updateStats, delay, hour);
+    if (date.getMinutes() === 0) { // Schedule every hour on the hour
+        Scheduler.schedule(updateStats, 0, hour);
+    } else {
+        date.setHours(date.getHours() + 1);
+        date.setMinutes(0);
+        date.setSeconds(0);
+        const difference = date.getTime() - new Date().getTime();
+        console.log(difference);
+        Scheduler.schedule(updateStats, difference, hour);
+    }
 }
-
-export const defaultAnswerChoiceStats = {
-    count: 0
-};
-
-export const defaultQuestionStats = {
-    count: 1,
-    submissions: 0,
-    submissionsCorrect: 0,
-    timeSpent: 0n,
-    timeSpentVideo: 0n
-};
-
-export const defaultExamStats = {
-    ...defaultQuestionStats,
-    questions: 0
-};
-
-export const defaultCourseStats = {
-    ...defaultExamStats,
-    exams: 0
-};
 
 async function updateStats() {
     const before = new Date();
     const after = Epoch;
-    const courses = await prisma.course.findMany({ select: { id: true } });
-    const exams = await prisma.exam.findMany({ select: { id: true } });
-    const questions = await prisma.question.findMany({ select: { id: true } });
-    const answerChoices = await prisma.answerChoice.findMany({ select:
-            { id: true, questionId: true, index: true }
-    });
+    const cStats = await courseStats({ before: before, after: after });
+    const eStats = await examStats({ before: before, after: after });
+    const tStats = await topicStats({ before: before, after: after });
+    const qStats = await questionStats({ before: before, after: after });
+    const acStats = await answerChoiceStats({ before: before, after: after });
 
     console.log(`Stats update started at ${Date.now()}`);
 
-    for (const course of courses) {
-        const stats = await courseStats(before, after, course.id);
-        const stat = stats[0];
+    for (const stat of cStats) {
         await prisma.course.update({
             where: {
-                id: course.id
+                id: stat.id
             },
             data: {
-                stats: stat ? stat as object : defaultCourseStats
+                stats: {
+                    ...stat,
+                    count: undefined,
+                    id: undefined,
+                } as object
             }
         });
     }
 
-    for (const exam of exams) {
-        const stats = await examStats(before, after, exam.id);
-        const stat = stats[0];
+    for (const stat of eStats) {
         await prisma.exam.update({
             where: {
-                id: exam.id
+                id: stat.id
             },
             data: {
-                stats: stat ? stat as object : defaultExamStats
+                stats: {
+                    ...stat,
+                    count: undefined,
+                    id: undefined,
+                } as object
             }
         });
     }
 
-    for (const question of questions) {
-        const stats = await questionStats(before, after, question.id);
-        const stat = stats[0];
+    for (const stat of tStats) {
+        await prisma.topic.update({
+            where: {
+                id: stat.id
+            },
+            data: {
+                stats: {
+                    ...stat,
+                    count: undefined,
+                    id: undefined,
+                } as object
+            }
+        });
+    }
+
+    for (const stat of qStats) {
         await prisma.question.update({
             where: {
-                id: question.id
+                id: stat.id
             },
             data: {
-                stats: stat ? stat as object : defaultQuestionStats
+                stats: {
+                    ...stat,
+                    count: undefined,
+                    id: undefined,
+                } as object
             }
         });
     }
 
-
-    for (const answerChoice of answerChoices) {
-        const stats = await answerChoiceStats(answerChoice.questionId, answerChoice.index);
-        const stat = stats[0];
+    for (const stat of acStats) {
         await prisma.answerChoice.update({
             where: {
-                id: answerChoice.id
+                id: stat.id
             },
             data: {
-                stats: stat ? stat as object : defaultAnswerChoiceStats
+                stats: {
+                    ...stat,
+                    id: undefined,
+                    index: undefined
+                }
             }
         });
     }
