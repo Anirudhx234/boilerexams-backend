@@ -199,7 +199,7 @@ export async function deleteTopic(req: Request, res: Response) {
     res.status(200).send(topic);
 }
 
-export function upsertAndDisconnectTopics(questionId: string, courseId: string, currentTopicIds: string[], topics?: z.infer<typeof UpsertTopic>[]) {
+export function upsertOrDisconnectTopics(questionId: string, courseId: string, currentTopicIds: string[], topics?: z.infer<typeof UpsertTopic>[]) {
     return {
         connectOrCreate: topics?.map(topic => {
             return {
@@ -237,5 +237,4 @@ export function upsertAndDisconnectTopics(questionId: string, courseId: string, 
             };
         }),
     };
-
 }
