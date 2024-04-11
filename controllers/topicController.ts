@@ -200,6 +200,8 @@ export async function deleteTopic(req: Request, res: Response) {
 }
 
 export function upsertOrDisconnectTopics(questionId: string, courseId: string, currentTopicIds: string[], topics?: z.infer<typeof UpsertTopic>[]) {
+    const newTopicIds = topics?.map(topic => topic.id);
+
     return {
         connectOrCreate: topics?.map(topic => {
             return {
@@ -225,15 +227,9 @@ export function upsertOrDisconnectTopics(questionId: string, courseId: string, c
                 }
             };
         }),
-        disconnect: currentTopicIds.map(id => {
+        deleteMany: currentTopicIds.filter(id => !newTopicIds?.includes(id)).map(id => {
             return {
-                questionId_topicId: {
-                    questionId: questionId,
-                    topicId: id,
-                },
-                topicId: {
-                    notIn: topics?.map(topic => topic.id)
-                }
+                topicId: id
             };
         }),
     };
