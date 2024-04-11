@@ -6,15 +6,11 @@ export async function submissionStats(options: SubmissionStatsOptions): Promise<
     return await prisma.$queryRaw`
         SELECT 
                1::INTEGER AS "count",
-               s.id as "id",
+               s.id::VARCHAR as "id",
                SUM(s."timeSpent")::BIGINT AS "timeSpent",
                SUM(s."timeSpentVideo")::BIGINT AS "timeSpentVideo",
                COUNT(s.id)::INTEGER AS "submissions",
-               SUM(CASE
-                       WHEN s.correct = TRUE
-                           THEN 1
-                       ELSE 0
-                   END)::INTEGER AS "submissionsCorrect"
+               SUM(CASE WHEN s.correct = TRUE THEN 1 ELSE 0 END)::INTEGER AS "submissionsCorrect"
         FROM "Submission" s
         WHERE (
             s.id = ${options.id}

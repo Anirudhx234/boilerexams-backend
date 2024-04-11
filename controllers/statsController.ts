@@ -10,38 +10,38 @@ import { topicStats } from "../helpers/stats/topicStats.js";
 import { hourlySubmissionStats } from "../helpers/stats/submissionStats.js";
 
 export const AnswerChoiceStats = z.object({
-    id:     z.string().uuid(),
-    index:  z.coerce.number().int(),
-    count:  z.coerce.number().default(0),
+    id:     z.string().uuid().optional(),
+    index:  z.number().int().optional(),
+    count:  z.number().default(0),
 });
 
 export const SubmissionStats = z.object({
     id:             z.string().uuid().optional(),
-    count:          z.coerce.number().default(1),
+    count:          z.number().default(1),
     timeSpent:      z.coerce.bigint().default(0n),
     timeSpentVideo: z.coerce.bigint().default(0n),
 });
 
 export const QuestionStats = SubmissionStats.extend({
-    submissions:        z.coerce.number().default(0),
-    submissionsCorrect: z.coerce.number().default(0),
+    submissions:        z.number().default(0),
+    submissionsCorrect: z.number().default(0),
 });
 
 export const ExamStats = QuestionStats.extend({
-    questions:  z.coerce.number().default(0),
+    questions:  z.number().default(0),
 });
 
 export const TopicStats = QuestionStats.extend({
-    questions:  z.coerce.number().default(0)
+    questions:  z.number().default(0)
 });
 
 export const CourseStats = ExamStats.extend({
-   exams:   z.coerce.number().default(0),
+   exams:   z.number().default(0),
 });
 
 export const HourlyStats = z.object({
-    x:  z.coerce.number(),
-    y:  z.coerce.number(),
+    x:  z.number(),
+    y:  z.number(),
 });
 
 export async function generalStats(req: Request, res: Response) {

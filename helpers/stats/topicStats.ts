@@ -5,29 +5,16 @@ import { TopicStats } from "../../controllers/statsController.js";
 export async function topicStats(options: TopicStatsOptions): Promise<z.infer<typeof TopicStats>[]> {
     return await prisma.$queryRaw`
         SELECT
-            1 AS "count",
-            t.id as "id",
-               (
-                   SELECT COUNT(*)
-                   FROM "QuestionToTopic" qtt
-                   WHERE qtt."topicId" = t.id
-               ) AS "questions",
-               SUM(CASE
-                       WHEN s."timeSpent" BETWEEN 0 AND 36000000
-                           THEN s."timeSpent"
-                       ELSE 0
-                   END)::BIGINT AS "timeSpent",
-               SUM(CASE
-                       WHEN s."timeSpentVideo" BETWEEN 0 AND 36000000
-                           THEN s."timeSpentVideo"
-                       ELSE 0
-                   END)::BIGINT AS "timeSpentVideo",
-               COUNT(s.id) AS "submissions",
-               SUM(CASE
-                       WHEN s.correct = TRUE
-                           THEN 1
-                       ELSE 0
-                   END) AS "submissionsCorrect"
+            1::INTEGER AS "count",
+            t.id::VARCHAR as "id",
+               (SELECT COUNT(*) FROM "QuestionToTopic" qtt WHERE qtt."topicId" = t.id
+               )::INTEGER AS "questions",
+               SUM(CASE WHEN s."timeSpent" BETWEEN 0 AND 36000000 THEN s."timeSpent" ELSE 0 END)::BIGINT 
+                   AS "timeSpent",
+               SUM(CASE WHEN s."timeSpentVideo" BETWEEN 0 AND 36000000 THEN s."timeSpentVideo" ELSE 0 END)::BIGINT 
+                   AS "timeSpentVideo",
+               COUNT(s.id)::INTEGER AS "submissions",
+               SUM(CASE WHEN s.correct = TRUE THEN 1 ELSE 0 END)::INTEGER AS "submissionsCorrect"
         FROM "Topic" t
                  JOIN "QuestionToTopic" qt ON t.id = qt."topicId"
                  JOIN "Question" q ON qt."questionId" = q.id

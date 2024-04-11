@@ -4,8 +4,8 @@ import { CourseStats } from "../../controllers/statsController.js";
 
 export async function courseStats(options: CourseStatsOptions): Promise<z.infer<typeof CourseStats>[]> {
     return await prisma.$queryRaw`
-        SELECT c.id as "id",
-               1 AS "count",
+        SELECT c.id::VARCHAR as "id",
+               1::INTEGER AS "count",
                (SELECT COUNT(*)::INTEGER FROM "Question" q 
                 WHERE q."courseId" = c.id AND q."parentId" IS NULL AND q.flags & 1 = 1)::INTEGER 
                    AS "questions",

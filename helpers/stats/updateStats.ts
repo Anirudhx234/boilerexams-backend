@@ -6,6 +6,13 @@ import { questionStats } from "./questionStats.js";
 import { courseStats } from "./courseStats.js";
 import Scheduler from "../scheduler.js";
 import { topicStats } from "./topicStats.js";
+import {
+    AnswerChoiceStats,
+    CourseStats,
+    ExamStats,
+    QuestionStats,
+    TopicStats
+} from "../../controllers/statsController.js";
 
 
 export function scheduleUpdateStats() {
@@ -14,7 +21,8 @@ export function scheduleUpdateStats() {
     const minute = 60 * second;
     const hour = 60 * minute;
 
-    if (date.getMinutes() === 0) { // Schedule every hour on the hour
+    if (true) {
+    //if (date.getMinutes() === 0) { // Schedule every hour on the hour
         Scheduler.schedule(updateStats, 0, hour);
     } else {
         date.setHours(date.getHours() + 1);
@@ -44,7 +52,7 @@ async function updateStats() {
             },
             data: {
                 stats: {
-                    ...stat,
+                    ...CourseStats.parse(stat),
                     count: undefined,
                     id: undefined,
                 } as object
@@ -59,7 +67,7 @@ async function updateStats() {
             },
             data: {
                 stats: {
-                    ...stat,
+                    ...ExamStats.parse(stat),
                     count: undefined,
                     id: undefined,
                 } as object
@@ -74,7 +82,7 @@ async function updateStats() {
             },
             data: {
                 stats: {
-                    ...stat,
+                    ...TopicStats.parse(stat),
                     count: undefined,
                     id: undefined,
                 } as object
@@ -89,7 +97,7 @@ async function updateStats() {
             },
             data: {
                 stats: {
-                    ...stat,
+                    ...QuestionStats.parse(stat),
                     count: undefined,
                     id: undefined,
                 } as object
@@ -104,7 +112,7 @@ async function updateStats() {
             },
             data: {
                 stats: {
-                    ...stat,
+                    ...AnswerChoiceStats.parse(stat),
                     id: undefined,
                     index: undefined
                 }

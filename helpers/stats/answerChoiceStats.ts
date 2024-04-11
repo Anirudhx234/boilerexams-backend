@@ -5,9 +5,9 @@ import { AnswerChoiceStats } from "../../controllers/statsController.js";
 export async function answerChoiceStats(options: AnswerChoiceStatsOptions): Promise<z.infer<typeof AnswerChoiceStats>[]> {
     return await prisma.$queryRaw`
         SELECT
-            COUNT(*) as count,
-            ac.id as "id",
-            ac.index as "index"
+            COUNT(*)::INTEGER as count,
+            ac.id::VARCHAR as "id",
+            ac.index::INTEGER as "index"
         FROM "AnswerChoice" ac
                  JOIN "Submission" S on ac."questionId" = S."questionId"
         WHERE "userSolution" IS NOT NULL
