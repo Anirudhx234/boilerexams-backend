@@ -1,6 +1,9 @@
 interface CourseStatsOptions {
     before: Date,
     after:  Date,
+    sort:  string,
+    skip:   number,
+    limit?:  number,
     id?:    string
 }
 

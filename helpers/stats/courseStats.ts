@@ -3,7 +3,8 @@ import { z } from "zod";
 import { CourseStats } from "../../controllers/statsController.js";
 
 export async function courseStats(options: CourseStatsOptions): Promise<z.infer<typeof CourseStats>[]> {
-    return await prisma.$queryRaw`
+    // Construct the query string with placeholders for order, skip, and limit
+    return prisma.$queryRaw`
         SELECT c.id::VARCHAR as "id",
                1::INTEGER AS "count",
                (SELECT COUNT(*)::INTEGER FROM "Question" q 
@@ -25,6 +26,6 @@ export async function courseStats(options: CourseStatsOptions): Promise<z.infer<
           AND q.flags & 1 = 1 
           AND (${!options.id} = ${ true} OR c.id = ${ options.id})
           AND (s."timeStarted" BETWEEN SYMMETRIC ${ options.after} AND ${ options.before})
-        GROUP BY c.id;
+        GROUP BY c.id
     `;
 }

@@ -66,7 +66,6 @@ export const CreateQuestion = z.object({
 export const UpdateQuestion = z.object({
     type:           z.nativeEnum(QuestionType).optional(),
     data:           QuestionData.optional(),
-    number:         z.number().min(1).optional(),
     flags:          QuestionFlags.optional(),
     topics:         z.array(UpsertTopic).optional(),
     resources:      z.array(UpsertResource).optional(),
@@ -203,6 +202,7 @@ export async function updateQuestion(req: Request, res: Response) {
         },
         data: {
             ...options,
+            number: undefined, // Block update to question number
             flags: options.flags ? FlagEncoder.question(options.flags) : options.flags,
             topics: upsertTopics(question.id, question.courseId, options.topics),
             resources: upsertResources(options.resources),
@@ -302,7 +302,6 @@ export async function deleteQuestion(req: Request, res: Response) {
 
     res.status(200).send(question);
 }
-
 
 export async function deleteAnswerChoice(req: Request, res: Response) {
     const { answerChoiceId } = req.params;

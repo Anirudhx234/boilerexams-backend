@@ -9,7 +9,7 @@ import FlagEncoder from "../helpers/encoder.js";
 import Formatter from "../helpers/formatter.js";
 import { z } from "zod";
 import { FullQuestion, PartialQuestion } from "./questionController.js";
-import { QuestionType, Season } from "@prisma/client";
+import { Season } from "@prisma/client";
 import { UpsertResource, upsertResources } from "./resourceController.js";
 
 export const ExamFlags = z.object({
@@ -237,7 +237,8 @@ export async function reorderExamQuestions(req: Request, res: Response) {
             },
             data: {
                 number: options.indexOf(question.id) + 1
-            }
+            },
+            select: PartialQuestion
         });
     }));
 

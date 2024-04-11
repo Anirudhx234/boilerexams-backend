@@ -3,7 +3,7 @@ import { z } from "zod";
 import { ExamStats } from "../../controllers/statsController.js";
 
 export async function examStats(options: ExamStatsOptions): Promise<z.infer<typeof ExamStats>[]> {
-    return await prisma.$queryRaw`
+    return prisma.$queryRaw`
         SELECT
             1::INTEGER AS "count",
             e.id::VARCHAR as "id",

@@ -8,6 +8,8 @@ import { examStats } from "../helpers/stats/examStats.js";
 import { questionStats } from "../helpers/stats/questionStats.js";
 import { topicStats } from "../helpers/stats/topicStats.js";
 import { hourlySubmissionStats } from "../helpers/stats/submissionStats.js";
+import { APIError } from "../middleware/errors/index.js";
+import { orderBy } from "lodash";
 
 export const AnswerChoiceStats = z.object({
     id:     z.string().uuid().optional(),
@@ -46,7 +48,7 @@ export const HourlyStats = z.object({
 });
 
 export async function generalStats(req: Request, res: Response) {
-    const options = parseBeforeAndAfter(req);
+    const options = parseOptions(req);
     const stats = await courseStats(options);
 
     const combinedStats = stats?.reduce((a, b) => {
@@ -75,19 +77,19 @@ export async function generalStats(req: Request, res: Response) {
 
 export async function getCourseStats(req: Request, res: Response) {
     const { c } = req.params;
-    const options = parseBeforeAndAfter(req);
+    const options = parseOptions(req);
 
     const course = c ? await prisma.course.findUniqueOrThrow({
         where: Resolver.course(c)
     }) : undefined;
 
     const stats = await courseStats({ ...options, id: course?.id });
-    res.status(200).json(stats);
+    res.status(200).json(formatStats(stats, options.sort, options.skip, options.limit));
 }
 
 export async function getExamStats(req: Request, res: Response) {
     const { e, c } = req.params;
-    const options = parseBeforeAndAfter(req);
+    const options = parseOptions(req);
 
     const exam = e ? await prisma.exam.findUniqueOrThrow({
         where: await Resolver.exam(e, c)
@@ -98,12 +100,13 @@ export async function getExamStats(req: Request, res: Response) {
     }) : undefined;
 
     const stats = await examStats({ ...options, id: exam?.id, courseId: course?.id });
-    res.status(200).json(stats);
+
+    res.status(200).json(formatStats(stats, options.sort, options.skip, options.limit));
 }
 
 export async function getTopicStats(req: Request, res: Response) {
     const { t, c } = req.params;
-    const options = parseBeforeAndAfter(req);
+    const options = parseOptions(req);
 
     const topic = t ? await prisma.topic.findUniqueOrThrow({
         where: await Resolver.topic(t, c)
@@ -114,12 +117,12 @@ export async function getTopicStats(req: Request, res: Response) {
     }) : undefined;
 
     const stats = await topicStats({ ...options, id: topic?.id, courseId: course?.id });
-    res.status(200).send(stats);
+    res.status(200).json(formatStats(stats, options.sort, options.skip, options.limit));
 }
 
 export async function getQuestionStats(req: Request, res: Response) {
     const { q, t, e, c } = req.params;
-    const options = parseBeforeAndAfter(req);
+    const options = parseOptions(req);
 
     const question = q ? await prisma.question.findFirstOrThrow({
         where: await Resolver.question(q, t, e, c)
@@ -145,12 +148,12 @@ export async function getQuestionStats(req: Request, res: Response) {
         courseId: course?.id
     });
 
-    res.status(200).send(stats);
+    res.status(200).json(formatStats(stats, options.sort, options.skip, options.limit));
 }
 
 export async function getHourlySubmissionStats(req: Request, res: Response) {
     const { c } = req.params;
-    const { before, after } = parseBeforeAndAfter(req);
+    const { before, after } = parseOptions(req);
 
     const course = c ? await prisma.course.findUnique({
         where: Resolver.course(c)
@@ -161,13 +164,38 @@ export async function getHourlySubmissionStats(req: Request, res: Response) {
     res.status(200).json(stats);
 }
 
-function parseBeforeAndAfter(req: Request) {
+function formatStats(stats: { submissions: number, submissionsCorrect: number }[], order: string, skip: number, limit?: number) {
+    return stats
+        .sort((a, b) => {
+            const ratioA = a.submissions > 0 ? a.submissionsCorrect / a.submissions : 0;
+            const ratioB = b.submissions > 0 ? b.submissionsCorrect / b.submissions : 0;
+            if (order === "asc") {
+                return ratioA - ratioB; // Sort in ascending order of ratios
+            } else {
+                return ratioB - ratioA; // Sort in descending order of ratios
+            }
+        })
+        .slice(skip)
+        .slice(0, limit);
+}
+
+function parseOptions(req: Request) {
     const now = new Date();
     const before = req.query.before ? new Date(Number.parseInt(<string>req.query.before)) : now;
     const after = req.query.after ? new Date(Number.parseInt(<string>req.query.before)) : Epoch;
+    const sort = req.query.sort ? <string>req.query.sort : "asc";
+    const limit = req.query.limit ? Number.parseInt(<string>req.query.limit) : undefined;
+    const skip = req.query.skip ? Number.parseInt(<string>req.query.skip) : 0;
+
+    if (sort != "asc" && sort != "desc")
+        throw new APIError("Invalid Query Param Order must be \"asc\", \"desc\" or undefined", 400);
+
     return {
         before: before,
-        after: after
+        after: after,
+        sort: sort,
+        limit: limit,
+        skip: skip
     };
 }
 

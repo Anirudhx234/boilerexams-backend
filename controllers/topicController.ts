@@ -156,7 +156,8 @@ export async function reorderTopicQuestions(req: Request, res: Response) {
             },
             data: {
                 number: options.indexOf(relation.questionId) + 1
-            }
+            },
+            select: PartialQuestion
         });
     }));
 

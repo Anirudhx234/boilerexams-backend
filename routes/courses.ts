@@ -13,7 +13,7 @@ import {
     updateExam
 } from "../controllers/examController.js";
 import { createQuestion, getQuestion, updateQuestion } from "../controllers/questionController.js";
-import { createTopic, getTopic, getTopicQuestions } from "../controllers/topicController.js";
+import { createTopic, getTopic, getTopicQuestions, reorderTopicQuestions } from "../controllers/topicController.js";
 import { Role } from "@prisma/client";
 import asyncWrapper from "../middleware/wrappers/asyncWrapper.js";
 import authHandler from "../middleware/auth/authHandler.js";
@@ -70,7 +70,7 @@ router.post("/:c/exams/:e/reorderQuestions", authHandler(Role.CONTENT), asyncWra
 
 router.post("/:c/exams/:e/questions", authHandler(Role.CONTENT), asyncWrapper(createQuestion));
 
-router.post("/:c/topics/:t/reorderQuestions", authHandler(Role.CONTENT), asyncWrapper(createTopic));
+router.post("/:c/topics/:t/reorderQuestions", authHandler(Role.CONTENT), asyncWrapper(reorderTopicQuestions));
 
 router.delete("/:c", authHandler(Role.CONTENT), asyncWrapper(deleteCourse));
 

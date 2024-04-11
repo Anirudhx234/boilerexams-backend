@@ -34,12 +34,12 @@ export function scheduleUpdateStats() {
 
 async function updateStats() {
     const before = new Date();
-    const after = Epoch;
-    const cStats = await courseStats({ before: before, after: after });
-    const eStats = await examStats({ before: before, after: after });
-    const tStats = await topicStats({ before: before, after: after });
-    const qStats = await questionStats({ before: before, after: after });
-    const acStats = await answerChoiceStats({ before: before, after: after });
+    const options = { before: before, after: Epoch, order: "asc", skip: 0 };
+    const cStats = await courseStats(options);
+    const eStats = await examStats(options);
+    const tStats = await topicStats(options);
+    const qStats = await questionStats(options);
+    const acStats = await answerChoiceStats(options);
 
     console.log(`Stats update started at ${Date.now()}`);
 
