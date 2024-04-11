@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { QuestionType,  } from "@prisma/client";
 import { upsertResources, UpsertResource, connectOrCreateResources } from "./resourceController.js";
-import { upsertTopics, UpsertTopic } from "./topicController.js";
+import { upsertAndDisconnectTopics, UpsertTopic } from "./topicController.js";
 import { APIError, NotFoundError } from "../middleware/errors/index.js";
 import { Request, Response } from "express";
 import FlagEncoder from "../helpers/encoder.js";
@@ -194,6 +194,13 @@ export async function updateQuestion(req: Request, res: Response) {
 
     const question = await prisma.question.findFirstOrThrow({
         where: await Resolver.question(q, t, e, c),
+        include: {
+            topics: {
+                include: {
+                    topic: true
+                }
+            }
+        }
     });
 
     const updatedQuestion = await prisma.question.update({
@@ -204,7 +211,7 @@ export async function updateQuestion(req: Request, res: Response) {
             ...options,
             number: undefined, // Block update to question number
             flags: options.flags ? FlagEncoder.question(options.flags) : options.flags,
-            topics: upsertTopics(question.id, question.courseId, options.topics),
+            topics: upsertAndDisconnectTopics(question.id, question.courseId, question.topics.map(topic => topic.topicId), options.topics),
             resources: upsertResources(options.resources),
             answerChoices: upsertAnswerChoices(options.answerChoices),
             explanation: upsertExplanation(options.explanation)

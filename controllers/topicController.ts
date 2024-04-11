@@ -7,6 +7,7 @@ import Resolver from "../helpers/resolver.js";
 import prisma from "../prisma/prisma.js";
 import { FullQuestion, PartialQuestion } from "./questionController.js";
 import { randomUUID } from "node:crypto";
+import { Topic } from "@prisma/client";
 
 export const UpsertTopic = z.object({
     id:             z.string().uuid().default(randomUUID),
@@ -198,7 +199,7 @@ export async function deleteTopic(req: Request, res: Response) {
     res.status(200).send(topic);
 }
 
-export function upsertTopics(questionId: string, courseId: string, topics?: z.infer<typeof UpsertTopic>[]) {
+export function upsertAndDisconnectTopics(questionId: string, courseId: string, currentTopicIds: string[], topics?: z.infer<typeof UpsertTopic>[]) {
     return {
         connectOrCreate: topics?.map(topic => {
             return {
@@ -223,7 +224,18 @@ export function upsertTopics(questionId: string, courseId: string, topics?: z.in
                     }
                 }
             };
-        })
+        }),
+        disconnect: currentTopicIds.map(id => {
+            return {
+                questionId_topicId: {
+                    questionId: questionId,
+                    topicId: id,
+                },
+                topicId: {
+                    notIn: topics?.map(topic => topic.id)
+                }
+            };
+        }),
     };
 
 }
