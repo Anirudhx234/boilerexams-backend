@@ -21,8 +21,7 @@ export function scheduleUpdateStats() {
     const minute = 60 * second;
     const hour = 60 * minute;
 
-    if (true) {
-    //if (date.getMinutes() === 0) { // Schedule every hour on the hour
+    if (date.getMinutes() === 0) { // Schedule every hour on the hour
         Scheduler.schedule(updateStats, 0, hour);
     } else {
         date.setHours(date.getHours() + 1);
