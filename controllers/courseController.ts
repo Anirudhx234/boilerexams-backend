@@ -243,7 +243,7 @@ export async function getCourseTopicsByExam(req: Request, res: Response) {
 	            left join "Exam" as "e" on "e"."id" = "q"."examId"
 	        where 
                 "q"."courseId" = '${course.id}' 
-                and ("e"."flags" & 1 = 1 or ${req.sendUnpublished ? "true" : "false"})
+                and ("e"."flags" & 1 = 1 or ${req.sendUnpublished})
 	        group by "e"."number", "t"."name"
 	        order by "e"."number", "t"."name";
         `;
