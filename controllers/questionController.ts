@@ -49,7 +49,7 @@ export const UpsertAnswerChoice = z.object({
 
 export const UpsertExplanation = z.object({
     id:         z.string().uuid().default(randomUUID),
-    body:       z.string().optional(),
+    body:       z.string().optional().nullable(),
     resources:  z.array(UpsertResource).optional()
 });
 
