@@ -3,7 +3,6 @@ import { deleteFileFromS3 } from "../utils/uploadFileToS3.js";
 import { PrismaClient } from "@prisma/client";
 import { UrlResourceData } from "../controllers/resourceController.js";
 import FlagDecoder from "../helpers/decoder.js";
-import Color from "color";
 
 const prisma = new PrismaClient();
 
@@ -68,13 +67,26 @@ export default prisma
                     needs: { color: true },
                     compute(course) {
                         if (!course.color) return;
-                        const color = Color(course.color);
+                        const color = course.color;
+                        const decimal = 1.25;
 
-                        if (color.isLight()) {
-                            return color.darken(0.5).hex();
-                        } else {
-                            return color.lighten(0.5).hex();
-                        }
+                        let r = parseInt(color.substring(1, 3), 16);
+                        let g = parseInt(color.substring(3, 5), 16);
+                        let b = parseInt(color.substring(5, 7), 16);
+
+                        r = Math.round(r / decimal);
+                        g = Math.round(g / decimal);
+                        b = Math.round(b / decimal);
+
+                        r = r < 255 ? r : 255;
+                        g = g < 255 ? g : 255;
+                        b = b < 255 ? b : 255;
+
+                        const rr = r.toString(16).length === 1 ? `0${r.toString(16)}` : r.toString(16);
+                        const gg = g.toString(16).length === 1 ? `0${g.toString(16)}` : g.toString(16);
+                        const bb = b.toString(16).length === 1 ? `0${b.toString(16)}` : b.toString(16);
+
+                        return `#${rr}${gg}${bb}`;
                     },
                 },
                 stats: {
