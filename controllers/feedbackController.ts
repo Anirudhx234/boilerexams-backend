@@ -30,7 +30,7 @@ export const VideoFeedbackData = z.object({
     content:            z.string().optional()
 });
 
-export const BaseFeedbackScheme = z.object({
+export const FeedbackOptions = z.object({
     id:         z.string().uuid().default(randomUUID),
     type:       z.nativeEnum(FeedbackType),
     status:     z.nativeEnum(FeedbackStatus).default(FeedbackStatus.OPEN),
@@ -39,33 +39,33 @@ export const BaseFeedbackScheme = z.object({
     questionId: z.string().uuid().optional(),
 });
 
-export const BugReportScheme = BaseFeedbackScheme.extend({
+export const BugReportOptions = FeedbackOptions.extend({
     type:   z.literal(FeedbackType.BUG_REPORT),
     data:   BugReportData
 });
 
-export const QuestionReportScheme = BaseFeedbackScheme.extend({
+export const QuestionReportOptions = FeedbackOptions.extend({
     type:   z.literal(FeedbackType.QUESTION_REPORT),
     data:   QuestionReportData
 });
 
-export const FeatureRequestScheme = BaseFeedbackScheme.extend({
+export const FeatureRequestOptions = FeedbackOptions.extend({
     type:   z.literal(FeedbackType.FEATURE_REQUEST),
     data:   FeatureRequestData
 });
 
-export const VideoFeedbackScheme = BaseFeedbackScheme.extend({
+export const VideoFeedbackOptions = FeedbackOptions.extend({
     type:   z.literal(FeedbackType.VIDEO_FEEDBACK),
     data:   VideoFeedbackData
 });
 
-export const CourseRequestScheme = BaseFeedbackScheme.extend({
+export const CourseRequestOptions = FeedbackOptions.extend({
     abbreviation:   z.string().toUpperCase(),
     number:         z.number().min(100).max(99999)
 });
 
 
-export async function getAllVideoFeedback(req: Request, res: Response) {
+export async function getVideoFeedback(req: Request, res: Response) {
     const videoFeedback = await prisma.feedback.findMany({
         where: {
             type: FeedbackType.VIDEO_FEEDBACK
@@ -205,7 +205,7 @@ export async function createApplication(req: Request, res: Response) {
 }
 
 export async function requestCourse(req: Request, res: Response) {
-    const options = CourseRequestScheme.parse(req.body);
+    const options = CourseRequestOptions.parse(req.body);
     options.number = options.number < 100 ? options.number * 100 : options.number;
 
     const existingCourse = await prisma.course.findUniqueOrThrow({

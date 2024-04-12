@@ -1,6 +1,6 @@
 import {
     createApplication,
-    createVideoFeedback, deleteFeedback, getAllCourseRequests, getAllVideoFeedback,
+    createVideoFeedback, deleteFeedback, getAllCourseRequests, getVideoFeedback,
     getFeedback,
     getVideoFeedbackByCourse,
     getVideoFeedbackByExam,
@@ -13,7 +13,7 @@ import asyncWrapper from "../middleware/wrappers/asyncWrapper.js";
 import upload from "../middleware/multer/file.js";
 import express from "express";
 import authHandler from "../middleware/auth/authHandler.js";
-import {Role} from "@prisma/client";
+import { Role } from "@prisma/client";
 
 const router = express.Router();
 
@@ -25,7 +25,7 @@ router.get("/video-feedback/courses/:c", authHandler(Role.CONTENT), asyncWrapper
 
 router.get("/video-feedback/exams/:e", authHandler(Role.CONTENT), asyncWrapper(getVideoFeedbackByExam));
 
-router.get("/video-feedback/", authHandler(Role.CONTENT), asyncWrapper(getAllVideoFeedback));
+router.get("/video-feedback/", authHandler(Role.CONTENT), asyncWrapper(getVideoFeedback));
 
 router.get("/course-requests", authHandler(Role.CONTENT), asyncWrapper(getAllCourseRequests));
 

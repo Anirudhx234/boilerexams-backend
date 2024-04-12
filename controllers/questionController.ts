@@ -84,6 +84,9 @@ export const FullQuestion = {
     answerChoices: {
         include: {
             resources: true
+        },
+        orderBy: {
+            index: "asc" as const
         }
     },
     topics: {
@@ -103,6 +106,9 @@ export const FullQuestion = {
             answerChoices: {
                 include: {
                     resources: true
+                },
+                orderBy: {
+                    index: "asc" as const
                 }
             },
             topics: {
