@@ -1,8 +1,9 @@
-import { PrismaClient } from "@prisma/client";
-import FlagDecoder from "../helpers/decoder.js";
-import { UrlResourceData } from "../controllers/resourceController.js";
-import { deleteFileFromS3 } from "../utils/uploadFileToS3.js";
 import { AnswerChoiceStats, CourseStats, ExamStats, QuestionStats, TopicStats } from "../controllers/statsController.js";
+import { deleteFileFromS3 } from "../utils/uploadFileToS3.js";
+import { PrismaClient } from "@prisma/client";
+import { UrlResourceData } from "../controllers/resourceController.js";
+import FlagDecoder from "../helpers/decoder.js";
+import Color from "color";
 
 const prisma = new PrismaClient();
 
@@ -67,20 +68,13 @@ export default prisma
                     needs: { color: true },
                     compute(course) {
                         if (!course.color) return;
+                        const color = Color(course.color);
 
-                        const color = course.color.slice(1);
-
-                        const r = parseInt(color.substring(0, 2), 16);
-                        const g = parseInt(color.substring(2, 4), 16);
-                        const b = parseInt(color.substring(4, 6), 16);
-
-                        const lightnessFactor = 30; // Increase this value for lighter colors
-                        const newR = Math.min(255, r + lightnessFactor);
-                        const newG = Math.min(255, g + lightnessFactor);
-                        const newB = Math.min(255, b + lightnessFactor);
-
-                        // Convert back to hex
-                        return `#${((1 << 24) + (newR << 16) + (newG << 8) + newB).toString(16).slice(1)}`;
+                        if (color.isLight()) {
+                            return color.darken(0.5).hex();
+                        } else {
+                            return color.lighten(0.5).hex();
+                        }
                     },
                 },
                 stats: {

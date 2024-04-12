@@ -291,4 +291,5 @@ enum StudyMode {
 enum FeedbackStatus {
   OPEN
   CLOSED
+  DELETED
 }
