@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { QuestionType,  } from "@prisma/client";
-import { upsertResources, UpsertResource, connectOrCreateResources } from "./resourceController.js";
+import { QuestionType } from "@prisma/client";
+import { connectOrCreateResources, UpsertResource, upsertResources } from "./resourceController.js";
 import { upsertOrDisconnectTopics, UpsertTopic } from "./topicController.js";
 import { APIError, NotFoundError } from "../middleware/errors/index.js";
 import { Request, Response } from "express";
@@ -137,21 +137,13 @@ export async function createQuestion(req: Request, res: Response) {
 
     const question = await prisma.$transaction(async (prisma) => {
         // 1. Insert the new question
-        const question = await prisma.question.create({
-            data: {
-                ...options,
-                flags: FlagEncoder.question(options.flags),
-            },
-            include: FullQuestion
-        });
-
         // 2. Update existing questions
         await prisma.question.updateMany({
             where: {
-                examId: question.examId,
-                parentId: question.parentId,
+                examId: options.examId,
+                parentId: options.parentId,
                 number: {
-                    gte: question.number
+                    gte: options.number
                 }
             },
             data: {
@@ -161,7 +153,18 @@ export async function createQuestion(req: Request, res: Response) {
             }
         });
 
-        return question;
+        return await prisma.question.create({
+            data: {
+                ...options,
+                flags: FlagEncoder.question(options.flags),
+                explanation: {
+                    create: {
+
+                    }
+                }
+            },
+            include: FullQuestion
+        });
     });
 
     res.status(200).send(Formatter.question({

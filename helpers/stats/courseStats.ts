@@ -3,7 +3,6 @@ import { z } from "zod";
 import { CourseStats } from "../../controllers/statsController.js";
 
 export async function courseStats(options: CourseStatsOptions): Promise<z.infer<typeof CourseStats>[]> {
-    // Construct the query string with placeholders for order, skip, and limit
     return prisma.$queryRaw`
         SELECT c.id::VARCHAR as "id",
                1::INTEGER AS "count",

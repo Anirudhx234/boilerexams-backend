@@ -1,16 +1,14 @@
-import prisma from "../prisma/prisma.js";
-import Resolver from "../helpers/resolver.js";
-import { Request, Response } from "express";
 import { APIError, NotFoundError } from "../middleware/errors/index.js";
-import {
-    ReorderQuestions,
-} from "../prisma/schema.js";
+import { FullQuestion, PartialQuestion } from "./questionController.js";
+import { Request, Response } from "express";
+import { UpsertResource, upsertResources } from "./resourceController.js";
+import { ReorderQuestions } from "../prisma/schema.js";
+import { Season } from "@prisma/client";
+import { z } from "zod";
 import FlagEncoder from "../helpers/encoder.js";
 import Formatter from "../helpers/formatter.js";
-import { z } from "zod";
-import { FullQuestion, PartialQuestion } from "./questionController.js";
-import { Season } from "@prisma/client";
-import { UpsertResource, upsertResources } from "./resourceController.js";
+import prisma from "../prisma/prisma.js";
+import Resolver from "../helpers/resolver.js";
 
 export const ExamFlags = z.object({
     published:  z.boolean().default(false),
