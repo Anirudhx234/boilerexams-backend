@@ -4,6 +4,11 @@ import { Request, Response } from "express";
 import { APIError, NotFoundError } from "../middleware/errors/index.js";
 import { z } from "zod";
 
+export const UpdateUserSchema = z.object({
+    userId: z.string(),
+    role: z.nativeEnum(Role),
+})
+
 export const AssignCourseOptions = z.array(z.string().uuid());
 
 export async function getMe(req: Request, res: Response) {
@@ -49,18 +54,14 @@ export async function getAllUsers(req: Request, res: Response) {
 }
 
 export async function updateUserRole(req: Request, res: Response) {
-    const { userId } = req.params;
-    const { role } = req.body;
+    const { userId, role } = UpdateUserSchema.parse({...req.params, ...req.body});
 
-    if (!role || typeof role !== "string" || !Role[role.toUpperCase() as keyof typeof Role]) {
-        throw new Error("Role must be USER, CONTENT, or ADMIN");
-    }
     const user = await prisma.user.update({
         where: {
             id: userId,
         },
         data: {
-            role: Role[role.toUpperCase() as keyof typeof Role],
+            role: role,
         },
         include: {
             courses: true,
@@ -69,6 +70,7 @@ export async function updateUserRole(req: Request, res: Response) {
     if (!user) {
         throw new NotFoundError("User not found");
     }
+
     res.status(200).send(user);
 }
 
@@ -76,7 +78,7 @@ export async function assignUserCourses(req: Request, res: Response) {
     const { userId } = req.params;
     const options = AssignCourseOptions.parse(req.body);
 
-    const validRoles = [ Role.CONTENT, Role.PROFESSOR, Role.ADMIN ];
+    const validRoles = [Role.CONTENT, Role.PROFESSOR, Role.ADMIN];
 
     const user = await prisma.user.update({
         where: {

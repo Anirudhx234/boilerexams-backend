@@ -8,6 +8,23 @@ import { AccountType } from "@prisma/client";
 import hashString from "../../utils/hashString.js";
 import sendEmail from "../../utils/sendMail.js";
 import resetPasswordTemplate from "../../utils/emailTemplates/resetPassword.js";
+import { z } from "zod";
+
+export const NewUserSchema = z.object({
+    name: z.string(),
+    email: z.string().email({ message: "Invalid email" }),
+    password: z.string().regex(/^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$/,
+        { message: `Password must contain at least 8 characters consisting of at least 1 uppercase letter, 1 lowercase letter, 1 number, and 1 special character` })
+});
+
+export const ChangePasswordSchema = z.object({
+    id: z.string(),
+    d: z.string(),
+    h: z.string(),
+    newPassword: z.string().regex(/^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$/,
+        {
+            message: `Password must contain at least 8 characters consisting of at least 1 uppercase letter, 1 lowercase letter, 1 number, and 1 special character` })
+});
 
 const redirectUrl = (req: Request) => {
     const urlString = req.headers.referer;
@@ -22,6 +39,18 @@ const redirectUrl = (req: Request) => {
     return Buffer.from(JSON.stringify({ redirect: baseUrl })).toString("base64");
 };
 
+const discordLogin = (req: Request, res: Response, next: NextFunction) => {
+    const state = redirectUrl(req);
+    const authenticator = passport.authenticate("discord", { state });
+    authenticator(req, res, next);
+};
+
+const googleLogin = (req: Request, res: Response, next: NextFunction) => {
+    const state = redirectUrl(req);
+    const authenticator = passport.authenticate("google", { state });
+    authenticator(req, res, next);
+};
+
 const base64Encode = (data: string) => {
     const buffer = Buffer.from(data);
     return buffer.toString("base64");
@@ -33,11 +62,7 @@ const base64Decode = (data: string) => {
 };
 
 const signup = async (req: Request, res: Response) => {
-    const { name, email, password } = req.body;
-
-    if (!name || !email || !password) {
-        throw new APIError("Name, email, or password missing", 400);
-    }
+    const { name, email, password } = NewUserSchema.parse(req.body);
 
     const salt = randomBytes(16);
     const hashedPassword = await hashString(password, salt);
@@ -69,20 +94,8 @@ const localLogin = (req: Request, res: Response, next: NextFunction) => {
     authenticator(req, res, next);
 };
 
-const discordLogin = (req: Request, res: Response, next: NextFunction) => {
-    const state = redirectUrl(req);
-    const authenticator = passport.authenticate("discord", { state });
-    authenticator(req, res, next);
-};
-
-const googleLogin = (req: Request, res: Response, next: NextFunction) => {
-    const state = redirectUrl(req);
-    const authenticator = passport.authenticate("google", { state });
-    authenticator(req, res, next);
-};
-
 const resetPassword = async (req: Request, res: Response) => {
-    const { email } = req.body;
+    const email = z.string().email({ message: "Invalid email" }).parse(req.body.email);
 
     const user = await prisma.user.findFirst({
         where: {
@@ -106,12 +119,12 @@ const resetPassword = async (req: Request, res: Response) => {
         // lastLogin: user.lastLoginDate.toISOString(),
         salt: user.localAccount.salt,
     };
-    const hash = await hashString(JSON.stringify(data), Buffer.from("lol", "hex"));
+    const hash = await hashString(JSON.stringify(data), Buffer.from(process.env["SESSION_SECRET"] ?? "", "hex"));
 
-    const resetLink = `${process.env["API_URL"]}/auth/password-change/?id=${userId}&d=${date}&h=${hash.toString("hex")}`;
+    const resetLink = `${process.env["API_URL"]}/auth/change-password/?id=${userId}&d=${date}&h=${hash.toString("hex")}`;
 
     const options = {
-        from: process.env["EMAIL_ADDRESS"] || "",
+        from: process.env["EMAIL_ADDRESS"] ?? "",
         to: email,
         subject: "Reset Password",
         html: resetPasswordTemplate(resetLink),
@@ -121,13 +134,8 @@ const resetPassword = async (req: Request, res: Response) => {
     res.status(200).send({ resetLink: resetLink });
 };
 
-const changePassword = async (req, res) => {
-    const { id, d, h } = req.query;
-    const { newPassword } = req.body;
-
-    if (!id || !d || !h || typeof id != "string" || typeof d != "string" || typeof h != "string") {
-        throw new APIError("Invalid reset link", 400);
-    }
+const changePassword = async (req: Request, res: Response) => {
+    const { id, d, h, newPassword } = ChangePasswordSchema.parse({ ...req.query, ...req.body });
 
     // Check if the link in not out of date
     const date = base64Decode(d);
@@ -161,7 +169,7 @@ const changePassword = async (req, res) => {
         // lastLogin: user.lastLoginDate.toISOString(),
         salt: user.localAccount.salt,
     };
-    const hash = await hashString(JSON.stringify(data), Buffer.from("lol", "hex"));
+    const hash = await hashString(JSON.stringify(data), Buffer.from(process.env["SESSION_SECRET"] ?? "", "hex"));
 
     if (hash.toString("hex") !== h) {
         throw new APIError("Invalid reset link", 400);
@@ -180,7 +188,7 @@ const changePassword = async (req, res) => {
         },
     });
 
-    res.status(200).send("Password changed");
+    res.status(200).send({ message: "Password changed successfully" });
 };
 
 const logout = (req: Request, res: Response, next: NextFunction) => {

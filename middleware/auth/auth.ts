@@ -17,10 +17,6 @@ const redirect = (req: Request, res: Response) => {
     }
 };
 
-router.post("/signup", asyncWrapper(signup));
-
-router.post("/login", localLogin);
-
 router.get("/discord/login", discordLogin);
 
 router.get("/google/login", googleLogin);
@@ -28,6 +24,10 @@ router.get("/google/login", googleLogin);
 router.get("/discord/redirect", passport.authenticate("discord"), redirect);
 
 router.get("/google/redirect", passport.authenticate("google"), redirect);
+
+router.post("/signup", asyncWrapper(signup));
+
+router.post("/login", localLogin);
 
 router.post("/reset-password", asyncWrapper(resetPassword));
 
