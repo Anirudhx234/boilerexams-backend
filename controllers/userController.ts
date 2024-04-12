@@ -39,6 +39,10 @@ export async function getAllUsers(req: Request, res: Response) {
         include: {
             courses: true,
         },
+        orderBy: [
+            { role: "desc" },
+            { name: "asc" },
+        ]
     });
 
     res.status(200).send(users);
