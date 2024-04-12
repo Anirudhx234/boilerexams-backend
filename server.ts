@@ -43,20 +43,13 @@ app.get("/", (req: Request, res: Response) => {
 });
 
 app.use("/docs", swaggerUi.serve, swaggerUi.setup(docs));
-
 app.use(routes);
-
 app.use(errorHandler);
 
 const PORT = process.env["PORT"];
 
 scheduleUpdateStats();
 
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
     console.log(`Server is running at port ${PORT}`);
 });
-
-
-
-export default app;
-

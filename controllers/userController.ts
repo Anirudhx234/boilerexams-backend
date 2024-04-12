@@ -2,21 +2,12 @@ import prisma from "../prisma/prisma.js";
 import { Role } from "@prisma/client";
 import { Request, Response } from "express";
 import { APIError, NotFoundError } from "../middleware/errors/index.js";
+import { z } from "zod";
 
-const getAllUsers = async (req: Request, res: Response) => {
-    const users = await prisma.user.findMany({
-        include: {
-            courses: true,
-        },
-    });
-    if (!users.length) {
-        throw new NotFoundError("No users found");
-    }
-    res.status(200).send(users);
-};
+export const AssignCourseOptions = z.array(z.string().uuid());
 
-const getUserMe = async (req: Request, res: Response) => {
-    const user = await prisma.user.findUnique({
+export async function getMe(req: Request, res: Response) {
+    const user = await prisma.user.findUniqueOrThrow({
         where: {
             id: req.user.id,
         },
@@ -24,12 +15,14 @@ const getUserMe = async (req: Request, res: Response) => {
             courses: true,
         },
     });
-    return res.status(200).send(user);
-};
 
-const getUser = async (req: Request, res: Response) => {
+    return res.status(200).send(user);
+}
+
+export async function getUser(req: Request, res: Response) {
     const { userId } = req.params;
-    const user = await prisma.user.findUnique({
+
+    const user = await prisma.user.findUniqueOrThrow({
         where: {
             id: userId,
         },
@@ -37,13 +30,21 @@ const getUser = async (req: Request, res: Response) => {
             courses: true,
         },
     });
-    if (!user) {
-        throw new NotFoundError("User not found");
-    }
-    res.status(200).send(user);
-};
 
-const updateUserRole = async (req: Request, res: Response) => {
+    res.status(200).send(user);
+}
+
+export async function getAllUsers(req: Request, res: Response) {
+    const users = await prisma.user.findMany({
+        include: {
+            courses: true,
+        },
+    });
+
+    res.status(200).send(users);
+}
+
+export async function updateUserRole(req: Request, res: Response) {
     const { userId } = req.params;
     const { role } = req.body;
 
@@ -65,52 +66,46 @@ const updateUserRole = async (req: Request, res: Response) => {
         throw new NotFoundError("User not found");
     }
     res.status(200).send(user);
-};
+}
 
-const assignUserCourses = async (req: Request, res: Response) => {
+export async function assignUserCourses(req: Request, res: Response) {
     const { userId } = req.params;
-    const { courseIds } = req.body;
+    const options = AssignCourseOptions.parse(req.body);
 
-    const validRoles = [Role.CONTENT, Role.PROFESSOR, Role.ADMIN];
+    const validRoles = [ Role.CONTENT, Role.PROFESSOR, Role.ADMIN ];
 
-    const user = await prisma.user.findFirst({
+    const user = await prisma.user.update({
         where: {
             id: userId,
             role: {
                 in: validRoles,
-            },
-        },
-    });
-    if (!user) {
-        throw new APIError("User must have role CONTENT or PROFESSOR or ADMIN, or not found", 403);
-    }
-
-    const resp = await prisma.user.update({
-        where: {
-            id: userId,
+            }
         },
         data: {
             courses: {
-                set: courseIds.map((courseId) => ({ id: courseId })),
+                set: options.map(courseId => ({ id: courseId })),
             },
         },
         include: {
             courses: true,
         },
     });
-    res.status(200).send(resp);
-};
 
-const deleteUser = async (req: Request, res: Response) => {
+    if (!user) {
+        throw new APIError("User must have role CONTENT or PROFESSOR or ADMIN", 403);
+    }
+
+    res.status(200).send(user);
+}
+
+export async function deleteUser(req: Request, res: Response) {
     const { userId } = req.params;
 
-    const user = prisma.user.delete({
+    const user = await prisma.user.delete({
         where: {
             id: userId,
         },
     });
 
     res.status(200).send(user);
-};
-
-export { getAllUsers, getUserMe, getUser, updateUserRole, assignUserCourses, deleteUser };
+}

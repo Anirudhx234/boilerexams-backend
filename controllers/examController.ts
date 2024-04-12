@@ -1,7 +1,7 @@
 import { APIError, NotFoundError } from "../middleware/errors/index.js";
 import { FullQuestion, PartialQuestion } from "./questionController.js";
 import { Request, Response } from "express";
-import { UpsertResource, upsertResources } from "./resourceController.js";
+import { UpsertResourceOptions, upsertResources } from "./resourceController.js";
 import { ReorderQuestions } from "../prisma/schema.js";
 import { Season } from "@prisma/client";
 import { z } from "zod";
@@ -15,21 +15,21 @@ export const ExamFlags = z.object({
     practice:   z.boolean().default(false),
 });
 
-export const CreateExamScheme = z.object({
+export const CreateExamOptions = z.object({
     number:     z.number(),
     year:       z.number(),
     season:     z.nativeEnum(Season),
-    disclaimer: z.string().optional(),
+    disclaimer: z.string().optional().nullable(),
     flags:      ExamFlags.optional().default({  })
 });
 
-export const UpdateExamScheme = z.object({
+export const UpdateExamOptions = z.object({
     number:     z.number().optional(),
     year:       z.number().optional(),
     season:     z.nativeEnum(Season).optional(),
-    disclaimer: z.string().optional(),
+    disclaimer: z.string().optional().nullable(),
     flags:      ExamFlags.optional(),
-    resources:  z.array(UpsertResource).optional(),
+    resources:  z.array(UpsertResourceOptions).optional(),
 });
 
 export async function getExam(req: Request, res: Response) {
@@ -162,7 +162,7 @@ export async function getExamTopics(req: Request, res: Response) {
 
 export async function createExam(req: Request, res: Response)  {
     const { c } = req.params;
-    const options = CreateExamScheme.parse(req.body);
+    const options = CreateExamOptions.parse(req.body);
 
     const course = await prisma.course.findUnique({
         where: Resolver.course(c)
@@ -186,7 +186,7 @@ export async function createExam(req: Request, res: Response)  {
 
 export async function updateExam(req: Request, res: Response) {
     const { e, c } = req.params;
-    const options = UpdateExamScheme.parse(req.body);
+    const options = UpdateExamOptions.parse(req.body);
 
     const updatedExam = await prisma.exam.update({
         where: await Resolver.exam(e, c),

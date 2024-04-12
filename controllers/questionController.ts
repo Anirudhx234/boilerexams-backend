@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { QuestionType } from "@prisma/client";
-import { connectOrCreateResources, UpsertResource, upsertResources } from "./resourceController.js";
+import { connectOrCreateResources, UpsertResourceOptions, upsertResources } from "./resourceController.js";
 import { upsertOrDisconnectTopics, UpsertTopic } from "./topicController.js";
 import { APIError, NotFoundError } from "../middleware/errors/index.js";
 import { Request, Response } from "express";
@@ -40,37 +40,37 @@ export const QuestionData = z.union([
     ParentData, MultipleChoiceData, FreeResponseData, ShortAnswerData, FillInBlankData
 ]);
 
-export const UpsertAnswerChoice = z.object({
+export const UpsertAnswerChoiceOptions = z.object({
     id:         z.string().default(randomUUID),
     index:      z.number(),
-    body:       z.string().optional(),
-    resources:  z.array(UpsertResource).optional(),
+    body:       z.string().optional().nullable(),
+    resources:  z.array(UpsertResourceOptions).optional(),
 });
 
-export const UpsertExplanation = z.object({
+export const UpsertExplanationOptions = z.object({
     id:         z.string().uuid().default(randomUUID),
     body:       z.string().optional().nullable(),
-    resources:  z.array(UpsertResource).optional()
+    resources:  z.array(UpsertResourceOptions).optional()
 });
 
-export const CreateQuestion = z.object({
+export const CreateQuestionOptions = z.object({
     type:       z.nativeEnum(QuestionType).default(QuestionType.MULTIPLE_CHOICE),
     data:       QuestionData,
     number:     z.number().min(1),
     courseId:   z.string().uuid(),
     examId:     z.string().uuid(),
-    parentId:   z.string().uuid().optional(),
+    parentId:   z.string().uuid().optional().nullable(),
     flags:      QuestionFlags.optional().default({  }),
 });
 
-export const UpdateQuestion = z.object({
+export const UpdateQuestionOptions = z.object({
     type:           z.nativeEnum(QuestionType).optional(),
     data:           QuestionData.optional(),
     flags:          QuestionFlags.optional(),
     topics:         z.array(UpsertTopic).optional(),
-    resources:      z.array(UpsertResource).optional(),
-    answerChoices:  z.array(UpsertAnswerChoice).optional().optional(),
-    explanation:    UpsertExplanation.optional()
+    resources:      z.array(UpsertResourceOptions).optional(),
+    answerChoices:  z.array(UpsertAnswerChoiceOptions).optional().optional(),
+    explanation:    UpsertExplanationOptions.optional()
 });
 
 export const FullQuestion = {
@@ -133,7 +133,7 @@ export const PartialQuestion = {
 };
 
 export async function createQuestion(req: Request, res: Response) {
-    const options = CreateQuestion.parse(req.body);
+    const options = CreateQuestionOptions.parse(req.body);
 
     const question = await prisma.$transaction(async (prisma) => {
         // 1. Insert the new question
@@ -193,7 +193,7 @@ export async function getQuestion(req: Request, res: Response) {
 
 export async function updateQuestion(req: Request, res: Response) {
     const { q, t, e, c } = req.params;
-    const options = UpdateQuestion.parse(req.body);
+    const options = UpdateQuestionOptions.parse(req.body);
 
     const question = await prisma.question.findFirstOrThrow({
         where: await Resolver.question(q, t, e, c),
@@ -329,7 +329,7 @@ export async function deleteAnswerChoice(req: Request, res: Response) {
     res.status(200).send(answerChoice);
 }
 
-function upsertAnswerChoices(answerChoices?: z.infer<typeof UpsertAnswerChoice>[]) {
+function upsertAnswerChoices(answerChoices?: z.infer<typeof UpsertAnswerChoiceOptions>[]) {
     return {
         upsert: answerChoices?.map(ac => {
             return {
@@ -351,7 +351,7 @@ function upsertAnswerChoices(answerChoices?: z.infer<typeof UpsertAnswerChoice>[
     };
 }
 
-function upsertExplanation(explanation?: z.infer<typeof UpsertExplanation>) {
+function upsertExplanation(explanation?: z.infer<typeof UpsertExplanationOptions>) {
     return explanation ? {
         upsert: {
             where: {

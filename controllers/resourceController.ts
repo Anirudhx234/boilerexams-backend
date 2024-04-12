@@ -19,7 +19,7 @@ export const UrlResourceData = z.object({
     altText:    z.string().optional()
 });
 
-export const UpsertResource = z.object({
+export const UpsertResourceOptions = z.object({
     id:             z.string().uuid().default(randomUUID),
     courseId:       z.string().uuid().nullable().optional(),
     examId:         z.string().uuid().nullable().optional(),
@@ -58,7 +58,7 @@ export async function getResource(req: Request, res: Response) {
 }
 
 export async function upsertResource(req: Request, res: Response) {
-    const options = UpsertResource.parse(req.body);
+    const options = UpsertResourceOptions.parse(req.body);
 
     if (fileBasedResources.includes(options.type)) {
         const kilobyte = 1000;
@@ -113,7 +113,7 @@ export async function deleteResource(req: Request, res: Response) {
     res.status(200).send(resource);
 }
 
-export function connectOrCreateResources(resources?: z.infer<typeof UpsertResource>[]) {
+export function connectOrCreateResources(resources?: z.infer<typeof UpsertResourceOptions>[]) {
     return {
         connectOrCreate: resources?.map(resource => {
             return {
@@ -129,7 +129,7 @@ export function connectOrCreateResources(resources?: z.infer<typeof UpsertResour
     };
 }
 
-export function upsertResources(resources?: z.infer<typeof UpsertResource>[]) {
+export function upsertResources(resources?: z.infer<typeof UpsertResourceOptions>[]) {
     return {
         upsert: resources?.map(resource => {
             return {

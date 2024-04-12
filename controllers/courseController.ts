@@ -8,27 +8,27 @@ import FlagEncoder from "../helpers/encoder.js";
 import Formatter from "../helpers/formatter.js";
 import { z } from "zod";
 import { EventQueryParams } from "./eventController.js";
-import { connectOrCreateResources, UpsertResource, upsertResources } from "./resourceController.js";
+import { connectOrCreateResources, UpsertResourceOptions, upsertResources } from "./resourceController.js";
 
 export const CourseFlags = z.object({
     published: z.boolean().default(false),
 });
 
-export const CreateCourse = z.object({
+export const CreateCourseOptions = z.object({
     abbreviation:   z.string(),
     number:         z.number(),
     color:          z.string().min(4).max(9).regex(/^#/).optional(),
-    disclaimer:     z.string().optional(),
+    disclaimer:     z.string().optional().nullable(),
     studyModes:     z.array(z.nativeEnum(StudyMode)).default([ StudyMode.EXAM, StudyMode.TIMED_EXAM, StudyMode.TOPIC ]),
-    resources:      z.array(UpsertResource).optional(),
+    resources:      z.array(UpsertResourceOptions).optional(),
     flags:          CourseFlags.optional().default({  }),
 });
 
-export const UpdateCourse = z.object({
+export const UpdateCourseOptions = z.object({
     color:      z.string().min(4).max(9).regex(/^#/).optional(),
-    disclaimer: z.string().optional(),
+    disclaimer: z.string().optional().nullable(),
     studyModes: z.array(z.nativeEnum(StudyMode)).optional(),
-    resources:  z.array(UpsertResource).optional(),
+    resources:  z.array(UpsertResourceOptions).optional(),
     flags:      CourseFlags.optional(),
 });
 
@@ -247,7 +247,7 @@ export async function getCourseEvents(req: Request, res: Response) {
 }
 
 export async function createCourse(req: Request, res: Response) {
-    const options = CreateCourse.parse(req.body);
+    const options = CreateCourseOptions.parse(req.body);
 
     // PurdueIO confirms existence of course and standardizes name and subject fields
     const purdueIoSubject = await PurdueIoAPI.getSubject(options.abbreviation);
@@ -277,7 +277,7 @@ export async function createCourse(req: Request, res: Response) {
 
 export async function updateCourse(req: Request, res: Response) {
     const { c } = req.params;
-    const options = UpdateCourse.parse(req.body);
+    const options = UpdateCourseOptions.parse(req.body);
 
     const course = await prisma.course.update({
         where: Resolver.course(c),

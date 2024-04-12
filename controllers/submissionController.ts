@@ -25,7 +25,7 @@ export const ParentSubmissionData = z.array(z.object({
     ])
 }));
 
-export const UpdateSubmissionScheme = z.object({
+export const UpdateSubmissionOptions = z.object({
     timeStarted:    z.coerce.date().min(Epoch).optional(),
     timeEnded:      z.coerce.date().refine(date => date < new Date()).optional(),
     timeSpent:      z.preprocess(coerceBigIntSafely, z.bigint().optional()),
@@ -33,7 +33,7 @@ export const UpdateSubmissionScheme = z.object({
     timeSpentModal: z.preprocess(coerceBigIntSafely, z.bigint().optional()),
 });
 
-export const CreateSubmissionScheme = z.object({
+export const CreateSubmissionOptions = z.object({
     type:           z.nativeEnum(QuestionType),
     questionId:     z.string().uuid(),
     userSolution:   z.union([
@@ -53,7 +53,7 @@ export const CreateSubmissionScheme = z.object({
 
 export async function createSubmission(req: Request, res: Response) {
     const { q, t, e, c } = req.params;
-    const options = CreateSubmissionScheme.parse(req.body);
+    const options = CreateSubmissionOptions.parse(req.body);
 
     const question = await prisma.question.findFirstOrThrow({
         where: await Resolver.question(q, t, e, c)
@@ -78,8 +78,8 @@ export async function createSubmission(req: Request, res: Response) {
 }
 
 export async function batchCreateSubmission(req: Request, res: Response) {
-    const options: z.infer<typeof CreateSubmissionScheme>[] = req.body.map((option: unknown) => {
-        return CreateSubmissionScheme.parse(option);
+    const options: z.infer<typeof CreateSubmissionOptions>[] = req.body.map((option: unknown) => {
+        return CreateSubmissionOptions.parse(option);
     });
 
     const submissions = await prisma.$transaction(async (prisma) => {
@@ -113,7 +113,7 @@ export async function batchCreateSubmission(req: Request, res: Response) {
 
 export async function updateSubmission(req: Request, res: Response) {
     const { submissionId } = req.params;
-    const options = UpdateSubmissionScheme.parse(req.body);
+    const options = UpdateSubmissionOptions.parse(req.body);
 
     const submission = await prisma.submission.update({
         where: {
