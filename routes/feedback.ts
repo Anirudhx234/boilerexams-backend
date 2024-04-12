@@ -1,9 +1,10 @@
 import {
     createApplication,
-    createVideoFeedback, deleteFeedback, getAllCourseRequests, getVideoFeedback,
+    createVideoFeedback,
+    deleteFeedback,
+    getCourseRequests,
     getFeedback,
-    getVideoFeedbackByCourse,
-    getVideoFeedbackByExam,
+    getVideoFeedback,
     reportBug,
     reportQuestion,
     requestCourse,
@@ -19,15 +20,13 @@ const router = express.Router();
 
 router.get("/:feedbackId", authHandler(Role.CONTENT), asyncWrapper(getFeedback));
 
-router.get("/video-feedback/courses/:c/exams/:e", authHandler(Role.CONTENT), asyncWrapper(getVideoFeedbackByExam));
+router.get("/courses/:c/exams/:e", authHandler(Role.CONTENT), asyncWrapper(getVideoFeedback));
 
-router.get("/video-feedback/courses/:c", authHandler(Role.CONTENT), asyncWrapper(getVideoFeedbackByCourse));
+router.get("/courses/:c", authHandler(Role.CONTENT), asyncWrapper(getVideoFeedback));
 
-router.get("/video-feedback/exams/:e", authHandler(Role.CONTENT), asyncWrapper(getVideoFeedbackByExam));
+router.get("/exams/:e", authHandler(Role.CONTENT), asyncWrapper(getVideoFeedback));
 
-router.get("/video-feedback/", authHandler(Role.CONTENT), asyncWrapper(getVideoFeedback));
-
-router.get("/course-requests", authHandler(Role.CONTENT), asyncWrapper(getAllCourseRequests));
+router.get("/course-requests", authHandler(Role.CONTENT), asyncWrapper(getCourseRequests));
 
 router.post("/bug-reports", asyncWrapper(reportBug));
 

@@ -1,13 +1,13 @@
 import { APIError, CourseAlreadyExistsError, NotFoundError } from "../middleware/errors/index.js";
+import { FeedbackStatus, FeedbackType, ResourceType } from "@prisma/client";
 import { Request, Response } from "express";
 import { DiscordAPI } from "../services/discord.api.js";
 import { PurdueIoAPI } from "../services/purdue.io.js";
-import prisma from "../prisma/prisma.js";
-import uploadFileToS3 from "../utils/uploadFileToS3.js";
-import { FeedbackStatus, FeedbackType, ResourceType } from "@prisma/client";
-import Resolver from "../helpers/resolver.js";
-import { z } from "zod";
 import { randomUUID } from "node:crypto";
+import { z } from "zod";
+import prisma from "../prisma/prisma.js";
+import Resolver from "../helpers/resolver.js";
+import uploadFileToS3 from "../utils/uploadFileToS3.js";
 
 export const FeatureRequestData = z.object({
     title:      z.string(),
@@ -39,62 +39,14 @@ export const FeedbackOptions = z.object({
     questionId: z.string().uuid().optional(),
 });
 
-export const BugReportOptions = FeedbackOptions.extend({
-    type:   z.literal(FeedbackType.BUG_REPORT),
-    data:   BugReportData
-});
-
-export const QuestionReportOptions = FeedbackOptions.extend({
-    type:   z.literal(FeedbackType.QUESTION_REPORT),
-    data:   QuestionReportData
-});
-
-export const FeatureRequestOptions = FeedbackOptions.extend({
-    type:   z.literal(FeedbackType.FEATURE_REQUEST),
-    data:   FeatureRequestData
-});
-
-export const VideoFeedbackOptions = FeedbackOptions.extend({
-    type:   z.literal(FeedbackType.VIDEO_FEEDBACK),
-    data:   VideoFeedbackData
-});
-
 export const CourseRequestOptions = FeedbackOptions.extend({
     abbreviation:   z.string().toUpperCase(),
     number:         z.number().min(100).max(99999)
 });
 
-
-export async function getVideoFeedback(req: Request, res: Response) {
-    const videoFeedback = await prisma.feedback.findMany({
-        where: {
-            type: FeedbackType.VIDEO_FEEDBACK
-        },
-        include: {
-            question: {
-                include: {
-                    exam: true
-                }
-            }
-        }
-    });
-
-    res.status(200).send(videoFeedback);
-}
-
-export async function getAllCourseRequests(req: Request, res: Response) {
+export async function getCourseRequests(req: Request, res: Response) {
     const courseRequests = await prisma.courseRequest.findMany();
     res.status(200).send(courseRequests);
-}
-
-export async function getAllApplications(req: Request, res: Response) {
-    const applications = await prisma.application.findMany({
-        include: {
-            resume: true
-        }
-    });
-
-    res.status(200).send(applications);
 }
 
 export async function getFeedback(req: Request, res: Response) {
@@ -121,53 +73,28 @@ export async function getFeedback(req: Request, res: Response) {
     res.status(200).send(feedback);
 }
 
-export async function getVideoFeedbackByCourse(req: Request, res: Response) {
-    const { c } = req.params;
+export async function getVideoFeedback(req: Request, res: Response) {
+    const { q, t, e, c } = req.params;
 
-    const course = await prisma.course.findUniqueOrThrow({
-        where: Resolver.course(c),
-        include: {
-            feedback: {
-                include: {
-                    question: {
-                        select: {
-                            id: true
-                        }
-                    }
-                }
-            }
+    const question = q ? await prisma.question.findFirstOrThrow({
+        where: await Resolver.question(q, t, e, c)
+    }) : undefined;
+
+    const exam = e ? await prisma.exam.findUniqueOrThrow({
+        where: await Resolver.exam(e, c)
+    }) : undefined;
+
+    const course = c ? await prisma.course.findUniqueOrThrow({
+        where: Resolver.course(c)
+    }): undefined;
+
+    const feedback = await prisma.feedback.findMany({
+        where: {
+            questionId: question?.id,
+            examId:     exam?.id,
+            courseId:   course?.id
         }
     });
-
-    if (!course) throw new NotFoundError("Course Not Found");
-
-    const feedback = course.feedback.filter(feedback => feedback.type == FeedbackType.VIDEO_FEEDBACK);
-
-    res.status(200).send(feedback);
-}
-
-export async function getVideoFeedbackByExam(req: Request, res: Response) {
-    const { e, c } = req.params;
-
-    const exam = await prisma.exam.findUniqueOrThrow({
-        where: await Resolver.exam(e, c),
-        include: {
-            course: true,
-            feedback: {
-                include: {
-                    question: {
-                        select: {
-                            id: true
-                        }
-                    }
-                }
-            }
-        },
-    });
-
-    if (!exam) throw new NotFoundError("Exam Not Found");
-
-    const feedback = exam.feedback.filter(feedback => feedback.type == FeedbackType.VIDEO_FEEDBACK);
 
     res.status(200).send(feedback);
 }
@@ -208,7 +135,7 @@ export async function requestCourse(req: Request, res: Response) {
     const options = CourseRequestOptions.parse(req.body);
     options.number = options.number < 100 ? options.number * 100 : options.number;
 
-    const existingCourse = await prisma.course.findUniqueOrThrow({
+    const existingCourse = await prisma.course.findUnique({
         where: {
             abbreviation_number: {
                 abbreviation: options.abbreviation,
@@ -222,7 +149,6 @@ export async function requestCourse(req: Request, res: Response) {
     const subject = await PurdueIoAPI.getSubject(options.abbreviation);
     const course = await PurdueIoAPI.getCourse(subject, options.number);
 
-    // ToDo figure out why this has wrong argument type
     const courseRequest = await prisma.courseRequest.upsert({
         where: {
             id: course.Id,
@@ -304,7 +230,9 @@ export async function reportQuestion(req: Request, res: Response) {
             type: FeedbackType.QUESTION_REPORT,
             status: FeedbackStatus.OPEN,
             userId: req.user?.id,
-            questionId: question?.id,
+            questionId: question.id,
+            examId: question.examId,
+            courseId: question.courseId,
             data: {
                 ...options,
                 title: title
