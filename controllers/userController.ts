@@ -7,7 +7,7 @@ import { z } from "zod";
 export const UpdateUserSchema = z.object({
     userId: z.string(),
     role: z.nativeEnum(Role),
-})
+});
 
 export const AssignCourseOptions = z.array(z.string().uuid());
 
@@ -44,17 +44,14 @@ export async function getAllUsers(req: Request, res: Response) {
         include: {
             courses: true,
         },
-        orderBy: [
-            { role: "desc" },
-            { name: "asc" },
-        ]
+        orderBy: [{ role: "desc" }, { name: "asc" }],
     });
 
     res.status(200).send(users);
 }
 
 export async function updateUserRole(req: Request, res: Response) {
-    const { userId, role } = UpdateUserSchema.parse({...req.params, ...req.body});
+    const { userId, role } = UpdateUserSchema.parse({ ...req.params, ...req.body });
 
     const user = await prisma.user.update({
         where: {
@@ -85,11 +82,11 @@ export async function assignUserCourses(req: Request, res: Response) {
             id: userId,
             role: {
                 in: validRoles,
-            }
+            },
         },
         data: {
             courses: {
-                set: options.map(courseId => ({ id: courseId })),
+                set: options.map((courseId) => ({ id: courseId })),
             },
         },
         include: {

@@ -20,13 +20,13 @@ export async function topicStats(options: TopicStatsOptions): Promise<z.infer<ty
                  JOIN "Question" q ON qt."questionId" = q.id
                  JOIN "Submission" s ON q.id = s."questionId"
         WHERE (
-            t.id = ${ options.id}
-                OR ${!options.id} = ${ true}
+            t.id = ${options.id}
+                OR ${!options.id} = ${true}
             )
           AND q.flags & 1 = 1
           AND (
-            s."timeStarted" BETWEEN SYMMETRIC ${ options.before}
-                AND ${ options.after}
+            s."timeStarted" BETWEEN SYMMETRIC ${options.before}
+                AND ${options.after}
             )
         GROUP BY t.id;
     `;

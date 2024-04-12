@@ -1,16 +1,23 @@
 import {
     createCourse,
-    deleteCourse, getAllCourses,
-    getCourse, getCourseEvents, getCourseExams, getCourseTopics, getSubjects,
+    deleteCourse,
+    getAllCourses,
+    getCourse,
+    getCourseEvents,
+    getCourseExams,
+    getCourseTopics,
+    getSubjects,
     toggleCoursePublished,
-    updateCourse
+    updateCourse,
 } from "../controllers/courseController.js";
 import {
     createExam,
-    deleteExam, getExam,
-    getExamQuestions, reorderExamQuestions,
+    deleteExam,
+    getExam,
+    getExamQuestions,
+    reorderExamQuestions,
     toggleExamPublished,
-    updateExam
+    updateExam,
 } from "../controllers/examController.js";
 import { createQuestion, getQuestion, updateQuestion } from "../controllers/questionController.js";
 import { createTopic, getTopic, getTopicQuestions, reorderTopicQuestions } from "../controllers/topicController.js";
@@ -20,7 +27,6 @@ import authHandler from "../middleware/auth/authHandler.js";
 import cache from "../middleware/cache/caching.js";
 import express from "express";
 import sendPublished from "../middleware/auth/sendPublished.js";
-
 
 const router = express.Router();
 
@@ -75,6 +81,5 @@ router.post("/:c/topics/:t/reorderQuestions", authHandler(Role.CONTENT), asyncWr
 router.delete("/:c", authHandler(Role.CONTENT), asyncWrapper(deleteCourse));
 
 router.delete("/:c/exams/:e", authHandler(Role.CONTENT), asyncWrapper(deleteExam));
-
 
 export default router;

@@ -1,6 +1,6 @@
 import { APIError, NotFoundError } from "../middleware/errors/index.js";
 import type { Request, Response } from "express";
-import { ReorderQuestions} from "../prisma/schema.js";
+import { ReorderQuestions } from "../prisma/schema.js";
 import { z } from "zod";
 import Formatter from "../helpers/formatter.js";
 import Resolver from "../helpers/resolver.js";
@@ -9,9 +9,9 @@ import { FullQuestion, PartialQuestion } from "./questionController.js";
 import { randomUUID } from "node:crypto";
 
 export const UpsertTopic = z.object({
-    id:             z.string().uuid().default(randomUUID),
-    name:           z.string().max(50, "Topic name must be <= 50 characters"),
-    examNumbers:    z.array(z.number().int()).optional()
+    id: z.string().uuid().default(randomUUID),
+    name: z.string().max(50, "Topic name must be <= 50 characters"),
+    examNumbers: z.array(z.number().int()).optional(),
 });
 
 export async function getAllTopics(req: Request, res: Response) {
@@ -19,19 +19,21 @@ export async function getAllTopics(req: Request, res: Response) {
         include: {
             questions: {
                 include: {
-                    question: true
+                    question: true,
                 },
                 orderBy: {
-                    number: "asc"
+                    number: "asc",
                 },
             },
         },
     });
 
-    res.status(200).send(Formatter.topics({
-        data: topics,
-        sendUnpublished: req.sendUnpublished
-    }));
+    res.status(200).send(
+        Formatter.topics({
+            data: topics,
+            sendUnpublished: req.sendUnpublished,
+        }),
+    );
 }
 
 export async function getTopic(req: Request, res: Response) {
@@ -43,46 +45,48 @@ export async function getTopic(req: Request, res: Response) {
             questions: {
                 include: {
                     question: {
-                        select: PartialQuestion
-                    }
-                }
-            }
+                        select: PartialQuestion,
+                    },
+                },
+            },
         },
     });
 
-    res.status(200).send(Formatter.topic({
-        data: topic,
-        sendUnpublished: req.sendUnpublished
-    }));
+    res.status(200).send(
+        Formatter.topic({
+            data: topic,
+            sendUnpublished: req.sendUnpublished,
+        }),
+    );
 }
 
 export async function getTopicQuestions(req: Request, res: Response) {
     const { t, c } = req.params;
 
     const topic = await prisma.topic.findUniqueOrThrow({
-        where: await Resolver.topic(t, c)
+        where: await Resolver.topic(t, c),
     });
 
     const relations = await prisma.questionToTopic.findMany({
         where: {
-            topicId: topic.id
+            topicId: topic.id,
         },
         include: {
             question: {
-                include: FullQuestion
-            }
+                include: FullQuestion,
+            },
         },
         orderBy: {
-            number: "asc"
-        }
+            number: "asc",
+        },
     });
 
     const formattedQuestionToTopics = Formatter.questionsToTopics({
         data: relations,
-        sendUnpublished: req.sendUnpublished
+        sendUnpublished: req.sendUnpublished,
     });
 
-    res.status(200).send(formattedQuestionToTopics?.map(relation => relation.question));
+    res.status(200).send(formattedQuestionToTopics?.map((relation) => relation.question));
 }
 
 export async function createTopic(req: Request, res: Response) {
@@ -90,7 +94,7 @@ export async function createTopic(req: Request, res: Response) {
     const options = UpsertTopic.parse(req.body);
 
     const course = await prisma.course.findUnique({
-        where: Resolver.course(c)
+        where: Resolver.course(c),
     });
 
     if (!course) throw new APIError(`Course not found`, 404);
@@ -98,20 +102,20 @@ export async function createTopic(req: Request, res: Response) {
     const topic = await prisma.topic.create({
         data: {
             ...options,
-            courseId: course.id
+            courseId: course.id,
         },
         include: {
             questions: {
                 include: {
-                    question: true
-                }
-            }
+                    question: true,
+                },
+            },
         },
     });
 
     res.status(200).send({
         ...topic,
-        questions: topic.questions.map(relation => relation.question)
+        questions: topic.questions.map((relation) => relation.question),
     });
 }
 
@@ -122,8 +126,8 @@ export async function updateTopic(req: Request, res: Response) {
     const topic = await prisma.topic.update({
         where: await Resolver.topic(t, c),
         data: {
-            ...options
-        }
+            ...options,
+        },
     });
 
     res.status(200).send(topic);
@@ -136,8 +140,8 @@ export async function reorderTopicQuestions(req: Request, res: Response) {
         where: await Resolver.topic(t, c),
         select: {
             id: true,
-            questions: true
-        }
+            questions: true,
+        },
     });
 
     if (!topic) {
@@ -146,20 +150,22 @@ export async function reorderTopicQuestions(req: Request, res: Response) {
 
     const options = ReorderQuestions.parse(req.body);
 
-    const questions = await prisma.$transaction(topic.questions.map(relation => {
-        return prisma.questionToTopic.update({
-            where: {
-                questionId_topicId: {
-                    questionId: relation.questionId,
-                    topicId: relation.topicId
-                }
-            },
-            data: {
-                number: options.indexOf(relation.questionId) + 1
-            },
-            select: PartialQuestion
-        });
-    }));
+    const questions = await prisma.$transaction(
+        topic.questions.map((relation) => {
+            return prisma.questionToTopic.update({
+                where: {
+                    questionId_topicId: {
+                        questionId: relation.questionId,
+                        topicId: relation.topicId,
+                    },
+                },
+                data: {
+                    number: options.indexOf(relation.questionId) + 1,
+                },
+                select: PartialQuestion,
+            });
+        }),
+    );
 
     res.status(200).send(questions);
 }
@@ -198,30 +204,37 @@ export async function deleteTopic(req: Request, res: Response) {
     res.status(200).send(topic);
 }
 
-export function upsertOrDisconnectTopics(questionId: string, courseId: string, currentTopicIds: string[], topics?: z.infer<typeof UpsertTopic>[]) {
-    const newTopicIds = topics?.map(topic => topic.id);
+export function upsertOrDisconnectTopics(
+    questionId: string,
+    courseId: string,
+    currentTopicIds: string[],
+    topics?: z.infer<typeof UpsertTopic>[],
+) {
+    const newTopicIds = topics?.map((topic) => topic.id);
 
     return {
-        create: topics?.map(topic => {
+        create: topics?.map((topic) => {
             return {
                 topic: {
                     connectOrCreate: {
                         where: {
-                            id: topic.id
+                            id: topic.id,
                         },
                         create: {
                             name: topic.name,
                             courseId: courseId,
-                            examNumbers: topic.examNumbers
-                        }
-                    }
-                }
+                            examNumbers: topic.examNumbers,
+                        },
+                    },
+                },
             };
         }),
-        deleteMany: currentTopicIds.filter(id => !newTopicIds?.includes(id)).map(id => {
-            return {
-                topicId: id
-            };
-        }),
+        deleteMany: currentTopicIds
+            .filter((id) => !newTopicIds?.includes(id))
+            .map((id) => {
+                return {
+                    topicId: id,
+                };
+            }),
     };
 }

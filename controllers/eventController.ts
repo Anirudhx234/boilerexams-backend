@@ -4,38 +4,42 @@ import { NotFoundError } from "../middleware/errors/index.js";
 import { EventType } from "@prisma/client";
 import { z } from "zod";
 
-export const CreateEvent = z.object({
-    type:           z.nativeEnum(EventType),
-    title:          z.string().optional(),
-    description:    z.string().optional(),
-    location:       z.string().optional(),
-    start:          z.coerce.date(),
-    end:            z.coerce.date(),
-    courseId:       z.string().uuid().optional()
-}).refine(data => {
-    return data.start < data.end;
-}, "Event must start before it ends");
-
-export const UpdateEvent = z.object({
-    type:           z.nativeEnum(EventType).optional(),
-    title:          z.string().optional(),
-    description:    z.string().optional(),
-    location:       z.string().optional(),
-    start:          z.coerce.date().optional(),
-    end:            z.coerce.date().optional(),
-    courseId:       z.string().uuid().optional()
-}).refine(data => {
-    if (data.start && data.end) {
+export const CreateEvent = z
+    .object({
+        type: z.nativeEnum(EventType),
+        title: z.string().optional(),
+        description: z.string().optional(),
+        location: z.string().optional(),
+        start: z.coerce.date(),
+        end: z.coerce.date(),
+        courseId: z.string().uuid().optional(),
+    })
+    .refine((data) => {
         return data.start < data.end;
-    }
-    return true;
-}, "Event must start before it ends");
+    }, "Event must start before it ends");
+
+export const UpdateEvent = z
+    .object({
+        type: z.nativeEnum(EventType).optional(),
+        title: z.string().optional(),
+        description: z.string().optional(),
+        location: z.string().optional(),
+        start: z.coerce.date().optional(),
+        end: z.coerce.date().optional(),
+        courseId: z.string().uuid().optional(),
+    })
+    .refine((data) => {
+        if (data.start && data.end) {
+            return data.start < data.end;
+        }
+        return true;
+    }, "Event must start before it ends");
 
 export const EventQueryParams = z.object({
-    type:   z.nativeEnum(EventType).optional(),
+    type: z.nativeEnum(EventType).optional(),
     before: z.preprocess(coerceDateSafely, z.date()).optional(),
-    after:  z.preprocess(coerceDateSafely, z.date()).optional(),
-})
+    after: z.preprocess(coerceDateSafely, z.date()).optional(),
+});
 
 export async function getEvent(req: Request, res: Response) {
     const { eventId } = req.params;
@@ -63,8 +67,8 @@ export async function getEvents(req: Request, res: Response) {
                 gte: options.after,
             },
             end: {
-                lte: options.before
-            }
+                lte: options.before,
+            },
         },
         orderBy: [
             {
@@ -81,22 +85,24 @@ export async function createEvent(req: Request, res: Response) {
 
     const event = await prisma.event.create({
         data: {
-            ...options
-        }
+            ...options,
+        },
     });
 
     res.status(200).send(event);
 }
 
 export async function batchCreateEvent(req: Request, res: Response) {
-    const events = await prisma.$transaction(req.body.map((body: unknown) => {
-        const options = CreateEvent.parse(body);
-        return prisma.event.create({
-            data: {
-                ...options
-            },
-        });
-    }))
+    const events = await prisma.$transaction(
+        req.body.map((body: unknown) => {
+            const options = CreateEvent.parse(body);
+            return prisma.event.create({
+                data: {
+                    ...options,
+                },
+            });
+        }),
+    );
 
     res.status(200).send(events);
 }

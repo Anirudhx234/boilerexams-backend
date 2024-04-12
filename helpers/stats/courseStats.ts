@@ -23,8 +23,8 @@ export async function courseStats(options: CourseStatsOptions): Promise<z.infer<
                  JOIN "Submission" s ON q.ID = s."questionId"
         WHERE c.flags & 1 = 1 
           AND q.flags & 1 = 1 
-          AND (${!options.id} = ${ true} OR c.id = ${ options.id})
-          AND (s."timeStarted" BETWEEN SYMMETRIC ${ options.after} AND ${ options.before})
+          AND (${!options.id} = ${true} OR c.id = ${options.id})
+          AND (s."timeStarted" BETWEEN SYMMETRIC ${options.after} AND ${options.before})
         GROUP BY c.id
     `;
 }

@@ -1,9 +1,5 @@
 import express from "express";
-import {
-    getAllExams,
-    getExam,
-    getExamQuestions,
-} from "../controllers/examController.js";
+import { getAllExams, getExam, getExamQuestions } from "../controllers/examController.js";
 import asyncWrapper from "../middleware/wrappers/asyncWrapper.js";
 import sendPublished from "../middleware/auth/sendPublished.js";
 import authHandler from "../middleware/auth/authHandler.js";

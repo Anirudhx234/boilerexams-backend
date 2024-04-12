@@ -16,7 +16,6 @@ export function errorHandler2(err, req: Request, res: Response, next: NextFuncti
     res.status(500).json({ ...err, code: err.code });
 }
 
-
 async (error, req: Request, res: Response, next: NextFunction) => {
     const errorResponse: ErrorResponse = {
         message: error.message,

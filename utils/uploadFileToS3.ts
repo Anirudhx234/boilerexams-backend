@@ -39,7 +39,7 @@ export async function uploadFileToS3(buffer: Buffer, contentType: string) {
         Location: `https://${params.Bucket}.s3.us-east-2.amazonaws.com/${params.Key}`,
         Key: params.Key,
     };
-};
+}
 
 export async function deleteFileFromS3(key: string) {
     const s3 = s3Client();

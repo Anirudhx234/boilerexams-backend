@@ -6,7 +6,7 @@ import {
     batchCreateEvent,
     updateEvent,
     deleteAllEvents,
-    deleteEvent
+    deleteEvent,
 } from "../controllers/eventController.js";
 import asyncWrapper from "../middleware/wrappers/asyncWrapper.js";
 import authHandler from "../middleware/auth/authHandler.js";

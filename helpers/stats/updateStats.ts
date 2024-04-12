@@ -6,14 +6,7 @@ import { questionStats } from "./questionStats.js";
 import { courseStats } from "./courseStats.js";
 import Scheduler from "../scheduler.js";
 import { topicStats } from "./topicStats.js";
-import {
-    AnswerChoiceStats,
-    CourseStats,
-    ExamStats,
-    QuestionStats,
-    TopicStats
-} from "../../controllers/statsController.js";
-
+import { AnswerChoiceStats, CourseStats, ExamStats, QuestionStats, TopicStats } from "../../controllers/statsController.js";
 
 export function scheduleUpdateStats() {
     const date = new Date(); // Current date and time
@@ -21,7 +14,8 @@ export function scheduleUpdateStats() {
     const minute = 60 * second;
     const hour = 60 * minute;
 
-    if (date.getMinutes() === 0) { // Schedule every hour on the hour
+    if (date.getMinutes() === 0) {
+        // Schedule every hour on the hour
         Scheduler.schedule(updateStats, 0, hour);
     } else {
         date.setHours(date.getHours() + 1);
@@ -47,15 +41,15 @@ async function updateStats() {
     for (const stat of cStats) {
         await prisma.course.update({
             where: {
-                id: stat.id
+                id: stat.id,
             },
             data: {
                 stats: {
                     ...CourseStats.parse(stat),
                     count: undefined,
                     id: undefined,
-                } as object
-            }
+                } as object,
+            },
         });
     }
 
@@ -63,15 +57,15 @@ async function updateStats() {
     for (const stat of eStats) {
         await prisma.exam.update({
             where: {
-                id: stat.id
+                id: stat.id,
             },
             data: {
                 stats: {
                     ...ExamStats.parse(stat),
                     count: undefined,
                     id: undefined,
-                } as object
-            }
+                } as object,
+            },
         });
     }
 
@@ -79,7 +73,7 @@ async function updateStats() {
     for (const stat of tStats) {
         await prisma.topic.update({
             where: {
-                id: stat.id
+                id: stat.id,
             },
             data: {
                 stats: {
@@ -87,8 +81,8 @@ async function updateStats() {
                     count: undefined,
                     name: undefined,
                     id: undefined,
-                } as object
-            }
+                } as object,
+            },
         });
     }
 
@@ -96,15 +90,15 @@ async function updateStats() {
     for (const stat of qStats) {
         await prisma.question.update({
             where: {
-                id: stat.id
+                id: stat.id,
             },
             data: {
                 stats: {
                     ...QuestionStats.parse(stat),
                     count: undefined,
                     id: undefined,
-                } as object
-            }
+                } as object,
+            },
         });
     }
 
@@ -112,15 +106,15 @@ async function updateStats() {
     for (const stat of acStats) {
         await prisma.answerChoice.update({
             where: {
-                id: stat.id
+                id: stat.id,
             },
             data: {
                 stats: {
                     ...AnswerChoiceStats.parse(stat),
                     id: undefined,
-                    index: undefined
-                }
-            }
+                    index: undefined,
+                },
+            },
         });
     }
 

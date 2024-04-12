@@ -13,17 +13,20 @@ import { z } from "zod";
 export const NewUserSchema = z.object({
     name: z.string(),
     email: z.string().email({ message: "Invalid email" }),
-    password: z.string().regex(/^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$/,
-        { message: `Password must contain at least 8 characters consisting of at least 1 uppercase letter, 1 lowercase letter, 1 number, and 1 special character` })
+    password: z
+        .string()
+        .regex(/^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$/, {
+            message: `Password must contain at least 8 characters consisting of at least 1 uppercase letter, 1 lowercase letter, 1 number, and 1 special character`,
+        }),
 });
 
 export const ChangePasswordSchema = z.object({
     id: z.string(),
     d: z.string(),
     h: z.string(),
-    newPassword: z.string().regex(/^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$/,
-        {
-            message: `Password must contain at least 8 characters consisting of at least 1 uppercase letter, 1 lowercase letter, 1 number, and 1 special character` })
+    newPassword: z.string().regex(/^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$/, {
+        message: `Password must contain at least 8 characters consisting of at least 1 uppercase letter, 1 lowercase letter, 1 number, and 1 special character`,
+    }),
 });
 
 const redirectUrl = (req: Request) => {

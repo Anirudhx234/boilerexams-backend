@@ -11,66 +11,64 @@ import prisma from "../prisma/prisma.js";
 import { randomUUID } from "node:crypto";
 
 export const QuestionFlags = z.object({
-    published:              z.boolean().default(false),
-    disableRandomAnswers:   z.boolean().default(true),
-    answersStartHidden:     z.boolean().default(true)
+    published: z.boolean().default(false),
+    disableRandomAnswers: z.boolean().default(true),
+    answersStartHidden: z.boolean().default(true),
 });
 
 export const ParentData = z.object({
-    body:           z.string().optional(),
-    solution:       z.undefined(),
-    numberingType:  z.enum([ "LOWERCASE", "UPPERCASE", "ROMAN_LOWERCASE", "ROMAN_UPPERCASE", "NUMBER" ])
+    body: z.string().optional(),
+    solution: z.undefined(),
+    numberingType: z.enum(["LOWERCASE", "UPPERCASE", "ROMAN_LOWERCASE", "ROMAN_UPPERCASE", "NUMBER"]),
 });
 
 export const MultipleChoiceData = z.object({
-    body:           z.string().optional(),
-    solution:       z.array(z.number()),
+    body: z.string().optional(),
+    solution: z.array(z.number()),
 });
 
 export const FreeResponseData = z.object({
-    body:       z.string().optional(),
-    solution:   z.string().optional(),
+    body: z.string().optional(),
+    solution: z.string().optional(),
 });
 
 export const ShortAnswerData = FreeResponseData;
 
 export const FillInBlankData = FreeResponseData;
 
-export const QuestionData = z.union([
-    ParentData, MultipleChoiceData, FreeResponseData, ShortAnswerData, FillInBlankData
-]);
+export const QuestionData = z.union([ParentData, MultipleChoiceData, FreeResponseData, ShortAnswerData, FillInBlankData]);
 
 export const UpsertAnswerChoiceOptions = z.object({
-    id:         z.string().default(randomUUID),
-    index:      z.number(),
-    body:       z.string().optional().nullable(),
-    resources:  z.array(UpsertResourceOptions).optional(),
+    id: z.string().default(randomUUID),
+    index: z.number(),
+    body: z.string().optional().nullable(),
+    resources: z.array(UpsertResourceOptions).optional(),
 });
 
 export const UpsertExplanationOptions = z.object({
-    id:         z.string().uuid().default(randomUUID),
-    body:       z.string().optional().nullable(),
-    resources:  z.array(UpsertResourceOptions).optional()
+    id: z.string().uuid().default(randomUUID),
+    body: z.string().optional().nullable(),
+    resources: z.array(UpsertResourceOptions).optional(),
 });
 
 export const CreateQuestionOptions = z.object({
-    type:       z.nativeEnum(QuestionType).default(QuestionType.MULTIPLE_CHOICE),
-    data:       QuestionData,
-    number:     z.number().min(1),
-    courseId:   z.string().uuid(),
-    examId:     z.string().uuid(),
-    parentId:   z.string().uuid().optional().nullable(),
-    flags:      QuestionFlags.optional().default({  }),
+    type: z.nativeEnum(QuestionType).default(QuestionType.MULTIPLE_CHOICE),
+    data: QuestionData,
+    number: z.number().min(1),
+    courseId: z.string().uuid(),
+    examId: z.string().uuid(),
+    parentId: z.string().uuid().optional().nullable(),
+    flags: QuestionFlags.optional().default({}),
 });
 
 export const UpdateQuestionOptions = z.object({
-    type:           z.nativeEnum(QuestionType).optional(),
-    data:           QuestionData.optional(),
-    flags:          QuestionFlags.optional(),
-    topics:         z.array(UpsertTopic).optional(),
-    resources:      z.array(UpsertResourceOptions).optional(),
-    answerChoices:  z.array(UpsertAnswerChoiceOptions).optional().optional(),
-    explanation:    UpsertExplanationOptions.optional()
+    type: z.nativeEnum(QuestionType).optional(),
+    data: QuestionData.optional(),
+    flags: QuestionFlags.optional(),
+    topics: z.array(UpsertTopic).optional(),
+    resources: z.array(UpsertResourceOptions).optional(),
+    answerChoices: z.array(UpsertAnswerChoiceOptions).optional().optional(),
+    explanation: UpsertExplanationOptions.optional(),
 });
 
 export const FullQuestion = {
@@ -78,18 +76,18 @@ export const FullQuestion = {
     exam: true,
     explanation: {
         include: {
-            resources: true
-        }
+            resources: true,
+        },
     },
     answerChoices: {
         include: {
-            resources: true
-        }
+            resources: true,
+        },
     },
     topics: {
         include: {
-            topic: true
-        }
+            topic: true,
+        },
     },
     children: {
         include: {
@@ -97,21 +95,21 @@ export const FullQuestion = {
             exam: true,
             explanation: {
                 include: {
-                    resources: true
-                }
+                    resources: true,
+                },
             },
             answerChoices: {
                 include: {
-                    resources: true
-                }
+                    resources: true,
+                },
             },
             topics: {
                 include: {
-                    topic: true
-                }
-            }
-        }
-    }
+                    topic: true,
+                },
+            },
+        },
+    },
 };
 
 export const PartialQuestion = {
@@ -120,16 +118,16 @@ export const PartialQuestion = {
     flags: true,
     topics: {
         include: {
-            topic: true
-        }
+            topic: true,
+        },
     },
     children: {
         select: {
             id: true,
             number: true,
             flags: true,
-        }
-    }
+        },
+    },
 };
 
 export async function createQuestion(req: Request, res: Response) {
@@ -143,14 +141,14 @@ export async function createQuestion(req: Request, res: Response) {
                 examId: options.examId,
                 parentId: options.parentId,
                 number: {
-                    gte: options.number
-                }
+                    gte: options.number,
+                },
             },
             data: {
                 number: {
-                    increment: 1
-                }
-            }
+                    increment: 1,
+                },
+            },
         });
 
         return await prisma.question.create({
@@ -158,19 +156,19 @@ export async function createQuestion(req: Request, res: Response) {
                 ...options,
                 flags: FlagEncoder.question(options.flags),
                 explanation: {
-                    create: {
-
-                    }
-                }
+                    create: {},
+                },
             },
-            include: FullQuestion
+            include: FullQuestion,
         });
     });
 
-    res.status(200).send(Formatter.question({
-        data: question,
-        sendUnpublished: req.sendUnpublished
-    }));
+    res.status(200).send(
+        Formatter.question({
+            data: question,
+            sendUnpublished: req.sendUnpublished,
+        }),
+    );
 }
 
 export async function getQuestion(req: Request, res: Response) {
@@ -178,17 +176,19 @@ export async function getQuestion(req: Request, res: Response) {
 
     const question = await prisma.question.findFirstOrThrow({
         where: await Resolver.question(q, t, e, c),
-        include: FullQuestion
+        include: FullQuestion,
     });
 
     if (!question.flags.published && !req.sendUnpublished) {
         throw new NotFoundError("Question not found");
     }
 
-    res.status(200).send(Formatter.question({
-        data: question,
-        sendUnpublished: req.sendUnpublished
-    }));
+    res.status(200).send(
+        Formatter.question({
+            data: question,
+            sendUnpublished: req.sendUnpublished,
+        }),
+    );
 }
 
 export async function updateQuestion(req: Request, res: Response) {
@@ -200,32 +200,39 @@ export async function updateQuestion(req: Request, res: Response) {
         include: {
             topics: {
                 include: {
-                    topic: true
-                }
-            }
-        }
+                    topic: true,
+                },
+            },
+        },
     });
 
     const updatedQuestion = await prisma.question.update({
         where: {
-            id: question.id
+            id: question.id,
         },
         data: {
             ...options,
             number: undefined, // Block update to question number
             flags: options.flags ? FlagEncoder.question(options.flags) : options.flags,
-            topics: upsertOrDisconnectTopics(question.id, question.courseId, question.topics.map(topic => topic.topicId), options.topics),
+            topics: upsertOrDisconnectTopics(
+                question.id,
+                question.courseId,
+                question.topics.map((topic) => topic.topicId),
+                options.topics,
+            ),
             resources: upsertResources(options.resources),
             answerChoices: upsertAnswerChoices(options.answerChoices),
-            explanation: upsertExplanation(options.explanation)
+            explanation: upsertExplanation(options.explanation),
         },
-        include: FullQuestion
+        include: FullQuestion,
     });
 
-    res.status(200).send(Formatter.question({
-        data: updatedQuestion,
-        sendUnpublished: req.sendUnpublished
-    }));
+    res.status(200).send(
+        Formatter.question({
+            data: updatedQuestion,
+            sendUnpublished: req.sendUnpublished,
+        }),
+    );
 }
 
 export async function toggleQuestionPublished(req: Request, res: Response) {
@@ -238,11 +245,11 @@ export async function toggleQuestionPublished(req: Request, res: Response) {
             id: true,
             exam: {
                 select: {
-                    flags: true
-                }
+                    flags: true,
+                },
             },
-            flags: true
-        }
+            flags: true,
+        },
     });
 
     if (!question) {
@@ -262,8 +269,8 @@ export async function toggleQuestionPublished(req: Request, res: Response) {
         data: {
             flags: FlagEncoder.question({
                 ...question.flags,
-                published: status
-            })
+                published: status,
+            }),
         },
     });
 
@@ -277,8 +284,8 @@ export async function deleteQuestion(req: Request, res: Response) {
 
     const question = await prisma.question.findUnique({
         where: {
-            id: questionId
-        }
+            id: questionId,
+        },
     });
 
     if (!question) {
@@ -289,8 +296,8 @@ export async function deleteQuestion(req: Request, res: Response) {
         // Delete the question
         await prisma.question.delete({
             where: {
-                id: questionId
-            }
+                id: questionId,
+            },
         });
 
         // Update question numbers for remaining questions in the same exam and with the same parent
@@ -299,14 +306,14 @@ export async function deleteQuestion(req: Request, res: Response) {
                 examId: question.examId,
                 parentId: question.parentId,
                 number: {
-                    gt: question.number
-                }
+                    gt: question.number,
+                },
             },
             data: {
                 number: {
-                    decrement: 1
-                }
-            }
+                    decrement: 1,
+                },
+            },
         });
     });
 
@@ -318,8 +325,8 @@ export async function deleteAnswerChoice(req: Request, res: Response) {
 
     const answerChoice = await prisma.answerChoice.delete({
         where: {
-            id: answerChoiceId
-        }
+            id: answerChoiceId,
+        },
     });
 
     if (!answerChoice) {
@@ -331,40 +338,42 @@ export async function deleteAnswerChoice(req: Request, res: Response) {
 
 function upsertAnswerChoices(answerChoices?: z.infer<typeof UpsertAnswerChoiceOptions>[]) {
     return {
-        upsert: answerChoices?.map(ac => {
+        upsert: answerChoices?.map((ac) => {
             return {
                 where: {
-                    id: ac.id
+                    id: ac.id,
                 },
                 create: {
                     index: ac.index,
                     body: ac.body,
-                    resources: connectOrCreateResources(ac.resources)
+                    resources: connectOrCreateResources(ac.resources),
                 },
                 update: {
                     index: ac.index,
                     body: ac.body,
-                    resources: upsertResources(ac.resources)
-                }
+                    resources: upsertResources(ac.resources),
+                },
             };
-        })
+        }),
     };
 }
 
 function upsertExplanation(explanation?: z.infer<typeof UpsertExplanationOptions>) {
-    return explanation ? {
-        upsert: {
-            where: {
-                id: explanation.id
-            },
-            create: {
-                body: explanation.body,
-                resources: connectOrCreateResources(explanation.resources)
-            },
-            update: {
-                body: explanation.body,
-                resources: upsertResources(explanation.resources)
-            }
-        }
-    } : explanation;
+    return explanation
+        ? {
+              upsert: {
+                  where: {
+                      id: explanation.id,
+                  },
+                  create: {
+                      body: explanation.body,
+                      resources: connectOrCreateResources(explanation.resources),
+                  },
+                  update: {
+                      body: explanation.body,
+                      resources: upsertResources(explanation.resources),
+                  },
+              },
+          }
+        : explanation;
 }

@@ -15,21 +15,21 @@ export const CourseFlags = z.object({
 });
 
 export const CreateCourseOptions = z.object({
-    abbreviation:   z.string(),
-    number:         z.number(),
-    color:          z.string().min(4).max(9).regex(/^#/).optional(),
-    disclaimer:     z.string().optional().nullable(),
-    studyModes:     z.array(z.nativeEnum(StudyMode)).default([ StudyMode.EXAM, StudyMode.TIMED_EXAM, StudyMode.TOPIC ]),
-    resources:      z.array(UpsertResourceOptions).optional(),
-    flags:          CourseFlags.optional().default({  }),
+    abbreviation: z.string(),
+    number: z.number(),
+    color: z.string().min(4).max(9).regex(/^#/).optional(),
+    disclaimer: z.string().optional().nullable(),
+    studyModes: z.array(z.nativeEnum(StudyMode)).default([StudyMode.EXAM, StudyMode.TIMED_EXAM, StudyMode.TOPIC]),
+    resources: z.array(UpsertResourceOptions).optional(),
+    flags: CourseFlags.optional().default({}),
 });
 
 export const UpdateCourseOptions = z.object({
-    color:      z.string().min(4).max(9).regex(/^#/).optional(),
+    color: z.string().min(4).max(9).regex(/^#/).optional(),
     disclaimer: z.string().optional().nullable(),
     studyModes: z.array(z.nativeEnum(StudyMode)).optional(),
-    resources:  z.array(UpsertResourceOptions).optional(),
-    flags:      CourseFlags.optional(),
+    resources: z.array(UpsertResourceOptions).optional(),
+    flags: CourseFlags.optional(),
 });
 
 export async function getSubjects(req: Request, res: Response) {
@@ -40,31 +40,30 @@ export async function getSubjects(req: Request, res: Response) {
             },
             {
                 number: "asc",
-            }
+            },
         ],
         include: {
-            resources: true
-        }
+            resources: true,
+        },
     });
 
     const formattedCourses = Formatter.courses({
         data: courses,
-        sendUnpublished: req.sendUnpublished
+        sendUnpublished: req.sendUnpublished,
     });
 
-    const subjects = formattedCourses
-        ?.reduce((acc, course) => {
-            const subjectName = course.subject;
-            if (!subjectName) throw new APIError("Subject Name Missing", 500);
-            if (!acc[subjectName]) {
-                acc[subjectName] = {
-                    subject: subjectName,
-                    courses: []
-                };
-            }
-            acc[subjectName].courses.push(course);
-            return acc;
-        }, {} as object);
+    const subjects = formattedCourses?.reduce((acc, course) => {
+        const subjectName = course.subject;
+        if (!subjectName) throw new APIError("Subject Name Missing", 500);
+        if (!acc[subjectName]) {
+            acc[subjectName] = {
+                subject: subjectName,
+                courses: [],
+            };
+        }
+        acc[subjectName].courses.push(course);
+        return acc;
+    }, {} as object);
 
     if (!subjects) throw new APIError("No Subjects", 404);
 
@@ -95,10 +94,12 @@ export async function getCourse(req: Request, res: Response) {
         throw new NotFoundError("Course not found");
     }
 
-    res.status(200).send(Formatter.course({
-        data: course,
-        sendUnpublished: req.sendUnpublished
-    }));
+    res.status(200).send(
+        Formatter.course({
+            data: course,
+            sendUnpublished: req.sendUnpublished,
+        }),
+    );
 }
 
 export async function getAllCourses(req: Request, res: Response) {
@@ -109,7 +110,7 @@ export async function getAllCourses(req: Request, res: Response) {
             },
             {
                 number: "asc",
-            }
+            },
         ],
         include: {
             events: {
@@ -121,10 +122,12 @@ export async function getAllCourses(req: Request, res: Response) {
         },
     });
 
-    res.status(200).send(Formatter.courses({
-        data: courses,
-        sendUnpublished: req.sendUnpublished
-    }));
+    res.status(200).send(
+        Formatter.courses({
+            data: courses,
+            sendUnpublished: req.sendUnpublished,
+        }),
+    );
 }
 
 export async function getCourseExams(req: Request, res: Response) {
@@ -144,7 +147,7 @@ export async function getCourseExams(req: Request, res: Response) {
 
     const exams = await prisma.exam.findMany({
         where: {
-            courseId: course.id
+            courseId: course.id,
         },
         include: {
             resources: true,
@@ -152,24 +155,22 @@ export async function getCourseExams(req: Request, res: Response) {
                 select: {
                     id: true,
                     number: true,
-                    flags: true
+                    flags: true,
                 },
                 orderBy: {
-                    number: "asc"
-                }
-            }
+                    number: "asc",
+                },
+            },
         },
-        orderBy: [
-            { year: "asc" },
-            { season: "asc" },
-            { number: "asc" }
-        ]
+        orderBy: [{ year: "asc" }, { season: "asc" }, { number: "asc" }],
     });
 
-    res.status(200).send(Formatter.exams({
-        data: exams,
-        sendUnpublished: req.sendUnpublished
-    }));
+    res.status(200).send(
+        Formatter.exams({
+            data: exams,
+            sendUnpublished: req.sendUnpublished,
+        }),
+    );
 }
 
 export async function getCourseTopics(req: Request, res: Response) {
@@ -189,7 +190,7 @@ export async function getCourseTopics(req: Request, res: Response) {
 
     const topics = await prisma.topic.findMany({
         where: {
-            courseId: course.id
+            courseId: course.id,
         },
         include: {
             questions: {
@@ -198,23 +199,25 @@ export async function getCourseTopics(req: Request, res: Response) {
                         select: {
                             id: true,
                             flags: true,
-                        }
-                    }
+                        },
+                    },
                 },
                 orderBy: {
-                    number: "asc"
-                }
-            }
+                    number: "asc",
+                },
+            },
         },
         orderBy: {
             name: "asc",
         },
     });
 
-    res.status(200).send(Formatter.topics({
-        data: topics,
-        sendUnpublished: req.sendUnpublished
-    }));
+    res.status(200).send(
+        Formatter.topics({
+            data: topics,
+            sendUnpublished: req.sendUnpublished,
+        }),
+    );
 }
 
 export async function getCourseEvents(req: Request, res: Response) {
@@ -236,7 +239,7 @@ export async function getCourseEvents(req: Request, res: Response) {
     const events = await prisma.event.findMany({
         where: {
             ...options,
-            courseId: course.id
+            courseId: course.id,
         },
         orderBy: {
             start: "asc",
@@ -259,7 +262,7 @@ export async function createCourse(req: Request, res: Response) {
             name: purdueIoCourse.Title,
             subject: purdueIoSubject.Name,
             flags: FlagEncoder.course(options.flags),
-            resources: connectOrCreateResources(options.resources)
+            resources: connectOrCreateResources(options.resources),
         },
         include: {
             exams: true,
@@ -269,10 +272,12 @@ export async function createCourse(req: Request, res: Response) {
         },
     });
 
-    res.status(200).send(Formatter.course({
-        data: course,
-        sendUnpublished: req.sendUnpublished
-    }));
+    res.status(200).send(
+        Formatter.course({
+            data: course,
+            sendUnpublished: req.sendUnpublished,
+        }),
+    );
 }
 
 export async function updateCourse(req: Request, res: Response) {
@@ -284,14 +289,16 @@ export async function updateCourse(req: Request, res: Response) {
         data: {
             ...options,
             flags: options.flags ? FlagEncoder.course(options.flags) : undefined,
-            resources: upsertResources(options.resources)
-        }
+            resources: upsertResources(options.resources),
+        },
     });
 
-    res.status(200).send(Formatter.course({
-        data: course,
-        sendUnpublished: req.sendUnpublished
-    }));
+    res.status(200).send(
+        Formatter.course({
+            data: course,
+            sendUnpublished: req.sendUnpublished,
+        }),
+    );
 }
 
 export async function toggleCoursePublished(req: Request, res: Response) {
@@ -302,8 +309,8 @@ export async function toggleCoursePublished(req: Request, res: Response) {
         select: {
             id: true,
             name: true,
-            flags: true
-        }
+            flags: true,
+        },
     });
 
     if (!course) {
@@ -319,7 +326,7 @@ export async function toggleCoursePublished(req: Request, res: Response) {
         data: {
             flags: FlagEncoder.course({
                 ...course.flags,
-                published: status
+                published: status,
             }),
         },
     });
@@ -333,7 +340,7 @@ export async function deleteCourse(req: Request, res: Response) {
     const { c } = req.params;
 
     const course = await prisma.course.delete({
-        where: Resolver.course(c)
+        where: Resolver.course(c),
     });
 
     if (!course) {

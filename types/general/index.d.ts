@@ -1,19 +1,19 @@
 interface Subject {
-    name:       string
-    courses:    object[]
+    name: string;
+    courses: object[];
 }
 
 interface CourseFlags {
-    published:  boolean
+    published: boolean;
 }
 
 interface ExamFlags {
-    published:  boolean
-    practice:   boolean
+    published: boolean;
+    practice: boolean;
 }
 
 interface QuestionFlags {
-    published:              boolean
-    disableRandomAnswers:   boolean
-    answersStartHidden:     boolean
+    published: boolean;
+    disableRandomAnswers: boolean;
+    answersStartHidden: boolean;
 }

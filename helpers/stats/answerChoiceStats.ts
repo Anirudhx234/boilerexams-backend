@@ -12,9 +12,9 @@ export async function answerChoiceStats(options: AnswerChoiceStatsOptions): Prom
                  JOIN "Submission" S on ac."questionId" = S."questionId"
         WHERE "userSolution" IS NOT NULL
           AND jsonb_typeof("userSolution") = 'array'
-          AND (${!options.id} = ${true} OR ac.id = ${ options.id})
+          AND (${!options.id} = ${true} OR ac.id = ${options.id})
           AND (${!options.questionId} = ${true} OR S."questionId" = ${options.questionId})
-          AND (s."timeStarted" BETWEEN SYMMETRIC ${ options.before} AND ${ options.after})
+          AND (s."timeStarted" BETWEEN SYMMETRIC ${options.before} AND ${options.after})
           AND EXISTS (
             SELECT 1
             FROM jsonb_array_elements_text("userSolution") AS element

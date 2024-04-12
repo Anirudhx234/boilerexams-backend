@@ -17,8 +17,8 @@ export async function submissionStats(options: SubmissionStatsOptions): Promise<
                 OR ${!options.id} = ${true}
             )
           AND (
-            s."timeStarted" BETWEEN SYMMETRIC ${ options.before}
-                AND ${ options.after}
+            s."timeStarted" BETWEEN SYMMETRIC ${options.before}
+                AND ${options.after}
             )
         GROUP BY s.id;
     `;
@@ -33,8 +33,8 @@ export async function hourlySubmissionStats(before: Date, after: Date, courseId?
                               ON       s."questionId" = q.id
                      JOIN     "Course" C
                               ON       c.id = q."courseId"
-        WHERE    s."timeStarted" BETWEEN SYMMETRIC ${ after} AND ${ before}
-          AND    (c.id = ${ courseId} OR ${!courseId} = ${ true})
+        WHERE    s."timeStarted" BETWEEN SYMMETRIC ${after} AND ${before}
+          AND    (c.id = ${courseId} OR ${!courseId} = ${true})
           AND    c.flags & 1 = 1
         GROUP BY x
         ORDER BY x;

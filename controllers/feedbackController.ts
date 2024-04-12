@@ -10,73 +10,72 @@ import { z } from "zod";
 import { randomUUID } from "node:crypto";
 
 export const FeatureRequestData = z.object({
-    title:      z.string(),
-    content:    z.string().max(2000),
-    contact:    z.string().max(50).optional(),
+    title: z.string(),
+    content: z.string().max(2000),
+    contact: z.string().max(50).optional(),
 });
 
 export const QuestionReportData = FeatureRequestData.extend({
-    userAgent:  z.string().optional(),
+    userAgent: z.string().optional(),
 });
 
 export const BugReportData = QuestionReportData.extend({
-    location:   z.string(),
+    location: z.string(),
 });
 
 export const VideoFeedbackData = z.object({
     explanationQuality: z.number().min(1).max(5),
-    productionQuality:  z.number().min(1).max(5),
-    recommended:        z.boolean(),
-    content:            z.string().optional()
+    productionQuality: z.number().min(1).max(5),
+    recommended: z.boolean(),
+    content: z.string().optional(),
 });
 
 export const BaseFeedbackScheme = z.object({
-    id:         z.string().uuid().default(randomUUID),
-    type:       z.nativeEnum(FeedbackType),
-    status:     z.nativeEnum(FeedbackStatus).default(FeedbackStatus.OPEN),
-    data:       z.object({}),
-    userId:     z.string().uuid().optional(),
+    id: z.string().uuid().default(randomUUID),
+    type: z.nativeEnum(FeedbackType),
+    status: z.nativeEnum(FeedbackStatus).default(FeedbackStatus.OPEN),
+    data: z.object({}),
+    userId: z.string().uuid().optional(),
     questionId: z.string().uuid().optional(),
 });
 
 export const BugReportScheme = BaseFeedbackScheme.extend({
-    type:   z.literal(FeedbackType.BUG_REPORT),
-    data:   BugReportData
+    type: z.literal(FeedbackType.BUG_REPORT),
+    data: BugReportData,
 });
 
 export const QuestionReportScheme = BaseFeedbackScheme.extend({
-    type:   z.literal(FeedbackType.QUESTION_REPORT),
-    data:   QuestionReportData
+    type: z.literal(FeedbackType.QUESTION_REPORT),
+    data: QuestionReportData,
 });
 
 export const FeatureRequestScheme = BaseFeedbackScheme.extend({
-    type:   z.literal(FeedbackType.FEATURE_REQUEST),
-    data:   FeatureRequestData
+    type: z.literal(FeedbackType.FEATURE_REQUEST),
+    data: FeatureRequestData,
 });
 
 export const VideoFeedbackScheme = BaseFeedbackScheme.extend({
-    type:   z.literal(FeedbackType.VIDEO_FEEDBACK),
-    data:   VideoFeedbackData
+    type: z.literal(FeedbackType.VIDEO_FEEDBACK),
+    data: VideoFeedbackData,
 });
 
 export const CourseRequestScheme = BaseFeedbackScheme.extend({
-    abbreviation:   z.string().toUpperCase(),
-    number:         z.number().min(100).max(99999)
+    abbreviation: z.string().toUpperCase(),
+    number: z.number().min(100).max(99999),
 });
-
 
 export async function getAllVideoFeedback(req: Request, res: Response) {
     const videoFeedback = await prisma.feedback.findMany({
         where: {
-            type: FeedbackType.VIDEO_FEEDBACK
+            type: FeedbackType.VIDEO_FEEDBACK,
         },
         include: {
             question: {
                 include: {
-                    exam: true
-                }
-            }
-        }
+                    exam: true,
+                },
+            },
+        },
     });
 
     res.status(200).send(videoFeedback);
@@ -90,8 +89,8 @@ export async function getAllCourseRequests(req: Request, res: Response) {
 export async function getAllApplications(req: Request, res: Response) {
     const applications = await prisma.application.findMany({
         include: {
-            resume: true
-        }
+            resume: true,
+        },
     });
 
     res.status(200).send(applications);
@@ -102,7 +101,7 @@ export async function getFeedback(req: Request, res: Response) {
 
     const feedback = await prisma.feedback.findUniqueOrThrow({
         where: {
-            id: feedbackId
+            id: feedbackId,
         },
         include: {
             user: true,
@@ -110,12 +109,12 @@ export async function getFeedback(req: Request, res: Response) {
                 include: {
                     course: {
                         include: {
-                            users: true // Need users on course for Question Reports
-                        }
-                    }
-                }
-            }
-        }
+                            users: true, // Need users on course for Question Reports
+                        },
+                    },
+                },
+            },
+        },
     });
 
     res.status(200).send(feedback);
@@ -131,17 +130,17 @@ export async function getVideoFeedbackByCourse(req: Request, res: Response) {
                 include: {
                     question: {
                         select: {
-                            id: true
-                        }
-                    }
-                }
-            }
-        }
+                            id: true,
+                        },
+                    },
+                },
+            },
+        },
     });
 
     if (!course) throw new NotFoundError("Course Not Found");
 
-    const feedback = course.feedback.filter(feedback => feedback.type == FeedbackType.VIDEO_FEEDBACK);
+    const feedback = course.feedback.filter((feedback) => feedback.type == FeedbackType.VIDEO_FEEDBACK);
 
     res.status(200).send(feedback);
 }
@@ -157,17 +156,17 @@ export async function getVideoFeedbackByExam(req: Request, res: Response) {
                 include: {
                     question: {
                         select: {
-                            id: true
-                        }
-                    }
-                }
-            }
+                            id: true,
+                        },
+                    },
+                },
+            },
         },
     });
 
     if (!exam) throw new NotFoundError("Exam Not Found");
 
-    const feedback = exam.feedback.filter(feedback => feedback.type == FeedbackType.VIDEO_FEEDBACK);
+    const feedback = exam.feedback.filter((feedback) => feedback.type == FeedbackType.VIDEO_FEEDBACK);
 
     res.status(200).send(feedback);
 }
@@ -194,9 +193,9 @@ export async function createApplication(req: Request, res: Response) {
                     data: {
                         key: pdfData.Key,
                         url: pdfData.Location,
-                    }
-                }
-            }
+                    },
+                },
+            },
         },
     });
 
@@ -213,7 +212,7 @@ export async function requestCourse(req: Request, res: Response) {
             abbreviation_number: {
                 abbreviation: options.abbreviation,
                 number: options.number,
-            }
+            },
         },
     });
 
@@ -255,7 +254,7 @@ export async function reportBug(req: Request, res: Response) {
             type: FeedbackType.BUG_REPORT,
             userId: user.id,
             data: {
-                ...options
+                ...options,
             },
         },
         include: {
@@ -307,8 +306,8 @@ export async function reportQuestion(req: Request, res: Response) {
             questionId: question?.id,
             data: {
                 ...options,
-                title: title
-            }
+                title: title,
+            },
         },
         include: {
             question: true,
@@ -328,9 +327,9 @@ export async function requestFeature(req: Request, res: Response) {
             type: FeedbackType.FEATURE_REQUEST,
             userId: req.user?.id,
             data: {
-                ...options
-            }
-        }
+                ...options,
+            },
+        },
     });
 
     await DiscordAPI.createFeedback(request);
@@ -346,8 +345,8 @@ export async function createVideoFeedback(req: Request, res: Response) {
         select: {
             id: true,
             examId: true,
-            courseId: true
-        }
+            courseId: true,
+        },
     });
 
     if (!question) throw new NotFoundError("Question does not exist");
@@ -360,9 +359,9 @@ export async function createVideoFeedback(req: Request, res: Response) {
             examId: question.examId,
             questionId: question.id,
             data: {
-                ...options
-            }
-        }
+                ...options,
+            },
+        },
     });
 
     res.status(200).send(videoFeedback);
@@ -377,8 +376,8 @@ export async function updateFeedbackStatus(req: Request, res: Response) {
             id: feedbackId,
         },
         data: {
-            status: status
-        }
+            status: status,
+        },
     });
 
     res.status(200).send(feedback);
