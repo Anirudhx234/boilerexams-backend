@@ -6,6 +6,7 @@ import {
     getCourseEvents,
     getCourseExams,
     getCourseTopics,
+    getCourseTopicsByExam,
     getSubjects,
     toggleCoursePublished,
     updateCourse,
@@ -39,6 +40,8 @@ router.get("/subjects", sendPublished, cache(minute), asyncWrapper(getSubjects))
 router.get("/:c", sendPublished, cache(minute), asyncWrapper(getCourse));
 
 router.get("/:c/topics", sendPublished, cache(minute), asyncWrapper(getCourseTopics));
+
+router.get("/:c/topicsByExam", sendPublished, cache(minute), asyncWrapper(getCourseTopicsByExam));
 
 router.get("/:c/topics/:t", sendPublished, cache(minute), asyncWrapper(getTopic));
 
