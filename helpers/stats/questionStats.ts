@@ -13,10 +13,10 @@ export async function questionStats(options: QuestionStatsOptions): Promise<z.in
         FROM "Question" q
                  JOIN "Submission" s ON q.id = s."questionId"
         WHERE q.flags & 1 = 1 -- Public Questions
-          AND (q.id = ${ options.id} OR ${!options.id} = ${ true})
-          AND (q."examId" = ${ options.examId} OR ${!options.examId} = ${ true})
-          AND (q."courseId" = ${ options.courseId} OR ${!options.courseId} = ${ true})
-          AND (s."timeStarted" BETWEEN SYMMETRIC ${ options.before} AND ${ options.after})
+          AND (q.id = ${options.id} OR ${!options.id} = ${true})
+          AND (q."examId" = ${options.examId} OR ${!options.examId} = ${true})
+          AND (q."courseId" = ${options.courseId} OR ${!options.courseId} = ${true})
+          AND (s."timeStarted" BETWEEN SYMMETRIC ${options.before} AND ${options.after})
         GROUP BY q.id;
     `;
 }

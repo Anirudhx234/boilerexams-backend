@@ -6,15 +6,15 @@ export default class Formatter {
             ...options.data,
             exams: Formatter.exams({ ...options, data: options.data.exams }),
             topics: Formatter.topics({ ...options, data: options.data.topics }),
-            questions: Formatter.questions({ ...options, data: options.data.questions })
+            questions: Formatter.questions({ ...options, data: options.data.questions }),
         };
     }
 
     public static courses(options: FormatterOptions<PotentialCourse[] | undefined>) {
         if (!options.data) return undefined;
         return options.data
-            .filter(course => options.sendUnpublished || course.flags.published)
-            .map(course => Formatter.course({ ...options, data: course }));
+            .filter((course) => options.sendUnpublished || course.flags.published)
+            .map((course) => Formatter.course({ ...options, data: course }));
     }
 
     public static exam(options: FormatterOptions<PotentialExam>): FormattedExam {
@@ -27,157 +27,154 @@ export default class Formatter {
     public static exams(options: FormatterOptions<PotentialExam[] | undefined>) {
         if (!options.data) return undefined;
         return options.data
-            .filter(exam => options.sendUnpublished || exam.flags.published)
-            .map(exam => Formatter.exam({ ...options, data: exam }));
+            .filter((exam) => options.sendUnpublished || exam.flags.published)
+            .map((exam) => Formatter.exam({ ...options, data: exam }));
     }
 
     public static topic(options: FormatterOptions<PotentialTopic>): FormattedTopic {
         const questions = Formatter.questionsToTopics({ ...options, data: options.data.questions });
         return {
             ...options.data,
-            questions: questions
-                ?.map(relation => relation.question)
-                ?.filter(question => question) as FormattedQuestion[]
+            questions: questions?.map((relation) => relation.question)?.filter((question) => question) as FormattedQuestion[],
         };
     }
 
     public static topics(options: FormatterOptions<PotentialTopic[] | undefined>) {
         if (!options.data) return undefined;
-        return options.data.map(topic => Formatter.topic({ ...options, data: topic }));
+        return options.data.map((topic) => Formatter.topic({ ...options, data: topic }));
     }
 
     public static question(options: FormatterOptions<PotentialQuestion>): FormattedQuestion {
-
-        const topics = Formatter.questionsToTopics({ ...options, data: options.data.topics});
+        const topics = Formatter.questionsToTopics({ ...options, data: options.data.topics });
         return {
             ...options.data,
-            data: options.data.data ? {
-                ...(options.data.data as object),
-                explanationText: undefined, // ToDo temporary fix
-                answerChoices: Formatter.answerChoices({ ...options, data: options.data.answerChoices })
-            } : undefined,
+            data: options.data.data
+                ? {
+                      ...(options.data.data as object),
+                      explanationText: undefined, // ToDo temporary fix
+                      answerChoices: Formatter.answerChoices({ ...options, data: options.data.answerChoices }),
+                  }
+                : undefined,
             answerChoices: undefined,
             resources: options.data.resources,
             children: Formatter.questions({ ...options, data: options.data.children }),
-            topics: topics
-                ?.map(relation => relation.topic)
-                ?.filter(topic => topic) as FormattedTopic[]
+            topics: topics?.map((relation) => relation.topic)?.filter((topic) => topic) as FormattedTopic[],
         };
     }
 
     public static questions(options: FormatterOptions<PotentialQuestion[] | undefined>) {
         if (!options.data) return undefined;
         return options.data
-            .filter(question => options.sendUnpublished || question.flags.published)
-            .map(question => Formatter.question({ ...options, data: question }));
+            .filter((question) => options.sendUnpublished || question.flags.published)
+            .map((question) => Formatter.question({ ...options, data: question }));
     }
 
-    public static  answerChoice(options: FormatterOptions<PotentialAnswerChoice>): FormattedAnswerChoice {
+    public static answerChoice(options: FormatterOptions<PotentialAnswerChoice>): FormattedAnswerChoice {
         return {
             ...options.data,
-            question: options.data.question ? Formatter.question({ ...options, data: options.data.question }) : undefined
+            question: options.data.question ? Formatter.question({ ...options, data: options.data.question }) : undefined,
         };
     }
 
     public static answerChoices(options: FormatterOptions<PotentialAnswerChoice[] | undefined>) {
         if (!options.data) return undefined;
-        return options.data.map(answerChoice => Formatter.answerChoice({ ...options, data: answerChoice}));
+        return options.data.map((answerChoice) => Formatter.answerChoice({ ...options, data: answerChoice }));
     }
 
     public static questionToTopic(options: FormatterOptions<PotentialQuestionToTopic>): FormattedQuestionToTopic {
         return {
             ...options.data,
             topic: options.data.topic ? Formatter.topic({ ...options, data: options.data.topic }) : undefined,
-            question: options.data.question? Formatter.question({ ...options, data: options.data.question }) : undefined
+            question: options.data.question ? Formatter.question({ ...options, data: options.data.question }) : undefined,
         };
     }
 
     public static questionsToTopics(options: FormatterOptions<PotentialQuestionToTopic[] | undefined>) {
         if (!options.data) return undefined;
-        return options.data.map(relation => Formatter.questionToTopic({ ...options, data: relation}));
+        return options.data.map((relation) => Formatter.questionToTopic({ ...options, data: relation }));
     }
 }
 
 interface FormatterOptions<T> {
-    data: T,
-    sendUnpublished: boolean
+    data: T;
+    sendUnpublished: boolean;
 }
 
 interface FormattedCourse {
-    subject?:   string
-    flags:      CourseFlags
-    exams?:     FormattedExam[]
-    topics?:    FormattedTopic[]
-    questions?: FormattedQuestion[]
+    subject?: string;
+    flags: CourseFlags;
+    exams?: FormattedExam[];
+    topics?: FormattedTopic[];
+    questions?: FormattedQuestion[];
 }
 
 interface FormattedExam {
-    flags:      ExamFlags
-    questions?: FormattedQuestion[]
+    flags: ExamFlags;
+    questions?: FormattedQuestion[];
 }
 
 interface FormattedTopic {
-    questions?: FormattedQuestion[]
+    questions?: FormattedQuestion[];
 }
 
 interface FormattedQuestion {
-    data?:          unknown
-    flags:          QuestionFlags
-    children?:      FormattedQuestion[]
-    topics?:        FormattedTopic[]
-    resources?:     unknown[],
-    answerChoices?: undefined
+    data?: unknown;
+    flags: QuestionFlags;
+    children?: FormattedQuestion[];
+    topics?: FormattedTopic[];
+    resources?: unknown[];
+    answerChoices?: undefined;
 }
 
 interface FormattedAnswerChoice {
-    question?: FormattedQuestion
+    question?: FormattedQuestion;
 }
 
 interface FormattedQuestionToTopic {
-    topic?:     FormattedTopic
-    question?:  FormattedQuestion
+    topic?: FormattedTopic;
+    question?: FormattedQuestion;
 }
 
 interface PotentialQuestionToTopic {
-    topic?:     PotentialTopic
-    question?:  PotentialQuestion
+    topic?: PotentialTopic;
+    question?: PotentialQuestion;
 }
 
 interface PotentialAnswerChoice {
-    id?:        string
-    question?:  PotentialQuestion
-    resources?: unknown[],
+    id?: string;
+    question?: PotentialQuestion;
+    resources?: unknown[];
 }
 
 interface PotentialQuestion {
-    id?:            string
-    parentId?:      string | null
-    flags:          QuestionFlags
-    data?:          JsonValue
-    children?:      PotentialQuestion[]
-    answerChoices?: PotentialAnswerChoice[]
-    resources?:     unknown[],
-    topics?:        PotentialQuestionToTopic[]
+    id?: string;
+    parentId?: string | null;
+    flags: QuestionFlags;
+    data?: JsonValue;
+    children?: PotentialQuestion[];
+    answerChoices?: PotentialAnswerChoice[];
+    resources?: unknown[];
+    topics?: PotentialQuestionToTopic[];
 }
 
 interface PotentialTopic {
-    id?:        string
-    name:       string
-    questions?: PotentialQuestionToTopic[]
+    id?: string;
+    name: string;
+    questions?: PotentialQuestionToTopic[];
 }
 
 interface PotentialExam {
-    id?:        string
-    flags:      ExamFlags
-    resources?: unknown[],
-    questions?: PotentialQuestion[]
+    id?: string;
+    flags: ExamFlags;
+    resources?: unknown[];
+    questions?: PotentialQuestion[];
 }
 
 interface PotentialCourse {
-    id?:        string
-    flags:      CourseFlags
-    exams?:     PotentialExam[]
-    topics?:    PotentialTopic[]
-    questions?: PotentialQuestion[]
-    resources?: unknown[],
+    id?: string;
+    flags: CourseFlags;
+    exams?: PotentialExam[];
+    topics?: PotentialTopic[];
+    questions?: PotentialQuestion[];
+    resources?: unknown[];
 }

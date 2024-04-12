@@ -7,17 +7,15 @@ import passport from "passport";
 import corsOptions from "./utils/corsOptions.js";
 import sessionOptions from "./utils/sessionOptions.js";
 import initializePassport from "./middleware/auth/passport/index.js";
-import swaggerUi from 'swagger-ui-express';
+import swaggerUi from "swagger-ui-express";
 import docs from "./docs/index.js";
 import routes from "./routes/index.js";
 import errorHandler from "./middleware/errorHandler.js";
 import { scheduleUpdateStats } from "./helpers/stats/updateStats.js";
 
-
 (BigInt.prototype as any).toJSON = function () {
     return this.toString();
 };
-
 
 const app = express();
 

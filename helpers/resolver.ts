@@ -5,14 +5,14 @@ import prisma from "../prisma/prisma.js";
 
 export const CourseResolvable = z.union([
     z.object({
-        id: z.string().uuid()
+        id: z.string().uuid(),
     }),
     z.object({
         abbreviation_number: z.object({
-            abbreviation:   z.string(),
-            number:         z.number().min(10000).max(99999)
-        })
-    })
+            abbreviation: z.string(),
+            number: z.number().min(10000).max(99999),
+        }),
+    }),
 ]);
 
 export const ExamResolvable = z.union([
@@ -21,12 +21,12 @@ export const ExamResolvable = z.union([
     }),
     z.object({
         number_year_season_courseId: z.object({
-            number:     z.number().min(0).max(5),
-            year:       z.number().min(1970).max(2070),
-            season:     z.nativeEnum(Season),
-            courseId:   z.string().uuid()
-        })
-    })
+            number: z.number().min(0).max(5),
+            year: z.number().min(1970).max(2070),
+            season: z.nativeEnum(Season),
+            courseId: z.string().uuid(),
+        }),
+    }),
 ]);
 
 export const TopicResolvable = z.union([
@@ -35,21 +35,21 @@ export const TopicResolvable = z.union([
     }),
     z.object({
         name_courseId: z.object({
-            name:       z.string(),
-            courseId:   z.string().uuid()
-        })
-    })
+            name: z.string(),
+            courseId: z.string().uuid(),
+        }),
+    }),
 ]);
 
 export const QuestionResolvable = z.union([
     z.object({
-        id: z.string().uuid()
+        id: z.string().uuid(),
     }),
     z.object({
-        number:     z.number().min(1),
-        examId:     z.string().uuid(),
-        parentId:   z.string().uuid().nullable().default(null),
-    })
+        number: z.number().min(1),
+        examId: z.string().uuid(),
+        parentId: z.string().uuid().nullable().default(null),
+    }),
 ]);
 
 export default class Resolver {
@@ -62,7 +62,7 @@ export default class Resolver {
         if (Resolver.uuidRegex.test(courseResolvable)) {
             // If input matches UUIDv4, return object with id and null for abbreviation and number
             return CourseResolvable.parse({
-                id: courseResolvable
+                id: courseResolvable,
             });
         }
 
@@ -75,8 +75,8 @@ export default class Resolver {
             return CourseResolvable.parse({
                 abbreviation_number: {
                     abbreviation: abbreviation,
-                    number: number
-                }
+                    number: number,
+                },
             });
         }
 
@@ -88,7 +88,7 @@ export default class Resolver {
         if (Resolver.uuidRegex.test(examResolvable)) {
             // If input matches UUIDv4, return object with id and null for abbreviation and number
             return ExamResolvable.parse({
-                id: examResolvable
+                id: examResolvable,
             });
         }
 
@@ -97,10 +97,10 @@ export default class Resolver {
             const matches = examResolvable.match(Resolver.numberYearSeasonRegex);
             const season = matches?.[1];
             const year = Number(matches?.[2]);
-            const number = matches?.[3].toLowerCase() === 'final' ? 0 : matches?.[3];
+            const number = matches?.[3].toLowerCase() === "final" ? 0 : matches?.[3];
 
             const course = await prisma.course.findUnique({
-                where: Resolver.course(courseResolvable)
+                where: Resolver.course(courseResolvable),
             });
 
             if (!course) {
@@ -112,8 +112,8 @@ export default class Resolver {
                     number: isNaN(Number(number)) ? 0 : Number(number),
                     year: year,
                     season: season?.toUpperCase(),
-                    courseId: course.id
-                }
+                    courseId: course.id,
+                },
             });
         }
 
@@ -124,7 +124,7 @@ export default class Resolver {
         if (Resolver.uuidRegex.test(topicResolvable)) {
             // If input matches UUIDv4, return object with id and null for abbreviation and number
             return TopicResolvable.parse({
-                id: topicResolvable
+                id: topicResolvable,
             });
         }
 
@@ -132,7 +132,7 @@ export default class Resolver {
             const name = topicResolvable;
 
             const course = await prisma.course.findUnique({
-                where: Resolver.course(courseResolvable)
+                where: Resolver.course(courseResolvable),
             });
 
             if (!course) {
@@ -142,8 +142,8 @@ export default class Resolver {
             return TopicResolvable.parse({
                 name_courseId: {
                     name: name,
-                    courseId: course.id
-                }
+                    courseId: course.id,
+                },
             });
         }
 
@@ -154,13 +154,13 @@ export default class Resolver {
     public static async question(questionResolvable: string, topicResolvable?: string, examResolvable?: string, courseResolvable?: string) {
         if (Resolver.uuidRegex.test(questionResolvable)) {
             return QuestionResolvable.parse({
-                id: questionResolvable
+                id: questionResolvable,
             });
         }
 
         if (topicResolvable) {
             const topic = await prisma.topic.findUnique({
-                where: await Resolver.topic(topicResolvable, courseResolvable)
+                where: await Resolver.topic(topicResolvable, courseResolvable),
             });
 
             if (!topic) {
@@ -172,8 +172,8 @@ export default class Resolver {
                     number_topicId: {
                         number: Number(questionResolvable),
                         topicId: topic.id,
-                    }
-                }
+                    },
+                },
             });
 
             if (!questionToTopic) {
@@ -181,13 +181,13 @@ export default class Resolver {
             }
 
             return QuestionResolvable.parse({
-                id: questionToTopic.questionId
+                id: questionToTopic.questionId,
             });
         }
 
         if (examResolvable) {
             const exam = await prisma.exam.findUnique({
-                where: await Resolver.exam(examResolvable, courseResolvable)
+                where: await Resolver.exam(examResolvable, courseResolvable),
             });
 
             if (!exam) {
@@ -196,7 +196,7 @@ export default class Resolver {
 
             return QuestionResolvable.parse({
                 number: Number.parseInt(questionResolvable),
-                examId: exam.id
+                examId: exam.id,
             });
         }
 

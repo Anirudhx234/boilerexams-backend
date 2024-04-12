@@ -1,4 +1,3 @@
-
 async function main() {
     /*
     const semester = await prisma.semester.create({

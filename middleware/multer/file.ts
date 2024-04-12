@@ -6,7 +6,7 @@ const storage = multer.memoryStorage();
 
 const kilobyte = 1000;
 const megabyte = kilobyte * kilobyte;
-const validFileTypes = [ "image/jpeg", "image/png", "application/pdf" ];
+const validFileTypes = ["image/jpeg", "image/png", "application/pdf"];
 
 function fileFilter(_req: Express.Request, file: Express.Multer.File, callback: multer.FileFilterCallback) {
     if (validFileTypes.includes(file.mimetype)) {

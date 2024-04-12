@@ -5,7 +5,7 @@ import {
     getExamStats,
     getHourlySubmissionStats,
     getQuestionStats,
-    getTopicStats
+    getTopicStats,
 } from "../controllers/statsController.js";
 import asyncWrapper from "../middleware/wrappers/asyncWrapper.js";
 import cache from "../middleware/cache/caching.js";

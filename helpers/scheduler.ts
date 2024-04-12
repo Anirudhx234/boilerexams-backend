@@ -1,7 +1,6 @@
 type ScheduledFunction = (...args: unknown[]) => unknown;
 
 export default class Scheduler {
-
     public static schedule(next: ScheduledFunction, delay: number, interval: number, ...args: unknown[]) {
         console.log(`Scheduled ${next.name} with ${args.length} arguments`);
         setTimeout(async () => {

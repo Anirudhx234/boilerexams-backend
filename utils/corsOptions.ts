@@ -5,11 +5,10 @@
 
 const corsOptions = {
     origin: (origin: any, cb: any) => {
-       cb(null, true);
+        cb(null, true);
     },
     credentials: true,
     exposedHeaders: ["set-cookie"],
 };
-
 
 export default corsOptions;
