@@ -30,7 +30,6 @@ export default prisma
 
                         if (oldData.key != newData.key) {
                             if (oldData.key) {
-                                // ToDo Check if this works
                                 await deleteFileFromS3(oldData.key);
                             }
                         }
@@ -43,7 +42,6 @@ export default prisma
 
                     if (result.success) {
                         if (result.data.key) {
-                            // ToDo Check if this works
                             await deleteFileFromS3(result.data.key);
                         }
                     }

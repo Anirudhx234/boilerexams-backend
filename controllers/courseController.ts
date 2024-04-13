@@ -220,6 +220,64 @@ export async function getCourseTopics(req: Request, res: Response) {
     );
 }
 
+export async function getCourseTopicsByExam(req: Request, res: Response) {
+    const { c } = req.params;
+
+    const course = await prisma.course.findUniqueOrThrow({
+        where: Resolver.course(c),
+    });
+
+    if (!req.sendUnpublished && !course.flags.published) {
+        throw new NotFoundError("Course not found");
+    }
+
+    if (!course.studyModes.includes(StudyMode.TOPIC) && !req.sendUnpublished) {
+        throw new APIError("Route disabled for this course", 403);
+    }
+
+    const topics = await prisma.topic.findMany({
+        where: {
+            courseId: course.id
+        },
+        include: {
+            questions: {
+                include: {
+                    question: {
+                        include: {
+                            exam: {
+                                select: {
+                                    number: true
+                                }
+                            }
+                        }
+                    }
+                },
+            },
+        },
+        orderBy: {
+            name: "asc",
+        },
+    });
+
+    const buckets = {};
+    topics.forEach((topic) => {
+        topic.questions.forEach((questionToTopic) => {
+            const examNumber = questionToTopic.question.exam.number.toString();
+            if (!buckets[examNumber]) {
+                buckets[examNumber] = [];
+            }
+            buckets[examNumber].push(topic);
+        });
+    });
+
+    res.status(200).send(
+        Formatter.topics({
+            data: topics,
+            sendUnpublished: req.sendUnpublished,
+        }),
+    );
+}
+
 export async function getCourseEvents(req: Request, res: Response) {
     const { c } = req.params;
     const options = EventQueryParams.parse(req.query);

@@ -5,10 +5,10 @@ import {
     getCourse,
     getCourseEvents,
     getCourseExams,
-    getCourseTopics,
+    getCourseTopics, getCourseTopicsByExam,
     getSubjects,
     toggleCoursePublished,
-    updateCourse,
+    updateCourse
 } from "../controllers/courseController.js";
 import {
     createExam,
@@ -39,6 +39,8 @@ router.get("/subjects", sendPublished, cache(minute), asyncWrapper(getSubjects))
 router.get("/:c", sendPublished, cache(minute), asyncWrapper(getCourse));
 
 router.get("/:c/topics", sendPublished, cache(minute), asyncWrapper(getCourseTopics));
+
+router.get("/:c/topics/exams", sendPublished, cache(minute), asyncWrapper(getCourseTopicsByExam));
 
 router.get("/:c/topics/:t", sendPublished, cache(minute), asyncWrapper(getTopic));
 

@@ -1,5 +1,5 @@
 -- CreateEnum
-CREATE TYPE "QuestionType" AS ENUM ('MULTIPLE_CHOICE', 'FREE_RESPONSE', 'SHORT_ANSWER', 'FILL_IN_BLANK');
+CREATE TYPE "QuestionType" AS ENUM ('PARENT', 'MULTIPLE_CHOICE', 'FREE_RESPONSE', 'SHORT_ANSWER', 'FILL_IN_BLANK');
 
 -- CreateEnum
 CREATE TYPE "ResourceType" AS ENUM ('LOGO', 'IMAGE', 'VIDEO', 'LONG_VIDEO', 'CODE', 'PDF');
@@ -23,7 +23,7 @@ CREATE TYPE "Season" AS ENUM ('SPRING', 'SUMMER', 'FALL', 'WINTER');
 CREATE TYPE "StudyMode" AS ENUM ('EXAM', 'TIMED_EXAM', 'TOPIC');
 
 -- CreateEnum
-CREATE TYPE "FeedbackStatus" AS ENUM ('OPEN', 'CLOSED');
+CREATE TYPE "FeedbackStatus" AS ENUM ('OPEN', 'CLOSED', 'DELETED');
 
 -- CreateTable
 CREATE TABLE "Course" (
@@ -36,6 +36,7 @@ CREATE TABLE "Course" (
     "disclaimer" TEXT,
     "studyModes" "StudyMode"[],
     "flags" INTEGER NOT NULL,
+    "stats" JSONB,
 
     CONSTRAINT "Course_pkey" PRIMARY KEY ("id")
 );
@@ -49,6 +50,7 @@ CREATE TABLE "Exam" (
     "disclaimer" TEXT,
     "courseId" TEXT NOT NULL,
     "flags" INTEGER NOT NULL,
+    "stats" JSONB,
 
     CONSTRAINT "Exam_pkey" PRIMARY KEY ("id")
 );
@@ -64,6 +66,7 @@ CREATE TABLE "Question" (
     "courseId" TEXT NOT NULL,
     "parentId" TEXT,
     "flags" INTEGER NOT NULL,
+    "stats" JSONB,
 
     CONSTRAINT "Question_pkey" PRIMARY KEY ("id")
 );
@@ -81,8 +84,9 @@ CREATE TABLE "Explanation" (
 CREATE TABLE "AnswerChoice" (
     "id" TEXT NOT NULL,
     "index" INTEGER NOT NULL,
-    "body" TEXT NOT NULL,
+    "body" TEXT,
     "questionId" TEXT NOT NULL,
+    "stats" JSONB,
 
     CONSTRAINT "AnswerChoice_pkey" PRIMARY KEY ("id")
 );
@@ -124,6 +128,8 @@ CREATE TABLE "Topic" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "courseId" TEXT NOT NULL,
+    "examNumbers" INTEGER[],
+    "stats" JSONB,
 
     CONSTRAINT "Topic_pkey" PRIMARY KEY ("id")
 );
@@ -230,7 +236,7 @@ CREATE TABLE "_CourseToUser" (
 );
 
 -- CreateConstraint
-ALTER TABLE "Question" ADD CONSTRAINT "Question_number_examId_key" UNIQUE ("number", "examId") DEFERRABLE INITIALLY DEFERRED;
+ALTER TABLE "Question" ADD CONSTRAINT "Question_number_examId_parentId_key" UNIQUE ("number", "examId", "parentId") DEFERRABLE INITIALLY DEFERRED;
 
 -- CreateConstraint
 ALTER TABLE "AnswerChoice" ADD CONSTRAINT "AnswerChoice_index_questionId_key" UNIQUE ("index", "questionId") DEFERRABLE INITIALLY DEFERRED;
