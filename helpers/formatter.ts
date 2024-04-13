@@ -1,4 +1,5 @@
 import { JsonValue } from "@prisma/client/runtime/library.js";
+import questions from "../routes/questions.js";
 
 export default class Formatter {
     public static course(options: FormatterOptions<PotentialCourse>): FormattedCourse {
@@ -55,6 +56,8 @@ export default class Formatter {
                       answerChoices: Formatter.answerChoices({ ...options, data: options.data.answerChoices }),
                   }
                 : undefined,
+            course: options.data.course ? Formatter.course({ ...options, data: options.data.course }) : undefined,
+            exam: options.data.exam ? Formatter.exam({ ...options, data: options.data.exam }) : undefined,
             answerChoices: undefined,
             resources: options.data.resources,
             children: Formatter.questions({ ...options, data: options.data.children }),
@@ -110,6 +113,7 @@ interface FormattedCourse {
 
 interface FormattedExam {
     flags: ExamFlags;
+    number?: number;
     questions?: FormattedQuestion[];
 }
 
@@ -119,6 +123,8 @@ interface FormattedTopic {
 
 interface FormattedQuestion {
     data?: unknown;
+    course?: FormattedCourse;
+    exam?: FormattedExam;
     flags: QuestionFlags;
     children?: FormattedQuestion[];
     topics?: FormattedTopic[];
@@ -149,6 +155,8 @@ interface PotentialAnswerChoice {
 interface PotentialQuestion {
     id?: string;
     parentId?: string | null;
+    course?: PotentialCourse;
+    exam?: PotentialExam;
     flags: QuestionFlags;
     data?: JsonValue;
     children?: PotentialQuestion[];

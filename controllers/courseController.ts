@@ -1,5 +1,5 @@
 import prisma from "../prisma/prisma.js";
-import type { Request, Response } from "express";
+import e, { Request, Response } from "express";
 import { APIError, NotFoundError } from "../middleware/errors/index.js";
 import { PurdueIoAPI } from "../services/purdue.io.js";
 import { StudyMode } from "@prisma/client";
@@ -246,7 +246,8 @@ export async function getCourseTopicsByExam(req: Request, res: Response) {
                         include: {
                             exam: {
                                 select: {
-                                    number: true
+                                    number: true,
+                                    flags: true
                                 }
                             }
                         }
@@ -257,12 +258,19 @@ export async function getCourseTopicsByExam(req: Request, res: Response) {
         orderBy: {
             name: "asc",
         },
+    }).then(topics => {
+        return Formatter.topics({
+            data: topics,
+            sendUnpublished: req.sendUnpublished,
+        });
     });
 
     const buckets = {};
-    topics.forEach((topic) => {
-        topic.questions.forEach((questionToTopic) => {
-            const examNumber = questionToTopic.question.exam.number.toString();
+
+    topics?.forEach((topic) => {
+        topic.questions?.forEach((question) => {
+            const examNumber = question.exam?.number?.toString();
+            if (!examNumber) return;
             if (!buckets[examNumber]) {
                 buckets[examNumber] = [];
             }
@@ -270,12 +278,7 @@ export async function getCourseTopicsByExam(req: Request, res: Response) {
         });
     });
 
-    res.status(200).send(
-        Formatter.topics({
-            data: topics,
-            sendUnpublished: req.sendUnpublished,
-        }),
-    );
+    res.status(200).json(buckets);
 }
 
 export async function getCourseEvents(req: Request, res: Response) {
