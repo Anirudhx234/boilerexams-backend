@@ -135,14 +135,14 @@ export async function getCourseExams(req: Request, res: Response) {
 
     const course = await prisma.course.findUniqueOrThrow({
         where: Resolver.course(c),
-        select: {
-            id: true,
-            flags: true,
-        },
     });
 
     if (!req.sendUnpublished && !course.flags.published) {
         throw new NotFoundError("Course not found");
+    }
+
+    if (!course.studyModes.includes(StudyMode.EXAM)) {
+        throw new APIError("Route disabled for this course", 403);
     }
 
     const exams = await prisma.exam.findMany({
@@ -168,7 +168,7 @@ export async function getCourseExams(req: Request, res: Response) {
     res.status(200).send(
         Formatter.exams({
             data: exams,
-            sendUnpublished: req.sendUnpublished,
+            sendUnpublished: req.sendUnpublished
         }),
     );
 }
@@ -178,14 +178,14 @@ export async function getCourseTopics(req: Request, res: Response) {
 
     const course = await prisma.course.findUniqueOrThrow({
         where: Resolver.course(c),
-        select: {
-            id: true,
-            flags: true,
-        },
     });
 
     if (!req.sendUnpublished && !course.flags.published) {
         throw new NotFoundError("Course not found");
+    }
+
+    if (!course.studyModes.includes(StudyMode.TOPIC)) {
+        throw new APIError("Route disabled for this course", 403);
     }
 
     const topics = await prisma.topic.findMany({
