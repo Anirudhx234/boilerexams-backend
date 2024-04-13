@@ -141,7 +141,7 @@ export async function getCourseExams(req: Request, res: Response) {
         throw new NotFoundError("Course not found");
     }
 
-    if (!course.studyModes.includes(StudyMode.EXAM)) {
+    if (!course.studyModes.includes(StudyMode.EXAM) && !req.sendUnpublished) {
         throw new APIError("Route disabled for this course", 403);
     }
 
@@ -184,7 +184,7 @@ export async function getCourseTopics(req: Request, res: Response) {
         throw new NotFoundError("Course not found");
     }
 
-    if (!course.studyModes.includes(StudyMode.TOPIC)) {
+    if (!course.studyModes.includes(StudyMode.TOPIC) && !req.sendUnpublished) {
         throw new APIError("Route disabled for this course", 403);
     }
 
