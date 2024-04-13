@@ -127,13 +127,12 @@ model Resource {
 }
 
 model Topic {
-  id          String            @id @default(uuid())
-  name        String
-  courseId    String
-  examNumbers Int[]
-  course      Course            @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  questions   QuestionToTopic[]
-  stats       Json?
+  id        String            @id @default(uuid())
+  name      String
+  courseId  String
+  course    Course            @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  questions QuestionToTopic[]
+  stats     Json?
 
   @@unique([name, courseId])
 }
