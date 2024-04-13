@@ -84,6 +84,41 @@ export async function getAllExams(req: Request, res: Response) {
     );
 }
 
+export async function getExamTopics(req: Request, res: Response) {
+    const { e, c } = req.params;
+
+    const exam = await prisma.exam.findUniqueOrThrow({
+        where: await Resolver.exam(e, c),
+    });
+
+    if (!req.sendUnpublished && !exam.flags.published) {
+        throw new NotFoundError("Exam not found");
+    }
+
+    const topics = await prisma.topic.findMany({
+        where: {
+            questions: {
+                some: {
+                    question: {
+                        examId: exam.id,
+                    },
+                },
+            },
+        },
+        orderBy: {
+            name: "asc",
+        },
+    });
+
+    res.status(200).send(
+        Formatter.topics({
+            data: topics,
+            sendUnpublished: req.sendUnpublished,
+        }),
+    );
+}
+
+
 export async function getExamQuestions(req: Request, res: Response) {
     const { e, c } = req.params;
 
@@ -108,55 +143,6 @@ export async function getExamQuestions(req: Request, res: Response) {
     res.status(200).send(
         Formatter.questions({
             data: questions,
-            sendUnpublished: req.sendUnpublished,
-        }),
-    );
-}
-
-export async function getExamTopics(req: Request, res: Response) {
-    const { e, c } = req.params;
-
-    const exam = await prisma.exam.findUniqueOrThrow({
-        where: await Resolver.exam(e, c),
-    });
-
-    if (!req.sendUnpublished && !exam.flags.published) {
-        throw new NotFoundError("Exam not found");
-    }
-
-    const topics = await prisma.topic.findMany({
-        where: {
-            questions: {
-                some: {
-                    question: {
-                        examId: exam.id,
-                    },
-                },
-            },
-        },
-        include: {
-            questions: {
-                include: {
-                    question: {
-                        select: {
-                            id: true,
-                            flags: true,
-                        },
-                    },
-                },
-                orderBy: {
-                    number: "asc",
-                },
-            },
-        },
-        orderBy: {
-            name: "asc",
-        },
-    });
-
-    res.status(200).send(
-        Formatter.topics({
-            data: topics,
             sendUnpublished: req.sendUnpublished,
         }),
     );

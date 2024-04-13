@@ -6,7 +6,6 @@ import {
     getCourseEvents,
     getCourseExams,
     getCourseTopics,
-    getCourseTopicsByExam,
     getSubjects,
     toggleCoursePublished,
     updateCourse,
@@ -15,10 +14,10 @@ import {
     createExam,
     deleteExam,
     getExam,
-    getExamQuestions,
+    getExamQuestions, getExamTopics,
     reorderExamQuestions,
     toggleExamPublished,
-    updateExam,
+    updateExam
 } from "../controllers/examController.js";
 import { createQuestion, getQuestion, updateQuestion } from "../controllers/questionController.js";
 import { createTopic, getTopic, getTopicQuestions, reorderTopicQuestions } from "../controllers/topicController.js";
@@ -41,8 +40,6 @@ router.get("/:c", sendPublished, cache(minute), asyncWrapper(getCourse));
 
 router.get("/:c/topics", sendPublished, cache(minute), asyncWrapper(getCourseTopics));
 
-router.get("/:c/topicsByExam", sendPublished, cache(minute), asyncWrapper(getCourseTopicsByExam));
-
 router.get("/:c/topics/:t", sendPublished, cache(minute), asyncWrapper(getTopic));
 
 router.get("/:c/topics/:t/questions", sendPublished, cache(minute), asyncWrapper(getTopicQuestions));
@@ -50,6 +47,8 @@ router.get("/:c/topics/:t/questions", sendPublished, cache(minute), asyncWrapper
 router.get("/:c/exams", sendPublished, cache(minute), asyncWrapper(getCourseExams));
 
 router.get("/:c/exams/:e", sendPublished, cache(minute), asyncWrapper(getExam));
+
+router.get("/:c/exams/:e/topics", sendPublished, cache(minute), asyncWrapper(getExamTopics));
 
 router.get("/:c/exams/:e/questions", sendPublished, cache(minute), asyncWrapper(getExamQuestions));
 

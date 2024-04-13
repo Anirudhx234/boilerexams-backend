@@ -1,5 +1,5 @@
 import express from "express";
-import { getAllExams, getExam, getExamQuestions } from "../controllers/examController.js";
+import { getAllExams, getExam, getExamQuestions, getExamTopics } from "../controllers/examController.js";
 import asyncWrapper from "../middleware/wrappers/asyncWrapper.js";
 import sendPublished from "../middleware/auth/sendPublished.js";
 import authHandler from "../middleware/auth/authHandler.js";
@@ -11,6 +11,8 @@ const router = express.Router();
 router.get("/", sendPublished, asyncWrapper(getAllExams));
 
 router.get("/:e", sendPublished, asyncWrapper(getExam));
+
+router.get("/:e/topics", asyncWrapper(getExamTopics));
 
 router.get("/:e/questions", asyncWrapper(getExamQuestions));
 
