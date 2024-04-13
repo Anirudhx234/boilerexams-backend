@@ -129,6 +129,7 @@ export const PartialQuestion = {
             topic: true
         }
     },
+    difficulty: true,
     children: {
         select: {
             id: true,

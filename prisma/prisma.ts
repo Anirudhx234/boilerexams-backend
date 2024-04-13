@@ -125,6 +125,13 @@ export default prisma
                         return QuestionStats.parse(question.stats ?? {});
                     },
                 },
+                difficulty: {
+                    needs: { stats: true },
+                    compute(question) {
+                        const stats = QuestionStats.parse(question.stats ?? {});
+                        return stats.submissions > 50 ? stats.submissionsCorrect / stats.submissions : 0.5;
+                    }
+                },
             },
             topic: {
                 stats: {
