@@ -220,6 +220,37 @@ export async function getCourseTopics(req: Request, res: Response) {
     );
 }
 
+export async function getCourseTopicsByExam(req: Request, res: Response) {
+    const { c } = req.params;
+
+    const course = await prisma.course.findUniqueOrThrow({
+        where: Resolver.course(c),
+        select: {
+            id: true,
+            flags: true,
+        },
+    });
+
+    if (!req.sendUnpublished && !course.flags.published) {
+        throw new NotFoundError("Course not found");
+    }
+
+    const topics: { number: number; name: string; questionIds: string[] }[] = await prisma.$queryRaw`
+            select "e"."number", "t"."name", json_agg("qt"."questionId") as "questionIds" 
+            from "Topic" as "t"
+	            inner join "QuestionToTopic" as "qt" on "qt"."topicId" = "t"."id"
+	            inner join "Question" as "q" on "qt"."questionId" = "q"."id"
+	            left join "Exam" as "e" on "e"."id" = "q"."examId"
+	        where 
+                "q"."courseId" = '${course.id}' 
+                and ("e"."flags" & 1 = 1 or ${req.sendUnpublished})
+	        group by "e"."number", "t"."name"
+	        order by "e"."number", "t"."name";
+        `;
+
+    res.status(200).send(topics);
+}
+
 export async function getCourseEvents(req: Request, res: Response) {
     const { c } = req.params;
     const options = EventQueryParams.parse(req.query);
