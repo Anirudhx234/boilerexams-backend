@@ -129,7 +129,7 @@ export default prisma
                     needs: { stats: true },
                     compute(question) {
                         const stats = QuestionStats.parse(question.stats ?? {});
-                        return stats.submissions > 50 ? stats.submissionsCorrect / stats.submissions : 0.5;
+                        return stats.submissions > 50 ? 1 - (stats.submissionsCorrect / stats.submissions) : 0.5;
                     }
                 },
             },
