@@ -173,14 +173,4 @@ const getIdResults = async (req: Request, res: Response) => {
     res.status(200).send({ id: pdfId, questions: uploadedQuestions });
 };
 
-const attachPDFToExam = async (req: Request, res: Response) => {
-    const { examId } = req.params;
-
-    if (!req.file) {
-        throw new Error("No file attached");
-    }
-    const exam = await savePDFtoExam(examId, req.file.buffer, req.file.mimetype);
-    res.status(200).send(exam);
-};
-
-export { parseFromFile, parseFromLink, getIdResults, attachPDFToExam };
+export { parseFromFile, parseFromLink, getIdResults };

@@ -17,10 +17,10 @@ router.get("/:question", sendPublished, asyncWrapper(getQuestion));
 
 router.put("/:question", authHandler(Role.CONTENT), asyncWrapper(updateQuestion));
 
-router.put("/:question/togglePublished", authHandler(Role.CONTENT), asyncWrapper(toggleQuestionPublished));
+router.put("/:question/toggle-published", authHandler(Role.CONTENT), asyncWrapper(toggleQuestionPublished));
 
 router.delete("/:question", authHandler(Role.CONTENT), asyncWrapper(deleteQuestion));
 
-router.delete("/answerChoices/:answerChoiceId", authHandler(Role.CONTENT), asyncWrapper(deleteAnswerChoice));
+router.delete("/answer-choices/:answerChoiceId", authHandler(Role.CONTENT), asyncWrapper(deleteAnswerChoice));
 
 export default router;

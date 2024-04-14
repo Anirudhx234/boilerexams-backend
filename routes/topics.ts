@@ -11,7 +11,7 @@ router.get("/", sendPublished, asyncWrapper(getAllTopics));
 
 router.put("/:topic", authHandler(Role.CONTENT), asyncWrapper(updateTopic));
 
-router.put("/:topic/setQuestions", authHandler(Role.CONTENT), asyncWrapper(setTopicQuestions));
+router.put("/:topic/set-questions", authHandler(Role.CONTENT), asyncWrapper(setTopicQuestions));
 
 router.delete("/:topic", authHandler(Role.CONTENT), asyncWrapper(deleteTopic));
 
