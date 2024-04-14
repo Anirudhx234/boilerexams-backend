@@ -7,8 +7,6 @@ import passport from "passport";
 import corsOptions from "./utils/corsOptions.js";
 import sessionOptions from "./utils/sessionOptions.js";
 import initializePassport from "./middleware/auth/passport/index.js";
-import swaggerUi from "swagger-ui-express";
-import docs from "./docs/index.js";
 import routes from "./routes/index.js";
 import errorHandler from "./middleware/errorHandler.js";
 import { scheduleUpdateStats } from "./helpers/stats/updateStats.js";
@@ -40,7 +38,10 @@ app.get("/", (req: Request, res: Response) => {
     res.send("Working");
 });
 
-app.use("/docs", swaggerUi.serve, swaggerUi.setup(docs));
+app.get("/docs", (req: Request, res: Response) => {
+    res.redirect(process.env["DOCS_URL"] ?? "/")
+});
+
 app.use(routes);
 app.use(errorHandler);
 
