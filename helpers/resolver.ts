@@ -85,7 +85,7 @@ export default class Resolver {
         throw new APIError(`Course could not be parsed: ${course}`, 400);
     }
 
-    // Resolve an Exam from either id or number_year_season_courseId
+    // Resolve an Exam from either id or number_year_season and course
     public static async exam(req: Request) {
         const { exam, course } = req.params;
         if (Resolver.uuidRegex.test(exam)) {
@@ -123,6 +123,7 @@ export default class Resolver {
         throw new APIError(`Exam could not be parsed: ${exam} ${course}`, 400);
     }
 
+    // Resolve a Topic from either id or name and course
     public static async topic(req: Request) {
         const { topic, course } = req.params;
         if (Resolver.uuidRegex.test(topic)) {
@@ -154,7 +155,7 @@ export default class Resolver {
         throw new APIError(`Topic could not be parsed: ${topic} ${course}`, 400);
     }
 
-    // Resolve a Question from either id or number_examId and ExamResolvable/CourseResolvable
+    // Resolve a Question from either id or number and Exam
     public static async question(req: Request) {
         const { question, topic, exam, course } = req.params;
         if (Resolver.uuidRegex.test(question)) {
