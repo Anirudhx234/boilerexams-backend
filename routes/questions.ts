@@ -25,6 +25,6 @@ router.post("/:question/submit", generalLimiter, asyncWrapper(createSubmission))
 
 router.delete("/:question", authHandler(Role.CONTENT), asyncWrapper(deleteQuestion));
 
-router.delete("/answerChoices/:answerChoiceId", authHandler(Role.CONTENT), asyncWrapper(deleteAnswerChoice));
+router.delete("/answer-choices/:answerChoiceId", authHandler(Role.CONTENT), asyncWrapper(deleteAnswerChoice));
 
 export default router;
