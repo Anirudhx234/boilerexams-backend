@@ -136,6 +136,7 @@ function checkUserSolution(type: QuestionType, userSolution?: unknown, solution?
             {
                 const parsedUserSolution = z.array(z.number()).parse(userSolution);
                 const parseSolution = z.array(z.number()).parse(solution);
+                if (parsedUserSolution.length < 1) return false;
                 for (const entry of parsedUserSolution) {
                     if (parseSolution.includes(entry)) continue;
                     return false;
@@ -147,7 +148,8 @@ function checkUserSolution(type: QuestionType, userSolution?: unknown, solution?
             {
                 const parsedUserSolution = z.string().parse(userSolution);
                 const parsedSolution = z.string().parse(solution);
-                if (parsedUserSolution != parsedSolution) return false;
+                if (parsedUserSolution.length < 1) return false;
+                if (parsedUserSolution != parsedSolution || parsedUserSolution) return false;
             }
             break;
 
