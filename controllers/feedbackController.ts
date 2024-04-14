@@ -73,7 +73,7 @@ export async function getFeedback(req: Request, res: Response) {
     res.status(200).send(feedback);
 }
 
-export async function getVideoFeedback(req: Request, res: Response) {
+export async function getManyFeedback(req: Request, res: Response) {
     const question = await getQuestionSafe(req);
     const exam = await getExamSafe(req);
     const course = await getCourseSafe(req);
@@ -83,6 +83,33 @@ export async function getVideoFeedback(req: Request, res: Response) {
             questionId: question?.id,
             examId:     exam?.id,
             courseId:   course?.id
+        },
+        include: {
+            question: {
+                select: {
+                    id: true,
+                    flags: true,
+                    number: true
+                }
+            },
+            exam: {
+                select: {
+                    id: true,
+                    flags: true,
+                    year: true,
+                    number: true,
+                    season: true
+                }
+            },
+            course: {
+                select: {
+                    id: true,
+                    abbreviation: true,
+                    number: true,
+                    name: true,
+                    subject: true
+                }
+            }
         }
     });
 

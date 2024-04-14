@@ -59,7 +59,9 @@ export async function createSubmission(req: Request, res: Response) {
     const options = CreateSubmissionOptions.parse(req.body);
 
     const question = await prisma.question.findFirstOrThrow({
-        where: await Resolver.question(req),
+        where: {
+            id: options.questionId
+        },
     });
 
     const data = QuestionData.parse(question.data);

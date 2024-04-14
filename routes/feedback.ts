@@ -4,7 +4,7 @@ import {
     deleteFeedback,
     getCourseRequests,
     getFeedback,
-    getVideoFeedback,
+    getManyFeedback,
     reportBug,
     reportQuestion,
     requestCourse,
@@ -20,11 +20,11 @@ const router = express.Router();
 
 router.get("/:feedbackId", authHandler(Role.CONTENT), asyncWrapper(getFeedback));
 
-router.get("/courses/:course/exams/:e", authHandler(Role.CONTENT), asyncWrapper(getVideoFeedback));
+router.get("/courses/:course/exams/:e", authHandler(Role.CONTENT), asyncWrapper(getManyFeedback));
 
-router.get("/courses/:course", authHandler(Role.CONTENT), asyncWrapper(getVideoFeedback));
+router.get("/courses/:course", authHandler(Role.CONTENT), asyncWrapper(getManyFeedback));
 
-router.get("/exams/:exam", authHandler(Role.CONTENT), asyncWrapper(getVideoFeedback));
+router.get("/exams/:exam", authHandler(Role.CONTENT), asyncWrapper(getManyFeedback));
 
 router.get("/course-requests", authHandler(Role.CONTENT), asyncWrapper(getCourseRequests));
 
