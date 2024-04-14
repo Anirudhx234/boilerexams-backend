@@ -1,5 +1,5 @@
 import express from "express";
-import auth from "../middleware/auth/auth.js";
+import auth from "./auth.js";
 import courses from "./courses.js";
 import exams from "./exams.js";
 import events from "./events.js";

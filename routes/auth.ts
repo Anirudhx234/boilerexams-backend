@@ -1,9 +1,20 @@
 import express from "express";
 import { Request, Response } from "express";
 import passport from "passport";
-import authTester from "./authTester.js";
-import asyncWrapper from "../wrappers/asyncWrapper.js";
-import { signup, localLogin, discordLogin, googleLogin, resetPassword, changePassword, logout } from "./authController.js";
+import authTester from "../middleware/auth/authTester.js";
+import asyncWrapper from "../middleware/wrappers/asyncWrapper.js";
+import {
+    localSignup,
+    localLogin,
+    discordLogin,
+    googleLogin,
+    resetPassword,
+    changePassword,
+    logout,
+    createLocalAccount
+} from "../middleware/auth/authController.js";
+import authHandler from "../middleware/auth/authHandler.js";
+import { Role } from "@prisma/client";
 
 const router = express.Router();
 
@@ -25,7 +36,9 @@ router.get("/discord/redirect", passport.authenticate("discord"), redirect);
 
 router.get("/google/redirect", passport.authenticate("google"), redirect);
 
-router.post("/signup", asyncWrapper(signup));
+router.post("/create", authHandler(Role.ADMIN), asyncWrapper(createLocalAccount));
+
+router.post("/signup", asyncWrapper(localSignup));
 
 router.post("/login", localLogin);
 

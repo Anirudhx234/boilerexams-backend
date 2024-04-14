@@ -1,16 +1,16 @@
-import prisma from "../../prisma/prisma.js";
-import type { NextFunction, Request, Response } from "express";
-import passport from "passport";
-import { URL } from "url";
-import { randomBytes } from "crypto";
 import { APIError, NotFoundError } from "../errors/index.js";
-import { AccountType } from "@prisma/client";
-import hashString from "../../utils/hashString.js";
-import sendEmail from "../../utils/sendMail.js";
-import resetPasswordTemplate from "../../utils/emailTemplates/resetPassword.js";
+import { AccountType, Role } from "@prisma/client";
+import type { NextFunction, Request, Response } from "express";
+import { randomBytes } from "crypto";
+import { URL } from "url";
 import { z } from "zod";
+import hashString from "../../utils/hashString.js";
+import passport from "passport";
+import prisma from "../../prisma/prisma.js";
+import resetPasswordTemplate from "../../utils/emailTemplates/resetPassword.js";
+import sendEmail from "../../utils/sendMail.js";
 
-export const NewUserSchema = z.object({
+export const LocalSignupOptions = z.object({
     name: z.string(),
     email: z.string().email({ message: "Invalid email" }),
     password: z
@@ -20,7 +20,12 @@ export const NewUserSchema = z.object({
         }),
 });
 
-export const ChangePasswordSchema = z.object({
+export const CreateLocalOptions = LocalSignupOptions.extend({
+    role: z.nativeEnum(Role).default(Role.USER),
+    courses: z.array(z.string().uuid()).optional()
+});
+
+export const ChangePasswordOptions = z.object({
     id: z.string(),
     d: z.string(),
     h: z.string(),
@@ -28,6 +33,16 @@ export const ChangePasswordSchema = z.object({
         message: `Password must contain at least 8 characters consisting of at least 1 uppercase letter, 1 lowercase letter, 1 number, and 1 special character`,
     }),
 });
+
+const base64Encode = (data: string) => {
+    const buffer = Buffer.from(data);
+    return buffer.toString("base64");
+};
+
+const base64Decode = (data: string) => {
+    const buffer = Buffer.from(data, "base64");
+    return buffer.toString("ascii");
+};
 
 const redirectUrl = (req: Request) => {
     const urlString = req.headers.referer;
@@ -42,30 +57,52 @@ const redirectUrl = (req: Request) => {
     return Buffer.from(JSON.stringify({ redirect: baseUrl })).toString("base64");
 };
 
-const discordLogin = (req: Request, res: Response, next: NextFunction) => {
+export async function discordLogin(req: Request, res: Response, next: NextFunction) {
     const state = redirectUrl(req);
     const authenticator = passport.authenticate("discord", { state });
     authenticator(req, res, next);
-};
+}
 
-const googleLogin = (req: Request, res: Response, next: NextFunction) => {
+export async function googleLogin(req: Request, res: Response, next: NextFunction) {
     const state = redirectUrl(req);
     const authenticator = passport.authenticate("google", { state });
     authenticator(req, res, next);
-};
+}
 
-const base64Encode = (data: string) => {
-    const buffer = Buffer.from(data);
-    return buffer.toString("base64");
-};
+export async function createLocalAccount(req: Request, res: Response) {
+    const { name, email, password, role, courses } = CreateLocalOptions.parse(req.body);
 
-const base64Decode = (data: string) => {
-    const buffer = Buffer.from(data, "base64");
-    return buffer.toString("ascii");
-};
+    const salt = randomBytes(16);
+    const hashedPassword = await hashString(password, salt);
 
-const signup = async (req: Request, res: Response) => {
-    const { name, email, password } = NewUserSchema.parse(req.body);
+    const newUser = await prisma.user.create({
+        data: {
+            name: name,
+            email: email,
+            role: role,
+            profilePicture: "https://upload.wikimedia.org/wikipedia/commons/2/2c/Default_pfp.svg",
+            accountType: AccountType.LOCAL,
+            localAccount: {
+                create: {
+                    password: hashedPassword,
+                    salt: salt,
+                },
+            },
+            courses: {
+                connect: courses?.map(courseId => {
+                    return {
+                        id: courseId
+                    };
+                })
+            }
+        },
+    });
+
+    res.status(200).send(newUser);
+}
+
+export async function localSignup(req: Request, res: Response){
+    const { name, email, password } = LocalSignupOptions.parse(req.body);
 
     const salt = randomBytes(16);
     const hashedPassword = await hashString(password, salt);
@@ -86,18 +123,18 @@ const signup = async (req: Request, res: Response) => {
     });
 
     res.status(200).send(newUser);
-};
+}
 
-const localLogin = (req: Request, res: Response, next: NextFunction) => {
+export async function localLogin(req: Request, res: Response, next: NextFunction) {
     const authenticator = passport.authenticate("local", {
         successReturnToOrRedirect: "/auth/test",
         failureRedirect: "/auth/test",
         failureMessage: true,
     });
     authenticator(req, res, next);
-};
+}
 
-const resetPassword = async (req: Request, res: Response) => {
+export async function resetPassword(req: Request, res: Response) {
     const email = z.string().email({ message: "Invalid email" }).parse(req.body.email);
 
     const user = await prisma.user.findFirst({
@@ -135,10 +172,10 @@ const resetPassword = async (req: Request, res: Response) => {
     await sendEmail(options);
 
     res.status(200).send({ resetLink: resetLink });
-};
+}
 
-const changePassword = async (req: Request, res: Response) => {
-    const { id, d, h, newPassword } = ChangePasswordSchema.parse({ ...req.query, ...req.body });
+export async function changePassword(req: Request, res: Response) {
+    const { id, d, h, newPassword } = ChangePasswordOptions.parse({ ...req.query, ...req.body });
 
     // Check if the link in not out of date
     const date = base64Decode(d);
@@ -192,10 +229,10 @@ const changePassword = async (req: Request, res: Response) => {
     });
 
     res.status(200).send({ message: "Password changed successfully" });
-};
+}
 
-const logout = (req: Request, res: Response, next: NextFunction) => {
-    req.logOut((error: any) => {
+export async function logout(req: Request, res: Response, next: NextFunction) {
+    req.logOut((error: unknown) => {
         if (error) {
             next(error);
         }
@@ -203,6 +240,4 @@ const logout = (req: Request, res: Response, next: NextFunction) => {
         const { redirect } = JSON.parse(Buffer.from(url, "base64").toString());
         return res.json({ redirectUrl: redirect });
     });
-};
-
-export { signup, localLogin, discordLogin, googleLogin, resetPassword, changePassword, logout };
+}
