@@ -267,16 +267,26 @@ export async function getCourseTopicsByExam(req: Request, res: Response) {
         });
     });
 
-    const buckets = {};
+    const buckets = {}; // buckets["i"] will be an array of topics on exam i
 
     topics?.forEach((topic) => {
+        const exams: string[] = [];
         topic.questions?.forEach((question) => {
             const examNumber = question.exam?.number?.toString();
-            if (!examNumber) return;
+            if (!examNumber || exams.includes(examNumber)) return;
+            exams.push(examNumber);
             if (!buckets[examNumber]) {
                 buckets[examNumber] = [];
             }
-            buckets[examNumber].push(topic);
+            buckets[examNumber].push({
+                ...topic,
+                questions: topic.questions?.map(question => {
+                    return {
+                        ...question,
+                        exam: undefined
+                    };
+                })
+            });
         });
     });
 
