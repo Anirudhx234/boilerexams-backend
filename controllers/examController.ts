@@ -9,6 +9,7 @@ import FlagEncoder from "../helpers/encoder.js";
 import Formatter from "../helpers/formatter.js";
 import prisma from "../prisma/prisma.js";
 import Resolver from "../helpers/resolver.js";
+import savePDFtoExam from "../helpers/mathpix/savePDFtoExam.js";
 
 export const ExamFlags = z.object({
     published: z.boolean().default(false),
@@ -253,6 +254,16 @@ export async function toggleExamPublished(req: Request, res: Response) {
         message: `Exam is now ${status ? "published" : "unpublished"}`,
     });
 }
+
+export async function attachPDFToExam(req: Request, res: Response) {
+    const { examId } = req.params;
+
+    if (!req.file) {
+        throw new Error("No file attached");
+    }
+    const exam = await savePDFtoExam(examId, req.file.buffer, req.file.mimetype);
+    res.status(200).send(exam);
+};
 
 export async function deleteExam(req: Request, res: Response) {
     const exam = await prisma.exam.delete({

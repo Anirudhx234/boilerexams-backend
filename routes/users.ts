@@ -13,9 +13,9 @@ router.get("/me", authTester, asyncWrapper(getMe));
 
 router.get("/:userId", authHandler(Role.ADMIN), asyncWrapper(getUser));
 
-router.put("/:userId/updateRole", authHandler(Role.ADMIN), asyncWrapper(updateUserRole));
+router.put("/:userId/update-role", authHandler(Role.ADMIN), asyncWrapper(updateUserRole));
 
-router.put("/:userId/assignCourses", authHandler(Role.ADMIN), asyncWrapper(assignUserCourses));
+router.put("/:userId/assign-courses", authHandler(Role.ADMIN), asyncWrapper(assignUserCourses));
 
 router.delete("/:userId", authHandler(Role.ADMIN), asyncWrapper(deleteUser));
 

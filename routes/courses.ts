@@ -62,11 +62,11 @@ router.get("/:course/events", sendPublished, cache(minute), asyncWrapper(getCour
 
 router.put("/:course", authHandler(Role.CONTENT), asyncWrapper(updateCourse));
 
-router.put("/:course/togglePublished", authHandler(Role.CONTENT), asyncWrapper(toggleCoursePublished));
+router.put("/:course/toggle-published", authHandler(Role.CONTENT), asyncWrapper(toggleCoursePublished));
 
 router.put("/:course/exams/:exam", authHandler(Role.CONTENT), asyncWrapper(updateExam));
 
-router.put("/:course/exams/:exam/togglePublished", authHandler(Role.CONTENT), asyncWrapper(toggleExamPublished));
+router.put("/:course/exams/:exam/toggle-published", authHandler(Role.CONTENT), asyncWrapper(toggleExamPublished));
 
 router.put("/:course/exams/:exam/questions/:question", authHandler(Role.CONTENT), asyncWrapper(updateQuestion));
 
@@ -76,11 +76,11 @@ router.post("/:course/exams", authHandler(Role.CONTENT), asyncWrapper(createExam
 
 router.post("/:course/topics", authHandler(Role.CONTENT), asyncWrapper(createTopic));
 
-router.post("/:course/exams/:exam/reorderQuestions", authHandler(Role.CONTENT), asyncWrapper(reorderExamQuestions));
+router.post("/:course/exams/:exam/reorder-questions", authHandler(Role.CONTENT), asyncWrapper(reorderExamQuestions));
 
 router.post("/:course/exams/:exam/questions", authHandler(Role.CONTENT), asyncWrapper(createQuestion));
 
-router.post("/:course/topics/:topic/reorderQuestions", authHandler(Role.CONTENT), asyncWrapper(reorderTopicQuestions));
+router.post("/:course/topics/:topic/reorder-questions", authHandler(Role.CONTENT), asyncWrapper(reorderTopicQuestions));
 
 router.delete("/:course", authHandler(Role.CONTENT), asyncWrapper(deleteCourse));
 

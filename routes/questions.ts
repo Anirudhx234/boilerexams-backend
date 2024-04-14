@@ -19,7 +19,7 @@ router.get("/:question", sendPublished, asyncWrapper(getQuestion));
 
 router.put("/:question", authHandler(Role.CONTENT), asyncWrapper(updateQuestion));
 
-router.put("/:question/togglePublished", authHandler(Role.CONTENT), asyncWrapper(toggleQuestionPublished));
+router.put("/:question/toggle-published", authHandler(Role.CONTENT), asyncWrapper(toggleQuestionPublished));
 
 router.post("/:question/submit", generalLimiter, asyncWrapper(createSubmission));
 

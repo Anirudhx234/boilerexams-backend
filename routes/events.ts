@@ -16,7 +16,7 @@ const router = express.Router();
 
 router.get("/", asyncWrapper(getEvents));
 
-router.get("/eventId:", asyncWrapper(getEvent));
+router.get("/:eventId", asyncWrapper(getEvent));
 
 router.post("/", authHandler(Role.CONTENT), asyncWrapper(createEvent));
 
