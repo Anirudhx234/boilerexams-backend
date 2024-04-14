@@ -9,12 +9,12 @@ const router = express.Router();
 
 router.get("/", sendPublished, asyncWrapper(getAllExams));
 
-router.get("/:e", sendPublished, asyncWrapper(getExam));
+router.get("/:exam", sendPublished, asyncWrapper(getExam));
 
-router.get("/:e/topics", asyncWrapper(getExamTopics));
+router.get("/:exam/topics", asyncWrapper(getExamTopics));
 
-router.get("/:e/questions", asyncWrapper(getExamQuestions));
+router.get("/:exam/questions", asyncWrapper(getExamQuestions));
 
-router.delete("/:e", authHandler(Role.CONTENT), asyncWrapper(deleteExam));
+router.delete("/:exam", authHandler(Role.CONTENT), asyncWrapper(deleteExam));
 
 export default router;

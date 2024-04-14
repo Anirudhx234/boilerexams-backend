@@ -33,10 +33,8 @@ export const UpdateExamOptions = z.object({
 });
 
 export async function getExam(req: Request, res: Response) {
-    const { e, c } = req.params;
-
     const exam = await prisma.exam.findUniqueOrThrow({
-        where: await Resolver.exam(e, c),
+        where: await Resolver.exam(req),
         include: {
             resources: true,
             questions: {
@@ -85,10 +83,8 @@ export async function getAllExams(req: Request, res: Response) {
 }
 
 export async function getExamTopics(req: Request, res: Response) {
-    const { e, c } = req.params;
-
     const exam = await prisma.exam.findUniqueOrThrow({
-        where: await Resolver.exam(e, c),
+        where: await Resolver.exam(req),
     });
 
     if (!req.sendUnpublished && !exam.flags.published) {
@@ -120,10 +116,8 @@ export async function getExamTopics(req: Request, res: Response) {
 
 
 export async function getExamQuestions(req: Request, res: Response) {
-    const { e, c } = req.params;
-
     const exam = await prisma.exam.findUniqueOrThrow({
-        where: await Resolver.exam(e, c),
+        where: await Resolver.exam(req),
     });
 
     if (!req.sendUnpublished && !exam.flags.published) {
@@ -149,11 +143,10 @@ export async function getExamQuestions(req: Request, res: Response) {
 }
 
 export async function createExam(req: Request, res: Response) {
-    const { c } = req.params;
     const options = CreateExamOptions.parse(req.body);
 
     const course = await prisma.course.findUnique({
-        where: Resolver.course(c),
+        where: Resolver.course(req),
     });
 
     if (!course) throw new APIError(`Course not found`, 404);
@@ -173,11 +166,10 @@ export async function createExam(req: Request, res: Response) {
 }
 
 export async function updateExam(req: Request, res: Response) {
-    const { e, c } = req.params;
     const options = UpdateExamOptions.parse(req.body);
 
     const updatedExam = await prisma.exam.update({
-        where: await Resolver.exam(e, c),
+        where: await Resolver.exam(req),
         data: {
             ...options,
             flags: options.flags ? FlagEncoder.exam(options.flags) : options.flags,
@@ -197,10 +189,8 @@ export async function updateExam(req: Request, res: Response) {
 }
 
 export async function reorderExamQuestions(req: Request, res: Response) {
-    const { e, c } = req.params;
-
-    const exam = await prisma.exam.findUnique({
-        where: await Resolver.exam(e, c),
+    const exam = await prisma.exam.findUniqueOrThrow({
+        where: await Resolver.exam(req),
         select: {
             id: true,
             questions: {
@@ -211,10 +201,6 @@ export async function reorderExamQuestions(req: Request, res: Response) {
             },
         },
     });
-
-    if (!exam) {
-        throw new NotFoundError(`Exam not found: ${e}`);
-    }
 
     const options = ReorderQuestions.parse(req.body);
 
@@ -241,19 +227,13 @@ export async function reorderExamQuestions(req: Request, res: Response) {
 }
 
 export async function toggleExamPublished(req: Request, res: Response) {
-    const { c, e } = req.params;
-
-    const exam = await prisma.exam.findUnique({
-        where: await Resolver.exam(e, c),
+    const exam = await prisma.exam.findUniqueOrThrow({
+        where: await Resolver.exam(req),
         select: {
             id: true,
             flags: true,
         },
     });
-
-    if (!exam) {
-        throw new NotFoundError("Exam not found");
-    }
 
     const status = !exam.flags.published;
 
@@ -275,10 +255,8 @@ export async function toggleExamPublished(req: Request, res: Response) {
 }
 
 export async function deleteExam(req: Request, res: Response) {
-    const { c, e } = req.params;
-
     const exam = await prisma.exam.delete({
-        where: await Resolver.exam(e, c),
+        where: await Resolver.exam(req),
     });
 
     if (!exam) {

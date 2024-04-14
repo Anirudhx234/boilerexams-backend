@@ -15,15 +15,15 @@ import sendPublished from "../middleware/auth/sendPublished.js";
 
 const router = express.Router();
 
-router.get("/:q", sendPublished, asyncWrapper(getQuestion));
+router.get("/:question", sendPublished, asyncWrapper(getQuestion));
 
-router.put("/:q", authHandler(Role.CONTENT), asyncWrapper(updateQuestion));
+router.put("/:question", authHandler(Role.CONTENT), asyncWrapper(updateQuestion));
 
-router.put("/:q/togglePublished", authHandler(Role.CONTENT), asyncWrapper(toggleQuestionPublished));
+router.put("/:question/togglePublished", authHandler(Role.CONTENT), asyncWrapper(toggleQuestionPublished));
 
-router.post("/:q/submit", generalLimiter, asyncWrapper(createSubmission));
+router.post("/:question/submit", generalLimiter, asyncWrapper(createSubmission));
 
-router.delete("/:questionId", authHandler(Role.CONTENT), asyncWrapper(deleteQuestion));
+router.delete("/:question", authHandler(Role.CONTENT), asyncWrapper(deleteQuestion));
 
 router.delete("/answerChoices/:answerChoiceId", authHandler(Role.CONTENT), asyncWrapper(deleteAnswerChoice));
 

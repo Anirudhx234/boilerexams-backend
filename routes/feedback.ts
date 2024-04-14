@@ -20,21 +20,21 @@ const router = express.Router();
 
 router.get("/:feedbackId", authHandler(Role.CONTENT), asyncWrapper(getFeedback));
 
-router.get("/courses/:c/exams/:e", authHandler(Role.CONTENT), asyncWrapper(getVideoFeedback));
+router.get("/courses/:course/exams/:e", authHandler(Role.CONTENT), asyncWrapper(getVideoFeedback));
 
-router.get("/courses/:c", authHandler(Role.CONTENT), asyncWrapper(getVideoFeedback));
+router.get("/courses/:course", authHandler(Role.CONTENT), asyncWrapper(getVideoFeedback));
 
-router.get("/exams/:e", authHandler(Role.CONTENT), asyncWrapper(getVideoFeedback));
+router.get("/exams/:exam", authHandler(Role.CONTENT), asyncWrapper(getVideoFeedback));
 
 router.get("/course-requests", authHandler(Role.CONTENT), asyncWrapper(getCourseRequests));
 
 router.post("/bug-reports", asyncWrapper(reportBug));
 
-router.post("/question-reports/:q", asyncWrapper(reportQuestion));
+router.post("/question-reports/:question", asyncWrapper(reportQuestion));
 
 router.post("/feature-requests", asyncWrapper(requestFeature));
 
-router.post("/video-feedback/:q", asyncWrapper(createVideoFeedback));
+router.post("/video-feedback/:question", asyncWrapper(createVideoFeedback));
 
 router.post("/course-requests", asyncWrapper(requestCourse));
 

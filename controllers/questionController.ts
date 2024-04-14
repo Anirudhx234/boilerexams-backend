@@ -1,14 +1,14 @@
-import { z } from "zod";
-import { QuestionType } from "@prisma/client";
+import { APIError, NotFoundError } from "../middleware/errors/index.js";
 import { connectOrCreateResources, UpsertResourceOptions, upsertResources } from "./resourceController.js";
 import { upsertOrDisconnectTopics, UpsertTopic } from "./topicController.js";
-import { APIError, NotFoundError } from "../middleware/errors/index.js";
 import { Request, Response } from "express";
+import { QuestionType } from "@prisma/client";
+import { randomUUID } from "node:crypto";
+import { z } from "zod";
 import FlagEncoder from "../helpers/encoder.js";
 import Formatter from "../helpers/formatter.js";
-import Resolver from "../helpers/resolver.js";
 import prisma from "../prisma/prisma.js";
-import { randomUUID } from "node:crypto";
+import Resolver from "../helpers/resolver.js";
 
 export const QuestionFlags = z.object({
     published:              z.boolean().default(false),
@@ -181,10 +181,8 @@ export async function createQuestion(req: Request, res: Response) {
 }
 
 export async function getQuestion(req: Request, res: Response) {
-    const { q, t, e, c } = req.params;
-
     const question = await prisma.question.findFirstOrThrow({
-        where: await Resolver.question(q, t, e, c),
+        where: await Resolver.question(req),
         include: FullQuestion
     });
 
@@ -199,11 +197,10 @@ export async function getQuestion(req: Request, res: Response) {
 }
 
 export async function updateQuestion(req: Request, res: Response) {
-    const { q, t, e, c } = req.params;
     const options = UpdateQuestionOptions.parse(req.body);
 
     const question = await prisma.question.findFirstOrThrow({
-        where: await Resolver.question(q, t, e, c),
+        where: await Resolver.question(req),
         include: {
             topics: {
                 include: {
@@ -236,11 +233,8 @@ export async function updateQuestion(req: Request, res: Response) {
 }
 
 export async function toggleQuestionPublished(req: Request, res: Response) {
-    const { q, t, e, c } = req.params;
-
-    // Need to hack since we can't force uniqueness on question numbers
     const question = await prisma.question.findFirstOrThrow({
-        where: await Resolver.question(q, t, e, c),
+        where: await Resolver.question(req),
         select: {
             id: true,
             exam: {
@@ -280,23 +274,15 @@ export async function toggleQuestionPublished(req: Request, res: Response) {
 }
 
 export async function deleteQuestion(req: Request, res: Response) {
-    const { questionId } = req.params;
-
-    const question = await prisma.question.findUnique({
-        where: {
-            id: questionId
-        }
+    const question = await prisma.question.findFirstOrThrow({
+        where: await Resolver.question(req)
     });
-
-    if (!question) {
-        throw new NotFoundError(`Question not found: ${questionId}`);
-    }
 
     await prisma.$transaction(async (prisma) => {
         // Delete the question
         await prisma.question.delete({
             where: {
-                id: questionId
+                id: question.id
             }
         });
 

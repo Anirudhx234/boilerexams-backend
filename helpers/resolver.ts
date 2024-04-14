@@ -1,4 +1,5 @@
 import { APIError } from "../middleware/errors/index.js";
+import { Request } from "express";
 import { Season } from "@prisma/client";
 import { z } from "zod";
 import prisma from "../prisma/prisma.js";
@@ -58,17 +59,18 @@ export default class Resolver {
     private static numberYearSeasonRegex = /^([a-zA-Z]+)-(\d{4})-(\d)$/; // Spring-1970-1
 
     // Resolve a Course from either id or abbreviation_number
-    public static course(courseResolvable: string) {
-        if (Resolver.uuidRegex.test(courseResolvable)) {
+    public static course(req: Request) {
+        const { course } = req.params;
+        if (Resolver.uuidRegex.test(course)) {
             // If input matches UUIDv4, return object with id and null for abbreviation and number
             return CourseResolvable.parse({
-                id: courseResolvable,
+                id: course,
             });
         }
 
-        if (Resolver.abbreviationNumberRegex.test(courseResolvable)) {
+        if (Resolver.abbreviationNumberRegex.test(course)) {
             // If input matches abbreviation + number, extract parts and return object
-            const matches = courseResolvable.match(Resolver.abbreviationNumberRegex);
+            const matches = course.match(Resolver.abbreviationNumberRegex);
             const abbreviation = matches?.at(1);
             const number = Number(matches?.at(2));
 
@@ -80,31 +82,32 @@ export default class Resolver {
             });
         }
 
-        throw new APIError(`CourseResolvable could not be parsed: ${courseResolvable}`, 400);
+        throw new APIError(`Course could not be parsed: ${course}`, 400);
     }
 
     // Resolve an Exam from either id or number_year_season_courseId
-    public static async exam(examResolvable: string, courseResolvable?: string) {
-        if (Resolver.uuidRegex.test(examResolvable)) {
+    public static async exam(req: Request) {
+        const { exam, course } = req.params;
+        if (Resolver.uuidRegex.test(exam)) {
             // If input matches UUIDv4, return object with id and null for abbreviation and number
             return ExamResolvable.parse({
-                id: examResolvable,
+                id: exam,
             });
         }
 
-        if (Resolver.numberYearSeasonRegex.test(examResolvable) && courseResolvable) {
+        if (Resolver.numberYearSeasonRegex.test(exam) && course) {
             // If input matches "Spring-2022-Final" format, extract parts and return object
-            const matches = examResolvable.match(Resolver.numberYearSeasonRegex);
+            const matches = exam.match(Resolver.numberYearSeasonRegex);
             const season = matches?.[1];
             const year = Number(matches?.[2]);
             const number = matches?.[3].toLowerCase() === "final" ? 0 : matches?.[3];
 
             const course = await prisma.course.findUnique({
-                where: Resolver.course(courseResolvable),
+                where: Resolver.course(req),
             });
 
             if (!course) {
-                throw new APIError(`Course not found ${courseResolvable}`, 404);
+                throw new APIError(`Course not found ${course}`, 404);
             }
 
             return ExamResolvable.parse({
@@ -117,26 +120,27 @@ export default class Resolver {
             });
         }
 
-        throw new APIError(`ExamResolvable could not be parsed: ${examResolvable} ${courseResolvable}`, 400);
+        throw new APIError(`Exam could not be parsed: ${exam} ${course}`, 400);
     }
 
-    public static async topic(topicResolvable: string, courseResolvable?: string) {
-        if (Resolver.uuidRegex.test(topicResolvable)) {
+    public static async topic(req: Request) {
+        const { topic, course } = req.params;
+        if (Resolver.uuidRegex.test(topic)) {
             // If input matches UUIDv4, return object with id and null for abbreviation and number
             return TopicResolvable.parse({
-                id: topicResolvable,
+                id: topic,
             });
         }
 
-        if (courseResolvable) {
-            const name = topicResolvable;
+        if (course) {
+            const name = topic;
 
             const course = await prisma.course.findUnique({
-                where: Resolver.course(courseResolvable),
+                where: Resolver.course(req),
             });
 
             if (!course) {
-                throw new APIError(`Course not found ${courseResolvable}`, 404);
+                throw new APIError(`Course not found ${course}`, 404);
             }
 
             return TopicResolvable.parse({
@@ -147,37 +151,38 @@ export default class Resolver {
             });
         }
 
-        throw new APIError(`TopicResolvable could not be parsed: ${topicResolvable} ${courseResolvable}`, 400);
+        throw new APIError(`Topic could not be parsed: ${topic} ${course}`, 400);
     }
 
     // Resolve a Question from either id or number_examId and ExamResolvable/CourseResolvable
-    public static async question(questionResolvable: string, topicResolvable?: string, examResolvable?: string, courseResolvable?: string) {
-        if (Resolver.uuidRegex.test(questionResolvable)) {
+    public static async question(req: Request) {
+        const { question, topic, exam, course } = req.params;
+        if (Resolver.uuidRegex.test(question)) {
             return QuestionResolvable.parse({
-                id: questionResolvable,
+                id: question,
             });
         }
 
-        if (topicResolvable) {
+        if (topic) {
             const topic = await prisma.topic.findUnique({
-                where: await Resolver.topic(topicResolvable, courseResolvable),
+                where: await Resolver.topic(req),
             });
 
             if (!topic) {
-                throw new APIError(`Topic not found ${topicResolvable}`, 404);
+                throw new APIError(`Topic not found ${topic}`, 404);
             }
 
             const questionToTopic = await prisma.questionToTopic.findUnique({
                 where: {
                     number_topicId: {
-                        number: Number(questionResolvable),
+                        number: Number(question),
                         topicId: topic.id,
                     },
                 },
             });
 
             if (!questionToTopic) {
-                throw new APIError(`QuestionToTopic not found ${topicResolvable} ${questionResolvable}`, 404);
+                throw new APIError(`Question ${question} does not belong to topic ${topic}`, 404);
             }
 
             return QuestionResolvable.parse({
@@ -185,21 +190,21 @@ export default class Resolver {
             });
         }
 
-        if (examResolvable) {
+        if (exam) {
             const exam = await prisma.exam.findUnique({
-                where: await Resolver.exam(examResolvable, courseResolvable),
+                where: await Resolver.exam(req),
             });
 
             if (!exam) {
-                throw new APIError(`Exam not found ${examResolvable}`, 404);
+                throw new APIError(`Exam not found ${exam}`, 404);
             }
 
             return QuestionResolvable.parse({
-                number: Number.parseInt(questionResolvable),
+                number: Number.parseInt(question),
                 examId: exam.id,
             });
         }
 
-        throw new APIError(`QuestionResolvable could not be parsed: ${questionResolvable} ${examResolvable} ${courseResolvable}`, 400);
+        throw new APIError(`Question could not be parsed: ${question} ${exam} ${course}`, 400);
     }
 }

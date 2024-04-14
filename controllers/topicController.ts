@@ -39,10 +39,8 @@ export async function getAllTopics(req: Request, res: Response) {
 }
 
 export async function getTopic(req: Request, res: Response) {
-    const { t, c } = req.params;
-
     const topic = await prisma.topic.findUniqueOrThrow({
-        where: await Resolver.topic(t, c),
+        where: await Resolver.topic(req),
         include: {
             questions: {
                 include: {
@@ -63,10 +61,8 @@ export async function getTopic(req: Request, res: Response) {
 }
 
 export async function getTopicQuestions(req: Request, res: Response) {
-    const { t, c } = req.params;
-
     const topic = await prisma.topic.findUniqueOrThrow({
-        where: await Resolver.topic(t, c),
+        where: await Resolver.topic(req),
     });
 
     const relations = await prisma.questionToTopic.findMany({
@@ -92,11 +88,10 @@ export async function getTopicQuestions(req: Request, res: Response) {
 }
 
 export async function createTopic(req: Request, res: Response) {
-    const { c } = req.params;
     const options = UpsertTopic.parse(req.body);
 
     const course = await prisma.course.findUnique({
-        where: Resolver.course(c),
+        where: Resolver.course(req),
     });
 
     if (!course) throw new APIError(`Course not found`, 404);
@@ -122,11 +117,10 @@ export async function createTopic(req: Request, res: Response) {
 }
 
 export async function updateTopic(req: Request, res: Response) {
-    const { t, c } = req.params;
     const options = UpsertTopic.parse(req.body);
 
     const topic = await prisma.topic.update({
-        where: await Resolver.topic(t, c),
+        where: await Resolver.topic(req),
         data: {
             ...options,
         },
@@ -136,19 +130,13 @@ export async function updateTopic(req: Request, res: Response) {
 }
 
 export async function reorderTopicQuestions(req: Request, res: Response) {
-    const { t, c } = req.params;
-
-    const topic = await prisma.topic.findUnique({
-        where: await Resolver.topic(t, c),
+    const topic = await prisma.topic.findUniqueOrThrow({
+        where: await Resolver.topic(req),
         select: {
             id: true,
             questions: true,
         },
     });
-
-    if (!topic) {
-        throw new NotFoundError(`Topic not found: ${t} ${c}`);
-    }
 
     const options = ReorderQuestions.parse(req.body);
 
@@ -173,11 +161,10 @@ export async function reorderTopicQuestions(req: Request, res: Response) {
 }
 
 export async function setTopicQuestions(req: Request, res: Response) {
-    const { t, c } = req.params;
     const options = SetTopicQuestionsOptions.parse(req.body);
 
     const topic = await prisma.topic.findUniqueOrThrow({
-        where: await Resolver.topic(t, c)
+        where: await Resolver.topic(req)
     });
 
     const updatedTopic = await prisma.topic.update({

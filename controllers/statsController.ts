@@ -1,15 +1,14 @@
-import prisma from "../prisma/prisma.js";
 import { Request, Response } from "express";
-import Resolver from "../helpers/resolver.js";
-import { Epoch } from "../prisma/schema.js";
-import { z } from "zod";
+import { APIError } from "../middleware/errors/index.js";
 import { courseStats } from "../helpers/stats/courseStats.js";
 import { examStats } from "../helpers/stats/examStats.js";
 import { questionStats } from "../helpers/stats/questionStats.js";
 import { topicStats } from "../helpers/stats/topicStats.js";
 import { hourlySubmissionStats } from "../helpers/stats/submissionStats.js";
-import { APIError } from "../middleware/errors/index.js";
-import { orderBy } from "lodash";
+import { Epoch } from "../prisma/schema.js";
+import { z } from "zod";
+import prisma from "../prisma/prisma.js";
+import Resolver from "../helpers/resolver.js";
 
 export const AnswerChoiceStats = z.object({
     id: z.string().uuid().optional(),
@@ -76,87 +75,41 @@ export async function generalStats(req: Request, res: Response) {
 }
 
 export async function getCourseStats(req: Request, res: Response) {
-    const { c } = req.params;
     const options = parseOptions(req);
 
-    const course = c
-        ? await prisma.course.findUniqueOrThrow({
-              where: Resolver.course(c),
-          })
-        : undefined;
-
+    const course = await getCourseSafe(req);
     const stats = await courseStats({ ...options, id: course?.id });
+
     res.status(200).json(formatStats(stats, options.sort, options.skip, options.limit));
 }
 
 export async function getExamStats(req: Request, res: Response) {
-    const { e, c } = req.params;
     const options = parseOptions(req);
 
-    const exam = e
-        ? await prisma.exam.findUniqueOrThrow({
-              where: await Resolver.exam(e, c),
-          })
-        : undefined;
-
-    const course = c
-        ? await prisma.course.findUniqueOrThrow({
-              where: Resolver.course(c),
-          })
-        : undefined;
-
+    const exam = await getExamSafe(req);
+    const course = await getCourseSafe(req);
     const stats = await examStats({ ...options, id: exam?.id, courseId: course?.id });
 
     res.status(200).json(formatStats(stats, options.sort, options.skip, options.limit));
 }
 
 export async function getTopicStats(req: Request, res: Response) {
-    const { t, c } = req.params;
     const options = parseOptions(req);
 
-    const topic = t
-        ? await prisma.topic.findUniqueOrThrow({
-              where: await Resolver.topic(t, c),
-          })
-        : undefined;
-
-    const course = c
-        ? await prisma.course.findUniqueOrThrow({
-              where: Resolver.course(c),
-          })
-        : undefined;
+    const topic = await getTopicSafe(req);
+    const course = await getCourseSafe(req);
 
     const stats = await topicStats({ ...options, id: topic?.id, courseId: course?.id });
     res.status(200).json(formatStats(stats, options.sort, options.skip, options.limit));
 }
 
 export async function getQuestionStats(req: Request, res: Response) {
-    const { q, t, e, c } = req.params;
     const options = parseOptions(req);
 
-    const question = q
-        ? await prisma.question.findFirstOrThrow({
-              where: await Resolver.question(q, t, e, c),
-          })
-        : undefined;
-
-    const topic = t
-        ? await prisma.topic.findUniqueOrThrow({
-              where: await Resolver.topic(t, c),
-          })
-        : undefined;
-
-    const exam = e
-        ? await prisma.exam.findUniqueOrThrow({
-              where: await Resolver.exam(e, c),
-          })
-        : undefined;
-
-    const course = c
-        ? await prisma.course.findUniqueOrThrow({
-              where: Resolver.course(c),
-          })
-        : undefined;
+    const question = await getQuestionSafe(req);
+    const topic = await getTopicSafe(req);
+    const exam = await getExamSafe(req);
+    const course = await getCourseSafe(req);
 
     const stats = await questionStats({
         ...options,
@@ -170,15 +123,9 @@ export async function getQuestionStats(req: Request, res: Response) {
 }
 
 export async function getHourlySubmissionStats(req: Request, res: Response) {
-    const { c } = req.params;
     const { before, after } = parseOptions(req);
 
-    const course = c
-        ? await prisma.course.findUnique({
-              where: Resolver.course(c),
-          })
-        : undefined;
-
+    const course = await getCourseSafe(req);
     const stats = await hourlySubmissionStats(before, after, course?.id);
 
     res.status(200).json(stats);
@@ -218,14 +165,42 @@ function parseOptions(req: Request) {
     };
 }
 
-function getDaysInMonth(year: number, month: number) {
-    return new Date(year, month, 0).getDate();
+async function getCourseSafe(req: Request) {
+    try {
+        return await prisma.course.findUniqueOrThrow({
+            where: Resolver.course(req),
+        });
+    } catch {
+        return undefined;
+    }
 }
 
-function addMonths(date: Date, months: number) {
-    const nextDate = new Date(date);
-    nextDate.setDate(1);
-    nextDate.setMonth(nextDate.getMonth() + months);
-    nextDate.setDate(Math.min(date.getDate(), getDaysInMonth(date.getFullYear(), date.getMonth() + 1)));
-    return nextDate;
+async function getExamSafe(req: Request) {
+    try {
+        return await prisma.exam.findUniqueOrThrow({
+            where: await Resolver.exam(req),
+        });
+    } catch {
+        return undefined;
+    }
+}
+
+async function getTopicSafe(req: Request) {
+    try {
+        return await prisma.topic.findUniqueOrThrow({
+            where: await Resolver.topic(req),
+        });
+    } catch {
+        return undefined;
+    }
+}
+
+async function getQuestionSafe(req: Request) {
+    try {
+        return await prisma.question.findFirstOrThrow({
+            where: await Resolver.question(req),
+        });
+    } catch {
+        return undefined;
+    }
 }

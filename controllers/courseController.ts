@@ -1,14 +1,14 @@
-import prisma from "../prisma/prisma.js";
-import e, { Request, Response } from "express";
 import { APIError, NotFoundError } from "../middleware/errors/index.js";
+import { connectOrCreateResources, UpsertResourceOptions, upsertResources } from "./resourceController.js";
+import { Request, Response } from "express";
+import { EventQueryParams } from "./eventController.js";
 import { PurdueIoAPI } from "../services/purdue.io.js";
 import { StudyMode } from "@prisma/client";
-import Resolver from "../helpers/resolver.js";
+import { z } from "zod";
 import FlagEncoder from "../helpers/encoder.js";
 import Formatter from "../helpers/formatter.js";
-import { z } from "zod";
-import { EventQueryParams } from "./eventController.js";
-import { connectOrCreateResources, UpsertResourceOptions, upsertResources } from "./resourceController.js";
+import prisma from "../prisma/prisma.js";
+import Resolver from "../helpers/resolver.js";
 
 export const CourseFlags = z.object({
     published: z.boolean().default(false),
@@ -76,10 +76,8 @@ export async function getSubjects(req: Request, res: Response) {
 }
 
 export async function getCourse(req: Request, res: Response) {
-    const { c } = req.params;
-
     const course = await prisma.course.findUniqueOrThrow({
-        where: Resolver.course(c),
+        where: Resolver.course(req),
         include: {
             events: {
                 orderBy: {
@@ -131,10 +129,8 @@ export async function getAllCourses(req: Request, res: Response) {
 }
 
 export async function getCourseExams(req: Request, res: Response) {
-    const { c } = req.params;
-
     const course = await prisma.course.findUniqueOrThrow({
-        where: Resolver.course(c),
+        where: Resolver.course(req),
     });
 
     if (!req.sendUnpublished && !course.flags.published) {
@@ -174,10 +170,8 @@ export async function getCourseExams(req: Request, res: Response) {
 }
 
 export async function getCourseTopics(req: Request, res: Response) {
-    const { c } = req.params;
-
     const course = await prisma.course.findUniqueOrThrow({
-        where: Resolver.course(c),
+        where: Resolver.course(req),
     });
 
     if (!req.sendUnpublished && !course.flags.published) {
@@ -221,10 +215,8 @@ export async function getCourseTopics(req: Request, res: Response) {
 }
 
 export async function getCourseTopicsByExam(req: Request, res: Response) {
-    const { c } = req.params;
-
     const course = await prisma.course.findUniqueOrThrow({
-        where: Resolver.course(c),
+        where: Resolver.course(req),
     });
 
     if (!req.sendUnpublished && !course.flags.published) {
@@ -294,11 +286,10 @@ export async function getCourseTopicsByExam(req: Request, res: Response) {
 }
 
 export async function getCourseEvents(req: Request, res: Response) {
-    const { c } = req.params;
     const options = EventQueryParams.parse(req.query);
 
     const course = await prisma.course.findUniqueOrThrow({
-        where: Resolver.course(c),
+        where: Resolver.course(req),
         select: {
             id: true,
             flags: true,
@@ -354,11 +345,10 @@ export async function createCourse(req: Request, res: Response) {
 }
 
 export async function updateCourse(req: Request, res: Response) {
-    const { c } = req.params;
     const options = UpdateCourseOptions.parse(req.body);
 
     const course = await prisma.course.update({
-        where: Resolver.course(c),
+        where: Resolver.course(req),
         data: {
             ...options,
             flags: options.flags ? FlagEncoder.course(options.flags) : undefined,
@@ -375,10 +365,8 @@ export async function updateCourse(req: Request, res: Response) {
 }
 
 export async function toggleCoursePublished(req: Request, res: Response) {
-    const { c } = req.params;
-
     const course = await prisma.course.findUnique({
-        where: Resolver.course(c),
+        where: Resolver.course(req),
         select: {
             id: true,
             name: true,
@@ -410,10 +398,8 @@ export async function toggleCoursePublished(req: Request, res: Response) {
 }
 
 export async function deleteCourse(req: Request, res: Response) {
-    const { c } = req.params;
-
     const course = await prisma.course.delete({
-        where: Resolver.course(c),
+        where: Resolver.course(req),
     });
 
     if (!course) {

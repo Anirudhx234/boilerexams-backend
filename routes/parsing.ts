@@ -13,6 +13,6 @@ router.post("/convert-file", upload.single("pdf"), authHandler(Role.CONTENT), as
 
 router.post("/convert-id", authHandler(Role.CONTENT), asyncWrapper(getIdResults));
 
-router.post("/exams/:e/attachPDF", upload.single("pdf"), authHandler(Role.CONTENT), asyncWrapper(attachPDFToExam));
+router.post("/exams/:examId/attachPDF", upload.single("pdf"), authHandler(Role.CONTENT), asyncWrapper(attachPDFToExam));
 
 export default router;

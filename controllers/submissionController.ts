@@ -56,11 +56,10 @@ export const CreateSubmissionOptions = z.object({
 });
 
 export async function createSubmission(req: Request, res: Response) {
-    const { q, t, e, c } = req.params;
     const options = CreateSubmissionOptions.parse(req.body);
 
     const question = await prisma.question.findFirstOrThrow({
-        where: q ? await Resolver.question(q, t, e, c) : { id: options.questionId },
+        where: await Resolver.question(req),
     });
 
     const data = QuestionData.parse(question.data);

@@ -74,19 +74,9 @@ export async function getFeedback(req: Request, res: Response) {
 }
 
 export async function getVideoFeedback(req: Request, res: Response) {
-    const { q, t, e, c } = req.params;
-
-    const question = q ? await prisma.question.findFirstOrThrow({
-        where: await Resolver.question(q, t, e, c)
-    }) : undefined;
-
-    const exam = e ? await prisma.exam.findUniqueOrThrow({
-        where: await Resolver.exam(e, c)
-    }) : undefined;
-
-    const course = c ? await prisma.course.findUniqueOrThrow({
-        where: Resolver.course(c)
-    }): undefined;
+    const question = await getQuestionSafe(req);
+    const exam = await getExamSafe(req);
+    const course = await getCourseSafe(req);
 
     const feedback = await prisma.feedback.findMany({
         where: {
@@ -194,11 +184,10 @@ export async function reportBug(req: Request, res: Response) {
 }
 
 export async function reportQuestion(req: Request, res: Response) {
-    const { q, t, e, c } = req.params;
     const options = QuestionReportData.parse(req.body);
 
     const question = await prisma.question.findFirstOrThrow({
-        where: await Resolver.question(q, t, e, c),
+        where: await Resolver.question(req),
         include: {
             course: {
                 select: {
@@ -266,11 +255,10 @@ export async function requestFeature(req: Request, res: Response) {
 }
 
 export async function createVideoFeedback(req: Request, res: Response) {
-    const { q, t, e, c } = req.params;
     const options = VideoFeedbackData.parse(req.body);
 
     const question = await prisma.question.findFirstOrThrow({
-        where: await Resolver.question(q, t, e, c),
+        where: await Resolver.question(req),
         select: {
             id: true,
             examId: true,
@@ -322,4 +310,44 @@ export async function deleteFeedback(req: Request, res: Response) {
     });
 
     res.status(200).send(videoFeedback);
+}
+
+async function getCourseSafe(req: Request) {
+    try {
+        return await prisma.course.findUniqueOrThrow({
+            where: Resolver.course(req),
+        });
+    } catch {
+        return undefined;
+    }
+}
+
+async function getExamSafe(req: Request) {
+    try {
+        return await prisma.exam.findUniqueOrThrow({
+            where: await Resolver.exam(req),
+        });
+    } catch {
+        return undefined;
+    }
+}
+
+async function getTopicSafe(req: Request) {
+    try {
+        return await prisma.topic.findUniqueOrThrow({
+            where: await Resolver.topic(req),
+        });
+    } catch {
+        return undefined;
+    }
+}
+
+async function getQuestionSafe(req: Request) {
+    try {
+        return await prisma.question.findFirstOrThrow({
+            where: await Resolver.question(req),
+        });
+    } catch {
+        return undefined;
+    }
 }
