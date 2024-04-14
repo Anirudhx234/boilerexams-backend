@@ -221,7 +221,7 @@ export async function updateQuestion(req: Request, res: Response) {
             ...options,
             number: undefined, // Block update to question number
             flags: options.flags ? FlagEncoder.question(options.flags) : options.flags,
-            topics: upsertOrDisconnectTopics(question.id, question.courseId, question.topics.map(topic => topic.topicId), options.topics),
+            topics: upsertOrDisconnectTopics(question.courseId, question.topics.map(topic => topic.topicId), options.topics),
             resources: upsertResources(options.resources),
             answerChoices: upsertAnswerChoices(options.answerChoices),
             explanation: upsertExplanation(options.explanation)

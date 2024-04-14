@@ -1,18 +1,20 @@
 import { APIError, NotFoundError } from "../middleware/errors/index.js";
 import type { Request, Response } from "express";
 import { ReorderQuestions } from "../prisma/schema.js";
+import { FullQuestion, PartialQuestion } from "./questionController.js";
+import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import Formatter from "../helpers/formatter.js";
 import Resolver from "../helpers/resolver.js";
 import prisma from "../prisma/prisma.js";
-import { FullQuestion, PartialQuestion } from "./questionController.js";
-import { randomUUID } from "node:crypto";
 
 export const UpsertTopic = z.object({
     id: z.string().uuid().default(randomUUID),
     name: z.string().max(50, "Topic name must be <= 50 characters"),
     examNumbers: z.array(z.number().int()).optional(),
 });
+
+export const SetTopicQuestionsOptions = z.array(z.string().uuid());
 
 export async function getAllTopics(req: Request, res: Response) {
     const topics = await prisma.topic.findMany({
@@ -171,21 +173,42 @@ export async function reorderTopicQuestions(req: Request, res: Response) {
 }
 
 export async function setTopicQuestions(req: Request, res: Response) {
-    const { topicId } = req.params;
-    const { questionIds } = req.body;
+    const { t, c } = req.params;
+    const options = SetTopicQuestionsOptions.parse(req.body);
 
-    const topic = await prisma.topic.update({
+    const topic = await prisma.topic.findUniqueOrThrow({
+        where: await Resolver.topic(t, c)
+    });
+
+    const updatedTopic = await prisma.topic.update({
         where: {
-            id: topicId,
+            id: topic.id
         },
         data: {
             questions: {
-                set: questionIds.map((id: string) => ({ id: id })),
+                set: options.map(questionId => {
+                    return {
+                        questionId_topicId: {
+                            questionId: questionId,
+                            topicId: topic.id
+                        }
+                    };
+                })
             },
         },
+        include: {
+            questions: {
+                include: {
+                    question: true
+                }
+            }
+        }
     });
 
-    res.status(200).send(topic);
+    res.status(200).send(Formatter.topic({
+        data: updatedTopic,
+        sendUnpublished: req.sendUnpublished
+    }));
 }
 
 export async function deleteTopic(req: Request, res: Response) {
@@ -205,7 +228,6 @@ export async function deleteTopic(req: Request, res: Response) {
 }
 
 export function upsertOrDisconnectTopics(
-    questionId: string,
     courseId: string,
     currentTopicIds: string[],
     topics?: z.infer<typeof UpsertTopic>[],

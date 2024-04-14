@@ -26,7 +26,7 @@ export const ParentSubmissionData = z.array(
     }),
 );
 
-export const UpdateSubmissionOptions = z.object({
+export const UpsertSubmissionOptions = z.object({
     timeStarted: z.coerce.date().min(Epoch).optional(),
     timeEnded: z.coerce
         .date()
@@ -115,9 +115,9 @@ export async function batchCreateSubmission(req: Request, res: Response) {
     res.status(200).send(submissions);
 }
 
-export async function updateSubmission(req: Request, res: Response) {
+export async function upsertSubmission(req: Request, res: Response) {
     const { submissionId } = req.params;
-    const options = UpdateSubmissionOptions.parse(req.body);
+    const options = UpsertSubmissionOptions.parse(req.body);
 
     const submission = await prisma.submission.update({
         where: {
