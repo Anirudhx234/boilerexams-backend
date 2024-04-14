@@ -283,7 +283,7 @@ export async function getCourseTopicsByExam(req: Request, res: Response) {
                 questions: topic.questions?.map(question => {
                     return {
                         ...question,
-                        exam: undefined
+                        exam: undefined // Shave off extra info
                     };
                 })
             });

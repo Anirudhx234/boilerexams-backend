@@ -8,6 +8,7 @@ import parsing from "./parsing.js";
 import questions from "./questions.js";
 import resources from "./resources.js";
 import stats from "./stats.js";
+import submissions from "./submissions.js";
 import topics from "./topics.js";
 import users from "./users.js";
 import feedbackLimiter from "../middleware/rateLimiting/feedbackLimiter.js";
@@ -32,6 +33,8 @@ router.use("/exams", exams);
 router.use("/topics", topics);
 
 router.use("/questions", questions);
+
+router.use("/submissions", submissions);
 
 router.use("/resources", resources);
 

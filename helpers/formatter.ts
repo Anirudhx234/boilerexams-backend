@@ -1,5 +1,4 @@
 import { JsonValue } from "@prisma/client/runtime/library.js";
-import questions from "../routes/questions.js";
 
 export default class Formatter {
     public static course(options: FormatterOptions<PotentialCourse>): FormattedCourse {
