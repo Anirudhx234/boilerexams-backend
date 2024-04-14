@@ -1,464 +1,363 @@
-import prisma from "../libs/prisma.js";
-import { Request, Response } from "express";
 import { APIError, NotFoundError } from "../middleware/errors/index.js";
-import msToDate from "../utils/msToDate.js";
-import answerChoiceStats from "../helpers/stats/single.answerChoiceStats.js";
+import { connectOrCreateResources, UpsertResourceOptions, upsertResources } from "./resourceController.js";
+import { upsertOrDisconnectTopics, UpsertTopic } from "./topicController.js";
+import { Request, Response } from "express";
+import { QuestionType } from "@prisma/client";
+import { randomUUID } from "node:crypto";
+import { z } from "zod";
+import FlagEncoder from "../helpers/encoder.js";
+import Formatter from "../helpers/formatter.js";
+import prisma from "../prisma/prisma.js";
+import Resolver from "../helpers/resolver.js";
 
-const getQuestion = async (req: Request, res: Response) => {
-    const { questionId } = req.params;
+export const QuestionFlags = z.object({
+    published:              z.boolean().default(false),
+    disableRandomAnswers:   z.boolean().default(true),
+    answersStartHidden:     z.boolean().default(true)
+});
 
-    const question = await prisma.question.findFirst({
-        where: {
-            id: questionId,
-            OR: req.published,
-        },
+export const ParentData = z.object({
+    body:           z.string().optional(),
+    solution:       z.undefined(),
+    numberingType:  z.enum([ "LOWERCASE", "UPPERCASE", "ROMAN_LOWERCASE", "ROMAN_UPPERCASE", "NUMBER" ])
+});
+
+export const MultipleChoiceData = z.object({
+    body:           z.string().optional(),
+    solution:       z.array(z.number()),
+});
+
+export const FreeResponseData = z.object({
+    body:       z.string().optional(),
+    solution:   z.string().optional(),
+});
+
+export const ShortAnswerData = FreeResponseData;
+
+export const FillInBlankData = FreeResponseData;
+
+export const QuestionData = z.union([
+    ParentData, MultipleChoiceData, FreeResponseData, ShortAnswerData, FillInBlankData
+]);
+
+export const UpsertAnswerChoiceOptions = z.object({
+    id:         z.string().default(randomUUID),
+    index:      z.number(),
+    body:       z.string().optional().nullable(),
+    resources:  z.array(UpsertResourceOptions).optional(),
+});
+
+export const UpsertExplanationOptions = z.object({
+    id:         z.string().uuid().default(randomUUID),
+    body:       z.string().optional().nullable(),
+    resources:  z.array(UpsertResourceOptions).optional()
+});
+
+export const CreateQuestionOptions = z.object({
+    type:       z.nativeEnum(QuestionType).default(QuestionType.MULTIPLE_CHOICE),
+    data:       QuestionData,
+    number:     z.number().min(1),
+    courseId:   z.string().uuid(),
+    examId:     z.string().uuid(),
+    parentId:   z.string().uuid().optional().nullable(),
+    flags:      QuestionFlags.optional().default({  }),
+});
+
+export const UpdateQuestionOptions = z.object({
+    type:           z.nativeEnum(QuestionType).optional(),
+    data:           QuestionData.optional(),
+    flags:          QuestionFlags.optional(),
+    topics:         z.array(UpsertTopic).optional(),
+    resources:      z.array(UpsertResourceOptions).optional(),
+    answerChoices:  z.array(UpsertAnswerChoiceOptions).optional().optional(),
+    explanation:    UpsertExplanationOptions.optional()
+});
+
+export const FullQuestion = {
+    resources: true,
+    exam: true,
+    explanation: {
         include: {
-            course: true,
-            topics: true,
-            exam: {
+            resources: true
+        }
+    },
+    answerChoices: {
+        include: {
+            resources: true
+        },
+        orderBy: {
+            index: "asc" as const
+        }
+    },
+    topics: {
+        include: {
+            topic: true
+        }
+    },
+    children: {
+        include: {
+            resources: true,
+            exam: true,
+            explanation: {
                 include: {
-                    semester: true,
-                },
+                    resources: true
+                }
             },
             answerChoices: {
+                include: {
+                    resources: true
+                },
                 orderBy: {
-                    choiceIndex: "asc",
-                },
-                include: {
-                    resources: {
-                        include: {
-                            image: true,
-                            code: true,
-                        },
-                    },
-                },
+                    index: "asc" as const
+                }
             },
-            resources: {
+            topics: {
                 include: {
-                    image: true,
-                    code: true,
-                },
+                    topic: true
+                }
+            }
+        }
+    }
+};
+
+export const PartialQuestion = {
+    id: true,
+    number: true,
+    flags: true,
+    topics: {
+        include: {
+            topic: true
+        }
+    },
+    difficulty: true,
+    children: {
+        select: {
+            id: true,
+            number: true,
+            flags: true,
+        }
+    }
+};
+
+export async function createQuestion(req: Request, res: Response) {
+    const options = CreateQuestionOptions.parse(req.body);
+
+    const question = await prisma.$transaction(async (prisma) => {
+        // 1. Insert the new question
+        // 2. Update existing questions
+        await prisma.question.updateMany({
+            where: {
+                examId: options.examId,
+                parentId: options.parentId,
+                number: {
+                    gte: options.number
+                }
             },
-        },
+            data: {
+                number: {
+                    increment: 1
+                }
+            }
+        });
+
+        return await prisma.question.create({
+            data: {
+                ...options,
+                flags: FlagEncoder.question(options.flags),
+                explanation: {
+                    create: {
+
+                    }
+                }
+            },
+            include: FullQuestion
+        });
     });
-    if (!question) {
+
+    res.status(200).send(Formatter.question({
+        data: question,
+        sendUnpublished: req.sendUnpublished
+    }));
+}
+
+export async function getQuestion(req: Request, res: Response) {
+    const question = await prisma.question.findFirstOrThrow({
+        where: await Resolver.question(req),
+        include: FullQuestion
+    });
+
+    if (!question.flags.published && !req.sendUnpublished) {
         throw new NotFoundError("Question not found");
     }
 
-    // @ts-expect-error Extend Later
-    question.answerChoiceStats = await answerChoiceStats(questionId);
+    res.status(200).send(Formatter.question({
+        data: question,
+        sendUnpublished: req.sendUnpublished
+    }));
+}
 
-    res.status(200).send(question);
-};
+export async function updateQuestion(req: Request, res: Response) {
+    const options = UpdateQuestionOptions.parse(req.body);
 
-const createQuestion = async (req: Request, res: Response) => {
-    const { courseId, examId } = req.params;
-
-    const { number, body, correctChoiceIndices, solutionVideoLink, explanationText, disableRandomAnswers, answersStartHidden, disclaimer, type } =
-        req.body;
-
-    let { topics, answerChoices, resourceIds } = req.body;
-
-    if (!topics) {
-        topics = [];
-    }
-
-    if (!resourceIds) {
-        resourceIds = [];
-    }
-
-    if (!answerChoices) {
-        answerChoices = [];
-    }
-
-    await prisma.course.update({
-        where: {
-            id: courseId,
-        },
-        data: {
-            topics: {
-                connectOrCreate: topics.map((topic: { id: string; name: string }) => ({
-                    where: topic,
-                    create: topic,
-                })),
-            },
-        },
-    });
-
-    const question = await prisma.question.create({
-        data: {
-            courseId: courseId,
-            examId: examId,
-            type: type,
-            topics: {
-                connect: topics,
-            },
-            number: Number(number),
-            body: body ?? "",
-            answerChoices: {
-                create: answerChoices.map((answerChoice) => ({
-                    choiceIndex: Number(answerChoice.choiceIndex),
-                    body: answerChoice.body,
-                    resources: {
-                        connect: answerChoice.resourceIds.map((resourceId) => ({
-                            id: resourceId,
-                        })),
-                    },
-                })),
-            },
-            correctChoiceIndices: correctChoiceIndices,
-            solutionVideoLink: solutionVideoLink,
-            explanationText: explanationText,
-            disclaimer: disclaimer,
-            resources: {
-                connect: resourceIds.map((resourceId) => ({ id: resourceId })),
-            },
-            disableRandomAnswers: disableRandomAnswers,
-            answersStartHidden: answersStartHidden,
-        },
+    const question = await prisma.question.findFirstOrThrow({
+        where: await Resolver.question(req),
         include: {
-            topics: true,
-            answerChoices: {
-                orderBy: {
-                    choiceIndex: "asc",
-                },
+            topics: {
                 include: {
-                    resources: {
-                        include: {
-                            image: true,
-                            code: true,
-                        },
-                    },
-                },
-            },
-            resources: {
-                include: {
-                    image: true,
-                    code: true,
-                },
-            },
-        },
+                    topic: true
+                }
+            }
+        }
     });
-    res.status(200).send(question);
-};
 
-const updateQuestion = async (req: Request, res: Response) => {
-    const { courseId, examId, questionId } = req.params;
-    const {
-        type,
-        topics,
-        number,
-        body,
-        answerChoices,
-        correctChoiceIndices,
-        solutionVideoLink,
-        explanationText,
-        resourceIds,
-        answersStartHidden,
-        disableRandomAnswers,
-        disclaimer,
-    } = req.body;
-
-    await prisma.course.update({
+    const updatedQuestion = await prisma.question.update({
         where: {
-            id: courseId,
+            id: question.id
         },
         data: {
-            topics: {
-                connectOrCreate: topics.map((topic: { id: string; name: string }) => ({
-                    where: topic,
-                    create: topic,
-                })),
-            },
+            ...options,
+            number: undefined, // Block update to question number
+            flags: options.flags ? FlagEncoder.question(options.flags) : options.flags,
+            topics: upsertOrDisconnectTopics(question.courseId, question.topics.map(topic => topic.topicId), options.topics),
+            resources: upsertResources(options.resources),
+            answerChoices: upsertAnswerChoices(options.answerChoices),
+            explanation: upsertExplanation(options.explanation)
         },
+        include: FullQuestion
     });
 
-    const existingAnswerChoices = answerChoices.filter((answerChoice: { id: string }) => {
-        return answerChoice.id !== undefined;
-    });
+    res.status(200).send(Formatter.question({
+        data: updatedQuestion,
+        sendUnpublished: req.sendUnpublished
+    }));
+}
 
-    const question = await prisma.question.update({
-        where: {
-            id: questionId,
-        },
-        data: {
-            courseId: courseId,
-            examId: examId,
-            type: type,
-            topics: {
-                set: topics,
-            },
-            number: Number(number),
-            body: body,
-            answerChoices: {
-                deleteMany: {
-                    id: {
-                        notIn: existingAnswerChoices.map((answerChoice) => answerChoice.id),
-                    },
-                },
-                upsert: answerChoices.map((answerChoice) => ({
-                    where: {
-                        id: answerChoice.id || "",
-                    },
-                    update: {
-                        choiceIndex: Number(answerChoice.choiceIndex),
-                        body: answerChoice.body,
-                        resources: {
-                            deleteMany: {
-                                id: {
-                                    notIn: answerChoice.resourceIds,
-                                },
-                            },
-                            connect: answerChoice.resourceIds.map((resourceId) => ({
-                                id: resourceId,
-                            })),
-                        },
-                    },
-                    create: {
-                        choiceIndex: Number(answerChoice.choiceIndex),
-                        body: answerChoice.body,
-                        resources: {
-                            connect: answerChoice.resourceIds.map((resourceId) => ({
-                                id: resourceId,
-                            })),
-                        },
-                    },
-                })),
-            },
-            correctChoiceIndices: correctChoiceIndices,
-            solutionVideoLink: solutionVideoLink,
-            explanationText: explanationText,
-            disableRandomAnswers: disableRandomAnswers,
-            answersStartHidden: answersStartHidden,
-            disclaimer: disclaimer,
-            resources: {
-                deleteMany: {
-                    id: {
-                        notIn: resourceIds,
-                    },
-                },
-                connect: resourceIds.map((resourceId) => ({ id: resourceId })),
-                // upsert: resources.map((resource) => ({
-                //    where: {
-                //        id: resource.id ?? "",
-                //    },
-                //    update: resource,
-                //    create: resource,
-                //})),
-            },
-        },
-        include: {
-            topics: true,
-            answerChoices: {
-                orderBy: {
-                    choiceIndex: "asc",
-                },
-                include: {
-                    resources: {
-                        include: {
-                            image: true,
-                            code: true,
-                        },
-                    },
-                },
-            },
-            resources: {
-                include: {
-                    image: true,
-                    code: true,
-                },
-            },
-        },
-    });
-    res.status(200).send(question);
-};
-
-const toggleQuestionPublished = async (req: Request, res: Response) => {
-    const { questionId } = req.params;
-    const question = await prisma.question.findUnique({
-        where: {
-            id: questionId,
-        },
+export async function toggleQuestionPublished(req: Request, res: Response) {
+    const question = await prisma.question.findFirstOrThrow({
+        where: await Resolver.question(req),
         select: {
+            id: true,
             exam: {
                 select: {
-                    published: true,
-                },
+                    flags: true
+                }
             },
-            published: true,
-        },
+            flags: true
+        }
     });
+
     if (!question) {
         throw new NotFoundError("Question not found");
     }
-    if (!question.exam.published) {
+
+    if (!question.exam.flags.published) {
         throw new APIError("Exam must be published", 409);
     }
 
-    const published = !question.published;
+    const status = !question.flags.published;
+
     await prisma.question.update({
         where: {
-            id: questionId,
+            id: question.id,
         },
         data: {
-            published: published,
+            flags: FlagEncoder.question({
+                ...question.flags,
+                published: status
+            })
         },
     });
+
     res.status(200).send({
-        message: `Question is now ${published ? "published" : "unpublished"}`,
+        message: `Question is now ${status ? "published" : "unpublished"}`,
     });
-};
+}
 
-const deleteQuestion = async (req: Request, res: Response) => {
-    const { questionId } = req.params;
-    const question = await prisma.question.delete({
-        where: {
-            id: questionId,
-        },
+export async function deleteQuestion(req: Request, res: Response) {
+    const question = await prisma.question.findFirstOrThrow({
+        where: await Resolver.question(req)
     });
 
-    if (!question) {
-        throw new NotFoundError("Question not found");
-    }
-    res.status(200).send(question);
-};
+    await prisma.$transaction(async (prisma) => {
+        // Delete the question
+        await prisma.question.delete({
+            where: {
+                id: question.id
+            }
+        });
 
-const createQuestionSubmission = async (req: Request, res: Response) => {
-    const { questionId } = req.params;
-    const {
-        selectedChoiceIndices,
-        type,
-        correct,
-        timeSpent,
-        timeStarted,
-        timeEnded,
-        videoStartTime,
-        videoEndTime,
-        timeSpentVideo,
-        modalStartTime,
-        modalEndTime,
-        modalTotalTime,
-        osFamily,
-    } = req.body;
-
-    const startTime = msToDate(timeStarted);
-    const endTime = msToDate(timeEnded);
-    const videoStart = msToDate(videoStartTime);
-    const videoEnd = msToDate(videoEndTime);
-    const modalStart = msToDate(modalStartTime);
-    const modalEnd = msToDate(modalEndTime);
-    const timeSpentSafe = Math.floor(Math.min(1073741824, timeSpent ?? 0));
-    const timeSpentVideoSafe = Math.floor(Math.min(1073741824, timeSpentVideo ?? 0));
-
-    const submission = await prisma.submission.create({
-        data: {
-            questionId: questionId,
-            type: type,
-            correct: Boolean(correct),
-            selectedChoiceIndices: selectedChoiceIndices,
-            timeStarted: startTime,
-            timeEnded: endTime,
-            timeSpent: timeSpentSafe,
-            videoStartTime: videoStart,
-            videoEndTime: videoEnd,
-            timeSpentVideo: timeSpentVideoSafe,
-            modalStartTime: modalStart,
-            modalEndTime: modalEnd,
-            modalTotalTime: modalTotalTime,
-            osFamily: osFamily,
-        },
-    });
-    res.status(200).send(submission);
-};
-
-const bulkQuestionSubmission = async (req: Request, res: Response) => {
-    const rawSubmissions = req.body;
-
-    const submissions = await prisma.$transaction(
-        rawSubmissions.map(
-            ({
-                questionId,
-                type,
-                selectedChoiceIndices,
-                correct,
-                timeStarted,
-                timeEnded,
-                timeSpent,
-                videoStartTime,
-                videoEndTime,
-                timeSpentVideo,
-                modalStartTime,
-                modalEndTime,
-                modalTotalTime,
-                osFamily,
-            }) => {
-                const startTime = msToDate(timeStarted);
-                const endTime = msToDate(timeEnded);
-                const videoStart = msToDate(videoStartTime);
-                const videoEnd = msToDate(videoEndTime);
-                const modalStart = msToDate(modalStartTime);
-                const modalEnd = msToDate(modalEndTime);
-                const timeSpentSafe = Math.floor(Math.min(1073741824, timeSpent ?? 0));
-                const timeSpentVideoSafe = Math.floor(Math.min(1073741824, timeSpentVideo ?? 0));
-
-                return prisma.submission.create({
-                    data: {
-                        questionId: questionId,
-                        type: type,
-                        correct: Boolean(correct),
-                        selectedChoiceIndices: selectedChoiceIndices,
-                        timeStarted: startTime,
-                        timeEnded: endTime,
-                        timeSpent: timeSpentSafe,
-                        videoStartTime: videoStart,
-                        videoEndTime: videoEnd,
-                        timeSpentVideo: timeSpentVideoSafe,
-                        modalStartTime: modalStart,
-                        modalEndTime: modalEnd,
-                        modalTotalTime: modalTotalTime,
-                        osFamily: osFamily,
-                    },
-                });
+        // Update question numbers for remaining questions in the same exam and with the same parent
+        await prisma.question.updateMany({
+            where: {
+                examId: question.examId,
+                parentId: question.parentId,
+                number: {
+                    gt: question.number
+                }
             },
-        ),
-    );
-
-    res.status(200).send(submissions);
-};
-
-const updateSubmission = async (req: Request, res: Response) => {
-    const { submissionId } = req.params;
-    const { videoStartTime, videoEndTime, timeSpentVideo, modalStartTime, modalEndTime, modalTotalTime } = req.body;
-
-    const videoStart = msToDate(videoStartTime);
-    const videoEnd = msToDate(videoEndTime);
-    const modalStart = msToDate(modalStartTime);
-    const modalEnd = msToDate(modalEndTime);
-    const timeSpentVideoSafe = Math.floor(Math.min(1073741824, timeSpentVideo ?? 0));
-
-    const submission = await prisma.submission.update({
-        where: {
-            id: submissionId,
-        },
-        data: {
-            videoStartTime: videoStart,
-            videoEndTime: videoEnd,
-            timeSpentVideo: timeSpentVideoSafe,
-            modalStartTime: modalStart,
-            modalEndTime: modalEnd,
-            modalTotalTime: modalTotalTime,
-        },
+            data: {
+                number: {
+                    decrement: 1
+                }
+            }
+        });
     });
-    res.status(200).send(submission);
-};
 
-export {
-    getQuestion,
-    createQuestion,
-    updateQuestion,
-    toggleQuestionPublished,
-    deleteQuestion,
-    createQuestionSubmission,
-    bulkQuestionSubmission,
-    updateSubmission,
-};
+    res.status(200).send(question);
+}
+
+export async function deleteAnswerChoice(req: Request, res: Response) {
+    const { answerChoiceId } = req.params;
+
+    const answerChoice = await prisma.answerChoice.delete({
+        where: {
+            id: answerChoiceId
+        }
+    });
+
+    if (!answerChoice) {
+        throw new NotFoundError(`AnswerChoice not found: ${answerChoice}`);
+    }
+
+    res.status(200).send(answerChoice);
+}
+
+function upsertAnswerChoices(answerChoices?: z.infer<typeof UpsertAnswerChoiceOptions>[]) {
+    return {
+        upsert: answerChoices?.map(ac => {
+            return {
+                where: {
+                    id: ac.id
+                },
+                create: {
+                    index: ac.index,
+                    body: ac.body,
+                    resources: connectOrCreateResources(ac.resources)
+                },
+                update: {
+                    index: ac.index,
+                    body: ac.body,
+                    resources: upsertResources(ac.resources)
+                }
+            };
+        })
+    };
+}
+
+function upsertExplanation(explanation?: z.infer<typeof UpsertExplanationOptions>) {
+    return explanation ? {
+        upsert: {
+            where: {
+                id: explanation.id
+            },
+            create: {
+                body: explanation.body,
+                resources: connectOrCreateResources(explanation.resources)
+            },
+            update: {
+                body: explanation.body,
+                resources: upsertResources(explanation.resources)
+            }
+        }
+    } : explanation;
+}

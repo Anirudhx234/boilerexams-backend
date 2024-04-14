@@ -1,36 +1,26 @@
-import express from "express";
 import { Role } from "@prisma/client";
 import {
-    bulkQuestionSubmission,
-    createQuestion,
-    createQuestionSubmission,
+    deleteAnswerChoice,
     deleteQuestion,
     getQuestion,
     toggleQuestionPublished,
     updateQuestion,
-    updateSubmission,
 } from "../controllers/questionController.js";
 import asyncWrapper from "../middleware/wrappers/asyncWrapper.js";
 import authHandler from "../middleware/auth/authHandler.js";
-import generalLimiter from "../middleware/rateLimiting/generalLimiter.js";
+import express from "express";
 import sendPublished from "../middleware/auth/sendPublished.js";
 
 const router = express.Router();
 
-router.get("/id/questions/:questionId", sendPublished, asyncWrapper(getQuestion));
+router.get("/:question", sendPublished, asyncWrapper(getQuestion));
 
-router.post("/courses/:courseId/exams/:examId/questions", authHandler(Role.CONTENT), asyncWrapper(createQuestion));
+router.put("/:question", authHandler(Role.CONTENT), asyncWrapper(updateQuestion));
 
-router.put("/courses/:courseId/exams/:examId/questions/:questionId", authHandler(Role.CONTENT), asyncWrapper(updateQuestion));
+router.put("/:question/toggle-published", authHandler(Role.CONTENT), asyncWrapper(toggleQuestionPublished));
 
-router.put("/questions/:questionId/togglePublished", authHandler(Role.CONTENT), asyncWrapper(toggleQuestionPublished));
+router.delete("/:question", authHandler(Role.CONTENT), asyncWrapper(deleteQuestion));
 
-router.delete("/courses/:courseId/exams/:examId/questions/:questionId", authHandler(Role.CONTENT), asyncWrapper(deleteQuestion));
-
-router.post("/questions/:questionId/submit", generalLimiter, asyncWrapper(createQuestionSubmission));
-
-router.post("/questions/bulkSubmit", generalLimiter, asyncWrapper(bulkQuestionSubmission));
-
-router.put("/submissions/:submissionId", generalLimiter, asyncWrapper(updateSubmission));
+router.delete("/answer-choices/:answerChoiceId", authHandler(Role.CONTENT), asyncWrapper(deleteAnswerChoice));
 
 export default router;

@@ -2,24 +2,41 @@ version: "3.8"
 
 include:
     - ./judge0/docker-compose.yml
-    - ./umami/docker-compose.yml
     - ./nginx/docker-compose.yml
 
 services:
     production:
         container_name: production
-        image: anirudhx234/boilerexams-backend:production
+        image: boilerexams/backend:production
         env_file:
-            - ../.env.production
+            - .env.production
         restart: always
         ports:
             - "8080:8080"
+        network_mode: host
+        volumes:
+            - /etc/letsencrypt:/etc/letsencrypt:ro
 
     development:
         container_name: development
-        image: anirudhx234/boilerexams-backend:development
+        image: boilerexams/backend:development
         env_file:
-            - ../.env.development
+            - .env.development
         restart: always
         ports:
             - "8081:8081"
+        network_mode: host
+        volumes:
+            - /etc/letsencrypt:/etc/letsencrypt:ro
+
+    canary:
+        container_name: canary
+        image: boilerexams/backend:canary
+        env_file:
+            - .env.canary
+        restart: always
+        ports:
+            - "8082:8082"
+        network_mode: host
+        volumes:
+            - /etc/letsencrypt:/etc/letsencrypt:ro

@@ -23,7 +23,7 @@ export type PurdueIoTerm = {
 };
 
 export class PurdueIoAPI {
-    public static async getCourse(subject: PurdueIoSubject, number: string) {
+    public static async getCourse(subject: PurdueIoSubject, number: number) {
         const query = `https://api.purdue.io/odata/Courses?$filter=Subject/Abbreviation eq '${subject.Abbreviation}' and Number eq '${number}'`;
         const request = await axios.get(query);
         const course = request.data.value[0] as PurdueIoCourse;

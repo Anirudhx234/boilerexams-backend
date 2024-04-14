@@ -1,30 +1,18 @@
 import express from "express";
-import {
-    createCodeResource,
-    createImageResource,
-    createImageResourceFromLink,
-    deleteResource,
-    getResource,
-    updateImageResource,
-    updateCodeResource,
-} from "../controllers/resourceController.js";
 import asyncWrapper from "../middleware/wrappers/asyncWrapper.js";
-import upload from "../middleware/multer/image.js";
+import { deleteResource, getResource, uploadFile, upsertResource } from "../controllers/resourceController.js";
+import upload from "../middleware/multer/file.js";
+import authHandler from "../middleware/auth/authHandler.js";
+import { Role } from "@prisma/client";
 
 const router = express.Router();
 
 router.get("/:resourceId", asyncWrapper(getResource));
 
-router.post("/images", upload.single("image"), asyncWrapper(createImageResource));
+router.post("/files", upload.single("file"), authHandler(Role.GRAPHIC), asyncWrapper(uploadFile));
 
-router.post("/images/link", asyncWrapper(createImageResourceFromLink));
+router.put("/", upload.single("image"), authHandler(Role.GRAPHIC), asyncWrapper(upsertResource));
 
-router.post("/codes", asyncWrapper(createCodeResource));
-
-router.put("/:resourceId/image", asyncWrapper(updateImageResource));
-
-router.put("/:resourceId/code", asyncWrapper(updateCodeResource));
-
-router.delete("/:resourceId", asyncWrapper(deleteResource));
+router.delete("/:resourceId", authHandler(Role.GRAPHIC), asyncWrapper(deleteResource));
 
 export default router;

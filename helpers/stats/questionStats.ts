@@ -1,48 +1,22 @@
-import prisma from "../../libs/prisma.js";
-import msToHMS from "../../utils/msToHMS.js";
+import prisma from "../../prisma/prisma.js";
+import { z } from "zod";
+import { QuestionStats } from "../../controllers/statsController.js";
 
-const minimumValidSubmissionTime = 0;
-
-const questionStats = async (questionId: string) => {
-    const submissions = await prisma.submission.aggregate({
-        where: {
-            question: {
-                id: questionId,
-                published: true,
-            },
-            timeSpent: {
-                gte: minimumValidSubmissionTime,
-            },
-        },
-        _sum: {
-            timeSpent: true,
-            timeSpentVideo: true,
-        },
-        _count: true,
-    });
-
-    const correctSubmissions = await prisma.submission.count({
-        where: {
-            question: {
-                id: questionId,
-                published: true,
-            },
-            timeSpent: {
-                gte: minimumValidSubmissionTime,
-            },
-            correct: true,
-        },
-    });
-
-    const totalTimeSpent = msToHMS(submissions._sum.timeSpent);
-    const totalVideoWatchTime = msToHMS(submissions._sum.timeSpentVideo);
-
-    return {
-        totalTimeSpent: totalTimeSpent,
-        totalVideoWatchTime: totalVideoWatchTime,
-        totalSubmissions: submissions._count,
-        totalCorrectSubmissions: correctSubmissions,
-    };
-};
-
-export default questionStats;
+export async function questionStats(options: QuestionStatsOptions): Promise<z.infer<typeof QuestionStats>[]> {
+    return await prisma.$queryRaw`
+        SELECT q.id::VARCHAR as "id",
+               1::INTEGER AS "count",
+               COUNT(s.id)::INTEGER AS "submissions",
+               SUM(CASE WHEN s.correct = TRUE THEN 1 ELSE 0 END)::INTEGER AS "submissionsCorrect",
+               SUM(CASE WHEN s."timeSpent" BETWEEN 0 AND 3600000 THEN s."timeSpent" ELSE 0 END)::BIGINT AS "timeSpent", 
+               SUM(CASE WHEN  s."timeSpentVideo" BETWEEN 0 AND 3600000 THEN s."timeSpentVideo" ELSE 0 END)::BIGINT AS "timeSpentVideo"    
+        FROM "Question" q
+                 JOIN "Submission" s ON q.id = s."questionId"
+        WHERE q.flags & 1 = 1 -- Public Questions
+          AND (q.id = ${options.id} OR ${!options.id} = ${true})
+          AND (q."examId" = ${options.examId} OR ${!options.examId} = ${true})
+          AND (q."courseId" = ${options.courseId} OR ${!options.courseId} = ${true})
+          AND (s."timeStarted" BETWEEN SYMMETRIC ${options.before} AND ${options.after})
+        GROUP BY q.id;
+    `;
+}

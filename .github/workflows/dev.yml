@@ -1,4 +1,4 @@
-name: Deploy API to Docker Hub and EC2 - Development
+name: Deploy API to Docker Hub and Beast - Development
 
 on:
     push:
@@ -22,7 +22,7 @@ jobs:
               uses: docker/build-push-action@v5
               with:
                   context: .
-                  file: ./Dockerfile.development
+                  file: ./docker/Dockerfile.development
                   push: true
                   tags: ${{ secrets.DOCKERHUB_USERNAME }}/backend:development
                   cache-from: type=gha

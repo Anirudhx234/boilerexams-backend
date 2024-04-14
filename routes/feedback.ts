@@ -1,50 +1,47 @@
 import {
     createApplication,
-    createBugReport,
-    createCourseRequest,
-    createFeatureRequest,
-    createQuestionBugReport,
-    createReport,
-    createVideoFeedbackReport,
-    deleteVideoFeedback,
-    getReport,
-    getVideoFeedbackByCourse,
-    getVideoFeedbackByExam,
-    updateReport,
-    updateVideoFeedbackReport
+    createVideoFeedback,
+    deleteFeedback,
+    getCourseRequests,
+    getFeedback,
+    getManyFeedback,
+    reportBug,
+    reportQuestion,
+    requestCourse,
+    requestFeature, updateFeedbackStatus
 } from "../controllers/feedbackController.js";
 import asyncWrapper from "../middleware/wrappers/asyncWrapper.js";
-import upload from "../middleware/multer/pdf.js";
+import upload from "../middleware/multer/file.js";
 import express from "express";
 import authHandler from "../middleware/auth/authHandler.js";
-import {Role} from "@prisma/client";
+import { Role } from "@prisma/client";
 
 const router = express.Router();
 
-router.get("/reports/:reportId", asyncWrapper(getReport));
+router.get("/:feedbackId", authHandler(Role.CONTENT), asyncWrapper(getFeedback));
 
-router.get("/video-feedback/courses/:courseId", asyncWrapper(getVideoFeedbackByCourse));
+router.get("/courses/:course/exams/:e", authHandler(Role.CONTENT), asyncWrapper(getManyFeedback));
 
-router.get("/video-feedback/exams/:examId", asyncWrapper(getVideoFeedbackByExam));
+router.get("/courses/:course", authHandler(Role.CONTENT), asyncWrapper(getManyFeedback));
 
-router.post("/reports/", asyncWrapper(createReport));
+router.get("/exams/:exam", authHandler(Role.CONTENT), asyncWrapper(getManyFeedback));
+
+router.get("/course-requests", authHandler(Role.CONTENT), asyncWrapper(getCourseRequests));
+
+router.post("/bug-reports", asyncWrapper(reportBug));
+
+router.post("/question-reports/:question", asyncWrapper(reportQuestion));
+
+router.post("/feature-requests", asyncWrapper(requestFeature));
+
+router.post("/video-feedback/:question", asyncWrapper(createVideoFeedback));
+
+router.post("/course-requests", asyncWrapper(requestCourse));
 
 router.post("/applications", upload.single("pdf"), asyncWrapper(createApplication));
 
-router.post("/course-requests", asyncWrapper(createCourseRequest));
+router.patch("/:feedbackId", authHandler(Role.CONTENT), asyncWrapper(updateFeedbackStatus));
 
-router.post("/bug-reports", asyncWrapper(createBugReport));
-
-router.post("/content-reports/:questionId", asyncWrapper(createQuestionBugReport));
-
-router.post("/feature-requests", asyncWrapper(createFeatureRequest));
-
-router.post("/video-feedback/:questionId", asyncWrapper(createVideoFeedbackReport));
-
-router.put("/reports/:reportId", authHandler(Role.CONTENT), asyncWrapper(updateReport));
-
-router.put("/video-feedback/:reportId", authHandler(Role.CONTENT), asyncWrapper(updateVideoFeedbackReport));
-
-router.delete("/video-feedback/:reportId", authHandler(Role.CONTENT), asyncWrapper(deleteVideoFeedback));
+router.delete("/:feedbackId", authHandler(Role.CONTENT), asyncWrapper(deleteFeedback));
 
 export default router;

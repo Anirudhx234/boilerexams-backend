@@ -1,175 +1,277 @@
-import prisma from "../libs/prisma.js";
-import { Season } from "@prisma/client";
-import { Request, Response } from "express";
 import { APIError, NotFoundError } from "../middleware/errors/index.js";
+import { FullQuestion, PartialQuestion } from "./questionController.js";
+import { Request, Response } from "express";
+import { UpsertResourceOptions, upsertResources } from "./resourceController.js";
+import { ReorderQuestions } from "../prisma/schema.js";
+import { Season } from "@prisma/client";
+import { z } from "zod";
+import FlagEncoder from "../helpers/encoder.js";
+import Formatter from "../helpers/formatter.js";
+import prisma from "../prisma/prisma.js";
+import Resolver from "../helpers/resolver.js";
+import savePDFtoExam from "../helpers/mathpix/savePDFtoExam.js";
 
-const createExam = async (req: Request, res: Response) => {
-    const { courseId } = req.params;
-    const {
-        semester: { season, year },
-        number,
-        practice,
-        disclaimer,
-    } = req.body;
+export const ExamFlags = z.object({
+    published: z.boolean().default(false),
+    practice: z.boolean().default(false),
+});
 
-    if (!season || !year) {
-        throw new APIError("Season and year required", 400);
-    }
+export const CreateExamOptions = z.object({
+    number: z.number(),
+    year: z.number(),
+    season: z.nativeEnum(Season),
+    disclaimer: z.string().optional().nullable(),
+    flags: ExamFlags.optional().default({}),
+});
 
-    const exam = await prisma.$transaction(async (tx) => {
-        const semester = await tx.semester.upsert({
-            where: {
-                season_year: {
-                    season: Season[season.toUpperCase() as keyof typeof Season],
-                    year: Number(year),
-                },
-            },
-            update: {},
-            create: {
-                season: Season[season.toUpperCase() as keyof typeof Season],
-                year: Number(year),
-            },
-        });
+export const UpdateExamOptions = z.object({
+    number: z.number().optional(),
+    year: z.number().optional(),
+    season: z.nativeEnum(Season).optional(),
+    disclaimer: z.string().optional().nullable(),
+    flags: ExamFlags.optional(),
+    resources: z.array(UpsertResourceOptions).optional(),
+});
 
-        await tx.course.update({
-            where: {
-                id: courseId,
+export async function getExam(req: Request, res: Response) {
+    const exam = await prisma.exam.findUniqueOrThrow({
+        where: await Resolver.exam(req),
+        include: {
+            resources: true,
+            questions: {
+                select: PartialQuestion,
+                orderBy: [{ number: "asc" }],
             },
-            data: {
-                semesters: {
-                    connect: {
-                        id: semester.id,
-                    },
-                },
-            },
-        });
-
-        return tx.exam.create({
-            data: {
-                courseId: courseId,
-                number: Number(number),
-                semesterId: semester.id,
-                practice: practice,
-                disclaimer: disclaimer,
-            },
-            include: {
-                semester: true,
-                questions: true,
-            },
-        });
-    });
-    res.status(200).send(exam);
-};
-
-const updateExam = async (req: Request, res: Response) => {
-    const { courseId, examId } = req.params;
-    const {
-        semester: { season, year },
-        number,
-        practice,
-        disclaimer,
-    } = req.body;
-
-    if (!season || !year) {
-        throw new APIError("Season and year required", 400);
-    }
-
-    const exam = await prisma.$transaction(async (tx) => {
-        const semester = await tx.semester.upsert({
-            where: {
-                season_year: {
-                    season: Season[season.toUpperCase() as keyof typeof Season],
-                    year: Number(year),
-                },
-            },
-            update: {},
-            create: {
-                season: Season[season.toUpperCase() as keyof typeof Season],
-                year: Number(year),
-            },
-        });
-
-        await tx.course.update({
-            where: {
-                id: courseId,
-            },
-            data: {
-                semesters: {
-                    connect: {
-                        id: semester.id,
-                    },
-                },
-            },
-        });
-
-        return tx.exam.update({
-            where: {
-                id: examId,
-            },
-            data: {
-                semesterId: semester.id,
-                number: number,
-                practice: practice,
-                disclaimer: disclaimer,
-            },
-            include: {
-                semester: true,
-            },
-        });
-    });
-    res.status(200).send(exam);
-};
-
-const toggleExamPublished = async (req: Request, res: Response) => {
-    const { examId } = req.params;
-    const exam = await prisma.exam.findUnique({
-        where: {
-            id: examId,
-        },
-        select: {
-            published: true,
         },
     });
-    if (!exam) {
+
+    if (!req.sendUnpublished && !exam.flags.published) {
         throw new NotFoundError("Exam not found");
     }
 
-    const published = !exam.published;
+    res.status(200).send(
+        Formatter.exam({
+            data: exam,
+            sendUnpublished: req.sendUnpublished,
+        }),
+    );
+}
+
+export async function getAllExams(req: Request, res: Response) {
+    const exams = await prisma.exam.findMany({
+        include: {
+            resources: true,
+            questions: {
+                select: {
+                    id: true,
+                    number: true,
+                    flags: true,
+                },
+                orderBy: {
+                    number: "asc",
+                },
+            },
+        },
+        orderBy: [{ year: "asc" }, { season: "asc" }, { number: "asc" }],
+    });
+
+    res.status(200).send(
+        Formatter.exams({
+            data: exams,
+            sendUnpublished: req.sendUnpublished,
+        }),
+    );
+}
+
+export async function getExamTopics(req: Request, res: Response) {
+    const exam = await prisma.exam.findUniqueOrThrow({
+        where: await Resolver.exam(req),
+    });
+
+    if (!req.sendUnpublished && !exam.flags.published) {
+        throw new NotFoundError("Exam not found");
+    }
+
+    const topics = await prisma.topic.findMany({
+        where: {
+            questions: {
+                some: {
+                    question: {
+                        examId: exam.id,
+                    },
+                },
+            },
+        },
+        orderBy: {
+            name: "asc",
+        },
+    });
+
+    res.status(200).send(
+        Formatter.topics({
+            data: topics,
+            sendUnpublished: req.sendUnpublished,
+        }),
+    );
+}
+
+
+export async function getExamQuestions(req: Request, res: Response) {
+    const exam = await prisma.exam.findUniqueOrThrow({
+        where: await Resolver.exam(req),
+    });
+
+    if (!req.sendUnpublished && !exam.flags.published) {
+        throw new NotFoundError("Exam not found");
+    }
+
+    const questions = await prisma.question.findMany({
+        where: {
+            examId: exam.id,
+        },
+        include: FullQuestion,
+        orderBy: {
+            number: "asc",
+        },
+    });
+
+    res.status(200).send(
+        Formatter.questions({
+            data: questions,
+            sendUnpublished: req.sendUnpublished,
+        }),
+    );
+}
+
+export async function createExam(req: Request, res: Response) {
+    const options = CreateExamOptions.parse(req.body);
+
+    const course = await prisma.course.findUnique({
+        where: Resolver.course(req),
+    });
+
+    if (!course) throw new APIError(`Course not found`, 404);
+
+    const exam = await prisma.exam.create({
+        data: {
+            ...options,
+            courseId: course.id,
+            flags: FlagEncoder.exam(options.flags),
+        },
+        include: {
+            questions: true,
+        },
+    });
+
+    res.status(200).send(exam);
+}
+
+export async function updateExam(req: Request, res: Response) {
+    const options = UpdateExamOptions.parse(req.body);
+
+    const updatedExam = await prisma.exam.update({
+        where: await Resolver.exam(req),
+        data: {
+            ...options,
+            flags: options.flags ? FlagEncoder.exam(options.flags) : options.flags,
+            resources: upsertResources(options.resources),
+        },
+        include: {
+            resources: true,
+        },
+    });
+
+    res.status(200).send(
+        Formatter.exam({
+            data: updatedExam,
+            sendUnpublished: req.sendUnpublished,
+        }),
+    );
+}
+
+export async function reorderExamQuestions(req: Request, res: Response) {
+    const exam = await prisma.exam.findUniqueOrThrow({
+        where: await Resolver.exam(req),
+        select: {
+            id: true,
+            questions: {
+                select: {
+                    id: true,
+                    number: true,
+                },
+            },
+        },
+    });
+
+    const options = ReorderQuestions.parse(req.body);
+
+    const questions = await prisma.$transaction(
+        exam.questions.map((question) => {
+            return prisma.question.update({
+                where: {
+                    id: question.id,
+                },
+                data: {
+                    number: options.indexOf(question.id) + 1,
+                },
+                select: PartialQuestion,
+            });
+        }),
+    );
+
+    res.status(200).send(
+        Formatter.questions({
+            data: questions,
+            sendUnpublished: req.sendUnpublished,
+        }),
+    );
+}
+
+export async function toggleExamPublished(req: Request, res: Response) {
+    const exam = await prisma.exam.findUniqueOrThrow({
+        where: await Resolver.exam(req),
+        select: {
+            id: true,
+            flags: true,
+        },
+    });
+
+    const status = !exam.flags.published;
+
     await prisma.exam.update({
         where: {
-            id: examId,
+            id: exam.id,
         },
         data: {
-            published: published,
-            questions: {
-                updateMany: {
-                    where: {
-                        published: !published,
-                    },
-                    data: {
-                        published: published,
-                    },
-                },
-            },
+            flags: FlagEncoder.exam({
+                ...exam.flags,
+                published: status,
+            }),
         },
     });
+
     res.status(200).send({
-        message: `Exam and questions are now ${published ? "published" : "unpublished"}`,
+        message: `Exam is now ${status ? "published" : "unpublished"}`,
     });
+}
+
+export async function attachPDFToExam(req: Request, res: Response) {
+    const { examId } = req.params;
+
+    if (!req.file) {
+        throw new Error("No file attached");
+    }
+    const exam = await savePDFtoExam(examId, req.file.buffer, req.file.mimetype);
+    res.status(200).send(exam);
 };
 
-const deleteExam = async (req: Request, res: Response) => {
-    const { examId } = req.params;
+export async function deleteExam(req: Request, res: Response) {
     const exam = await prisma.exam.delete({
-        where: {
-            id: examId,
-        },
+        where: await Resolver.exam(req),
     });
 
     if (!exam) {
         throw new NotFoundError("Exam not found");
     }
     res.status(200).send(exam);
-};
-
-export { createExam, updateExam, toggleExamPublished, deleteExam };
+}

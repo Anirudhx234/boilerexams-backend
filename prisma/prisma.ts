@@ -1,0 +1,151 @@
+import { AnswerChoiceStats, CourseStats, ExamStats, QuestionStats, TopicStats } from "../controllers/statsController.js";
+import { deleteFileFromS3 } from "../utils/uploadFileToS3.js";
+import { PrismaClient } from "@prisma/client";
+import { UrlResourceData } from "../controllers/resourceController.js";
+import FlagDecoder from "../helpers/decoder.js";
+
+const prisma = new PrismaClient();
+
+export default prisma
+    .$extends({
+        model: {},
+    })
+    .$extends({
+        query: {
+            resource: {
+                async update({ query, args }) {
+                    const oldResource = await prisma.resource.findUniqueOrThrow({
+                        where: {
+                            id: args.where.id,
+                        },
+                    });
+                    const newResource = await query(args);
+
+                    const oldResult = UrlResourceData.safeParse(oldResource.data);
+                    const newResult = UrlResourceData.safeParse(newResource.data);
+
+                    if (oldResult.success && newResult.success) {
+                        const oldData = oldResult.data;
+                        const newData = newResult.data;
+
+                        if (oldData.key != newData.key) {
+                            if (oldData.key) {
+                                await deleteFileFromS3(oldData.key);
+                            }
+                        }
+                    }
+                },
+                // Hook into resource delete query
+                async delete({ query, args }) {
+                    const resource = await query(args);
+                    const result = UrlResourceData.safeParse(resource.data);
+
+                    if (result.success) {
+                        if (result.data.key) {
+                            await deleteFileFromS3(result.data.key);
+                        }
+                    }
+
+                    return resource;
+                },
+            },
+        },
+        result: {
+            // Extension of result allows us to modify result of a fetch query
+            course: {
+                // Modify course result
+                flags: {
+                    needs: { flags: true },
+                    compute(course) {
+                        return FlagDecoder.course(course.flags); // Overwrite flag field with computed flags
+                    },
+                },
+                secondaryColor: {
+                    // Compute secondaryColor
+                    needs: { color: true },
+                    compute(course) {
+                        if (!course.color) return;
+                        const color = course.color;
+                        const decimal = 1.25;
+
+                        let r = parseInt(color.substring(1, 3), 16);
+                        let g = parseInt(color.substring(3, 5), 16);
+                        let b = parseInt(color.substring(5, 7), 16);
+
+                        r = Math.round(r / decimal);
+                        g = Math.round(g / decimal);
+                        b = Math.round(b / decimal);
+
+                        r = r < 255 ? r : 255;
+                        g = g < 255 ? g : 255;
+                        b = b < 255 ? b : 255;
+
+                        const rr = r.toString(16).length === 1 ? `0${r.toString(16)}` : r.toString(16);
+                        const gg = g.toString(16).length === 1 ? `0${g.toString(16)}` : g.toString(16);
+                        const bb = b.toString(16).length === 1 ? `0${b.toString(16)}` : b.toString(16);
+
+                        return `#${rr}${gg}${bb}`;
+                    },
+                },
+                stats: {
+                    needs: { stats: true },
+                    compute(course) {
+                        return CourseStats.parse(course.stats ?? {});
+                    },
+                },
+            },
+            exam: {
+                // Modify exam query
+                flags: {
+                    needs: { flags: true },
+                    compute(exam) {
+                        return FlagDecoder.exam(exam.flags); // Overwrite flag field with computed flags
+                    },
+                },
+                stats: {
+                    needs: { stats: true },
+                    compute(exam) {
+                        return ExamStats.parse(exam.stats ?? {});
+                    },
+                },
+            },
+            question: {
+                // Modify question query
+                flags: {
+                    needs: { flags: true },
+                    compute(question) {
+                        return FlagDecoder.question(question.flags); // Overwrite flag field with computed flags
+                    },
+                },
+                stats: {
+                    needs: { stats: true },
+                    compute(question) {
+                        return QuestionStats.parse(question.stats ?? {});
+                    },
+                },
+                difficulty: {
+                    needs: { stats: true },
+                    compute(question) {
+                        const stats = QuestionStats.parse(question.stats ?? {});
+                        return stats.submissions > 50 ? 1 - (stats.submissionsCorrect / stats.submissions) : 0.5;
+                    }
+                },
+            },
+            topic: {
+                stats: {
+                    needs: { stats: true },
+                    compute(topic) {
+                        return TopicStats.parse(topic.stats ?? {});
+                    },
+                },
+            },
+            answerChoice: {
+                stats: {
+                    needs: { stats: true },
+                    compute(answerChoice) {
+                        return AnswerChoiceStats.parse(answerChoice.stats ?? {});
+                    },
+                },
+            },
+        },
+    });

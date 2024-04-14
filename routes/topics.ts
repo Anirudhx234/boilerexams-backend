@@ -1,15 +1,18 @@
 import express from "express";
-import { createTopic, deleteTopic, setTopicQuestions, updateTopic } from "../controllers/topicController.js";
+import { deleteTopic, getAllTopics, setTopicQuestions, updateTopic } from "../controllers/topicController.js";
 import asyncWrapper from "../middleware/wrappers/asyncWrapper.js";
+import sendPublished from "../middleware/auth/sendPublished.js";
+import authHandler from "../middleware/auth/authHandler.js";
+import { Role } from "@prisma/client";
 
 const router = express.Router();
 
-router.post("/courses/:courseId/topics", asyncWrapper(createTopic));
+router.get("/", sendPublished, asyncWrapper(getAllTopics));
 
-router.put("/topics/:topicId", asyncWrapper(updateTopic));
+router.put("/:topic", authHandler(Role.CONTENT), asyncWrapper(updateTopic));
 
-router.put("/topics/:topicId/setQuestions", asyncWrapper(setTopicQuestions));
+router.put("/:topic/set-questions", authHandler(Role.CONTENT), asyncWrapper(setTopicQuestions));
 
-router.delete("/topics/:topicId", asyncWrapper(deleteTopic));
+router.delete("/:topic", authHandler(Role.CONTENT), asyncWrapper(deleteTopic));
 
 export default router;

@@ -1,59 +1,47 @@
-import { Role } from "@prisma/client";
-import auth from "../middleware/auth/auth.js";
-import authHandler from "../middleware/auth/authHandler.js";
-import analytics from "./analytics.js";
+import express from "express";
+import auth from "./auth.js";
 import courses from "./courses.js";
 import exams from "./exams.js";
 import events from "./events.js";
-import express from "express";
 import feedback from "./feedback.js";
-import feedbackLimiter from "../middleware/rateLimiting/feedbackLimiter.js";
-import generalLimiter from "../middleware/rateLimiting/generalLimiter.js";
-import globalLimiter from "../middleware/rateLimiting/globalLimiter.js";
-import id_routes from "./id_routes.js";
-import name_routes from "./name_routes.js";
 import parsing from "./parsing.js";
 import questions from "./questions.js";
 import resources from "./resources.js";
 import stats from "./stats.js";
+import submissions from "./submissions.js";
 import topics from "./topics.js";
 import users from "./users.js";
+import feedbackLimiter from "../middleware/rateLimiting/feedbackLimiter.js";
+import generalLimiter from "../middleware/rateLimiting/generalLimiter.js";
+import globalLimiter from "../middleware/rateLimiting/globalLimiter.js";
 
 const router = express.Router();
 
 // Global rate limit for all routes
 router.use(globalLimiter);
 
-// Standard user routes (has stricter rate limit)
 router.use("/auth", generalLimiter, auth);
 
 router.use("/stats", generalLimiter, stats);
 
-router.use("/analytics", generalLimiter, analytics);
-
-router.use(name_routes);
-
 router.use("/feedback", feedbackLimiter, feedback);
 
-// Content routes (uses global rate limit)
-router.use(questions);
+router.use("/courses", courses);
 
-router.use("/users", users);
+router.use("/exams", exams);
 
-router.use(authHandler(Role.CONTENT));
+router.use("/topics", topics);
 
-router.use("/id", id_routes);
+router.use("/questions", questions);
 
-router.use("/events", events);
+router.use("/submissions", submissions);
 
 router.use("/resources", resources);
 
-router.use(parsing);
+router.use("/users", users);
 
-router.use(courses);
+router.use("/events", events);
 
-router.use(exams);
-
-router.use(topics);
+router.use("/parser", parsing);
 
 export default router;

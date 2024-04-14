@@ -1,15 +1,23 @@
 import express from "express";
-import { createExam, deleteExam, toggleExamPublished, updateExam } from "../controllers/examController.js";
+import { deleteExam, getAllExams, getExam, getExamQuestions, getExamTopics, attachPDFToExam } from "../controllers/examController.js";
 import asyncWrapper from "../middleware/wrappers/asyncWrapper.js";
+import sendPublished from "../middleware/auth/sendPublished.js";
+import authHandler from "../middleware/auth/authHandler.js";
+import { Role } from "@prisma/client";
+import upload from "../middleware/multer/file.js";
 
 const router = express.Router();
 
-router.post("/courses/:courseId/exams", asyncWrapper(createExam));
+router.get("/", sendPublished, asyncWrapper(getAllExams));
 
-router.put("/courses/:courseId/exams/:examId", asyncWrapper(updateExam));
+router.get("/:exam", sendPublished, asyncWrapper(getExam));
 
-router.put("/courses/:courseId/exams/:examId/togglePublished", asyncWrapper(toggleExamPublished));
+router.get("/:exam/topics", asyncWrapper(getExamTopics));
 
-router.delete("/courses/:courseId/exams/:examId/hardDelete", asyncWrapper(deleteExam));
+router.get("/:exam/questions", asyncWrapper(getExamQuestions));
+
+router.put("/:examId/attach-PDF", authHandler(Role.CONTENT), upload.single("pdf"), asyncWrapper(attachPDFToExam));
+
+router.delete("/:exam", authHandler(Role.CONTENT), asyncWrapper(deleteExam));
 
 export default router;

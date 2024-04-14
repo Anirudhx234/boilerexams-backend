@@ -1,5 +1,5 @@
 import express from "express";
-import { Request, Response } from "express";
+import type { Request, Response } from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import session from "express-session";
@@ -9,6 +9,11 @@ import sessionOptions from "./utils/sessionOptions.js";
 import initializePassport from "./middleware/auth/passport/index.js";
 import routes from "./routes/index.js";
 import errorHandler from "./middleware/errorHandler.js";
+import { scheduleUpdateStats } from "./helpers/stats/updateStats.js";
+
+(BigInt.prototype as any).toJSON = function () {
+    return this.toString();
+};
 
 const app = express();
 
@@ -21,7 +26,7 @@ app.use("/favicon.ico", express.static("images/favicon.ico"));
 app.use(cookieParser());
 app.use(express.json());
 
-if (process.env.REMOTE === "enabled") {
+if (process.env["REMOTE"] === "enabled") {
     app.set("trust proxy", 1);
 }
 
@@ -33,21 +38,17 @@ app.get("/", (req: Request, res: Response) => {
     res.send("Working");
 });
 
-app.use(routes);
-
-app.use(errorHandler);
-
-const getPORT = () => {
-    if (process.env.NODE_ENV === "production") {
-        return process.env.PORT || 8080;
-    } else {
-        return process.env.DEV_PORT || 8081;
-    }
-};
-const PORT = getPORT();
-
-app.listen(PORT, () => {
-    console.log(`Server is running at port ${PORT}`);
+app.get("/docs", (req: Request, res: Response) => {
+    res.redirect(process.env["DOCS_URL"] ?? "/")
 });
 
-export default app;
+app.use(routes);
+app.use(errorHandler);
+
+const PORT = process.env["PORT"];
+
+scheduleUpdateStats();
+
+app.listen(PORT, async () => {
+    console.log(`Server is running at port ${PORT}`);
+});
