@@ -10,6 +10,7 @@ import initializePassport from "./middleware/auth/passport/index.js";
 import routes from "./routes/index.js";
 import errorHandler from "./middleware/errorHandler.js";
 import { scheduleUpdateStats } from "./helpers/stats/updateStats.js";
+import prisma from "./prisma/prisma.js";
 
 (BigInt.prototype as any).toJSON = function () {
     return this.toString();
@@ -51,4 +52,37 @@ scheduleUpdateStats();
 
 app.listen(PORT, async () => {
     console.log(`Server is running at port ${PORT}`);
+
+    const allFeedback = await prisma.feedback.findMany({
+        include: {
+            question: {
+                select: {
+                    courseId: true,
+                    examId: true
+                }
+            }
+        }
+    });
+
+    console.log("Migrating Feedback Relations");
+    let updates = 0;
+
+    for (const feedback of allFeedback) {
+        const question = feedback.question;
+
+        if (!question) continue;
+
+        await prisma.feedback.update({
+            where: {
+                id: feedback.id
+            },
+            data: {
+                courseId: question.courseId,
+                examId: question.examId
+            }
+        });
+        updates += 1;
+    }
+
+    console.log(`Created ${updates} Feedback Relations`);
 });
