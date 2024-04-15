@@ -4,19 +4,12 @@ import { APIError, InvalidCourseError, InvalidSeasonError, NotFoundError } from 
 import multer from "multer";
 import axios from "axios";
 
-export function errorHandler2(err, req: Request, res: Response, next: NextFunction) {
-    console.error(err.stack); // Log the error stack trace
-
-    // Check if headers have already been sent to avoid 'ERR_HTTP_HEADERS_SENT' error
-    if (res.headersSent) {
-        return next(err);
+export default async function errorHandler(error: unknown, req: Request, res: Response, _next: NextFunction) {
+    if (!(error instanceof Error)) {
+        res.status(500).send(`Unknown error type: ${typeof Error}`);
+        return;
     }
 
-    // Set the status code based on the error
-    res.status(500).json({ ...err, code: err.code });
-}
-
-async (error, req: Request, res: Response, next: NextFunction) => {
     const errorResponse: ErrorResponse = {
         message: error.message,
         fullError: {},
@@ -75,11 +68,12 @@ async (error, req: Request, res: Response, next: NextFunction) => {
 
     try {
         await axios.post(`${process.env["DISCORD_URL"]}/error`, { stackTrace: error.stack });
-    } catch {}
+    } catch {
+        console.log("Unable to POST error to Discord");
+    }
 
     console.log(error);
-    errorResponse.message = "An error occured";
+    errorResponse.message = "An error occurred";
     return res.status(500).json(errorResponse);
-};
+}
 
-export default errorHandler2;
