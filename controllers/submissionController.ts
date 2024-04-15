@@ -27,11 +27,8 @@ export const ParentSubmissionData = z.array(
 );
 
 export const UpsertSubmissionOptions = z.object({
-    timeStarted: z.coerce.date().min(Epoch).optional(),
-    timeEnded: z.coerce
-        .date()
-        .refine((date) => date < new Date())
-        .optional(),
+    timeStarted: z.coerce.date().min(Epoch, "value too old").optional(),
+    timeEnded: z.coerce.date().refine((date) => date < new Date(), `value too new`).optional(),
     timeSpent: z.preprocess(coerceBigIntSafely, z.bigint().optional()),
     timeSpentVideo: z.preprocess(coerceBigIntSafely, z.bigint().optional()),
     timeSpentModal: z.preprocess(coerceBigIntSafely, z.bigint().optional()),
@@ -47,8 +44,8 @@ export const CreateSubmissionOptions = z.object({
         ShortAnswerSubmissionData,
         FillInBlankSubmissionData,
     ]),
-    timeStarted: z.coerce.date().min(Epoch),
-    timeEnded: z.coerce.date().refine((date) => date < new Date()),
+    timeStarted: z.coerce.date().min(Epoch, "value too old").optional(),
+    timeEnded: z.coerce.date().refine((date) => date < new Date(), `value too new`).optional(),
     timeSpent: z.preprocess(coerceBigIntSafely, z.bigint()),
     timeSpentVideo: z.preprocess(coerceBigIntSafely, z.bigint().default(0n)),
     timeSpentModal: z.preprocess(coerceBigIntSafely, z.bigint().default(0n)),

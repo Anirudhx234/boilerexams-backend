@@ -39,7 +39,7 @@ export const FeedbackOptions = z.object({
     questionId: z.string().uuid().optional(),
 });
 
-export const CourseRequestOptions = FeedbackOptions.extend({
+export const CourseRequestOptions = z.object({
     abbreviation:   z.string().toUpperCase(),
     number:         z.coerce.number().min(100).max(99999)
 });
