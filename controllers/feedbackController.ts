@@ -41,7 +41,7 @@ export const FeedbackOptions = z.object({
 
 export const CourseRequestOptions = FeedbackOptions.extend({
     abbreviation:   z.string().toUpperCase(),
-    number:         z.number().min(100).max(99999)
+    number:         z.coerce.number().min(100).max(99999)
 });
 
 export async function getCourseRequests(req: Request, res: Response) {

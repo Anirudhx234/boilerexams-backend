@@ -1,8 +1,8 @@
 import { Prisma } from "@prisma/client";
 import type { NextFunction, Request, Response } from "express";
 import { APIError, InvalidCourseError, InvalidSeasonError, NotFoundError } from "./errors/index.js";
-import multer from "multer";
 import axios from "axios";
+import {MulterError} from "multer";
 
 export default async function errorHandler(error: unknown, req: Request, res: Response, _next: NextFunction) {
     if (!(error instanceof Error)) {
@@ -33,22 +33,28 @@ export default async function errorHandler(error: unknown, req: Request, res: Re
         return res.status(error.errorCode).json(errorResponse);
     }
 
-    if (error instanceof multer.MulterError && error.code == "LIMIT_FILE_SIZE") {
-        if (error.field === "image") {
-            errorResponse.message = "Image size must be under 1 MB";
-        } else if (error.field === "pdf") {
-            errorResponse.message = "PDF size must be under 5 MB";
+    if (error instanceof MulterError) {
+        const err = error as MulterError;
+        if (err.code == "LIMIT_FILE_SIZE") {
+            if (err.field === "image") {
+                errorResponse.message = "Image size must be under 1 MB";
+            } else if (err.field === "pdf") {
+                errorResponse.message = "PDF size must be under 5 MB";
+            }
+
+            return res.status(413).json(errorResponse);
         }
-        return res.status(413).json(errorResponse);
     }
 
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        if (error.code === "P2002") {
+        const err = error as Prisma.PrismaClientKnownRequestError;
+
+        if (err.code === "P2002") {
             errorResponse.message = "Duplicate record exists. Record not created.";
             return res.status(409).json(errorResponse);
         }
 
-        if (error.code === "P2025") {
+        if (err.code === "P2025") {
             errorResponse.message = "Record to update not found.";
             return res.status(404).json(errorResponse);
         }
