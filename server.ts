@@ -52,37 +52,4 @@ scheduleUpdateStats();
 
 app.listen(PORT, async () => {
     console.log(`Server is running at port ${PORT}`);
-
-    const allFeedback = await prisma.feedback.findMany({
-        include: {
-            question: {
-                select: {
-                    courseId: true,
-                    examId: true
-                }
-            }
-        }
-    });
-
-    console.log("Migrating Feedback Relations");
-    let updates = 0;
-
-    for (const feedback of allFeedback) {
-        const question = feedback.question;
-
-        if (!question) continue;
-
-        await prisma.feedback.update({
-            where: {
-                id: feedback.id
-            },
-            data: {
-                courseId: question.courseId,
-                examId: question.examId
-            }
-        });
-        updates += 1;
-    }
-
-    console.log(`Created ${updates} Feedback Relations`);
 });
