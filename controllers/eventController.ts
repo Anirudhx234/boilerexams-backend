@@ -1,6 +1,6 @@
 import prisma from "../prisma/prisma.js";
 import { Request, Response } from "express";
-import { NotFoundError } from "../middleware/errors/index.js";
+import APIError from "../middleware/errors/APIError.js";
 import { EventType } from "@prisma/client";
 import { z } from "zod";
 
@@ -51,7 +51,7 @@ export async function getEvent(req: Request, res: Response) {
     });
 
     if (!event) {
-        throw new NotFoundError("Event not found");
+        throw new APIError("Event not found", 404);
     }
 
     res.status(200).send(event);
@@ -117,7 +117,7 @@ export async function updateEvent(req: Request, res: Response) {
         data: req.body,
     });
     if (!event) {
-        throw new NotFoundError("Event not found");
+        throw new APIError("Event not found", 404);
     }
 
     res.status(200).send(event);
@@ -132,7 +132,7 @@ export async function deleteEvent(req: Request, res: Response) {
         },
     });
     if (!event) {
-        throw new NotFoundError("Event not found");
+        throw new APIError("Event not found", 404);
     }
 
     res.status(200).send(event);

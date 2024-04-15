@@ -1,5 +1,5 @@
 import { nanoid } from "nanoid";
-import { APIError } from "../middleware/errors/index.js";
+import APIError from "../middleware/errors/APIError.js";
 import { Upload } from "@aws-sdk/lib-storage";
 import { S3 } from "@aws-sdk/client-s3";
 

@@ -1,4 +1,4 @@
-import { APIError, NotFoundError } from "../middleware/errors/index.js";
+import APIError from "../middleware/errors/APIError.js";
 import { connectOrCreateResources, UpsertResourceOptions, upsertResources } from "./resourceController.js";
 import { upsertOrDisconnectTopics, UpsertTopic } from "./topicController.js";
 import { Request, Response } from "express";
@@ -187,7 +187,7 @@ export async function getQuestion(req: Request, res: Response) {
     });
 
     if (!question.flags.published && !req.sendUnpublished) {
-        throw new NotFoundError("Question not found");
+        throw new APIError("Question not found", 404);
     }
 
     res.status(200).send(Formatter.question({
@@ -247,7 +247,7 @@ export async function toggleQuestionPublished(req: Request, res: Response) {
     });
 
     if (!question) {
-        throw new NotFoundError("Question not found");
+        throw new APIError("Question not found", 404);
     }
 
     if (!question.exam.flags.published) {
@@ -316,7 +316,7 @@ export async function deleteAnswerChoice(req: Request, res: Response) {
     });
 
     if (!answerChoice) {
-        throw new NotFoundError(`AnswerChoice not found: ${answerChoice}`);
+        throw new APIError(`AnswerChoice not found: ${answerChoice}`, 404);
     }
 
     res.status(200).send(answerChoice);

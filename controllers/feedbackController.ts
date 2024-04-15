@@ -1,4 +1,4 @@
-import { APIError, CourseAlreadyExistsError, NotFoundError } from "../middleware/errors/index.js";
+import APIError from "../middleware/errors/APIError.js";
 import { FeedbackStatus, FeedbackType, ResourceType } from "@prisma/client";
 import { Request, Response } from "express";
 import { DiscordAPI } from "../services/discord.api.js";
@@ -161,7 +161,9 @@ export async function requestCourse(req: Request, res: Response) {
         },
     });
 
-    if (existingCourse) throw new CourseAlreadyExistsError(`Existing Course Requested`);
+    if (existingCourse) {
+        throw new APIError(`Existing Course Requested`, 409);
+    }
 
     const subject = await PurdueIoAPI.getSubject(options.abbreviation);
     const course = await PurdueIoAPI.getCourse(subject, options.number);
@@ -293,7 +295,7 @@ export async function createVideoFeedback(req: Request, res: Response) {
         }
     });
 
-    if (!question) throw new NotFoundError("Question does not exist");
+    if (!question) throw new APIError("Question does not exist", 404);
 
     const videoFeedback = await prisma.feedback.create({
         data: {

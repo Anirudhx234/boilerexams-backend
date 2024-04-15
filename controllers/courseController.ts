@@ -1,4 +1,4 @@
-import { APIError, NotFoundError } from "../middleware/errors/index.js";
+import APIError from "../middleware/errors/APIError.js";
 import { connectOrCreateResources, UpsertResourceOptions, upsertResources } from "./resourceController.js";
 import { Request, Response } from "express";
 import { EventQueryParams } from "./eventController.js";
@@ -89,7 +89,7 @@ export async function getCourse(req: Request, res: Response) {
     });
 
     if (!req.sendUnpublished && !course.flags.published) {
-        throw new NotFoundError("Course not found");
+        throw new APIError("Course not found", 404);
     }
 
     res.status(200).send(
@@ -134,7 +134,7 @@ export async function getCourseExams(req: Request, res: Response) {
     });
 
     if (!req.sendUnpublished && !course.flags.published) {
-        throw new NotFoundError("Course not found");
+        throw new APIError("Course not found", 404);
     }
 
     if (!course.studyModes.includes(StudyMode.EXAM) && !req.sendUnpublished) {
@@ -175,7 +175,7 @@ export async function getCourseTopics(req: Request, res: Response) {
     });
 
     if (!req.sendUnpublished && !course.flags.published) {
-        throw new NotFoundError("Course not found");
+        throw new APIError("Course not found", 404);
     }
 
     if (!course.studyModes.includes(StudyMode.TOPIC) && !req.sendUnpublished) {
@@ -220,7 +220,7 @@ export async function getCourseTopicsByExam(req: Request, res: Response) {
     });
 
     if (!req.sendUnpublished && !course.flags.published) {
-        throw new NotFoundError("Course not found");
+        throw new APIError("Course not found", 404);
     }
 
     if (!course.studyModes.includes(StudyMode.TOPIC) && !req.sendUnpublished) {
@@ -297,7 +297,7 @@ export async function getCourseEvents(req: Request, res: Response) {
     });
 
     if (!req.sendUnpublished && !course.flags.published) {
-        throw new NotFoundError("Course not found");
+        throw new APIError("Course not found", 404);
     }
 
     const events = await prisma.event.findMany({
@@ -375,7 +375,7 @@ export async function toggleCoursePublished(req: Request, res: Response) {
     });
 
     if (!course) {
-        throw new NotFoundError("Course not found");
+        throw new APIError("Course not found", 404);
     }
 
     const status = !course.flags.published;
@@ -403,7 +403,7 @@ export async function deleteCourse(req: Request, res: Response) {
     });
 
     if (!course) {
-        throw new NotFoundError("Course not found");
+        throw new APIError("Course not found", 404);
     }
 
     res.status(200).send(course);

@@ -1,4 +1,4 @@
-import { APIError, NotFoundError } from "../middleware/errors/index.js";
+import APIError from "../middleware/errors/APIError.js";
 import type { Request, Response } from "express";
 import { ReorderQuestions } from "../prisma/schema.js";
 import { FullQuestion, PartialQuestion } from "./questionController.js";
@@ -208,7 +208,7 @@ export async function deleteTopic(req: Request, res: Response) {
     });
 
     if (!topic) {
-        throw new NotFoundError("Topic not found");
+        throw new APIError("Topic not found", 404);
     }
 
     res.status(200).send(topic);

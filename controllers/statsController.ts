@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { APIError } from "../middleware/errors/index.js";
+import APIError from "../middleware/errors/APIError.js";
 import { courseStats } from "../helpers/stats/courseStats.js";
 import { examStats } from "../helpers/stats/examStats.js";
 import { questionStats } from "../helpers/stats/questionStats.js";

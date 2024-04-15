@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import { Role } from "@prisma/client";
 import asyncWrapper from "../wrappers/asyncWrapper.js";
-import { APIError } from "../errors/index.js";
+import APIError from "../errors/APIError.js";
 import isWhitelisted from "./isWhiteListed.js";
 
 const authHandler = (role: string) =>

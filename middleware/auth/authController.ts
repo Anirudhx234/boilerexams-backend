@@ -1,4 +1,4 @@
-import { APIError, NotFoundError } from "../errors/index.js";
+import APIError from "../errors/APIError.js";
 import { AccountType, Role } from "@prisma/client";
 import type { NextFunction, Request, Response } from "express";
 import { randomBytes } from "crypto";
@@ -147,7 +147,7 @@ export async function resetPassword(req: Request, res: Response) {
         },
     });
     if (!user || !user.localAccount) {
-        throw new NotFoundError("User not found");
+        throw new APIError("User not found", 404);
     }
 
     const today = new Date().toISOString();
@@ -200,7 +200,7 @@ export async function changePassword(req: Request, res: Response) {
         },
     });
     if (!user || !user.localAccount) {
-        throw new NotFoundError("User not found");
+        throw new APIError("User not found", 404);
     }
 
     const data = {

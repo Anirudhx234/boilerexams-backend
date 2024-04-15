@@ -4,7 +4,7 @@ import parseQuestions from "../helpers/mathpix/questionParser.js";
 import getPDFResult from "../helpers/mathpix/retrievePDF.js";
 import FormData from "form-data";
 import axios from "axios";
-import { APIError, NotFoundError } from "../middleware/errors/index.js";
+import APIError from "../middleware/errors/APIError.js";
 import uploadQuestions from "../helpers/mathpix/uploadQuestions.js";
 import savePDFtoExam from "../helpers/mathpix/savePDFtoExam.js";
 
@@ -20,7 +20,7 @@ const checkExistingQuestions = async (examId: string) => {
     });
 
     if (!exam) {
-        throw new NotFoundError("Exam not found");
+        throw new APIError("Exam not found", 404);
     }
     if (exam.questions.length > 0) {
         throw new Error("Exam already contains questions. Delete questions before scanning new PDF.");

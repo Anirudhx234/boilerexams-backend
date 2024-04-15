@@ -1,6 +1,6 @@
 import multer from "multer";
 import { Express } from "express"; // Don't remove this
-import { APIError } from "../errors/index.js";
+import APIError from "../errors/APIError.js";
 
 const storage = multer.memoryStorage();
 

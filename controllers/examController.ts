@@ -1,4 +1,4 @@
-import { APIError, NotFoundError } from "../middleware/errors/index.js";
+import APIError from "../middleware/errors/APIError.js";
 import { FullQuestion, PartialQuestion } from "./questionController.js";
 import { Request, Response } from "express";
 import { UpsertResourceOptions, upsertResources } from "./resourceController.js";
@@ -46,7 +46,7 @@ export async function getExam(req: Request, res: Response) {
     });
 
     if (!req.sendUnpublished && !exam.flags.published) {
-        throw new NotFoundError("Exam not found");
+        throw new APIError("Exam not found", 404);
     }
 
     res.status(200).send(
@@ -89,7 +89,7 @@ export async function getExamTopics(req: Request, res: Response) {
     });
 
     if (!req.sendUnpublished && !exam.flags.published) {
-        throw new NotFoundError("Exam not found");
+        throw new APIError("Exam not found", 404);
     }
 
     const topics = await prisma.topic.findMany({
@@ -122,7 +122,7 @@ export async function getExamQuestions(req: Request, res: Response) {
     });
 
     if (!req.sendUnpublished && !exam.flags.published) {
-        throw new NotFoundError("Exam not found");
+        throw new APIError("Exam not found", 404);
     }
 
     const questions = await prisma.question.findMany({
@@ -271,7 +271,7 @@ export async function deleteExam(req: Request, res: Response) {
     });
 
     if (!exam) {
-        throw new NotFoundError("Exam not found");
+        throw new APIError("Exam not found", 404);
     }
     res.status(200).send(exam);
 }
