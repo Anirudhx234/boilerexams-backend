@@ -1,5 +1,3 @@
-import prisma from "../libs/prisma.js";
-
 async function main() {
     /*
     const semester = await prisma.semester.create({
@@ -64,4 +62,4 @@ async function main() {
     }) */
 }
 
-main();
+main().catch(console.log);

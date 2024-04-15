@@ -1,8 +1,8 @@
-export default class InvalidSeasonError extends Error {
-    errorCode: number;
+import APIError from "./APIError.js";
 
-    constructor(message) {
-        super(message);
-        this.errorCode = 400;
+export default class InvalidSeasonError extends APIError {
+
+    constructor(message: string) {
+        super(message, 400);
     }
 }

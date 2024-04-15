@@ -1,10 +1,16 @@
 import { Prisma } from "@prisma/client";
-import { NextFunction, Request, Response } from "express";
+import type { NextFunction, Request, Response } from "express";
 import { APIError, InvalidCourseError, InvalidSeasonError, NotFoundError } from "./errors/index.js";
-import multer from "multer";
 import axios from "axios";
+import {MulterError} from "multer";
+import { ZodError } from "zod";
 
-const errorHandler = async (error, req: Request, res: Response, next: NextFunction) => {
+export default async function errorHandler(error: unknown, req: Request, res: Response, _next: NextFunction) {
+    if (!(error instanceof Error)) {
+        res.status(500).send(`Unknown error type: ${typeof Error}`);
+        return;
+    }
+
     const errorResponse: ErrorResponse = {
         message: error.message,
         fullError: {},
@@ -28,22 +34,28 @@ const errorHandler = async (error, req: Request, res: Response, next: NextFuncti
         return res.status(error.errorCode).json(errorResponse);
     }
 
-    if (error instanceof multer.MulterError && error.code == "LIMIT_FILE_SIZE") {
-        if (error.field === "image") {
-            errorResponse.message = "Image size must be under 1 MB";
-        } else if (error.field === "pdf") {
-            errorResponse.message = "PDF size must be under 5 MB";
+    if (error instanceof MulterError) {
+        const err = error as MulterError;
+        if (err.code == "LIMIT_FILE_SIZE") {
+            if (err.field === "image") {
+                errorResponse.message = "Image size must be under 1 MB";
+            } else if (err.field === "pdf") {
+                errorResponse.message = "PDF size must be under 5 MB";
+            }
+
+            return res.status(413).json(errorResponse);
         }
-        return res.status(413).json(errorResponse);
     }
 
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        if (error.code === "P2002") {
+        const err = error as Prisma.PrismaClientKnownRequestError;
+
+        if (err.code === "P2002") {
             errorResponse.message = "Duplicate record exists. Record not created.";
             return res.status(409).json(errorResponse);
         }
 
-        if (error.code === "P2025") {
+        if (err.code === "P2025") {
             errorResponse.message = "Record to update not found.";
             return res.status(404).json(errorResponse);
         }
@@ -58,16 +70,25 @@ const errorHandler = async (error, req: Request, res: Response, next: NextFuncti
     }
 
     if (error instanceof APIError) {
+        errorResponse.message = error.message;
         return res.status(error.errorCode).json(errorResponse);
     }
 
+    if (error instanceof ZodError) {
+        const err = error as ZodError;
+        errorResponse.message = "Valid input not provided";
+        errorResponse.fullError = err.errors;
+        return res.status(400).json(errorResponse);
+    }
+
     try {
-        await axios.post(`${process.env.DISCORD_URL}/error`, { stackTrace: error.stack });
-    } catch {}
+        await axios.post(`${process.env["DISCORD_URL"]}/error`, { stackTrace: error.stack });
+    } catch {
+        console.log("Unable to POST error to Discord");
+    }
 
     console.log(error);
-    errorResponse.message = "An error occured";
+    errorResponse.message = "An unknown error occurred";
     return res.status(500).json(errorResponse);
-};
+}
 
-export default errorHandler;

@@ -2,7 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import { Role } from "@prisma/client";
 import asyncWrapper from "../wrappers/asyncWrapper.js";
 import { APIError } from "../errors/index.js";
-import isWhitelisted from "../../helpers/auth/isWhiteListed.js";
+import isWhitelisted from "./isWhiteListed.js";
 
 const authHandler = (role: string) =>
     asyncWrapper(async (req: Request, _res: Response, next: NextFunction) => {
@@ -13,8 +13,9 @@ const authHandler = (role: string) =>
         const levels = {
             [Role.USER]: 1,
             [Role.PROFESSOR]: 2,
-            [Role.CONTENT]: 3,
-            [Role.ADMIN]: 4,
+            [Role.GRAPHIC]: 3,
+            [Role.CONTENT]: 4,
+            [Role.ADMIN]: 5,
         };
 
         if (isWhitelisted(req)) {
@@ -29,6 +30,11 @@ const authHandler = (role: string) =>
             const authLevel = levels[role];
 
             if (userLevel >= authLevel) {
+                return next();
+            }
+        } else {
+            const authLevel = levels[role];
+            if (authLevel === 1) {
                 return next();
             }
         }

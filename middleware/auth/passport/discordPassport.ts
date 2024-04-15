@@ -1,5 +1,5 @@
-import prisma from "../../../libs/prisma.js";
-import { AccountType, User } from "@prisma/client";
+import prisma from "../../../prisma/prisma.js";
+import { AccountType, type User } from "@prisma/client";
 import { Strategy } from "passport-discord";
 
 const discordPassport = (passport) => {
@@ -26,9 +26,9 @@ const discordPassport = (passport) => {
     passport.use(
         new Strategy(
             {
-                clientID: process.env.DISCORD_CLIENT_ID,
-                clientSecret: process.env.DISCORD_CLIENT_SECRET,
-                callbackURL: `${process.env.API_URL}/auth/discord/redirect`,
+                clientID: process.env["DISCORD_CLIENT_ID"],
+                clientSecret: process.env["DISCORD_CLIENT_SECRET"],
+                callbackURL: `${process.env["API_URL"]}/auth/discord/redirect`,
                 scope: ["identify", "email"],
             },
             async (accessToken: string, refreshToken: string, profile: any, done: any) => {

@@ -1,40 +1,67 @@
 import express from "express";
-import asyncWrapper from "../middleware/wrappers/asyncWrapper.js";
 import {
-    getCourseExamsStats,
+    generalStats,
     getCourseStats,
-    getCourseStatsAll,
     getExamStats,
-    getGeneralStats,
+    getHourlySubmissionStats,
     getQuestionStats,
-    getSubmissionStats,
-    getCourseTimeSubmissionStats,
-    getCourseStatsAllNQ
+    getTopicStats,
 } from "../controllers/statsController.js";
-import cache from "../cache/caching.js";
+import asyncWrapper from "../middleware/wrappers/asyncWrapper.js";
+import cache from "../middleware/cache/caching.js";
 
 const router = express.Router();
 
-router.get("/", cache(600), asyncWrapper(getGeneralStats));
+const minute = 60;
 
-router.get("/courses/all", cache(600), asyncWrapper(getCourseStatsAll));
+router.get("/", cache(10 * minute), asyncWrapper(generalStats));
 
-router.get("/courses/all/nq", cache(600), asyncWrapper(getCourseStatsAllNQ));
+router.get("/courses", cache(10 * minute), asyncWrapper(getCourseStats));
 
-//app.get("/courses/:courseId/after/:after/before/:before", cache(600), asyncWrapper(getCourseStats));
+router.get("/courses/:course", cache(10 * minute), asyncWrapper(getCourseStats));
 
-//app.get("/courses/:courseId/after/:after/", cache(600), asyncWrapper(getCourseStats));
+router.get("/courses/:course/exams/", cache(10 * minute), asyncWrapper(getExamStats));
 
-router.get("/courses/:courseId", cache(600), asyncWrapper(getCourseStats));
+router.get("/courses/:course/exams/:exam", cache(10 * minute), asyncWrapper(getExamStats));
 
-router.get("/courses/:courseId/exams/all", cache(600), asyncWrapper(getCourseExamsStats));
+router.get("/courses/:course/exams/:exam/questions", cache(10 * minute), asyncWrapper(getQuestionStats));
 
-router.get("/exams/:examId", cache(600), asyncWrapper(getExamStats));
+router.get("/courses/:course/exams/:exam/questions/:question", cache(10 * minute), asyncWrapper(getQuestionStats));
 
-router.get("/questions/:questionId", cache(600), asyncWrapper(getQuestionStats));
+router.get("/courses/:course/topics/", cache(10 * minute), asyncWrapper(getTopicStats));
 
-router.get("/submissions", cache(600), asyncWrapper(getSubmissionStats));
+router.get("/courses/:course/topics/:topic", cache(10 * minute), asyncWrapper(getTopicStats));
 
-router.get("/submissions/time/:courseId", cache(600), asyncWrapper(getCourseTimeSubmissionStats));
+router.get("/courses/:course/topics/:topic/questions", cache(10 * minute), asyncWrapper(getQuestionStats));
+
+router.get("/courses/:course/topics/:topic/questions/:question", cache(10 * minute), asyncWrapper(getQuestionStats));
+
+router.get("/courses/:course/questions/", cache(10 * minute), asyncWrapper(getQuestionStats));
+
+router.get("/courses/:course/questions/:question", cache(10 * minute), asyncWrapper(getQuestionStats));
+
+router.get("/exams", cache(10 * minute), asyncWrapper(getExamStats));
+
+router.get("/exams/:exam", cache(10 * minute), asyncWrapper(getExamStats));
+
+router.get("/exams/:exam/questions", cache(10 * minute), asyncWrapper(getQuestionStats));
+
+router.get("/exams/:exam/questions/:question", cache(10 * minute), asyncWrapper(getQuestionStats));
+
+router.get("/topics", cache(10 * minute), asyncWrapper(getTopicStats));
+
+router.get("/topics/:topic", cache(10 * minute), asyncWrapper(getTopicStats));
+
+router.get("/topics/:topic/questions", cache(10 * minute), asyncWrapper(getQuestionStats));
+
+router.get("/topics/:topic/questions/:question", cache(10 * minute), asyncWrapper(getQuestionStats));
+
+router.get("/questions", cache(10 * minute), asyncWrapper(getQuestionStats));
+
+router.get("/questions/:question", cache(10 * minute), asyncWrapper(getQuestionStats));
+
+router.get("/submissions/time", cache(10 * minute), asyncWrapper(getHourlySubmissionStats));
+
+router.get("/submissions/time/:course", cache(10 * minute), asyncWrapper(getHourlySubmissionStats));
 
 export default router;

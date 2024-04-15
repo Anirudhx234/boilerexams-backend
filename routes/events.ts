@@ -1,15 +1,31 @@
 import express from "express";
+import {
+    getEvents,
+    getEvent,
+    createEvent,
+    batchCreateEvent,
+    updateEvent,
+    deleteAllEvents,
+    deleteEvent,
+} from "../controllers/eventController.js";
 import asyncWrapper from "../middleware/wrappers/asyncWrapper.js";
-import { createEvents, updateEvent, deleteEvent, deleteAllEvents } from "../controllers/eventController.js";
+import authHandler from "../middleware/auth/authHandler.js";
+import { Role } from "@prisma/client";
 
 const router = express.Router();
 
-router.post("/", asyncWrapper(createEvents));
+router.get("/", asyncWrapper(getEvents));
 
-router.put("/", asyncWrapper(updateEvent));
+router.get("/:eventId", asyncWrapper(getEvent));
 
-router.delete("/all", asyncWrapper(deleteAllEvents));
+router.post("/", authHandler(Role.CONTENT), asyncWrapper(createEvent));
 
-router.delete("/:eventId", asyncWrapper(deleteEvent));
+router.post("/batch", authHandler(Role.CONTENT), asyncWrapper(batchCreateEvent));
+
+router.put("/", authHandler(Role.CONTENT), asyncWrapper(updateEvent));
+
+router.delete("/all", authHandler(Role.ADMIN), asyncWrapper(deleteAllEvents));
+
+router.delete("/:eventId", authHandler(Role.CONTENT), asyncWrapper(deleteEvent));
 
 export default router;

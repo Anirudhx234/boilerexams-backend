@@ -1,4 +1,4 @@
-import { Role, User } from "@prisma/client";
+import { Role, type User } from "@prisma/client";
 import { APIError } from "../errors/index.js";
 
 const isAuthorized = (user: User, role: string) => {

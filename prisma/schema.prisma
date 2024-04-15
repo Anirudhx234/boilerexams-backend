@@ -5,224 +5,174 @@ generator client {
 
 datasource db {
   provider  = "postgresql"
-  directUrl = env("DATABASE_URL")
   url       = env("DATABASE_URL_BOUNCER")
+  directUrl = env("DATABASE_URL")
 }
 
 model Course {
-  id              String      @id @default(uuid())
-  name            String
-  abbreviation    String
-  subject         String
-  backgroundColor String      @default("")
-  secondaryColor  String      @default("")
-  graphicLink     String      @default("")
-  disclaimer      String      @default("")
-  number          Int
-  published       Boolean     @default(false)
-  exams           Exam[]
-  studyModes      StudyMode[]
-  questions       Question[]
-  semesters       Semester[]  @relation("CourseToSemester")
-  topics          Topic[]     @relation("CourseToTopic")
-  users           User[]      @relation("CourseToUser")
-  events          Event[]
+  id           String      @id @default(uuid())
+  abbreviation String
+  number       Int
+  name         String
+  subject      String
+  color        String?
+  disclaimer   String?
+  studyModes   StudyMode[]
+  flags        Int
+  events       Event[]
+  exams        Exam[]
+  feedback     Feedback[]
+  questions    Question[]
+  topics       Topic[]
+  resources    Resource[]
+  users        User[]      @relation("CourseToUser")
+  stats        Json?
 
   @@unique([abbreviation, number])
 }
 
 model Exam {
   id         String     @id @default(uuid())
-  courseId   String
-  semesterId String
-  pdfId      String     @default("")
-  pdfKey     String     @default("")
-  pdfLink    String     @default("")
-  disclaimer String     @default("")
   number     Int
-  published  Boolean    @default(false)
-  practice   Boolean    @default(false)
+  year       Int
+  season     Season
+  disclaimer String?
+  courseId   String
+  flags      Int
   course     Course     @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  semester   Semester   @relation(fields: [semesterId], references: [id], onDelete: Cascade)
+  feedback   Feedback[]
   questions  Question[]
+  resources  Resource[]
+  stats      Json?
 
-  @@unique([number, courseId, semesterId])
-}
-
-model Topic {
-  id        String     @id @default(uuid())
-  name      String     @unique
-  courses   Course[]   @relation("CourseToTopic")
-  questions Question[] @relation("QuestionToTopic")
+  @@unique([number, year, season, courseId])
 }
 
 model Question {
-  id                   String          @id @default(uuid())
-  type                 QuestionType    @default(MCQ)
-  examId               String
-  body                 String
-  courseId             String
-  solutionVideoLink    String          @default("")
-  explanationText      String          @default("")
-  disclaimer           String          @default("")
-  number               Int
-  correctChoiceIndices Int[]
-  published            Boolean         @default(false)
-  disableRandomAnswers Boolean         @default(false)
-  answersStartHidden   Boolean         @default(false)
-  answerChoices        AnswerChoice[]
-  course               Course          @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  exam                 Exam            @relation(fields: [examId], references: [id], onDelete: Cascade)
-  topics               Topic[]         @relation("QuestionToTopic")
-  resources            Resource[]
-  submissions          Submission[]
-  reports              Report[]
-  videoFeedback        VideoFeedback[]
+  id            String            @id @default(uuid())
+  type          QuestionType
+  data          Json
+  number        Int
+  disclaimer    String?
+  examId        String
+  courseId      String
+  parentId      String?
+  flags         Int
+  feedback      Feedback[]
+  explanation   Explanation?
+  course        Course            @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  exam          Exam              @relation(fields: [examId], references: [id], onDelete: Cascade)
+  parent        Question?         @relation("QuestionToQuestion", fields: [parentId], references: [id], onDelete: Cascade)
+  children      Question[]        @relation("QuestionToQuestion")
+  topics        QuestionToTopic[]
+  submissions   Submission[]
+  resources     Resource[]
+  answerChoices AnswerChoice[]
+  stats         Json?
+
+  @@unique([number, examId, parentId])
+}
+
+model Explanation {
+  id         String     @id @default(uuid())
+  body       String?
+  questionId String     @unique
+  question   Question   @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  resources  Resource[]
 }
 
 model AnswerChoice {
-  id          String     @id @default(uuid())
-  choiceIndex Int
-  body        String
-  questionId  String
-  question    Question   @relation(fields: [questionId], references: [id], onDelete: Cascade)
-  resources   Resource[]
+  id         String     @id @default(uuid())
+  index      Int
+  body       String?
+  questionId String
+  question   Question   @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  resources  Resource[]
+  stats      Json?
 
-  @@unique([questionId, choiceIndex])
+  @@unique([index, questionId])
+}
+
+model Submission {
+  id             String       @id @default(uuid())
+  type           QuestionType
+  userSolution   Json?
+  correct        Boolean
+  timeStarted    DateTime
+  timeEnded      DateTime
+  timeSpent      BigInt
+  timeSpentVideo BigInt
+  timeSpentModal BigInt
+  osFamily       String?
+  questionId     String?
+  question       Question?    @relation(fields: [questionId], references: [id]) // SetNull needs to be added
 }
 
 model Resource {
   id             String        @id @default(uuid())
-  answerChoiceId String?
-  questionId     String?
   type           ResourceType
-  code           Code?
-  image          Image?
-  answerChoice   AnswerChoice? @relation(fields: [answerChoiceId], references: [id], onDelete: Cascade)
+  data           Json
+  courseId       String?
+  examId         String?
+  questionId     String?
+  explanationId  String?
+  applicationId  String?       @unique
+  answerChoiceId String?
+  course         Course?       @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  exam           Exam?         @relation(fields: [examId], references: [id], onDelete: Cascade)
   question       Question?     @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  explanation    Explanation?  @relation(fields: [explanationId], references: [id], onDelete: Cascade)
+  application    Application?  @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  answerChoice   AnswerChoice? @relation(fields: [answerChoiceId], references: [id], onDelete: Cascade)
 }
 
-model Image {
-  id         String   @id @default(uuid())
-  key        String
-  url        String
-  altText    String   @default("")
-  resourceId String   @unique
-  resource   Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+model Topic {
+  id        String            @id @default(uuid())
+  name      String
+  courseId  String
+  course    Course            @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  questions QuestionToTopic[]
+  stats     Json?
+
+  @@unique([name, courseId])
 }
 
-model Code {
-  id         String   @id @default(uuid())
-  language   Language
-  content    String
-  resourceId String   @unique
-  resource   Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
-}
-
-model Submission {
-  id                    String       @id @default(uuid())
-  type                  QuestionType @default(MCQ)
-  correct               Boolean
-  timeStarted           DateTime
-  timeEnded             DateTime
-  timeSpent             Int
-  videoStartTime        DateTime
-  videoEndTime          DateTime
-  timeSpentVideo        Int
-  questionId            String
-  modalEndTime          DateTime     @default(now())
-  modalStartTime        DateTime     @default(now())
-  modalTotalTime        Int
-  osFamily              String
-  selectedChoiceIndices Int[]
-  question              Question     @relation(fields: [questionId], references: [id], onDelete: Cascade)
-}
-
-model Semester {
-  id      String   @id @default(uuid())
-  season  Season
-  year    Int
-  exams   Exam[]
-  courses Course[] @relation("CourseToSemester")
-
-  @@unique([season, year])
-}
-
-model Report {
-  id         String     @id @default(uuid())
-  type       ReportType
-  title      String
-  content    String
-  status     String
-  contact    String?
-  url        String?
-  location   String?
-  userAgent  String?
-  createdAt  DateTime   @default(now())
-  updatedAt  DateTime   @updatedAt
+model Feedback {
+  id         String         @id @default(uuid())
+  type       FeedbackType
+  status     FeedbackStatus @default(OPEN)
+  data       Json
   userId     String?
-  user       User?      @relation(fields: [userId], references: [id], onDelete: SetNull)
+  courseId   String?
+  examId     String?
   questionId String?
-  question   Question?  @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+  course     Course?        @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  exam       Exam?          @relation(fields: [examId], references: [id], onDelete: Cascade)
+  question   Question?      @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  user       User?          @relation(fields: [userId], references: [id])
 }
 
 model CourseRequest {
   id           String @id @default(uuid())
-  subject      String
-  requests     Int    @default(1)
   abbreviation String
-  name         String @unique
   number       Int
-}
+  name         String
+  subject      String
+  count        Int    @default(1)
 
-model VideoFeedback {
-  id                  String              @id @default(uuid())
-  status              VideoFeedbackStatus @default(UNRESOLVED)
-  questionId          String
-  question            Question            @relation(fields: [questionId], references: [id], onDelete: Cascade)
-  explanationQuality  Int
-  productionQuality   Int
-  videoRecommendation Boolean
-  additionalFeedback  String
+  @@unique([abbreviation, number])
 }
 
 model Application {
-  id      String @id @default(uuid())
+  id      String         @id @default(uuid())
+  status  FeedbackStatus @default(OPEN)
   name    String
   email   String
   content String
-  year    Year
-  pdfKey  String
-  pdfLink String
-}
-
-model User {
-  id             String        @id @default(uuid())
-  name           String?
-  email          String?       @unique
-  profilePicture String?
-  role           Role          @default(USER)
-  accountId      String?       @unique
-  accountType    AccountType
-  localAccount   LocalAccount?
-  courses        Course[]      @relation("CourseToUser")
-  reports        Report[]
-}
-
-model LocalAccount {
-  id       String @id @default(uuid())
-  userId   String @unique
-  password Bytes
-  salt     Bytes
-  User     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
-model Session {
-  sid    String   @id(map: "session_pkey") @db.VarChar
-  sess   Json     @db.Json
-  expire DateTime @db.Timestamp(6)
-
-  @@index([expire], map: "IDX_session_expire")
+  year    String
+  resume  Resource?
 }
 
 model Event {
@@ -239,9 +189,62 @@ model Event {
   @@unique([location, start])
 }
 
+model User {
+  id             String        @id @default(uuid())
+  role           Role          @default(USER)
+  name           String?
+  email          String?       @unique
+  profilePicture String?
+  accountId      String?       @unique
+  accountType    AccountType
+  feedback       Feedback[]
+  localAccount   LocalAccount?
+  courses        Course[]      @relation("CourseToUser")
+}
+
+model LocalAccount {
+  id       String @id @default(uuid())
+  password Bytes
+  salt     Bytes
+  userId   String @unique
+  User     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Session {
+  sid    String   @id @db.VarChar
+  sess   Json     @db.Json
+  expire DateTime @db.Timestamp(6)
+
+  @@index([expire])
+}
+
+model QuestionToTopic {
+  questionId String
+  topicId    String
+  number     Int      @default(autoincrement())
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  topic      Topic    @relation(fields: [topicId], references: [id], onDelete: Cascade)
+
+  @@id([questionId, topicId])
+  @@unique([number, topicId])
+  @@index([number])
+}
+
 enum QuestionType {
-  MCQ
-  FRQ
+  PARENT
+  MULTIPLE_CHOICE
+  FREE_RESPONSE
+  SHORT_ANSWER
+  FILL_IN_BLANK
+}
+
+enum ResourceType {
+  LOGO
+  IMAGE
+  VIDEO
+  LONG_VIDEO
+  CODE
+  PDF
 }
 
 enum AccountType {
@@ -250,40 +253,32 @@ enum AccountType {
   LOCAL
 }
 
-enum ResourceType {
-  IMAGE
-  CODE
-}
-
-enum ReportType {
+enum FeedbackType {
   BUG_REPORT
-  CONTENT_REPORT
+  QUESTION_REPORT
   FEATURE_REQUEST
+  VIDEO_FEEDBACK
 }
 
-enum VideoFeedbackStatus {
-  RESOLVED
-  UNRESOLVED
+enum EventType {
+  EXAM
+  FINAL
+  CUSTOM
 }
 
-enum Year {
-  FRESHMAN
-  SOPHOMORE
-  JUNIOR
-  SENIOR
-  GRADUATE
-}
-
-enum Language {
-  C
-  PYTHON
-  JAVA
+enum Role {
+  USER
+  CONTENT
+  GRAPHIC
+  PROFESSOR
+  ADMIN
 }
 
 enum Season {
   SPRING
-  FALL
   SUMMER
+  FALL
+  WINTER
 }
 
 enum StudyMode {
@@ -292,15 +287,8 @@ enum StudyMode {
   TOPIC
 }
 
-enum Role {
-  USER
-  CONTENT
-  PROFESSOR
-  ADMIN
-}
-
-enum EventType {
-  EXAM
-  FINAL
-  CUSTOM
+enum FeedbackStatus {
+  OPEN
+  CLOSED
+  DELETED
 }

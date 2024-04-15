@@ -1,5 +1,5 @@
 import { rateLimit } from "express-rate-limit";
-import isWhitelisted from "../../helpers/auth/isWhiteListed.js";
+import isWhitelisted from "../auth/isWhiteListed.js";
 import isAuthorized from "../auth/isAuthorized.js";
 import { Role } from "@prisma/client";
 

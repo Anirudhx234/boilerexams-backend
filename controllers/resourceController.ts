@@ -1,165 +1,150 @@
-import prisma from "../libs/prisma.js";
-import { Language, ResourceType } from "@prisma/client";
 import { Request, Response } from "express";
+import { APIError, NotFoundError } from "../middleware/errors/index.js";
+import { ResourceType } from "@prisma/client";
+import { randomUUID } from "node:crypto";
+import { z } from "zod";
 import axios from "axios";
-import { APIError } from "../middleware/errors/index.js";
+import prisma from "../prisma/prisma.js";
 import uploadFileToS3 from "../utils/uploadFileToS3.js";
 
-const getResource = async (req: Request, res: Response) => {
+export const CodeResourceData = z.object({
+    language: z.enum(["C", "JAVA", "PYTHON", "TEXT"]),
+    content: z.string(),
+});
+
+export const UrlResourceData = z.object({
+    url: z.string().url(),
+    key: z.string().optional(),
+    mathpixId: z.string().optional(),
+    altText: z.string().optional(),
+});
+
+export const UpsertResourceOptions = z.object({
+    id: z.string().uuid().default(randomUUID),
+    courseId: z.string().uuid().nullable().optional(),
+    examId: z.string().uuid().nullable().optional(),
+    questionId: z.string().uuid().nullable().optional(),
+    explanationId: z.string().uuid().nullable().optional(),
+    answerChoiceId: z.string().uuid().nullable().optional(),
+    applicationId: z.string().uuid().nullable().optional(),
+    type: z.nativeEnum(ResourceType),
+    data: z.union([CodeResourceData, UrlResourceData]),
+});
+
+const fileBasedResources: ResourceType[] = [ResourceType.LOGO, ResourceType.IMAGE, ResourceType.PDF];
+
+export async function uploadFile(req: Request, res: Response) {
+    const file = req.file;
+
+    if (!file) {
+        throw new NotFoundError("File missing from request");
+    }
+
+    const data = await uploadFileToS3(file.buffer, file.mimetype);
+
+    res.status(200).send({ url: data.Location, key: data.Key });
+}
+
+export async function getResource(req: Request, res: Response) {
     const { resourceId } = req.params;
+
     const resource = await prisma.resource.findUnique({
         where: {
             id: resourceId,
         },
-        include: {
-            image: true,
-            code: true,
-        },
     });
+
     res.status(200).send(resource);
-};
+}
 
-const createImageResource = async (req: Request, res: Response) => {
-    const { altText } = req.body;
+export async function upsertResource(req: Request, res: Response) {
+    const options = UpsertResourceOptions.parse(req.body);
 
-    if (!req.file) {
-        throw new APIError("No file attached", 400);
+    if (fileBasedResources.includes(options.type)) {
+        const kilobyte = 1000;
+        const megabyte = kilobyte * kilobyte;
+        const validFileTypes = ["image/jpeg", "image/png", "application/pdf"];
+
+        const data = UrlResourceData.parse(options.data);
+
+        if (!data.key) {
+            const image = await axios.get(data.url, {
+                responseType: "arraybuffer",
+                maxContentLength: 5 * megabyte,
+            });
+
+            const contentType = image.headers["content-type"];
+
+            if (!validFileTypes.includes(contentType)) {
+                throw new APIError("Image upload failed, link must be JPEG or PNG or PDF", 415);
+            }
+
+            const s3Data = await uploadFileToS3(image.data, contentType);
+            data.key = s3Data.Key;
+            data.url = s3Data.Location;
+            options.data = data;
+        }
     }
 
-    const data = await uploadFileToS3(req.file.buffer, req.file.mimetype);
-
-    const resource = await prisma.resource.create({
-        data: {
-            type: ResourceType.IMAGE,
-            image: {
-                create: {
-                    key: data.Key,
-                    url: data.Location,
-                    altText: altText,
-                },
-            },
-        },
-        include: {
-            image: true,
-        },
-    });
-    res.status(200).send(resource);
-};
-
-const createImageResourceFromLink = async (req: Request, res: Response) => {
-    const { link, altText } = req.body;
-
-    const image = await axios.get(link, {
-        responseType: "arraybuffer",
-        maxContentLength: 1000 * 1024,
-    });
-
-    const contentType = image.headers["content-type"];
-
-    if (contentType !== "image/png" && contentType !== "image/jpeg") {
-        throw new APIError("Image upload failed, link must be JPEG or PNG", 415);
-    }
-
-    const data = await uploadFileToS3(image.data, contentType);
-
-    const resource = await prisma.resource.create({
-        data: {
-            type: ResourceType.IMAGE,
-            image: {
-                create: {
-                    key: data.Key,
-                    url: data.Location,
-                    altText: altText,
-                },
-            },
-        },
-        include: {
-            image: true,
-        },
-    });
-    res.status(200).send(resource);
-};
-
-const createCodeResource = async (req: Request, res: Response) => {
-    const { language, content } = req.body;
-    const resource = await prisma.resource.create({
-        data: {
-            type: ResourceType.CODE,
-            code: {
-                create: {
-                    language: Language[language.toUpperCase() as keyof typeof Language],
-                    content: content,
-                },
-            },
-        },
-        include: {
-            code: true,
-        },
-    });
-    res.status(200).send(resource);
-};
-
-const updateImageResource = async (req: Request, res: Response) => {
-    const { resourceId } = req.params;
-    const { altText } = req.body;
-
-    const resource = await prisma.resource.update({
+    const resource = await prisma.resource.upsert({
         where: {
-            id: resourceId,
+            id: options.id,
         },
-        data: {
-            image: {
-                update: {
-                    altText: altText,
-                },
-            },
+        create: {
+            ...options,
         },
-        include: {
-            image: true,
+        update: {
+            ...options,
         },
     });
+
     res.status(200).send(resource);
-};
+}
 
-const updateCodeResource = async (req: Request, res: Response) => {
+export async function deleteResource(req: Request, res: Response) {
     const { resourceId } = req.params;
-    const { language, content } = req.body;
 
-    const resource = await prisma.resource.update({
-        where: {
-            id: resourceId,
-        },
-        data: {
-            code: {
-                update: {
-                    language: Language[language.toUpperCase() as keyof typeof Language],
-                    content: content,
-                },
-            },
-        },
-        include: {
-            code: true,
-        },
-    });
-    res.status(200).send(resource);
-};
-
-const deleteResource = async (req: Request, res: Response) => {
-    const { resourceId } = req.params;
     const resource = await prisma.resource.delete({
         where: {
             id: resourceId,
         },
     });
-    res.status(200).send(resource);
-};
 
-export {
-    getResource,
-    createImageResource,
-    createImageResourceFromLink,
-    createCodeResource,
-    updateImageResource,
-    updateCodeResource,
-    deleteResource,
-};
+    res.status(200).send(resource);
+}
+
+export function connectOrCreateResources(resources?: z.infer<typeof UpsertResourceOptions>[]) {
+    return {
+        connectOrCreate: resources?.map((resource) => {
+            return {
+                where: {
+                    id: resource.id,
+                },
+                create: {
+                    type: resource.type,
+                    data: resource.data,
+                },
+            };
+        }),
+    };
+}
+
+export function upsertResources(resources?: z.infer<typeof UpsertResourceOptions>[]) {
+    return {
+        upsert: resources?.map((resource) => {
+            return {
+                where: {
+                    id: resource.id,
+                },
+                create: {
+                    type: resource.type,
+                    data: resource.data,
+                },
+                update: {
+                    type: resource.type,
+                    data: resource.data,
+                },
+            };
+        }),
+    };
+}

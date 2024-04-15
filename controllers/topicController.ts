@@ -1,107 +1,206 @@
-import prisma from "../libs/prisma.js";
-import { Request, Response } from "express";
 import { APIError, NotFoundError } from "../middleware/errors/index.js";
+import type { Request, Response } from "express";
+import { ReorderQuestions } from "../prisma/schema.js";
+import { FullQuestion, PartialQuestion } from "./questionController.js";
+import { randomUUID } from "node:crypto";
+import { z } from "zod";
+import Formatter from "../helpers/formatter.js";
+import Resolver from "../helpers/resolver.js";
+import prisma from "../prisma/prisma.js";
 
-const createTopic = async (req: Request, res: Response) => {
-    const { courseId } = req.params;
-    const { name } = req.body;
+export const UpsertTopic = z.object({
+    id: z.string().uuid().default(randomUUID),
+    name: z.string().max(50, "Topic name must be <= 50 characters"),
+    examNumbers: z.array(z.number().int()).optional(),
+});
 
-    if (typeof name === "string" && name.length > 50) {
-        throw new APIError("Topic length must be under 50 characters", 400);
-    }
+export const SetTopicQuestionsOptions = z.array(z.string().uuid());
+
+export async function getAllTopics(req: Request, res: Response) {
+    const topics = await prisma.topic.findMany({
+        include: {
+            questions: {
+                include: {
+                    question: true,
+                },
+                orderBy: {
+                    number: "asc",
+                },
+            },
+        },
+    });
+
+    res.status(200).send(
+        Formatter.topics({
+            data: topics,
+            sendUnpublished: req.sendUnpublished,
+        }),
+    );
+}
+
+export async function getTopic(req: Request, res: Response) {
+    const topic = await prisma.topic.findUniqueOrThrow({
+        where: await Resolver.topic(req),
+        include: {
+            questions: {
+                include: {
+                    question: {
+                        select: PartialQuestion,
+                    },
+                },
+            },
+        },
+    });
+
+    res.status(200).send(
+        Formatter.topic({
+            data: topic,
+            sendUnpublished: req.sendUnpublished,
+        }),
+    );
+}
+
+export async function getTopicQuestions(req: Request, res: Response) {
+    const topic = await prisma.topic.findUniqueOrThrow({
+        where: await Resolver.topic(req),
+    });
+
+    const relations = await prisma.questionToTopic.findMany({
+        where: {
+            topicId: topic.id,
+        },
+        include: {
+            question: {
+                include: FullQuestion,
+            },
+        },
+        orderBy: {
+            number: "asc",
+        },
+    });
+
+    const formattedQuestionToTopics = Formatter.questionsToTopics({
+        data: relations,
+        sendUnpublished: req.sendUnpublished,
+    });
+
+    res.status(200).send(formattedQuestionToTopics?.map((relation) => relation.question));
+}
+
+export async function createTopic(req: Request, res: Response) {
+    const options = UpsertTopic.parse(req.body);
+
+    const course = await prisma.course.findUnique({
+        where: Resolver.course(req),
+    });
+
+    if (!course) throw new APIError(`Course not found`, 404);
 
     const topic = await prisma.topic.create({
         data: {
-            name: name,
-            courses: {
-                connect: { id: courseId },
-            },
+            ...options,
+            courseId: course.id,
         },
         include: {
-            courses: true,
+            questions: {
+                include: {
+                    question: true,
+                },
+            },
+        },
+    });
+
+    res.status(200).send({
+        ...topic,
+        questions: topic.questions.map((relation) => relation.question),
+    });
+}
+
+export async function updateTopic(req: Request, res: Response) {
+    const options = UpsertTopic.parse(req.body);
+
+    const topic = await prisma.topic.update({
+        where: await Resolver.topic(req),
+        data: {
+            ...options,
+        },
+    });
+
+    res.status(200).send(topic);
+}
+
+export async function reorderTopicQuestions(req: Request, res: Response) {
+    const topic = await prisma.topic.findUniqueOrThrow({
+        where: await Resolver.topic(req),
+        select: {
+            id: true,
             questions: true,
         },
     });
-    res.status(200).send(topic);
-};
 
-const updateTopic = async (req: Request, res: Response) => {
-    const { topicId } = req.params;
-    const { name } = req.body;
+    const options = ReorderQuestions.parse(req.body);
 
-    if (typeof name === "string" && name.length > 50) {
-        throw new APIError("Topic length must be under 50 characters", 400);
-    }
+    const questions = await prisma.$transaction(
+        topic.questions.map((relation) => {
+            return prisma.questionToTopic.update({
+                where: {
+                    questionId_topicId: {
+                        questionId: relation.questionId,
+                        topicId: relation.topicId,
+                    },
+                },
+                data: {
+                    number: options.indexOf(relation.questionId) + 1,
+                },
+                select: PartialQuestion,
+            });
+        }),
+    );
 
-    const existingTopic = await prisma.topic.findUnique({
-        where: {
-            name: name,
-        },
+    res.status(200).send(questions);
+}
+
+export async function setTopicQuestions(req: Request, res: Response) {
+    const options = SetTopicQuestionsOptions.parse(req.body);
+
+    const topic = await prisma.topic.findUniqueOrThrow({
+        where: await Resolver.topic(req)
     });
 
-    let result;
-    if (existingTopic) {
-        const originalTopic = await prisma.topic.findUnique({
-            where: {
-                id: topicId,
-            },
-            include: {
-                questions: true,
-            },
-        });
-        if (!originalTopic) {
-            throw new NotFoundError("Invalid topic id");
-        }
-
-        result = await prisma.topic.update({
-            where: {
-                name: name,
-            },
-            data: {
-                questions: {
-                    connect: originalTopic.questions.map((question) => ({
-                        id: question.id,
-                    })),
-                },
-            },
-        });
-
-        await prisma.topic.delete({
-            where: {
-                id: topicId,
-            },
-        });
-    } else {
-        result = await prisma.topic.update({
-            where: {
-                id: topicId,
-            },
-            data: {
-                name: name,
-            },
-        });
-    }
-    res.status(200).send(result);
-};
-
-const setTopicQuestions = async (req: Request, res: Response) => {
-    const { topicId } = req.params;
-    const { questionIds } = req.body;
-    const topic = await prisma.topic.update({
+    const updatedTopic = await prisma.topic.update({
         where: {
-            id: topicId,
+            id: topic.id
         },
         data: {
             questions: {
-                set: questionIds.map((id: string) => ({ id: id })),
+                set: options.map(questionId => {
+                    return {
+                        questionId_topicId: {
+                            questionId: questionId,
+                            topicId: topic.id
+                        }
+                    };
+                })
             },
         },
+        include: {
+            questions: {
+                include: {
+                    question: true
+                }
+            }
+        }
     });
-    res.status(200).send(topic);
-};
 
-const deleteTopic = async (req: Request, res: Response) => {
+    res.status(200).send(Formatter.topic({
+        data: updatedTopic,
+        sendUnpublished: req.sendUnpublished
+    }));
+}
+
+export async function deleteTopic(req: Request, res: Response) {
     const { topicId } = req.params;
+
     const topic = await prisma.topic.delete({
         where: {
             id: topicId,
@@ -111,7 +210,40 @@ const deleteTopic = async (req: Request, res: Response) => {
     if (!topic) {
         throw new NotFoundError("Topic not found");
     }
-    res.status(200).send(topic);
-};
 
-export { createTopic, updateTopic, setTopicQuestions, deleteTopic };
+    res.status(200).send(topic);
+}
+
+export function upsertOrDisconnectTopics(
+    courseId: string,
+    currentTopicIds: string[],
+    topics?: z.infer<typeof UpsertTopic>[],
+) {
+    const newTopicIds = topics?.map((topic) => topic.id);
+
+    return {
+        create: topics?.map((topic) => {
+            return {
+                topic: {
+                    connectOrCreate: {
+                        where: {
+                            id: topic.id,
+                        },
+                        create: {
+                            name: topic.name,
+                            courseId: courseId,
+                            examNumbers: topic.examNumbers,
+                        },
+                    },
+                },
+            };
+        }),
+        deleteMany: currentTopicIds
+            .filter((id) => !newTopicIds?.includes(id))
+            .map((id) => {
+                return {
+                    topicId: id,
+                };
+            }),
+    };
+}

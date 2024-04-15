@@ -1,8 +1,8 @@
-export default class InvalidCourseError extends Error {
-    errorCode: number;
+import APIError from "./APIError.js";
 
-    constructor(message) {
-        super(message);
-        this.errorCode = 406;
+export default class InvalidCourseError extends APIError {
+
+    constructor(message: string) {
+        super(message, 406);
     }
 }

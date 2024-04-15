@@ -1,269 +1,206 @@
-import prisma from "../libs/prisma.js";
 import { Request, Response } from "express";
-import { NotFoundError } from "../middleware/errors/index.js";
-import questionStats from "../helpers/stats/questionStats.js";
-import examStats from "../helpers/stats/examStats.js";
-import msToHMS from "../utils/msToHMS.js";
-import { allCoursesStats, courseStats, allCoursesStatsNQ} from "../helpers/stats/courseStats.js";
-import {allSubmissionTimeStats, courseSubmissionTimeStats} from "../helpers/stats/submissionStats.js";
-import answerChoiceStats from "../helpers/stats/single.answerChoiceStats.js";
+import { APIError } from "../middleware/errors/index.js";
+import { courseStats } from "../helpers/stats/courseStats.js";
+import { examStats } from "../helpers/stats/examStats.js";
+import { questionStats } from "../helpers/stats/questionStats.js";
+import { topicStats } from "../helpers/stats/topicStats.js";
+import { hourlySubmissionStats } from "../helpers/stats/submissionStats.js";
+import { Epoch } from "../prisma/schema.js";
+import { z } from "zod";
+import prisma from "../prisma/prisma.js";
+import Resolver from "../helpers/resolver.js";
 
-const OLD_SUBMISSIONS = 1920571;
-const OLD_TIME_SPENT_HRS = 95074.53;
-const OLD_PERCENT_CORRECT = 0.6571;
-const minimumValidSubmissionTime = 0;
+export const AnswerChoiceStats = z.object({
+    id: z.string().uuid().optional(),
+    index: z.number().int().optional(),
+    count: z.number().default(0),
+});
 
-const getGeneralStats = async (req: Request, res: Response) => {
-    const promises: Promise<any>[] = [];
+export const SubmissionStats = z.object({
+    id: z.string().uuid().optional(),
+    count: z.number().default(1),
+    timeSpent: z.coerce.bigint().default(0n),
+    timeSpentVideo: z.coerce.bigint().default(0n),
+});
 
-    promises.push(
-        prisma.course.aggregate({
-            where: {
-                published: true,
-            },
-            _count: true,
-        }),
-    );
+export const QuestionStats = SubmissionStats.extend({
+    submissions: z.number().default(0),
+    submissionsCorrect: z.number().default(0),
+});
 
-    promises.push(
-        prisma.exam.aggregate({
-            where: {
-                published: true,
-            },
-            _count: true,
-        }),
-    );
+export const ExamStats = QuestionStats.extend({
+    questions: z.number().default(0),
+});
 
-    promises.push(
-        prisma.question.aggregate({
-            where: {
-                published: true,
-            },
-            _count: true,
-        }),
-    );
+export const TopicStats = QuestionStats.extend({
+    name: z.string().optional(),
+    questions: z.number().default(0),
+});
 
-    promises.push(
-        prisma.submission.aggregate({
-            where: {
-                question: {
-                    published: true,
-                },
-                timeSpent: {
-                    gte: minimumValidSubmissionTime,
-                },
-            },
-            _count: true,
-            _sum: {
-                timeSpent: true,
-            },
-        }),
-    );
+export const CourseStats = ExamStats.extend({
+    exams: z.number().default(0),
+});
 
-    promises.push(
-        prisma.submission.count({
-            where: {
-                correct: true,
-                question: {
-                    published: true,
-                },
-                timeSpent: {
-                    gte: minimumValidSubmissionTime,
-                },
-            },
-        }),
-    );
+export const HourlyStats = z.object({
+    x: z.number(),
+    y: z.number(),
+});
 
-    const resolved = await Promise.all(promises);
-    const courses = resolved[0];
-    const exams = resolved[1];
-    const questions = resolved[2];
-    const submissions = resolved[3];
-    const correctSubmissions = resolved[4];
+export async function generalStats(req: Request, res: Response) {
+    const options = parseOptions(req);
+    const stats = await courseStats(options);
 
-    let timeSpent = submissions._sum.timeSpent;
-    if (!timeSpent) {
-        timeSpent = 0;
-    }
-
-    const totalTimeSpent = msToHMS(timeSpent + OLD_TIME_SPENT_HRS * 3600000);
-    const totalSubmissions = submissions._count + OLD_SUBMISSIONS;
-    const percentCorrect = 100.0 * ((correctSubmissions + OLD_PERCENT_CORRECT * OLD_SUBMISSIONS) / totalSubmissions);
-
-    const stats = {
-        totalStudents: 10000,
-        totalCourses: courses._count,
-        totalExams: exams._count,
-        totalQuestions: questions._count,
-        totalSubmissions: submissions._count + OLD_SUBMISSIONS,
-        totalTimeSpent: totalTimeSpent,
-        percentCorrect: percentCorrect,
-    };
-
-    res.status(200).json(stats);
-};
-
-const getCourseStats = async (req: Request, res: Response) => {
-    const { courseId } = req.params;
-    const before = req.query.before ? Number.parseInt(<string>req.query.before) : Date.now();
-    const after = req.query.after ? Number.parseInt(<string>req.query.after) : 0;
-
-    const stats = await courseStats(courseId, new Date(before), new Date(after));
-
-    res.status(200).json(stats);
-};
-
-const getCourseStatsAll = async (req: Request, res: Response) => {
-    const before = req.query.before ? Number.parseInt(<string>req.query.before) : Date.now();
-    const after = req.query.after ? Number.parseInt(<string>req.query.after) : 0;
-    const stats = await allCoursesStats(new Date(before), new Date(after));
-
-    res.status(200).json(stats);
-};
-const getCourseStatsAllNQ = async (req: Request, res: Response) => {
-    const before = req.query.before ? Number.parseInt(<string>req.query.before) : Date.now();
-    const after = req.query.after ? Number.parseInt(<string>req.query.after) : 0;
-    const stats = await allCoursesStatsNQ(new Date(before), new Date(after));
-
-    res.status(200).json(stats);
-};
-const getCourseExamsStats = async (req: Request, res: Response) => {
-    const { courseId } = req.params;
-
-    const promises: Promise<any>[] = [];
-
-    const course = await prisma.course.findFirst({
-        where: {
-            id: courseId,
-            published: true,
-        },
-        select: {
-            exams: {
-                where: {
-                    published: true,
-                },
-                select: {
-                    id: true,
-                    number: true,
-                    semester: true,
-                },
-            },
-        },
+    const combinedStats = stats?.reduce((a, b) => {
+        return {
+            count: a.count + b.count,
+            exams: a.exams + b.exams,
+            questions: a.questions + b.questions,
+            submissions: a.submissions + b.submissions,
+            submissionsCorrect: a.submissionsCorrect + b.submissionsCorrect,
+            timeSpent: a.timeSpent + b.timeSpent,
+            timeSpentVideo: a.timeSpentVideo + b.timeSpentVideo,
+        };
     });
-    if (!course) {
-        throw new NotFoundError("Course not found");
-    }
 
-    const examsStats: any = [];
+    res.status(200).send({
+        students: 10000,
+        courses: combinedStats.count,
+        exams: combinedStats.exams,
+        questions: combinedStats.questions,
+        submissions: combinedStats.submissions,
+        submissionsCorrect: combinedStats.submissionsCorrect,
+        timeSpent: combinedStats.timeSpent,
+        timeSpentVideo: combinedStats.timeSpentVideo,
+    });
+}
 
-    for (const exam of course.exams) {
-        promises.push(examStats(exam.id));
-    }
+export async function getCourseStats(req: Request, res: Response) {
+    const options = parseOptions(req);
 
-    const resolved = await Promise.all(promises);
+    const course = await getCourseSafe(req);
+    const stats = await courseStats({ ...options, id: course?.id });
 
-    let i = 0;
-    for (const exam of course.exams) {
-        examsStats.push({
-            id: exam.id,
-            number: exam.number,
-            semester: exam.semester,
-            ...resolved[i],
+    res.status(200).json(formatStats(stats, options.sort, options.skip, options.limit));
+}
+
+export async function getExamStats(req: Request, res: Response) {
+    const options = parseOptions(req);
+
+    const exam = await getExamSafe(req);
+    const course = await getCourseSafe(req);
+    const stats = await examStats({ ...options, id: exam?.id, courseId: course?.id });
+
+    res.status(200).json(formatStats(stats, options.sort, options.skip, options.limit));
+}
+
+export async function getTopicStats(req: Request, res: Response) {
+    const options = parseOptions(req);
+
+    const topic = await getTopicSafe(req);
+    const course = await getCourseSafe(req);
+
+    const stats = await topicStats({ ...options, id: topic?.id, courseId: course?.id });
+    res.status(200).json(formatStats(stats, options.sort, options.skip, options.limit));
+}
+
+export async function getQuestionStats(req: Request, res: Response) {
+    const options = parseOptions(req);
+
+    const question = await getQuestionSafe(req);
+    const topic = await getTopicSafe(req);
+    const exam = await getExamSafe(req);
+    const course = await getCourseSafe(req);
+
+    const stats = await questionStats({
+        ...options,
+        id: question?.id,
+        topicId: topic?.id,
+        examId: exam?.id,
+        courseId: course?.id,
+    });
+
+    res.status(200).json(formatStats(stats, options.sort, options.skip, options.limit));
+}
+
+export async function getHourlySubmissionStats(req: Request, res: Response) {
+    const { before, after } = parseOptions(req);
+
+    const course = await getCourseSafe(req);
+    const stats = await hourlySubmissionStats(before, after, course?.id);
+
+    res.status(200).json(stats);
+}
+
+function formatStats(stats: { submissions: number; submissionsCorrect: number }[], order: string, skip: number, limit?: number) {
+    return stats
+        .sort((a, b) => {
+            const ratioA = a.submissions > 0 ? a.submissionsCorrect / a.submissions : 0;
+            const ratioB = b.submissions > 0 ? b.submissionsCorrect / b.submissions : 0;
+            if (order === "asc") {
+                return ratioA - ratioB; // Sort in ascending order of ratios
+            } else {
+                return ratioB - ratioA; // Sort in descending order of ratios
+            }
+        })
+        .slice(skip)
+        .slice(0, limit);
+}
+
+function parseOptions(req: Request) {
+    const now = new Date();
+    const before = req.query.before ? new Date(Number.parseInt(<string>req.query.before)) : now;
+    const after = req.query.after ? new Date(Number.parseInt(<string>req.query.before)) : Epoch;
+    const sort = req.query.sort ? <string>req.query.sort : "asc";
+    const limit = req.query.limit ? Number.parseInt(<string>req.query.limit) : undefined;
+    const skip = req.query.skip ? Number.parseInt(<string>req.query.skip) : 0;
+
+    if (sort != "asc" && sort != "desc") throw new APIError('Invalid Query Param Order must be "asc", "desc" or undefined', 400);
+
+    return {
+        before: before,
+        after: after,
+        sort: sort,
+        limit: limit,
+        skip: skip,
+    };
+}
+
+async function getCourseSafe(req: Request) {
+    try {
+        return await prisma.course.findUniqueOrThrow({
+            where: Resolver.course(req),
         });
-        i++;
+    } catch {
+        return undefined;
     }
-
-    res.status(200).json(examsStats);
-};
-
-const getExamStats = async (req: Request, res: Response) => {
-    const { examId } = req.params;
-
-    const stats = await examStats(examId);
-
-    res.status(200).json(stats);
-};
-
-const getQuestionStats = async (req: Request, res: Response) => {
-    const { questionId } = req.params;
-
-    const mainStats = await questionStats(questionId);
-
-    const answerStats = await answerChoiceStats(questionId);
-
-    const stats = {
-        questionStats: mainStats,
-        answerChoiceStats: answerStats,
-    };
-
-    res.status(200).json(stats);
-};
-
-const getSubmissionStats = async (req: Request, res: Response) => {
-    const submissions = await prisma.submission.aggregate({
-        where: {
-            question: {
-                published: true,
-            },
-            timeSpent: {
-                gte: minimumValidSubmissionTime,
-            },
-        },
-        _sum: {
-            timeSpent: true,
-        },
-        _avg: {
-            timeSpent: true,
-        },
-        _count: true,
-    });
-
-    const correctSubmissions = await prisma.submission.count({
-        where: {
-            correct: true,
-            question: {
-                published: true,
-            },
-            timeSpent: {
-                gte: minimumValidSubmissionTime,
-            },
-        },
-    });
-
-    const totalSubmissions = submissions._count + OLD_SUBMISSIONS;
-
-    let timeSpent = submissions._sum.timeSpent;
-    if (!timeSpent) {
-        timeSpent = 0;
-    }
-
-    const totalTimeSpent = msToHMS(timeSpent + OLD_TIME_SPENT_HRS * 3600000);
-    const averageTimeSpent = msToHMS(submissions._avg.timeSpent);
-    const percentCorrect = 100.0 * ((correctSubmissions + OLD_PERCENT_CORRECT * OLD_SUBMISSIONS) / totalSubmissions);
-
-    const submissionsStats = {
-        totalSubmissions: submissions._count + OLD_SUBMISSIONS,
-        totalTimeSpent: totalTimeSpent,
-        averageTimeSpent: averageTimeSpent,
-        percentCorrect: percentCorrect,
-    };
-    res.status(200).json(submissionsStats);
-};
-
-const getAllTimeSubmissionStats = async (req: Request, res: Response) => {
-    const stats = await allSubmissionTimeStats();
-
-    res.status(200).json(stats);
-}
-const getCourseTimeSubmissionStats = async (req: Request, res: Response) => {
-    const { courseId } = req.params;
-    if (courseId == "all") {
-        await getAllTimeSubmissionStats(req, res);
-        return;
-    }
-    const stats = await courseSubmissionTimeStats(courseId);
-
-    res.status(200).json(stats);
 }
 
-export { getGeneralStats, getCourseExamsStats, getQuestionStats, getExamStats, getCourseStats, getCourseStatsAll, getSubmissionStats, getCourseTimeSubmissionStats,getCourseStatsAllNQ };
+async function getExamSafe(req: Request) {
+    try {
+        return await prisma.exam.findUniqueOrThrow({
+            where: await Resolver.exam(req),
+        });
+    } catch {
+        return undefined;
+    }
+}
+
+async function getTopicSafe(req: Request) {
+    try {
+        return await prisma.topic.findUniqueOrThrow({
+            where: await Resolver.topic(req),
+        });
+    } catch {
+        return undefined;
+    }
+}
+
+async function getQuestionSafe(req: Request) {
+    try {
+        return await prisma.question.findFirstOrThrow({
+            where: await Resolver.question(req),
+        });
+    } catch {
+        return undefined;
+    }
+}

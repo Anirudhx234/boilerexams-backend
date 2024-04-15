@@ -1,4 +1,4 @@
-name: Deploy API to Docker Hub and EC2 - Production
+name: Deploy API to Docker Hub and Beast - Production
 
 on:
     push:
@@ -22,7 +22,7 @@ jobs:
               uses: docker/build-push-action@v5
               with:
                   context: .
-                  file: ./Dockerfile.production
+                  file: ./docker/Dockerfile.production
                   push: true
                   tags: ${{ secrets.DOCKERHUB_USERNAME }}/backend:production
                   cache-from: type=gha

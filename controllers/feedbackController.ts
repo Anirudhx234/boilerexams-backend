@@ -1,113 +1,122 @@
 import { APIError, CourseAlreadyExistsError, NotFoundError } from "../middleware/errors/index.js";
-import { ReportType, Year } from "@prisma/client";
+import { FeedbackStatus, FeedbackType, ResourceType } from "@prisma/client";
 import { Request, Response } from "express";
 import { DiscordAPI } from "../services/discord.api.js";
 import { PurdueIoAPI } from "../services/purdue.io.js";
-import prisma from "../libs/prisma.js";
+import { randomUUID } from "node:crypto";
+import { z } from "zod";
+import prisma from "../prisma/prisma.js";
+import Resolver from "../helpers/resolver.js";
 import uploadFileToS3 from "../utils/uploadFileToS3.js";
-import sendMail from "../utils/sendMail.js";
-import bugSubmissionTemplate from "../utils/emailTemplates/bugSubmission.js";
 
-const getReport = async (req: Request, res: Response) => {
-    const reportId = req.params.reportId;
+export const FeatureRequestData = z.object({
+    title:      z.string(),
+    content:    z.string().max(2000),
+    contact:    z.string().max(50).optional(),
+});
 
-    if (reportId == "all") {
-        const reports = await prisma.report.findMany({
-            include: {
-                question: {
-                    include: {
-                        course: {
-                            include: {
-                                users: true,
-                            },
-                        },
-                    },
-                },
-            },
-        });
+export const QuestionReportData = FeatureRequestData.extend({
+    userAgent:  z.string().default("No UserAgent"),
+});
 
-        res.status(200).send(reports);
-    } else {
-        const report = await prisma.report.findUnique({
-            where: {
-                id: reportId,
-            },
-            include: {
-                question: {
-                    include: {
-                        course: {
-                            include: {
-                                users: true,
-                            },
-                        },
-                    },
-                },
-            },
-        });
-        if (!report) throw new NotFoundError("Report Not Found");
+export const BugReportData = QuestionReportData.extend({
+    location:   z.string(),
+});
 
-        res.status(200).send(report);
-    }
-};
+export const VideoFeedbackData = z.object({
+    explanationQuality: z.number().min(1).max(5),
+    productionQuality:  z.number().min(1).max(5),
+    recommended:        z.boolean(),
+    content:            z.string().optional()
+});
 
-const getVideoFeedbackByCourse = async (req: Request, res: Response) => {
-    const { courseId } = req.params;
+export const FeedbackOptions = z.object({
+    id:         z.string().uuid().default(randomUUID),
+    type:       z.nativeEnum(FeedbackType),
+    status:     z.nativeEnum(FeedbackStatus).default(FeedbackStatus.OPEN),
+    data:       z.object({}),
+    userId:     z.string().uuid().optional(),
+    questionId: z.string().uuid().optional(),
+});
 
-    const course = await prisma.course.findUnique({
+export const CourseRequestOptions = z.object({
+    abbreviation:   z.string().toUpperCase(),
+    number:         z.coerce.number().min(100).max(99999)
+});
+
+export async function getCourseRequests(req: Request, res: Response) {
+    const courseRequests = await prisma.courseRequest.findMany();
+    res.status(200).send(courseRequests);
+}
+
+export async function getFeedback(req: Request, res: Response) {
+    const { feedbackId } = req.params;
+
+    const feedback = await prisma.feedback.findUniqueOrThrow({
         where: {
-            id: courseId,
+            id: feedbackId
         },
         include: {
-            questions: {
+            user: true,
+            question: {
                 include: {
-                    exam: true,
-                    videoFeedback: true,
-                },
-            },
-        },
+                    course: {
+                        include: {
+                            users: true // Need users on course for Question Reports
+                        }
+                    }
+                }
+            }
+        }
     });
 
-    if (!course) throw new NotFoundError("Course Not Found");
-
-    const feedback = course.questions
-        .sort((a, b) => a.number - b.number)
-        .sort((a, b) => a.examId.localeCompare(b.examId))
-        .map((question) => {
-            return question.videoFeedback;
-        })
-        .flat();
-
     res.status(200).send(feedback);
-};
+}
 
-const getVideoFeedbackByExam = async (req: Request, res: Response) => {
-    const { examId } = req.params;
+export async function getManyFeedback(req: Request, res: Response) {
+    const question = await getQuestionSafe(req);
+    const exam = await getExamSafe(req);
+    const course = await getCourseSafe(req);
 
-    const exam = await prisma.exam.findUnique({
+    const feedback = await prisma.feedback.findMany({
         where: {
-            id: examId,
+            questionId: question?.id,
+            examId:     exam?.id,
+            courseId:   course?.id
         },
         include: {
-            questions: {
-                include: {
-                    videoFeedback: true,
-                },
+            question: {
+                select: {
+                    id: true,
+                    flags: true,
+                    number: true
+                }
             },
-        },
+            exam: {
+                select: {
+                    id: true,
+                    flags: true,
+                    year: true,
+                    number: true,
+                    season: true
+                }
+            },
+            course: {
+                select: {
+                    id: true,
+                    abbreviation: true,
+                    number: true,
+                    name: true,
+                    subject: true
+                }
+            }
+        }
     });
 
-    if (!exam) throw new NotFoundError("Exam Not Found");
-
-    const feedback = exam.questions
-        .map((question) => {
-            return question.videoFeedback;
-        })
-        .flat();
-
     res.status(200).send(feedback);
-};
+}
 
-const createApplication = async (req: Request, res: Response) => {
+export async function createApplication(req: Request, res: Response) {
     const { name, email, year, why } = req.body;
     const file = req.file;
 
@@ -122,45 +131,54 @@ const createApplication = async (req: Request, res: Response) => {
             name: name,
             email: email,
             content: why,
-            year: year.toUpperCase() as Year,
-            pdfKey: pdfData.Key,
-            pdfLink: pdfData.Location,
+            year: year,
+            resume: {
+                create: {
+                    type: ResourceType.PDF,
+                    data: {
+                        key: pdfData.Key,
+                        url: pdfData.Location,
+                    }
+                }
+            }
         },
     });
 
     await DiscordAPI.createApplication(application);
     res.status(200).send(application);
-};
+}
 
-const createCourseRequest = async (req: Request, res: Response) => {
-    const { abbreviation, number } = req.body;
+export async function requestCourse(req: Request, res: Response) {
+    const options = CourseRequestOptions.parse(req.body);
+    options.number = options.number < 100 ? options.number * 100 : options.number;
 
-    const stringifiedNumber = String(number);
-    const courseNumber = stringifiedNumber + "0".repeat(5 - stringifiedNumber.length);
-    const purdueIoSubject = await PurdueIoAPI.getSubject(abbreviation.toUpperCase());
-    const purdueIoCourse = await PurdueIoAPI.getCourse(purdueIoSubject, courseNumber);
-
-    const existingCourse = await prisma.course.findFirst({
+    const existingCourse = await prisma.course.findUnique({
         where: {
-            AND: [{ abbreviation: purdueIoSubject.Abbreviation }, { number: Number(purdueIoCourse.Number) }],
+            abbreviation_number: {
+                abbreviation: options.abbreviation,
+                number: options.number,
+            }
         },
     });
 
     if (existingCourse) throw new CourseAlreadyExistsError(`Existing Course Requested`);
 
+    const subject = await PurdueIoAPI.getSubject(options.abbreviation);
+    const course = await PurdueIoAPI.getCourse(subject, options.number);
+
     const courseRequest = await prisma.courseRequest.upsert({
         where: {
-            id: purdueIoCourse.Id,
+            id: course.Id,
         },
         create: {
-            id: purdueIoCourse.Id,
-            name: purdueIoCourse.Title,
-            subject: purdueIoSubject.Name,
-            abbreviation: purdueIoSubject.Abbreviation,
-            number: Number(purdueIoCourse.Number),
+            id: course.Id,
+            name: course.Title,
+            subject: subject.Name,
+            abbreviation: subject.Abbreviation,
+            number: Number(course.Number),
         },
         update: {
-            requests: {
+            count: {
                 increment: 1, // Increment Request Count if CourseRequest exists
             },
         },
@@ -169,50 +187,34 @@ const createCourseRequest = async (req: Request, res: Response) => {
     const courseRequests = await prisma.courseRequest.findMany({});
     await DiscordAPI.updateCourseRequests(courseRequests);
     res.status(200).send(courseRequest);
-};
+}
 
-const createBugReport = async (req: Request, res: Response) => {
-    const { title, description, contact, footer, location } = req.body;
+export async function reportBug(req: Request, res: Response) {
+    const options = BugReportData.parse(req.body);
     const user = req.user;
 
-    const report = await prisma.report.create({
+    const report = await prisma.feedback.create({
         data: {
-            type: ReportType.BUG_REPORT,
-            title: title,
-            status: "in-progress",
-            content: description,
-            contact: contact,
-            location: location,
-            userAgent: footer,
+            type: FeedbackType.BUG_REPORT,
             userId: user?.id,
+            data: {
+                ...options
+            },
         },
         include: {
             user: true,
         },
     });
-    //Check if contact fits email
-    let regexp = new RegExp(/^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/);
-    if (regexp.test(contact)) {
-        let emailOptions = {
-            to: contact,
-            subject: `Bug Report: ${report.id}`,
-            html: bugSubmissionTemplate(report.id, report.title),
-        };
-        await sendMail(emailOptions);
-    }
-    
-    await DiscordAPI.createReport(report);
+
+    await DiscordAPI.createFeedback(report);
     res.status(200).send("Success");
-};
+}
 
-const createQuestionBugReport = async (req: Request, res: Response) => {
-    const { questionId } = req.params;
-    const { referer, description, contact, footer } = req.body;
+export async function reportQuestion(req: Request, res: Response) {
+    const options = QuestionReportData.parse(req.body);
 
-    const question = await prisma.question.findUnique({
-        where: {
-            id: questionId,
-        },
+    const question = await prisma.question.findFirstOrThrow({
+        where: await Resolver.question(req),
         include: {
             course: {
                 select: {
@@ -223,200 +225,156 @@ const createQuestionBugReport = async (req: Request, res: Response) => {
             },
             exam: {
                 select: {
+                    season: true,
+                    year: true,
                     number: true,
-                    semester: true,
                 },
             },
         },
     });
 
-    if (!question) throw new NotFoundError("Question does not exist");
-
-    const user = req.user;
     const course = question.course;
     const exam = question.exam;
-    const semester = exam.semester;
-    const title =
-        `${course.abbreviation}${course.number} | ${semester.season} ${semester.year} | Exam ${exam.number} | Question ${question.number}`.replace(
-            "Exam 0",
-            "Final Exam",
-        );
+    const title = `${course.abbreviation}${course.number} | `
+        .concat(`${exam.season} ${exam.year} | `)
+        .concat(`Exam ${exam.number} | `)
+        .concat(`Question ${question.number}`)
+        .replace("Exam 0", "Final Exam");
 
-    const report = await prisma.report.create({
+    const report = await prisma.feedback.create({
         data: {
-            type: ReportType.CONTENT_REPORT,
-            title: title,
-            status: "in-progress",
-            content: description,
-            contact: contact,
-            url: referer,
-            userAgent: footer,
-            questionId: question?.id,
-            userId: user?.id,
+            type: FeedbackType.QUESTION_REPORT,
+            status: FeedbackStatus.OPEN,
+            userId: req.user?.id,
+            questionId: question.id,
+            examId: question.examId,
+            courseId: question.courseId,
+            data: {
+                ...options,
+                title: title
+            }
         },
         include: {
-            question: {
-                include: {
-                    course: {
-                        select: {
-                            abbreviation: true,
-                            number: true,
-                            users: true,
-                        },
-                    },
-                    exam: {
-                        select: {
-                            number: true,
-                            semester: true,
-                        },
-                    },
-                },
-            },
+            question: true,
             user: true,
         },
     });
 
-    await DiscordAPI.createReport(report);
+    await DiscordAPI.createFeedback(report);
     res.status(200).send(report);
-};
+}
 
-const createFeatureRequest = async (req: Request, res: Response) => {
-    const { title, description } = req.body;
-    const user = req.user;
+export async function requestFeature(req: Request, res: Response) {
+    const options = FeatureRequestData.parse(req.body);
 
-    const report = await prisma.report.create({
+    const request = await prisma.feedback.create({
         data: {
-            type: ReportType.FEATURE_REQUEST,
-            title: title,
-            content: description,
-            status: "in-progress",
-            userId: user?.id,
-        },
-        include: {
-            user: true,
-        },
+            type: FeedbackType.FEATURE_REQUEST,
+            userId: req.user?.id,
+            data: {
+                ...options
+            }
+        }
     });
 
-    await DiscordAPI.createReport(report);
-    res.status(200).send(report);
-};
+    await DiscordAPI.createFeedback(request);
+    res.status(200).send(request);
+}
 
-const createVideoFeedbackReport = async (req: Request, res: Response) => {
-    const { questionId } = req.params;
-    const { explanationQuality, productionQuality, videoRecommendation, additionalFeedback } = req.body;
+export async function createVideoFeedback(req: Request, res: Response) {
+    const options = VideoFeedbackData.parse(req.body);
 
-    const question = await prisma.question.findUnique({
-        where: {
-            id: questionId,
-        },
-        include: {
-            course: {
-                select: {
-                    abbreviation: true,
-                    number: true,
-                    users: true,
-                },
-            },
-            exam: {
-                select: {
-                    number: true,
-                    semester: true,
-                },
-            },
-        },
+    const question = await prisma.question.findFirstOrThrow({
+        where: await Resolver.question(req),
+        select: {
+            id: true,
+            examId: true,
+            courseId: true
+        }
     });
 
     if (!question) throw new NotFoundError("Question does not exist");
 
-    const feedback = await prisma.videoFeedback.create({
+    const videoFeedback = await prisma.feedback.create({
         data: {
-            explanationQuality: explanationQuality,
-            productionQuality: productionQuality,
-            videoRecommendation: videoRecommendation,
-            additionalFeedback: additionalFeedback,
+            type: FeedbackType.VIDEO_FEEDBACK,
+            userId: req.user?.id,
+            courseId: question.courseId,
+            examId: question.examId,
             questionId: question.id,
+            data: {
+                ...options
+            }
+        }
+    });
+
+    res.status(200).send(videoFeedback);
+}
+
+export async function updateFeedbackStatus(req: Request, res: Response) {
+    const { feedbackId } = req.params;
+    const { status } = req.body;
+
+    const feedback = await prisma.feedback.update({
+        where: {
+            id: feedbackId,
         },
-        include: {
-            question: {
-                include: {
-                    course: {
-                        select: {
-                            abbreviation: true,
-                            number: true,
-                            users: true,
-                        },
-                    },
-                    exam: {
-                        select: {
-                            number: true,
-                            semester: true,
-                        },
-                    },
-                },
-            },
-        },
+        data: {
+            status: status
+        }
     });
 
     res.status(200).send(feedback);
-};
+}
 
-const createReport = async (req: Request, res: Response) => {
-    const report = await prisma.report.create({
-        data: req.body,
-    });
-    res.status(200).send(report);
-};
+export async function deleteFeedback(req: Request, res: Response) {
+    const { feedbackId } = req.params;
 
-const updateReport = async (req: Request, res: Response) => {
-    const reportId = req.params.reportId;
-
-    const report = await prisma.report.update({
+    const videoFeedback = await prisma.feedback.delete({
         where: {
-            id: reportId,
-        },
-        data: req.body,
-    });
-
-    res.status(200).send(report);
-};
-
-const updateVideoFeedbackReport = async (req: Request, res: Response) => {
-    const reportId = req.params.reportId;
-
-    const report = await prisma.videoFeedback.update({
-        where: {
-            id: reportId,
-        },
-        data: req.body,
-    });
-
-    res.status(200).send(report);
-};
-
-const deleteVideoFeedback = async (req: Request, res: Response) => {
-    const { reportId } = req.params;
-
-    const videoFeedback = await prisma.videoFeedback.delete({
-        where: {
-            id: reportId,
+            id: feedbackId,
         },
     });
 
     res.status(200).send(videoFeedback);
-};
+}
 
-export {
-    createApplication,
-    createCourseRequest,
-    createBugReport,
-    createQuestionBugReport,
-    createFeatureRequest,
-    createVideoFeedbackReport,
-    createReport,
-    deleteVideoFeedback,
-    getReport,
-    getVideoFeedbackByCourse,
-    getVideoFeedbackByExam,
-    updateReport,
-    updateVideoFeedbackReport
-};
+async function getCourseSafe(req: Request) {
+    try {
+        return await prisma.course.findUniqueOrThrow({
+            where: Resolver.course(req),
+        });
+    } catch {
+        return undefined;
+    }
+}
+
+async function getExamSafe(req: Request) {
+    try {
+        return await prisma.exam.findUniqueOrThrow({
+            where: await Resolver.exam(req),
+        });
+    } catch {
+        return undefined;
+    }
+}
+
+async function getTopicSafe(req: Request) {
+    try {
+        return await prisma.topic.findUniqueOrThrow({
+            where: await Resolver.topic(req),
+        });
+    } catch {
+        return undefined;
+    }
+}
+
+async function getQuestionSafe(req: Request) {
+    try {
+        return await prisma.question.findFirstOrThrow({
+            where: await Resolver.question(req),
+        });
+    } catch {
+        return undefined;
+    }
+}
