@@ -1,4 +1,4 @@
-import { APIError } from "../middleware/errors/index.js";
+import APIError from "../middleware/errors/APIError.js";
 import { Request } from "express";
 import { Season } from "@prisma/client";
 import { z } from "zod";

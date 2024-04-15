@@ -1,6 +1,6 @@
 import { Prisma } from "@prisma/client";
 import type { NextFunction, Request, Response } from "express";
-import { APIError, InvalidCourseError, InvalidSeasonError, NotFoundError } from "./errors/index.js";
+import APIError from "./APIError.js";
 import axios from "axios";
 import {MulterError} from "multer";
 import { ZodError } from "zod";
@@ -20,18 +20,6 @@ export default async function errorHandler(error: unknown, req: Request, res: Re
         if (["ADMIN", "CONTENT"].includes(req.user.role)) {
             errorResponse.fullError = error;
         }
-    }
-
-    if (error instanceof NotFoundError) {
-        return res.status(error.errorCode).json(errorResponse);
-    }
-
-    if (error instanceof InvalidSeasonError) {
-        return res.status(error.errorCode).json(errorResponse);
-    }
-
-    if (error instanceof InvalidCourseError) {
-        return res.status(error.errorCode).json(errorResponse);
     }
 
     if (error instanceof MulterError) {

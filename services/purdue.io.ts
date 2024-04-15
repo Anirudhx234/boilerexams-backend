@@ -1,4 +1,4 @@
-import { InvalidCourseError, NotFoundError } from "../middleware/errors/index.js";
+import APIError from "../middleware/errors/APIError.js";
 import axios from "axios";
 
 export type PurdueIoCourse = {
@@ -27,7 +27,7 @@ export class PurdueIoAPI {
         const query = `https://api.purdue.io/odata/Courses?$filter=Subject/Abbreviation eq '${subject.Abbreviation}' and Number eq '${number}'`;
         const request = await axios.get(query);
         const course = request.data.value[0] as PurdueIoCourse;
-        if (!course) throw new InvalidCourseError(`Invalid Course ${subject.Abbreviation} ${number}`);
+        if (!course) throw new APIError(`Invalid Course ${subject.Abbreviation} ${number}`, 400);
         return course;
     }
 
@@ -35,7 +35,7 @@ export class PurdueIoAPI {
         const query = `https://api.purdue.io/odata/Subjects?$filter=Abbreviation eq '${abbreviation}'`;
         const request = await axios.get(query);
         const subject = request.data.value[0] as PurdueIoSubject;
-        if (!subject) throw new InvalidCourseError(`Invalid Subject ${abbreviation}`);
+        if (!subject) throw new APIError(`Invalid Subject ${abbreviation}`, 400);
         return subject;
     }
 
@@ -48,7 +48,7 @@ export class PurdueIoAPI {
             const date = Date.parse(element.EndDate);
             return now < date;
         }) as PurdueIoTerm;
-        if (!term) throw new NotFoundError(`Could Not Find Current Term`);
+        if (!term) throw new APIError(`Could Not Find Current Term`, 404);
         return term;
     }
 }

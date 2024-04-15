@@ -1,5 +1,5 @@
 import axios from "axios";
-import { NotFoundError } from "../../middleware/errors/index.js";
+import APIError from "../../middleware/errors/APIError.js";
 
 const getPDFResult = async (pdf_id: string) => {
     const headers = {
@@ -11,7 +11,7 @@ const getPDFResult = async (pdf_id: string) => {
         headers: headers,
     });
     if (response.data.error) {
-        throw new NotFoundError("Requested PDF not found");
+        throw new APIError("Requested PDF not found", 404);
     }
     if (response.data.status != "completed") {
         await new Promise((f) => setTimeout(f, 15000));

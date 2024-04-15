@@ -8,7 +8,7 @@ import corsOptions from "./utils/corsOptions.js";
 import sessionOptions from "./utils/sessionOptions.js";
 import initializePassport from "./middleware/auth/passport/index.js";
 import routes from "./routes/index.js";
-import errorHandler from "./middleware/errorHandler.js";
+import errorHandler from "./middleware/errors/errorHandler.js";
 import { scheduleUpdateStats } from "./helpers/stats/updateStats.js";
 import prisma from "./prisma/prisma.js";
 

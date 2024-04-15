@@ -1,7 +1,7 @@
 import prisma from "../prisma/prisma.js";
 import { Role } from "@prisma/client";
 import { Request, Response } from "express";
-import { APIError, NotFoundError } from "../middleware/errors/index.js";
+import APIError from "../middleware/errors/APIError.js";
 import { z } from "zod";
 
 export const UpdateUserSchema = z.object({
@@ -65,7 +65,7 @@ export async function updateUserRole(req: Request, res: Response) {
         },
     });
     if (!user) {
-        throw new NotFoundError("User not found");
+        throw new APIError("User not found", 404);
     }
 
     res.status(200).send(user);

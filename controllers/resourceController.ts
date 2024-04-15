@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { APIError, NotFoundError } from "../middleware/errors/index.js";
+import APIError from "../middleware/errors/APIError.js";
 import { ResourceType } from "@prisma/client";
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
@@ -37,7 +37,7 @@ export async function uploadFile(req: Request, res: Response) {
     const file = req.file;
 
     if (!file) {
-        throw new NotFoundError("File missing from request");
+        throw new APIError("File missing from request", 400);
     }
 
     const data = await uploadFileToS3(file.buffer, file.mimetype);

@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import asyncWrapper from "../wrappers/asyncWrapper.js";
-import { APIError } from "../errors/index.js";
+import APIError from "../errors/APIError.js";
 
 const authTester = asyncWrapper(async (req: Request, res: Response, next: NextFunction) => {
     if (req.user) {

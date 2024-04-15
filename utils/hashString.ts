@@ -1,5 +1,5 @@
 import { scrypt } from "crypto";
-import { APIError } from "../middleware/errors/index.js";
+import APIError from "../middleware/errors/APIError.js";
 
 const hashString = (password: string, salt: Buffer): Promise<Buffer> => {
     return new Promise((resolve, reject) => {
