@@ -3,6 +3,7 @@ import type { NextFunction, Request, Response } from "express";
 import { APIError, InvalidCourseError, InvalidSeasonError, NotFoundError } from "./errors/index.js";
 import axios from "axios";
 import {MulterError} from "multer";
+import { ZodError } from "zod";
 
 export default async function errorHandler(error: unknown, req: Request, res: Response, _next: NextFunction) {
     if (!(error instanceof Error)) {
@@ -70,6 +71,13 @@ export default async function errorHandler(error: unknown, req: Request, res: Re
 
     if (error instanceof APIError) {
         return res.status(error.errorCode).json(errorResponse);
+    }
+
+    if (error instanceof ZodError) {
+        const err = error as ZodError;
+        errorResponse.message = "Valid input not provided";
+        errorResponse.fullError = err.errors;
+        return res.status(400).json(errorResponse);
     }
 
     try {

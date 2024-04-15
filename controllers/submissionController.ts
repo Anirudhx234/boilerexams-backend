@@ -29,8 +29,8 @@ export const ParentSubmissionData = z.array(
 export const UpsertSubmissionOptions = z.object({
     timeStarted: z.coerce.date().min(Epoch, "value too old").optional(),
     timeEnded: z.coerce.date().refine((date) => {
-        console.log(`TIME ENDED = ${date}`);
-        console.log(`NOW = ${new Date()}`);
+        console.log(`TIME ENDED = ${date.getTime()}`);
+        console.log(`NOW = ${new Date().getTime()}`);
         return date < new Date();
     }, `value too new`).optional(),
     timeSpent: z.preprocess(coerceBigIntSafely, z.bigint().optional()),
@@ -50,8 +50,8 @@ export const CreateSubmissionOptions = z.object({
     ]),
     timeStarted: z.coerce.date().min(Epoch, "value too old"),
     timeEnded: z.coerce.date().refine((date) => {
-        console.log(`TIME ENDED = ${date}`);
-        console.log(`NOW = ${new Date()}`);
+        console.log(`TIME ENDED = ${date.getTime()}`);
+        console.log(`NOW = ${new Date().getTime()}`);
         return date < new Date();
     }, `value too new`),
     timeSpent: z.preprocess(coerceBigIntSafely, z.bigint()),
