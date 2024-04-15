@@ -5,6 +5,8 @@ import prisma from "../prisma/prisma.js";
 import Resolver from "../helpers/resolver.js";
 import { Epoch } from "../prisma/schema.js";
 import { QuestionData } from "./questionController.js";
+import { DiscordAPI } from "../services/discord.api.js";
+import axios from "axios";
 
 export const MultipleChoiceSubmissionData = z.array(z.number());
 
@@ -26,13 +28,20 @@ export const ParentSubmissionData = z.array(
     }),
 );
 
-export const UpsertSubmissionOptions = z.object({
+export const UpdateSubmissionOptions = z.object({
     timeStarted: z.coerce.date().min(Epoch, "value too old").optional(),
     timeEnded: z.coerce.date().refine((date) => {
-        console.log(`TIME ENDED = ${date.getTime()}`);
-        console.log(`NOW = ${new Date().getTime()}`);
-        return date < new Date();
-    }, `value too new`).optional(),
+        const now = new Date();
+        if (date > now) {
+            const data = { stackTrace: `Update Submission\ntimeEnded: ${date.getTime()} - now: ${now.getTime()}`};
+            axios.post(`${process.env["DISCORD_URL"]}/error`, data).catch(console.log);
+        }
+        return date.getTime() <= (now.getTime() + 30000);
+    }, `value too new`).transform(date => {
+        const now = new Date();
+        if (date > now) return now;
+        return date;
+    }).optional(),
     timeSpent: z.preprocess(coerceBigIntSafely, z.bigint().optional()),
     timeSpentVideo: z.preprocess(coerceBigIntSafely, z.bigint().optional()),
     timeSpentModal: z.preprocess(coerceBigIntSafely, z.bigint().optional()),
@@ -50,10 +59,17 @@ export const CreateSubmissionOptions = z.object({
     ]),
     timeStarted: z.coerce.date().min(Epoch, "value too old"),
     timeEnded: z.coerce.date().refine((date) => {
-        console.log(`TIME ENDED = ${date.getTime()}`);
-        console.log(`NOW = ${new Date().getTime()}`);
-        return date < new Date();
-    }, `value too new`),
+        const now = new Date();
+        if (date > now) {
+            const data = { stackTrace: `Create Submission\ntimeEnded: ${date.getTime()} - now: ${now.getTime()}`};
+            axios.post(`${process.env["DISCORD_URL"]}/error`, data).catch(console.log);
+        }
+        return date.getTime() <= (now.getTime() + 30000);
+    }, `value too new`).transform(date => {
+        const now = new Date();
+        if (date > now) return now;
+        return date;
+    }),
     timeSpent: z.preprocess(coerceBigIntSafely, z.bigint()),
     timeSpentVideo: z.preprocess(coerceBigIntSafely, z.bigint().default(0n)),
     timeSpentModal: z.preprocess(coerceBigIntSafely, z.bigint().default(0n)),
@@ -123,7 +139,7 @@ export async function batchCreateSubmission(req: Request, res: Response) {
 
 export async function upsertSubmission(req: Request, res: Response) {
     const { submissionId } = req.params;
-    const options = UpsertSubmissionOptions.parse(req.body);
+    const options = UpdateSubmissionOptions.parse(req.body);
 
     const submission = await prisma.submission.update({
         where: {
