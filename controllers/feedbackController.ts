@@ -16,7 +16,7 @@ export const FeatureRequestData = z.object({
 });
 
 export const QuestionReportData = FeatureRequestData.extend({
-    userAgent:  z.string().optional(),
+    userAgent:  z.string().default("No UserAgent"),
 });
 
 export const BugReportData = QuestionReportData.extend({
@@ -196,7 +196,7 @@ export async function reportBug(req: Request, res: Response) {
     const report = await prisma.feedback.create({
         data: {
             type: FeedbackType.BUG_REPORT,
-            userId: user.id,
+            userId: user?.id,
             data: {
                 ...options
             },
