@@ -10,8 +10,6 @@ import initializePassport from "./middleware/auth/passport/index.js";
 import routes from "./routes/index.js";
 import errorHandler from "./middleware/errors/errorHandler.js";
 import { scheduleUpdateStats } from "./helpers/stats/updateStats.js";
-import prisma from "./prisma/prisma.js";
-import { qtHotfix } from "./controllers/courseController.js";
 
 (BigInt.prototype as any).toJSON = function () {
     return this.toString();
@@ -53,5 +51,4 @@ scheduleUpdateStats();
 
 app.listen(PORT, async () => {
     console.log(`Server is running at port ${PORT}`);
-    await qtHotfix();
 });

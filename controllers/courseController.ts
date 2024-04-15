@@ -9,7 +9,6 @@ import FlagEncoder from "../helpers/encoder.js";
 import Formatter from "../helpers/formatter.js";
 import prisma from "../prisma/prisma.js";
 import Resolver from "../helpers/resolver.js";
-import { read } from "node:fs";
 
 export const CourseFlags = z.object({
     published: z.boolean().default(false),
@@ -412,57 +411,4 @@ export async function deleteCourse(req: Request, res: Response) {
     }
 
     res.status(200).send(course);
-}
-
-export async function qtHotfix() {
-    // Extract relations from the old database
-    let total = 0;
-
-    const oldRelations = await prisma.questionToTopic.findMany({
-        include: {
-            topic: true,
-            question: true
-        }
-    });
-
-    for (const relation of oldRelations) {
-        const topic = relation.topic;
-        const question = relation.question;
-
-        //Check if topic courseId and question courseId match
-        if(topic.courseId !== question.courseId) {
-
-            //If they don't match, I assume question.courseId is what it should be
-            const correctTopic = await prisma.topic.findUniqueOrThrow({
-                where: {
-                    name_courseId: {
-                        name: topic.name,
-                        courseId: question.courseId
-                    },
-                },
-            });
-
-            //Update DB object
-            try {
-                await prisma.questionToTopic.update({
-                    data: {
-                        topicId: correctTopic.id,
-                    },
-                    where: {
-                        questionId_topicId: {
-                            questionId: question.id,
-                            topicId: topic.id
-                        },
-                    }
-                });
-
-                //Log update:
-                console.log(`Fixed Relation for ${relation.topic.name} to QuestionID: ${relation.question.id}\n`);
-                total++;
-            } catch (err) {
-                console.log(`ERROR WITH RELATION ${relation.questionId} to ${relation.topicId}:\n${err}`)
-            }
-        }
-    }
-    console.log(`Fixed ${total} wrong relations\n`);
 }
