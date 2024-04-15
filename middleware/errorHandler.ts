@@ -70,6 +70,7 @@ export default async function errorHandler(error: unknown, req: Request, res: Re
     }
 
     if (error instanceof APIError) {
+        errorResponse.message = error.message;
         return res.status(error.errorCode).json(errorResponse);
     }
 
@@ -87,7 +88,7 @@ export default async function errorHandler(error: unknown, req: Request, res: Re
     }
 
     console.log(error);
-    errorResponse.message = "An error occurred";
+    errorResponse.message = "An unknown error occurred";
     return res.status(500).json(errorResponse);
 }
 

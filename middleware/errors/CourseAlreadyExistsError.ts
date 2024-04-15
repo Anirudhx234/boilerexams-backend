@@ -1,8 +1,8 @@
-export default class CourseAlreadyExistsError extends Error {
-    errorCode: number;
+import APIError from "./APIError.js";
 
-    constructor(message) {
-        super(message);
-        this.errorCode = 400;
+export default class CourseAlreadyExistsError extends APIError {
+
+    constructor(message: string) {
+        super(message, 400);
     }
 }
