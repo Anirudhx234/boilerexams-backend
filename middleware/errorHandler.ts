@@ -1,8 +1,8 @@
 import { Prisma } from "@prisma/client";
 import type { NextFunction, Request, Response } from "express";
 import { APIError, InvalidCourseError, InvalidSeasonError, NotFoundError } from "./errors/index.js";
-import multer from "multer";
 import axios from "axios";
+import {MulterError} from "multer";
 
 export default async function errorHandler(error: unknown, req: Request, res: Response, _next: NextFunction) {
     if (!(error instanceof Error)) {
@@ -33,7 +33,7 @@ export default async function errorHandler(error: unknown, req: Request, res: Re
         return res.status(error.errorCode).json(errorResponse);
     }
 
-    if (error instanceof multer.MulterError && error.code == "LIMIT_FILE_SIZE") {
+    if (error instanceof MulterError && error.code == "LIMIT_FILE_SIZE") {
         if (error.field === "image") {
             errorResponse.message = "Image size must be under 1 MB";
         } else if (error.field === "pdf") {
