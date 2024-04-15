@@ -28,7 +28,11 @@ export const ParentSubmissionData = z.array(
 
 export const UpsertSubmissionOptions = z.object({
     timeStarted: z.coerce.date().min(Epoch, "value too old").optional(),
-    timeEnded: z.coerce.date().refine((date) => date < new Date(), `value too new`).optional(),
+    timeEnded: z.coerce.date().refine((date) => {
+        console.log(`TIME ENDED = ${date}`);
+        console.log(`NOW = ${new Date()}`);
+        return date < new Date();
+    }, `value too new`).optional(),
     timeSpent: z.preprocess(coerceBigIntSafely, z.bigint().optional()),
     timeSpentVideo: z.preprocess(coerceBigIntSafely, z.bigint().optional()),
     timeSpentModal: z.preprocess(coerceBigIntSafely, z.bigint().optional()),
@@ -45,7 +49,11 @@ export const CreateSubmissionOptions = z.object({
         FillInBlankSubmissionData,
     ]),
     timeStarted: z.coerce.date().min(Epoch, "value too old"),
-    timeEnded: z.coerce.date().refine((date) => date < new Date(), `value too new`),
+    timeEnded: z.coerce.date().refine((date) => {
+        console.log(`TIME ENDED = ${date}`);
+        console.log(`NOW = ${new Date()}`);
+        return date < new Date();
+    }, `value too new`),
     timeSpent: z.preprocess(coerceBigIntSafely, z.bigint()),
     timeSpentVideo: z.preprocess(coerceBigIntSafely, z.bigint().default(0n)),
     timeSpentModal: z.preprocess(coerceBigIntSafely, z.bigint().default(0n)),
