@@ -30,22 +30,16 @@ export const ParentSubmissionData = z.array(
 
 export const UpdateSubmissionOptions = z.object({
     timeStarted: z.coerce.date().min(Epoch, "value too old").optional(),
-    timeEnded: z.coerce.date().refine((date) => {
-        const now = new Date();
-        if (date > now) {
-            const data = { stackTrace: `Update Submission: timeEnded: ${date.getTime() - now.getTime()}`};
-            axios.post(`${process.env["DISCORD_URL"]}/error`, data).catch(console.log);
-        }
-        return date.getTime() <= (now.getTime() + 30000);
-    }, `value too new`).transform(date => {
-        const now = new Date();
-        if (date > now) return now;
-        return date;
-    }).optional(),
+    timeEnded: z.coerce.date(),
     timeSpent: z.preprocess(coerceBigIntSafely, z.bigint().optional()),
     timeSpentVideo: z.preprocess(coerceBigIntSafely, z.bigint().optional()),
     timeSpentModal: z.preprocess(coerceBigIntSafely, z.bigint().optional()),
-});
+}).refine(options => {
+    if (options.timeStarted && options.timeSpent) {
+        const difference = options.timeEnded.getTime() - options.timeStarted.getTime();
+        return difference >= options.timeSpent;
+    }
+}, "timeSpent did not exceed difference between timeStarted and timeEnded");
 
 export const CreateSubmissionOptions = z.object({
     type: z.nativeEnum(QuestionType),
@@ -58,23 +52,15 @@ export const CreateSubmissionOptions = z.object({
         FillInBlankSubmissionData,
     ]),
     timeStarted: z.coerce.date().min(Epoch, "value too old"),
-    timeEnded: z.coerce.date().refine((date) => {
-        const now = new Date();
-        if (date > now) {
-            const data = { stackTrace: `Create Submission: timeEnded: ${date.getTime() - now.getTime()}`};
-            axios.post(`${process.env["DISCORD_URL"]}/error`, data).catch(console.log);
-        }
-        return date.getTime() <= (now.getTime() + 30000);
-    }, `value too new`).transform(date => {
-        const now = new Date();
-        if (date > now) return now;
-        return date;
-    }),
+    timeEnded: z.coerce.date(),
     timeSpent: z.preprocess(coerceBigIntSafely, z.bigint()),
     timeSpentVideo: z.preprocess(coerceBigIntSafely, z.bigint().default(0n)),
     timeSpentModal: z.preprocess(coerceBigIntSafely, z.bigint().default(0n)),
     osFamily: z.string().optional(),
-});
+}).refine(options => {
+    const difference = options.timeEnded.getTime() - options.timeStarted.getTime();
+    return difference >= options.timeSpent;
+}, "timeSpent did not exceed difference between timeStarted and timeEnded");
 
 export async function createSubmission(req: Request, res: Response) {
     const options = CreateSubmissionOptions.parse(req.body);
