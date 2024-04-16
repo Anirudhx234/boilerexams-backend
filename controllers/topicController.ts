@@ -222,19 +222,26 @@ export function upsertOrDisconnectTopics(
     const newTopicIds = topics?.map((topic) => topic.id);
 
     return {
-        create: topics?.map((topic) => {
+        connectOrCreate: topics?.map((topic) => {
             return {
-                topic: {
-                    connectOrCreate: {
-                        where: {
-                            id: topic.id,
+                where: {
+                    questionId_topicId: {
+                        questionId: "",
+                        topicId: topic.id
+                    }
+                }, create: {
+                    topic: {
+                        connectOrCreate: {
+                            where: {
+                                id: topic.id,
+                            },
+                            create: {
+                                name: topic.name,
+                                courseId: courseId,
+                                examNumbers: topic.examNumbers,
+                            },
                         },
-                        create: {
-                            name: topic.name,
-                            courseId: courseId,
-                            examNumbers: topic.examNumbers,
-                        },
-                    },
+                    }
                 },
             };
         }),
