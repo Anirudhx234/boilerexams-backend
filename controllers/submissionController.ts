@@ -33,7 +33,7 @@ export const UpdateSubmissionOptions = z.object({
     timeEnded: z.coerce.date().refine((date) => {
         const now = new Date();
         if (date > now) {
-            const data = { stackTrace: `Update Submission\ntimeEnded: ${date.getTime()} - now: ${now.getTime()}`};
+            const data = { stackTrace: `Update Submission: timeEnded: ${date.getTime() - now.getTime()}`};
             axios.post(`${process.env["DISCORD_URL"]}/error`, data).catch(console.log);
         }
         return date.getTime() <= (now.getTime() + 30000);
@@ -61,7 +61,7 @@ export const CreateSubmissionOptions = z.object({
     timeEnded: z.coerce.date().refine((date) => {
         const now = new Date();
         if (date > now) {
-            const data = { stackTrace: `Create Submission\ntimeEnded: ${date.getTime()} - now: ${now.getTime()}`};
+            const data = { stackTrace: `Create Submission: timeEnded: ${date.getTime() - now.getTime()}`};
             axios.post(`${process.env["DISCORD_URL"]}/error`, data).catch(console.log);
         }
         return date.getTime() <= (now.getTime() + 30000);
