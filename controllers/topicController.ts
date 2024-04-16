@@ -215,6 +215,7 @@ export async function deleteTopic(req: Request, res: Response) {
 }
 
 export function upsertOrDisconnectTopics(
+    questionId: string,
     courseId: string,
     currentTopicIds: string[],
     topics?: z.infer<typeof UpsertTopic>[],
@@ -222,14 +223,18 @@ export function upsertOrDisconnectTopics(
     const newTopicIds = topics?.map((topic) => topic.id);
 
     return {
-        connectOrCreate: topics?.map((topic) => {
+        upsert: topics?.map((topic) => {
             return {
                 where: {
                     questionId_topicId: {
-                        questionId: "",
+                        questionId: questionId,
                         topicId: topic.id
                     }
-                }, create: {
+                },
+                update: {
+
+                },
+                create: {
                     topic: {
                         connectOrCreate: {
                             where: {
@@ -242,7 +247,7 @@ export function upsertOrDisconnectTopics(
                             },
                         },
                     }
-                },
+                }
             };
         }),
         deleteMany: currentTopicIds
