@@ -68,7 +68,10 @@ export default async function errorHandler(error: unknown, req: Request, res: Re
         errorResponse.fullError = err.errors;
 
         try {
-            await axios.post(`${process.env["DISCORD_URL"]}/error`, { stackTrace: err.format() });
+            await axios.post(`${process.env["DISCORD_URL"]}/error`, {
+                ...err.format(),
+                path: req.path
+            });
         } catch {
             console.log("Unable to POST error to Discord");
         }
@@ -77,7 +80,10 @@ export default async function errorHandler(error: unknown, req: Request, res: Re
     }
 
     try {
-        await axios.post(`${process.env["DISCORD_URL"]}/error`, { stackTrace: error.stack });
+        await axios.post(`${process.env["DISCORD_URL"]}/error`, {
+            stackTrace: error.stack,
+            path: req.path
+        });
     } catch {
         console.log("Unable to POST error to Discord");
     }

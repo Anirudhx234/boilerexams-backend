@@ -29,17 +29,9 @@ export const ParentSubmissionData = z.array(
 );
 
 export const UpdateSubmissionOptions = z.object({
-    timeStarted: z.coerce.date().min(Epoch, "value too old").optional(),
-    timeEnded: z.coerce.date(),
-    timeSpent: z.preprocess(coerceBigIntSafely, z.bigint().optional()),
     timeSpentVideo: z.preprocess(coerceBigIntSafely, z.bigint().optional()),
     timeSpentModal: z.preprocess(coerceBigIntSafely, z.bigint().optional()),
-}).refine(options => {
-    if (options.timeStarted && options.timeSpent) {
-        const difference = options.timeEnded.getTime() - options.timeStarted.getTime();
-        return difference >= options.timeSpent;
-    }
-}, "timeSpent did not exceed difference between timeStarted and timeEnded");
+});
 
 export const CreateSubmissionOptions = z.object({
     type: z.nativeEnum(QuestionType),
@@ -123,7 +115,7 @@ export async function batchCreateSubmission(req: Request, res: Response) {
     res.status(200).send(submissions);
 }
 
-export async function upsertSubmission(req: Request, res: Response) {
+export async function updateSubmission(req: Request, res: Response) {
     const { submissionId } = req.params;
     const options = UpdateSubmissionOptions.parse(req.body);
 
