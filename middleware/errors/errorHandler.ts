@@ -66,6 +66,13 @@ export default async function errorHandler(error: unknown, req: Request, res: Re
         const err = error as ZodError;
         errorResponse.message = "Valid input not provided";
         errorResponse.fullError = err.errors;
+
+        try {
+            await axios.post(`${process.env["DISCORD_URL"]}/error`, { stackTrace: err.format() });
+        } catch {
+            console.log("Unable to POST error to Discord");
+        }
+
         return res.status(400).json(errorResponse);
     }
 
