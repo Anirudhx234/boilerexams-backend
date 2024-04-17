@@ -94,7 +94,7 @@ export async function batchCreateSubmission(req: Request, res: Response) {
                 },
             });
             const data = QuestionData.parse(question.data);
-            const correct = checkUserSolution(question.type, option.userSolution, data);
+            const correct = checkUserSolution(question.type, option.userSolution, data.solution);
 
             return prisma.submission.create({
                 data: {
