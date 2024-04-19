@@ -14,6 +14,8 @@ export const AnswerChoiceStats = z.object({
     id: z.string().uuid().optional(),
     index: z.number().int().optional(),
     count: z.number().default(0),
+}).default({
+    count: 0
 });
 
 export const SubmissionStats = z.object({
@@ -21,24 +23,57 @@ export const SubmissionStats = z.object({
     count: z.number().default(1),
     timeSpent: z.coerce.bigint().default(0n),
     timeSpentVideo: z.coerce.bigint().default(0n),
+}).default({
+    count: 0,
+    timeSpent: 0n,
+    timeSpentVideo: 0n
 });
 
-export const QuestionStats = SubmissionStats.extend({
+
+export const QuestionStats = SubmissionStats.removeDefault().extend({
     submissions: z.number().default(0),
     submissionsCorrect: z.number().default(0),
+}).default({
+    count: 0,
+    submissions: 0,
+    submissionsCorrect: 0,
+    timeSpent: 0n,
+    timeSpentVideo: 0n
 });
 
-export const ExamStats = QuestionStats.extend({
+export const ExamStats = QuestionStats.removeDefault().extend({
     questions: z.number().default(0),
+}).default({
+    count: 0,
+    questions: 0,
+    submissions: 0,
+    submissionsCorrect: 0,
+    timeSpent: 0n,
+    timeSpentVideo: 0n
 });
 
-export const TopicStats = QuestionStats.extend({
+export const TopicStats = QuestionStats.removeDefault().extend({
     name: z.string().optional(),
     questions: z.number().default(0),
+}).default({
+    count: 0,
+    questions: 0,
+    submissions: 0,
+    submissionsCorrect: 0,
+    timeSpent: 0n,
+    timeSpentVideo: 0n
 });
 
-export const CourseStats = ExamStats.extend({
+export const CourseStats = ExamStats.removeDefault().extend({
     exams: z.number().default(0),
+}).default({
+    count: 0,
+    exams: 0,
+    questions: 0,
+    submissions: 0,
+    submissionsCorrect: 0,
+    timeSpent: 0n,
+    timeSpentVideo: 0n
 });
 
 export const HourlyStats = z.object({

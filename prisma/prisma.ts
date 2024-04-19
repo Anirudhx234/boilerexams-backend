@@ -90,7 +90,14 @@ export default prisma
                 stats: {
                     needs: { stats: true },
                     compute(course) {
-                        return CourseStats.parse(course.stats ?? {});
+                        const stats = CourseStats.parse(course.stats);
+                        const accuracy = calcAccuracy(stats.submissions, stats.submissionsCorrect);
+                        const difficulty = calcDifficulty(stats.submissions, stats.submissionsCorrect);
+                        return {
+                            ...stats,
+                            accuracy: accuracy,
+                            difficulty: difficulty
+                        };
                     },
                 },
             },
@@ -105,7 +112,14 @@ export default prisma
                 stats: {
                     needs: { stats: true },
                     compute(exam) {
-                        return ExamStats.parse(exam.stats ?? {});
+                        const stats = ExamStats.parse(exam.stats);
+                        const accuracy = calcAccuracy(stats.submissions, stats.submissionsCorrect);
+                        const difficulty = calcDifficulty(stats.submissions, stats.submissionsCorrect);
+                        return {
+                            ...stats,
+                            accuracy: accuracy,
+                            difficulty: difficulty
+                        };
                     },
                 },
             },
@@ -120,22 +134,29 @@ export default prisma
                 stats: {
                     needs: { stats: true },
                     compute(question) {
-                        return QuestionStats.parse(question.stats ?? {});
+                        const stats = QuestionStats.parse(question.stats);
+                        const accuracy = calcAccuracy(stats.submissions, stats.submissionsCorrect);
+                        const difficulty = calcDifficulty(stats.submissions, stats.submissionsCorrect);
+                        return {
+                            ...stats,
+                            accuracy: accuracy,
+                            difficulty: difficulty
+                        };
                     },
-                },
-                difficulty: {
-                    needs: { stats: true },
-                    compute(question) {
-                        const stats = QuestionStats.parse(question.stats ?? {});
-                        return stats.submissions > 50 ? 1 - (stats.submissionsCorrect / stats.submissions) : 0.5;
-                    }
                 },
             },
             topic: {
                 stats: {
                     needs: { stats: true },
                     compute(topic) {
-                        return TopicStats.parse(topic.stats ?? {});
+                        const stats = TopicStats.parse(topic.stats);
+                        const accuracy = calcAccuracy(stats.submissions, stats.submissionsCorrect);
+                        const difficulty = calcDifficulty(stats.submissions, stats.submissionsCorrect);
+                        return {
+                            ...stats,
+                            accuracy: accuracy,
+                            difficulty: difficulty
+                        };
                     },
                 },
             },
@@ -143,9 +164,19 @@ export default prisma
                 stats: {
                     needs: { stats: true },
                     compute(answerChoice) {
-                        return AnswerChoiceStats.parse(answerChoice.stats ?? {});
+                        return AnswerChoiceStats.parse(answerChoice.stats);
                     },
                 },
             },
         },
     });
+
+function calcAccuracy(submissions: number, submissionsCorrect: number) {
+    return submissionsCorrect / Math.max(submissions, 1);
+}
+
+function calcDifficulty(submissions: number, submissionsCorrect: number) {
+    const baselineSubmissions = submissions + 100;
+    const baselineSubmissionsCorrect = submissionsCorrect + 50;
+    return 1 - (baselineSubmissionsCorrect / baselineSubmissions);
+}
