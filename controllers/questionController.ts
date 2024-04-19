@@ -124,12 +124,12 @@ export const PartialQuestion = {
     id: true,
     number: true,
     flags: true,
+    stats: true,
     topics: {
         include: {
             topic: true
         }
     },
-    difficulty: true,
     children: {
         select: {
             id: true,
