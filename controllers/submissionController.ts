@@ -29,11 +29,13 @@ export const ParentSubmissionData = z.array(
 );
 
 export const UpdateSubmissionOptions = z.object({
+    id: z.string().uuid().optional(),
     timeSpentVideo: z.preprocess(coerceBigIntSafely, z.bigint().optional()),
     timeSpentModal: z.preprocess(coerceBigIntSafely, z.bigint().optional()),
 });
 
 export const CreateSubmissionOptions = z.object({
+    id: z.string().uuid().optional(),
     type: z.nativeEnum(QuestionType),
     questionId: z.string().uuid(),
     userSolution: z.union([
