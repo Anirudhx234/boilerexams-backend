@@ -163,6 +163,6 @@ function checkUserSolution(type: QuestionType, userSolution?: unknown, solution?
 }
 
 function coerceBigIntSafely(input?: unknown) {
-    if (!input) return;
+    if (input == undefined) return;
     return BigInt(String(input));
 }
