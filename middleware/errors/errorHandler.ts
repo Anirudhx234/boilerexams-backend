@@ -53,7 +53,7 @@ export default async function errorHandler(error: unknown, req: Request, res: Re
     }
 
     if (error instanceof Prisma.PrismaClientValidationError) {
-        errorResponse.message = "Valid input not provided";
+        errorResponse.message = "Prisma: Valid input not provided";
         return res.status(400).json(errorResponse);
     }
 
@@ -64,7 +64,7 @@ export default async function errorHandler(error: unknown, req: Request, res: Re
 
     if (error instanceof ZodError) {
         const err = error as ZodError;
-        errorResponse.message = "Valid input not provided";
+        errorResponse.message = "Zod: Valid input not provided";
         errorResponse.fullError = err.errors;
 
         try {
