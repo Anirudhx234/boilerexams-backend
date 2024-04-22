@@ -16,6 +16,7 @@ export const FeatureRequestData = z.object({
 });
 
 export const QuestionReportData = FeatureRequestData.extend({
+    title: z.string(),
     userAgent:  z.string().default("No UserAgent"),
 });
 
@@ -213,8 +214,6 @@ export async function reportBug(req: Request, res: Response) {
 }
 
 export async function reportQuestion(req: Request, res: Response) {
-    const options = QuestionReportData.parse(req.body);
-
     const question = await prisma.question.findFirstOrThrow({
         where: await Resolver.question(req),
         include: {
@@ -242,6 +241,11 @@ export async function reportQuestion(req: Request, res: Response) {
         .concat(`Exam ${exam.number} | `)
         .concat(`Question ${question.number}`)
         .replace("Exam 0", "Final Exam");
+
+    const options = QuestionReportData.parse({
+        title: title,
+        ...req.body
+    });
 
     const report = await prisma.feedback.create({
         data: {
