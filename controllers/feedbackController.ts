@@ -8,6 +8,8 @@ import { z } from "zod";
 import prisma from "../prisma/prisma.js";
 import Resolver from "../helpers/resolver.js";
 import uploadFileToS3 from "../utils/uploadFileToS3.js";
+import sendMail from "../utils/sendMail.js";
+import bugSubmissionTemplate from "../utils/emailTemplates/bugSubmission.js";
 
 export const FeatureRequestData = z.object({
     title:      z.string(),
@@ -209,6 +211,15 @@ export async function reportBug(req: Request, res: Response) {
         },
     });
 
+    let regexp = new RegExp(/^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/);
+    if (options.contact && regexp.test(options.contact)) {
+            const emailOptions = {
+            to: options.contact,
+            subject: `Bug Report: ${report.id}`,
+            html: bugSubmissionTemplate(report.id, options.title),
+        };
+        await sendMail(emailOptions);
+    }
     await DiscordAPI.createFeedback(report);
     res.status(200).send("Success");
 }
