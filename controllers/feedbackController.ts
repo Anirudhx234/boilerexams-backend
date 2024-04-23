@@ -299,6 +299,9 @@ export async function requestFeature(req: Request, res: Response) {
             data: {
                 ...options
             }
+        },
+        include: {
+            user: true
         }
     });
 
