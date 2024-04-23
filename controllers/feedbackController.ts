@@ -230,7 +230,7 @@ export async function reportQuestion(req: Request, res: Response) {
                     year: true,
                     number: true,
                 },
-            },
+            }
         },
     });
 
@@ -261,8 +261,27 @@ export async function reportQuestion(req: Request, res: Response) {
             }
         },
         include: {
-            question: true,
             user: true,
+            course: {
+                select: {
+                    abbreviation: true,
+                    number: true,
+                    users: true,
+                },
+            },
+            exam: {
+                select: {
+                    season: true,
+                    year: true,
+                    number: true,
+                },
+            },
+            question: {
+                select: {
+                    id: true,
+                    number: true
+                }
+            }
         },
     });
 
