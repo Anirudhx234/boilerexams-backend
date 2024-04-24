@@ -227,27 +227,55 @@ export async function reorderExamQuestions(req: Request, res: Response) {
     );
 }
 
+
+
 export async function toggleExamPublished(req: Request, res: Response) {
     const exam = await prisma.exam.findUniqueOrThrow({
         where: await Resolver.exam(req),
         select: {
             id: true,
             flags: true,
+            questions: {
+                select: {
+                    flags: true
+                }
+            }
         },
     });
 
     const status = !exam.flags.published;
 
-    await prisma.exam.update({
-        where: {
-            id: exam.id,
-        },
-        data: {
-            flags: FlagEncoder.exam({
-                ...exam.flags,
-                published: status,
-            }),
-        },
+    await prisma.$transaction(async (prisma) => {
+        // 1. Update the exam
+        // 2. Update existing questions
+        const updatedExam = await prisma.exam.update({
+            where: {
+                id: exam.id,
+            },
+            data: {
+                flags: FlagEncoder.exam({
+                    ...exam.flags,
+                    published: status,
+                }),
+            },
+            include: {
+                questions: true,
+            }
+        });
+
+        for (const question of updatedExam.questions) {
+            await prisma.question.update({
+                where: {
+                    id: question.id,
+                },
+                data: {
+                    flags: FlagEncoder.question({
+                        ...question.flags,
+                        published: status,
+                    }),
+                },
+            });
+        }
     });
 
     res.status(200).send({
