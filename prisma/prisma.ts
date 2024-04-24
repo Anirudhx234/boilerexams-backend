@@ -178,5 +178,5 @@ function calcAccuracy(submissions: number, submissionsCorrect: number) {
 function calcDifficulty(submissions: number, submissionsCorrect: number) {
     const baselineSubmissions = submissions + 100;
     const baselineSubmissionsCorrect = submissionsCorrect + 50;
-    return 1 - (baselineSubmissionsCorrect / baselineSubmissions);
+    return 1.25 - (baselineSubmissionsCorrect / baselineSubmissions);
 }
