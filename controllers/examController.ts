@@ -237,6 +237,7 @@ export async function toggleExamPublished(req: Request, res: Response) {
             flags: true,
             questions: {
                 select: {
+                    id: true,
                     flags: true
                 }
             }
@@ -248,7 +249,7 @@ export async function toggleExamPublished(req: Request, res: Response) {
     await prisma.$transaction(async (prisma) => {
         // 1. Update the exam
         // 2. Update existing questions
-        const updatedExam = await prisma.exam.update({
+        await prisma.exam.update({
             where: {
                 id: exam.id,
             },
@@ -257,13 +258,10 @@ export async function toggleExamPublished(req: Request, res: Response) {
                     ...exam.flags,
                     published: status,
                 }),
-            },
-            include: {
-                questions: true,
             }
         });
 
-        for (const question of updatedExam.questions) {
+        for (const question of exam.questions) {
             await prisma.question.update({
                 where: {
                     id: question.id,
