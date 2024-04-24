@@ -47,6 +47,36 @@ export const CourseRequestOptions = z.object({
     number:         z.coerce.number().min(100).max(99999)
 });
 
+const FeedbackInclude = {
+    user: true,
+    course: {
+        select: {
+            id: true,
+            abbreviation: true,
+            number: true,
+            name: true,
+            subject: true,
+            users: true
+        }
+    },
+    exam: {
+        select: {
+            id: true,
+            flags: true,
+            year: true,
+            number: true,
+            season: true
+        }
+    },
+    question: {
+        select: {
+            id: true,
+            flags: true,
+            number: true
+        }
+    }
+};
+
 export async function getCourseRequests(req: Request, res: Response) {
     const courseRequests = await prisma.courseRequest.findMany();
     res.status(200).send(courseRequests);
@@ -59,61 +89,24 @@ export async function getFeedback(req: Request, res: Response) {
         where: {
             id: feedbackId
         },
-        include: {
-            user: true,
-            question: {
-                include: {
-                    course: {
-                        include: {
-                            users: true // Need users on course for Question Reports
-                        }
-                    }
-                }
-            }
-        }
+        include: FeedbackInclude
     });
 
     res.status(200).send(feedback);
 }
 
 export async function getManyFeedback(req: Request, res: Response) {
-    const question = await getQuestionSafe(req);
-    const exam = await getExamSafe(req);
     const course = await getCourseSafe(req);
 
     const feedback = await prisma.feedback.findMany({
         where: {
-            questionId: question?.id,
-            examId:     exam?.id,
-            courseId:   course?.id
+            courseId: course?.id
         },
-        include: {
-            question: {
-                select: {
-                    id: true,
-                    flags: true,
-                    number: true
-                }
-            },
-            exam: {
-                select: {
-                    id: true,
-                    flags: true,
-                    year: true,
-                    number: true,
-                    season: true
-                }
-            },
-            course: {
-                select: {
-                    id: true,
-                    abbreviation: true,
-                    number: true,
-                    name: true,
-                    subject: true
-                }
-            }
-        }
+        include: FeedbackInclude,
+        orderBy: [
+            { createdAt: "asc" },
+            { updatedAt: "asc" }
+        ]
     });
 
     res.status(200).send(feedback);
@@ -206,20 +199,20 @@ export async function reportBug(req: Request, res: Response) {
                 ...options
             },
         },
-        include: {
-            user: true,
-        },
+        include: FeedbackInclude
     });
 
-    let regexp = new RegExp(/^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/);
-    if (options.contact && regexp.test(options.contact)) {
-            const emailOptions = {
-            to: options.contact,
+    const emailParse = z.string().email().safeParse(options.contact);
+
+    if (emailParse.success) {
+        const emailOptions = {
+            to: emailParse.data,
             subject: `Bug Report: ${report.id}`,
             html: bugSubmissionTemplate(report.id, options.title),
         };
         await sendMail(emailOptions);
     }
+
     await DiscordAPI.createFeedback(report);
     res.status(200).send("Success");
 }
@@ -271,29 +264,7 @@ export async function reportQuestion(req: Request, res: Response) {
                 title: title
             }
         },
-        include: {
-            user: true,
-            course: {
-                select: {
-                    abbreviation: true,
-                    number: true,
-                    users: true,
-                },
-            },
-            exam: {
-                select: {
-                    season: true,
-                    year: true,
-                    number: true,
-                },
-            },
-            question: {
-                select: {
-                    id: true,
-                    number: true
-                }
-            }
-        },
+        include: FeedbackInclude
     });
 
     await DiscordAPI.createFeedback(report);
@@ -311,9 +282,7 @@ export async function requestFeature(req: Request, res: Response) {
                 ...options
             }
         },
-        include: {
-            user: true
-        }
+        include: FeedbackInclude
     });
 
     await DiscordAPI.createFeedback(request);
@@ -382,36 +351,6 @@ async function getCourseSafe(req: Request) {
     try {
         return await prisma.course.findUniqueOrThrow({
             where: Resolver.course(req),
-        });
-    } catch {
-        return undefined;
-    }
-}
-
-async function getExamSafe(req: Request) {
-    try {
-        return await prisma.exam.findUniqueOrThrow({
-            where: await Resolver.exam(req),
-        });
-    } catch {
-        return undefined;
-    }
-}
-
-async function getTopicSafe(req: Request) {
-    try {
-        return await prisma.topic.findUniqueOrThrow({
-            where: await Resolver.topic(req),
-        });
-    } catch {
-        return undefined;
-    }
-}
-
-async function getQuestionSafe(req: Request) {
-    try {
-        return await prisma.question.findFirstOrThrow({
-            where: await Resolver.question(req),
         });
     } catch {
         return undefined;
