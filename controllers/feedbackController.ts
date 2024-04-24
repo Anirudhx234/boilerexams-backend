@@ -10,6 +10,7 @@ import Resolver from "../helpers/resolver.js";
 import uploadFileToS3 from "../utils/uploadFileToS3.js";
 import sendMail from "../utils/sendMail.js";
 import bugSubmissionTemplate from "../utils/emailTemplates/bugSubmission.js";
+import applicationTemplate from "../utils/emailTemplates/application.js";
 
 export const FeatureRequestData = z.object({
     title:      z.string(),
@@ -145,6 +146,16 @@ export async function createApplication(req: Request, res: Response) {
             }
         },
     });
+
+    let regexp = new RegExp(/^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/);
+    if (email && regexp.test(email)) {
+            const emailOptions = {
+            to: email,
+            subject: `Application Received Confirmation`,
+            html: applicationTemplate(application.id, application.name),
+        };
+        await sendMail(emailOptions);
+    }
 
     await DiscordAPI.createApplication(application);
     res.status(200).send(application);
