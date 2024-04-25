@@ -4,8 +4,10 @@ import APIError from "../errors/APIError.js";
 
 const storage = multer.memoryStorage();
 
-const kilobyte = 1000;
-const megabyte = kilobyte * kilobyte;
+const bit = 1 / 8;
+const byte = 8 * bit;
+const kibibyte = 1024 * byte;
+const mebibyte = 1024 * kibibyte;
 const validFileTypes = ["image/jpeg", "image/png", "application/pdf"];
 
 function fileFilter(_req: Express.Request, file: Express.Multer.File, callback: multer.FileFilterCallback) {
@@ -20,7 +22,7 @@ const upload = multer({
     storage: storage,
     fileFilter: fileFilter,
     limits: {
-        fileSize: 5 * megabyte,
+        fileSize: 5 * mebibyte,
     },
 });
 

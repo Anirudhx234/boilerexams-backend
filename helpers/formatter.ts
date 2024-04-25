@@ -95,7 +95,9 @@ export default class Formatter {
         if (!options.data) return undefined;
         return options.data
             .map((relation) => Formatter.questionToTopic({ ...options, data: relation }))
-            .filter((relation) => options.sendUnpublished || relation.question?.flags.published);
+            .filter((relation) => {
+                return options.sendUnpublished || !relation.question || relation.question.flags.published;
+            });
     }
 }
 
