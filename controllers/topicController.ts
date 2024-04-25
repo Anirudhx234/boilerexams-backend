@@ -199,12 +199,8 @@ export async function setTopicQuestions(req: Request, res: Response) {
 }
 
 export async function deleteTopic(req: Request, res: Response) {
-    const { topicId } = req.params;
-
     const topic = await prisma.topic.delete({
-        where: {
-            id: topicId,
-        },
+        where: await Resolver.topic(req)
     });
 
     if (!topic) {

@@ -3,7 +3,6 @@ import { FeedbackStatus, FeedbackType, ResourceType } from "@prisma/client";
 import { Request, Response } from "express";
 import { DiscordAPI } from "../services/discord.api.js";
 import { PurdueIoAPI } from "../services/purdue.io.js";
-import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import prisma from "../prisma/prisma.js";
 import Resolver from "../helpers/resolver.js";
@@ -19,6 +18,7 @@ export const FeatureRequestData = z.object({
 });
 
 export const QuestionReportData = FeatureRequestData.extend({
+    title: z.string(),
     userAgent:  z.string().default("No UserAgent"),
 });
 
@@ -33,19 +33,40 @@ export const VideoFeedbackData = z.object({
     content:            z.string().optional()
 });
 
-export const FeedbackOptions = z.object({
-    id:         z.string().uuid().default(randomUUID),
-    type:       z.nativeEnum(FeedbackType),
-    status:     z.nativeEnum(FeedbackStatus).default(FeedbackStatus.OPEN),
-    data:       z.object({}),
-    userId:     z.string().uuid().optional(),
-    questionId: z.string().uuid().optional(),
-});
-
 export const CourseRequestOptions = z.object({
     abbreviation:   z.string().toUpperCase(),
     number:         z.coerce.number().min(100).max(99999)
 });
+
+const FeedbackInclude = {
+    user: true,
+    course: {
+        select: {
+            id: true,
+            abbreviation: true,
+            number: true,
+            name: true,
+            subject: true,
+            users: true
+        }
+    },
+    exam: {
+        select: {
+            id: true,
+            flags: true,
+            year: true,
+            number: true,
+            season: true
+        }
+    },
+    question: {
+        select: {
+            id: true,
+            flags: true,
+            number: true
+        }
+    }
+};
 
 export async function getCourseRequests(req: Request, res: Response) {
     const courseRequests = await prisma.courseRequest.findMany();
@@ -59,61 +80,24 @@ export async function getFeedback(req: Request, res: Response) {
         where: {
             id: feedbackId
         },
-        include: {
-            user: true,
-            question: {
-                include: {
-                    course: {
-                        include: {
-                            users: true // Need users on course for Question Reports
-                        }
-                    }
-                }
-            }
-        }
+        include: FeedbackInclude
     });
 
     res.status(200).send(feedback);
 }
 
 export async function getManyFeedback(req: Request, res: Response) {
-    const question = await getQuestionSafe(req);
-    const exam = await getExamSafe(req);
     const course = await getCourseSafe(req);
 
     const feedback = await prisma.feedback.findMany({
         where: {
-            questionId: question?.id,
-            examId:     exam?.id,
-            courseId:   course?.id
+            courseId: course?.id
         },
-        include: {
-            question: {
-                select: {
-                    id: true,
-                    flags: true,
-                    number: true
-                }
-            },
-            exam: {
-                select: {
-                    id: true,
-                    flags: true,
-                    year: true,
-                    number: true,
-                    season: true
-                }
-            },
-            course: {
-                select: {
-                    id: true,
-                    abbreviation: true,
-                    number: true,
-                    name: true,
-                    subject: true
-                }
-            }
-        }
+        include: FeedbackInclude,
+        orderBy: [
+            { createdAt: "asc" },
+            { updatedAt: "asc" }
+        ]
     });
 
     res.status(200).send(feedback);
@@ -208,7 +192,7 @@ export async function reportBug(req: Request, res: Response) {
     const options = BugReportData.parse(req.body);
     const user = req.user;
 
-    const report = await prisma.feedback.create({
+    await prisma.feedback.create({
         data: {
             type: FeedbackType.BUG_REPORT,
             userId: user?.id,
@@ -216,27 +200,13 @@ export async function reportBug(req: Request, res: Response) {
                 ...options
             },
         },
-        include: {
-            user: true,
-        },
+        include: FeedbackInclude
     });
 
-    let regexp = new RegExp(/^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/);
-    if (options.contact && regexp.test(options.contact)) {
-            const emailOptions = {
-            to: options.contact,
-            subject: `Bug Report: ${report.id}`,
-            html: bugSubmissionTemplate(report.id, options.title),
-        };
-        await sendMail(emailOptions);
-    }
-    await DiscordAPI.createFeedback(report);
     res.status(200).send("Success");
 }
 
 export async function reportQuestion(req: Request, res: Response) {
-    const options = QuestionReportData.parse(req.body);
-
     const question = await prisma.question.findFirstOrThrow({
         where: await Resolver.question(req),
         include: {
@@ -253,7 +223,7 @@ export async function reportQuestion(req: Request, res: Response) {
                     year: true,
                     number: true,
                 },
-            },
+            }
         },
     });
 
@@ -264,6 +234,11 @@ export async function reportQuestion(req: Request, res: Response) {
         .concat(`Exam ${exam.number} | `)
         .concat(`Question ${question.number}`)
         .replace("Exam 0", "Final Exam");
+
+    const options = QuestionReportData.parse({
+        title: title,
+        ...req.body
+    });
 
     const report = await prisma.feedback.create({
         data: {
@@ -278,13 +253,9 @@ export async function reportQuestion(req: Request, res: Response) {
                 title: title
             }
         },
-        include: {
-            question: true,
-            user: true,
-        },
+        include: FeedbackInclude
     });
 
-    await DiscordAPI.createFeedback(report);
     res.status(200).send(report);
 }
 
@@ -298,10 +269,10 @@ export async function requestFeature(req: Request, res: Response) {
             data: {
                 ...options
             }
-        }
+        },
+        include: FeedbackInclude
     });
 
-    await DiscordAPI.createFeedback(request);
     res.status(200).send(request);
 }
 
@@ -367,36 +338,6 @@ async function getCourseSafe(req: Request) {
     try {
         return await prisma.course.findUniqueOrThrow({
             where: Resolver.course(req),
-        });
-    } catch {
-        return undefined;
-    }
-}
-
-async function getExamSafe(req: Request) {
-    try {
-        return await prisma.exam.findUniqueOrThrow({
-            where: await Resolver.exam(req),
-        });
-    } catch {
-        return undefined;
-    }
-}
-
-async function getTopicSafe(req: Request) {
-    try {
-        return await prisma.topic.findUniqueOrThrow({
-            where: await Resolver.topic(req),
-        });
-    } catch {
-        return undefined;
-    }
-}
-
-async function getQuestionSafe(req: Request) {
-    try {
-        return await prisma.question.findFirstOrThrow({
-            where: await Resolver.question(req),
         });
     } catch {
         return undefined;
