@@ -125,6 +125,9 @@ export async function createApplication(req: Request, res: Response) {
                 }
             }
         },
+        include: {
+            resume: true
+        }
     });
 
     res.status(200).send(application);
