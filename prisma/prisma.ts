@@ -1,6 +1,6 @@
 import { AnswerChoiceStats, CourseStats, ExamStats, QuestionStats, TopicStats } from "../controllers/statsController.js";
 import { deleteFileFromS3 } from "../utils/uploadFileToS3.js";
-import { Feedback, PrismaClient } from "@prisma/client";
+import { Application, Feedback, PrismaClient } from "@prisma/client";
 import { UrlResourceData } from "../controllers/resourceController.js";
 import FlagDecoder from "../helpers/decoder.js";
 import { z } from "zod";
@@ -8,6 +8,7 @@ import bugSubmissionTemplate from "../utils/emailTemplates/bugSubmission.js";
 import sendMail from "../utils/sendMail.js";
 import { DiscordAPI } from "../services/discord.api.js";
 import { FeatureRequestData } from "../controllers/feedbackController.js";
+import applicationTemplate from "../utils/emailTemplates/application.js";
 
 const prisma = new PrismaClient();
 
@@ -75,6 +76,35 @@ export default prisma
 
                     await DiscordAPI.createFeedback(feedback);
                     return feedback;
+                }
+            },
+            application: {
+                async create({ query, args }) {
+                    const application = await query(args) as Application;
+
+                    const emailOptions = {
+                        to: application.email,
+                        subject: `Application Received Confirmation`,
+                        html: applicationTemplate(application.id, application.name),
+                    };
+
+                    await sendMail(emailOptions);
+                    await DiscordAPI.createApplication(application);
+                }
+            },
+            courseRequest: {
+                async create({ query, args }) {
+                    const request = await query(args);
+                    const courseRequests = await prisma.courseRequest.findMany({});
+                    await DiscordAPI.updateCourseRequests(courseRequests);
+                    return request;
+                },
+
+                async update({ query, args }) {
+                    const request = await query(args);
+                    const courseRequests = await prisma.courseRequest.findMany({});
+                    await DiscordAPI.updateCourseRequests(courseRequests);
+                    return request;
                 }
             }
         },

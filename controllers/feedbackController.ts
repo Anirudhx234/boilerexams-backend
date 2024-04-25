@@ -1,7 +1,6 @@
 import APIError from "../middleware/errors/APIError.js";
 import { FeedbackStatus, FeedbackType, ResourceType } from "@prisma/client";
 import { Request, Response } from "express";
-import { DiscordAPI } from "../services/discord.api.js";
 import { PurdueIoAPI } from "../services/purdue.io.js";
 import { z } from "zod";
 import prisma from "../prisma/prisma.js";
@@ -128,7 +127,6 @@ export async function createApplication(req: Request, res: Response) {
         },
     });
 
-    await DiscordAPI.createApplication(application);
     res.status(200).send(application);
 }
 
@@ -170,8 +168,6 @@ export async function requestCourse(req: Request, res: Response) {
         },
     });
 
-    const courseRequests = await prisma.courseRequest.findMany({});
-    await DiscordAPI.updateCourseRequests(courseRequests);
     res.status(200).send(courseRequest);
 }
 
