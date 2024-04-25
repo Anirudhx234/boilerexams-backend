@@ -1,8 +1,13 @@
 import { AnswerChoiceStats, CourseStats, ExamStats, QuestionStats, TopicStats } from "../controllers/statsController.js";
 import { deleteFileFromS3 } from "../utils/uploadFileToS3.js";
-import { PrismaClient } from "@prisma/client";
+import { Feedback, PrismaClient } from "@prisma/client";
 import { UrlResourceData } from "../controllers/resourceController.js";
 import FlagDecoder from "../helpers/decoder.js";
+import { z } from "zod";
+import bugSubmissionTemplate from "../utils/emailTemplates/bugSubmission.js";
+import sendMail from "../utils/sendMail.js";
+import { DiscordAPI } from "../services/discord.api.js";
+import { FeatureRequestData } from "../controllers/feedbackController.js";
 
 const prisma = new PrismaClient();
 
@@ -49,6 +54,29 @@ export default prisma
                     return resource;
                 },
             },
+            feedback: {
+                async create({ query, args }) {
+                    const feedback = await query(args) as Feedback;
+                    const dataParse = FeatureRequestData.safeParse(feedback.data);
+
+                    if (!dataParse.success) return feedback;
+
+                    const emailParse = z.string().email().safeParse(dataParse.data.contact);
+
+                    if (emailParse.success) {
+                        const emailOptions = {
+                            to: emailParse.data,
+                            subject: `Bug Report: ${feedback.id}`,
+                            html: bugSubmissionTemplate(feedback.id, dataParse.data.title),
+                        };
+
+                        await sendMail(emailOptions);
+                    }
+
+                    await DiscordAPI.createFeedback(feedback);
+                    return feedback;
+                }
+            }
         },
         result: {
             // Extension of result allows us to modify result of a fetch query

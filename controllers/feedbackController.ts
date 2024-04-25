@@ -3,13 +3,10 @@ import { FeedbackStatus, FeedbackType, ResourceType } from "@prisma/client";
 import { Request, Response } from "express";
 import { DiscordAPI } from "../services/discord.api.js";
 import { PurdueIoAPI } from "../services/purdue.io.js";
-import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import prisma from "../prisma/prisma.js";
 import Resolver from "../helpers/resolver.js";
 import uploadFileToS3 from "../utils/uploadFileToS3.js";
-import sendMail from "../utils/sendMail.js";
-import bugSubmissionTemplate from "../utils/emailTemplates/bugSubmission.js";
 
 export const FeatureRequestData = z.object({
     title:      z.string(),
@@ -31,15 +28,6 @@ export const VideoFeedbackData = z.object({
     productionQuality:  z.number().min(1).max(5),
     recommended:        z.boolean(),
     content:            z.string().optional()
-});
-
-export const FeedbackOptions = z.object({
-    id:         z.string().uuid().default(randomUUID),
-    type:       z.nativeEnum(FeedbackType),
-    status:     z.nativeEnum(FeedbackStatus).default(FeedbackStatus.OPEN),
-    data:       z.object({}),
-    userId:     z.string().uuid().optional(),
-    questionId: z.string().uuid().optional(),
 });
 
 export const CourseRequestOptions = z.object({
@@ -191,7 +179,7 @@ export async function reportBug(req: Request, res: Response) {
     const options = BugReportData.parse(req.body);
     const user = req.user;
 
-    const report = await prisma.feedback.create({
+    await prisma.feedback.create({
         data: {
             type: FeedbackType.BUG_REPORT,
             userId: user?.id,
@@ -202,18 +190,6 @@ export async function reportBug(req: Request, res: Response) {
         include: FeedbackInclude
     });
 
-    const emailParse = z.string().email().safeParse(options.contact);
-
-    if (emailParse.success) {
-        const emailOptions = {
-            to: emailParse.data,
-            subject: `Bug Report: ${report.id}`,
-            html: bugSubmissionTemplate(report.id, options.title),
-        };
-        await sendMail(emailOptions);
-    }
-
-    await DiscordAPI.createFeedback(report);
     res.status(200).send("Success");
 }
 
@@ -267,7 +243,6 @@ export async function reportQuestion(req: Request, res: Response) {
         include: FeedbackInclude
     });
 
-    await DiscordAPI.createFeedback(report);
     res.status(200).send(report);
 }
 
@@ -285,7 +260,6 @@ export async function requestFeature(req: Request, res: Response) {
         include: FeedbackInclude
     });
 
-    await DiscordAPI.createFeedback(request);
     res.status(200).send(request);
 }
 
