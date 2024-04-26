@@ -23,9 +23,18 @@ export async function getAllTopics(req: Request, res: Response) {
                 include: {
                     question: true,
                 },
-                orderBy: {
-                    number: "asc",
-                },
+                orderBy: [
+                    {
+                        question: {
+                            examId: "asc",
+                        }
+                    },
+                    {
+                        question: {
+                            number: "asc",
+                        }
+                    },
+                ]
             },
         },
     });
@@ -48,6 +57,18 @@ export async function getTopic(req: Request, res: Response) {
                         select: PartialQuestion,
                     },
                 },
+                orderBy: [
+                    {
+                        question: {
+                            examId: "asc",
+                        }
+                    },
+                    {
+                        question: {
+                            number: "asc",
+                        }
+                    },
+                ]
             },
         },
     });
@@ -74,12 +95,18 @@ export async function getTopicQuestions(req: Request, res: Response) {
                 include: FullQuestion,
             },
         },
-        orderBy: {
-            question: {
-                examId: "asc",
-                number: "asc"
-            }
-        },
+        orderBy: [
+            {
+                question: {
+                    examId: "asc",
+                }
+            },
+            {
+                question: {
+                    number: "asc",
+                }
+            },
+        ]
     });
 
     const formattedQuestionToTopics = Formatter.questionsToTopics({
