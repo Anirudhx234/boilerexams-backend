@@ -48,12 +48,6 @@ export async function getTopic(req: Request, res: Response) {
                         select: PartialQuestion,
                     },
                 },
-                orderBy: {
-                    question: {
-                        examId: "asc",
-                        number: "asc"
-                    },
-                },
             },
         },
     });
