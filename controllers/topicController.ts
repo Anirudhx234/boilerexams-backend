@@ -75,7 +75,10 @@ export async function getTopicQuestions(req: Request, res: Response) {
             },
         },
         orderBy: {
-            number: "asc",
+            question: {
+                examId: "asc",
+                number: "asc"
+            }
         },
     });
 
