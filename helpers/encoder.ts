@@ -8,6 +8,7 @@ export default class FlagEncoder {
         let encodedFlags = 0;
 
         if (flags.published) encodedFlags |= 1 << 0;
+        if (flags.invertImageColors) encodedFlags |= 1 << 1;
 
         return encodedFlags;
     }

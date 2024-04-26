@@ -7,6 +7,7 @@ export default class FlagDecoder {
     public static course(flags: number): z.infer<typeof CourseFlags> {
         return {
             published: ((flags >> 0) & 1) === 1,
+            invertImageColors: ((flags >> 1) & 1) === 1
         };
     }
 

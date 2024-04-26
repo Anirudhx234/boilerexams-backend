@@ -12,6 +12,7 @@ import Resolver from "../helpers/resolver.js";
 
 export const CourseFlags = z.object({
     published: z.boolean().default(false),
+    invertImageColors: z.boolean().default(false)
 });
 
 export const CreateCourseOptions = z.object({
