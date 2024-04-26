@@ -34,7 +34,10 @@ export const FreeResponseData = z.object({
 
 export const ShortAnswerData = FreeResponseData;
 
-export const FillInBlankData = FreeResponseData;
+export const FillInBlankData = z.object({
+    body:       z.string().optional(),
+    solution:   z.array(z.string()),
+});
 
 export const QuestionData = z.union([
     ParentData, MultipleChoiceData, FreeResponseData, ShortAnswerData, FillInBlankData
