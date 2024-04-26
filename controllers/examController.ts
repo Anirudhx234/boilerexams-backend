@@ -72,7 +72,11 @@ export async function getAllExams(req: Request, res: Response) {
                 },
             },
         },
-        orderBy: [{ year: "asc" }, { season: "asc" }, { number: "asc" }],
+        orderBy: [
+            { year: "desc" },
+            { season: "asc" },
+            { number: "asc" }
+        ],
     });
 
     res.status(200).send(

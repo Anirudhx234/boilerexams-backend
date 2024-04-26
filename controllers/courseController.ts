@@ -159,7 +159,7 @@ export async function getCourseExams(req: Request, res: Response) {
             },
         },
         orderBy: [
-            { year: "asc" },
+            { year: "desc" },
             { season: "asc" },
             { number: "asc" }
         ],
