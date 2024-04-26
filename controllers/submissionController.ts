@@ -14,7 +14,7 @@ export const FreeResponseSubmissionData = z.string().optional();
 
 export const ShortAnswerSubmissionData = FreeResponseSubmissionData;
 
-export const FillInBlankSubmissionData = FreeResponseSubmissionData;
+export const FillInBlankSubmissionData = z.array(z.string());
 
 export const ParentSubmissionData = z.array(
     z.object({
@@ -137,7 +137,7 @@ function checkUserSolution(type: QuestionType, userSolution?: unknown, solution?
     switch (type) {
         case QuestionType.MULTIPLE_CHOICE:
             {
-                const parsedUserSolution = z.array(z.number()).parse(userSolution);
+                const parsedUserSolution = MultipleChoiceSubmissionData.parse(userSolution);
                 const parseSolution = z.array(z.number()).parse(solution);
                 if (parsedUserSolution.length < 1) return false;
                 for (const entry of parsedUserSolution) {
@@ -149,10 +149,24 @@ function checkUserSolution(type: QuestionType, userSolution?: unknown, solution?
 
         case QuestionType.SHORT_ANSWER:
             {
-                const parsedUserSolution = z.string().parse(userSolution);
-                const parsedSolution = z.string().parse(solution);
-                if (parsedUserSolution.length < 1) return false;
-                if (parsedUserSolution != parsedSolution || parsedUserSolution) return false;
+                const parsedUserSolution = ShortAnswerSubmissionData.parse(userSolution);
+                const parsedSolution = ShortAnswerSubmissionData.parse(solution);
+                if (!parsedUserSolution || parsedUserSolution.length < 1) return false;
+                if (parsedUserSolution != parsedSolution) return false;
+            }
+            break;
+
+        case QuestionType.FILL_IN_BLANK:
+            {
+                const parsedUserSolution = FillInBlankSubmissionData.parse(userSolution);
+                const parsedSolution = FillInBlankSubmissionData.parse(solution);
+
+                for (let i = 0; i < parsedSolution.length; i++) {
+                    const values = parsedSolution[i].split("|");
+                    if (!values.includes(parsedUserSolution[i])) {
+                        return false;
+                    }
+                }
             }
             break;
 
