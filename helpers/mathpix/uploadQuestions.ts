@@ -1,6 +1,6 @@
-import prisma from "../../prisma/prisma.js";
 import { QuestionType, ResourceType } from "@prisma/client";
 import axios from "axios";
+import prisma from "../../prisma/prisma.js";
 import uploadFileToS3 from "../../utils/uploadFileToS3.js";
 
 const uploadQuestions = async (courseId: string, examId: string, questions: any[]) => {
@@ -9,7 +9,7 @@ const uploadQuestions = async (courseId: string, examId: string, questions: any[
         const index = questions.indexOf(question);
         const newQuestion = {
             number: index + 1,
-            body: question[0].content,
+            body: question[0].content
         };
         const tempResources = question[0].hasImage ? question[0].imageLinks : [];
         const questionResources = uploadResources(tempResources);
@@ -20,7 +20,7 @@ const uploadQuestions = async (courseId: string, examId: string, questions: any[
             const index1 = question.indexOf(answerChoice);
             const ac = {
                 choiceIndex: index1,
-                body: answerChoice.content,
+                body: answerChoice.content
                 //resources: [] as any
             };
             //resources = (answerChoice.hasImage) ? (answerChoice.imageLinks) : ([]),
@@ -37,19 +37,19 @@ const uploadQuestions = async (courseId: string, examId: string, questions: any[
                     type: QuestionType.MULTIPLE_CHOICE,
                     data: {
                         body: newQuestion.body,
-                        answerChoices: answerChoices,
+                        answerChoices: answerChoices
                     },
                     resources: {
-                        connect: questionResources?.map((id) => ({ id: id })),
+                        connect: questionResources?.map((id) => ({ id: id }))
                     },
-                    flags: 0,
+                    flags: 0
                 },
                 include: {
                     submissions: true,
                     topics: true,
-                    resources: true,
-                },
-            }),
+                    resources: true
+                }
+            })
         );
     }
     return await Promise.all(promises);
@@ -59,7 +59,7 @@ const uploadResources = (resources) => {
     const resourceIds: string[] = [];
     resources.forEach(async (resource) => {
         const image = await axios.get(resource, {
-            responseType: "arraybuffer",
+            responseType: "arraybuffer"
         });
 
         const contentType = image.headers["content-type"];
@@ -72,9 +72,9 @@ const uploadResources = (resources) => {
                 type: ResourceType.IMAGE,
                 data: {
                     key: data.Key,
-                    url: data.Location,
-                },
-            },
+                    url: data.Location
+                }
+            }
         });
         resourceIds.push(resp.id);
     });

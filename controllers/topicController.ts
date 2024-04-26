@@ -1,17 +1,17 @@
-import APIError from "../middleware/errors/APIError.js";
 import type { Request, Response } from "express";
-import { ReorderQuestions } from "../prisma/schema.js";
-import { FullQuestion, PartialQuestion } from "./questionController.js";
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
+import prisma from "../prisma/prisma.js";
+import { ReorderQuestions } from "../prisma/schema.js";
 import Formatter from "../helpers/formatter.js";
 import Resolver from "../helpers/resolver.js";
-import prisma from "../prisma/prisma.js";
+import APIError from "../middleware/errors/APIError.js";
+import { FullQuestion, PartialQuestion } from "./questionController.js";
 
 export const UpsertTopic = z.object({
     id: z.string().uuid().default(randomUUID),
     name: z.string().max(50, "Topic name must be <= 50 characters"),
-    examNumbers: z.array(z.number().int()).optional(),
+    examNumbers: z.array(z.number().int()).optional()
 });
 
 export const SetTopicQuestionsOptions = z.array(z.string().uuid());
@@ -21,20 +21,20 @@ export async function getAllTopics(req: Request, res: Response) {
         include: {
             questions: {
                 include: {
-                    question: true,
+                    question: true
                 },
                 orderBy: {
-                    number: "asc",
-                },
-            },
-        },
+                    number: "asc"
+                }
+            }
+        }
     });
 
     res.status(200).send(
         Formatter.topics({
             data: topics,
-            sendUnpublished: req.sendUnpublished,
-        }),
+            sendUnpublished: req.sendUnpublished
+        })
     );
 }
 
@@ -47,18 +47,18 @@ export async function getTopic(req: Request, res: Response) {
             questions: {
                 include: {
                     question: {
-                        select: PartialQuestion,
-                    },
-                },
-            },
-        },
+                        select: PartialQuestion
+                    }
+                }
+            }
+        }
     });
 
     res.status(200).send(
         Formatter.topic({
             data: topic,
-            sendUnpublished: req.sendUnpublished,
-        }),
+            sendUnpublished: req.sendUnpublished
+        })
     );
 }
 
@@ -66,26 +66,26 @@ export async function getTopicQuestions(req: Request, res: Response) {
     req.params.topic = req.params["0"];
 
     const topic = await prisma.topic.findUniqueOrThrow({
-        where: await Resolver.topic(req),
+        where: await Resolver.topic(req)
     });
 
     const relations = await prisma.questionToTopic.findMany({
         where: {
-            topicId: topic.id,
+            topicId: topic.id
         },
         include: {
             question: {
-                include: FullQuestion,
-            },
+                include: FullQuestion
+            }
         },
         orderBy: {
-            number: "asc",
-        },
+            number: "asc"
+        }
     });
 
     const formattedQuestionToTopics = Formatter.questionsToTopics({
         data: relations,
-        sendUnpublished: req.sendUnpublished,
+        sendUnpublished: req.sendUnpublished
     });
 
     res.status(200).send(formattedQuestionToTopics?.map((relation) => relation.question));
@@ -95,7 +95,7 @@ export async function createTopic(req: Request, res: Response) {
     const options = UpsertTopic.parse(req.body);
 
     const course = await prisma.course.findUnique({
-        where: Resolver.course(req),
+        where: Resolver.course(req)
     });
 
     if (!course) throw new APIError(`Course not found`, 404);
@@ -103,20 +103,20 @@ export async function createTopic(req: Request, res: Response) {
     const topic = await prisma.topic.create({
         data: {
             ...options,
-            courseId: course.id,
+            courseId: course.id
         },
         include: {
             questions: {
                 include: {
-                    question: true,
-                },
-            },
-        },
+                    question: true
+                }
+            }
+        }
     });
 
     res.status(200).send({
         ...topic,
-        questions: topic.questions.map((relation) => relation.question),
+        questions: topic.questions.map((relation) => relation.question)
     });
 }
 
@@ -127,8 +127,8 @@ export async function updateTopic(req: Request, res: Response) {
     const topic = await prisma.topic.update({
         where: await Resolver.topic(req),
         data: {
-            ...options,
-        },
+            ...options
+        }
     });
 
     res.status(200).send(topic);
@@ -141,8 +141,8 @@ export async function reorderTopicQuestions(req: Request, res: Response) {
         where: await Resolver.topic(req),
         select: {
             id: true,
-            questions: true,
-        },
+            questions: true
+        }
     });
 
     const options = ReorderQuestions.parse(req.body);
@@ -153,15 +153,15 @@ export async function reorderTopicQuestions(req: Request, res: Response) {
                 where: {
                     questionId_topicId: {
                         questionId: relation.questionId,
-                        topicId: relation.topicId,
-                    },
+                        topicId: relation.topicId
+                    }
                 },
                 data: {
-                    number: options.indexOf(relation.questionId) + 1,
+                    number: options.indexOf(relation.questionId) + 1
                 },
-                select: PartialQuestion,
+                select: PartialQuestion
             });
-        }),
+        })
     );
 
     res.status(200).send(questions);
@@ -181,7 +181,7 @@ export async function setTopicQuestions(req: Request, res: Response) {
         },
         data: {
             questions: {
-                set: options.map(questionId => {
+                set: options.map((questionId) => {
                     return {
                         questionId_topicId: {
                             questionId: questionId,
@@ -189,7 +189,7 @@ export async function setTopicQuestions(req: Request, res: Response) {
                         }
                     };
                 })
-            },
+            }
         },
         include: {
             questions: {
@@ -200,10 +200,12 @@ export async function setTopicQuestions(req: Request, res: Response) {
         }
     });
 
-    res.status(200).send(Formatter.topic({
-        data: updatedTopic,
-        sendUnpublished: req.sendUnpublished
-    }));
+    res.status(200).send(
+        Formatter.topic({
+            data: updatedTopic,
+            sendUnpublished: req.sendUnpublished
+        })
+    );
 }
 
 export async function deleteTopic(req: Request, res: Response) {
@@ -224,7 +226,7 @@ export function upsertOrDisconnectTopics(
     questionId: string,
     courseId: string,
     currentTopicIds: string[],
-    topics?: z.infer<typeof UpsertTopic>[],
+    topics?: z.infer<typeof UpsertTopic>[]
 ) {
     const newTopicIds = topics?.map((topic) => topic.id);
 
@@ -237,21 +239,19 @@ export function upsertOrDisconnectTopics(
                         topicId: topic.id
                     }
                 },
-                update: {
-
-                },
+                update: {},
                 create: {
                     topic: {
                         connectOrCreate: {
                             where: {
-                                id: topic.id,
+                                id: topic.id
                             },
                             create: {
                                 name: topic.name,
                                 courseId: courseId,
-                                examNumbers: topic.examNumbers,
-                            },
-                        },
+                                examNumbers: topic.examNumbers
+                            }
+                        }
                     }
                 }
             };
@@ -260,8 +260,8 @@ export function upsertOrDisconnectTopics(
             .filter((id) => !newTopicIds?.includes(id))
             .map((id) => {
                 return {
-                    topicId: id,
+                    topicId: id
                 };
-            }),
+            })
     };
 }

@@ -1,22 +1,22 @@
-import prisma from "../prisma/prisma.js";
 import type { Request, Response } from "express";
+import axios from "axios";
+import FormData from "form-data";
+import prisma from "../prisma/prisma.js";
 import parseQuestions from "../helpers/mathpix/questionParser.js";
 import getPDFResult from "../helpers/mathpix/retrievePDF.js";
-import FormData from "form-data";
-import axios from "axios";
-import APIError from "../middleware/errors/APIError.js";
-import uploadQuestions from "../helpers/mathpix/uploadQuestions.js";
 import savePDFtoExam from "../helpers/mathpix/savePDFtoExam.js";
+import uploadQuestions from "../helpers/mathpix/uploadQuestions.js";
+import APIError from "../middleware/errors/APIError.js";
 
 const checkExistingQuestions = async (examId: string) => {
     const exam = await prisma.exam.findFirst({
         where: {
-            id: examId,
+            id: examId
         },
         include: {
             course: true,
-            questions: true,
-        },
+            questions: true
+        }
     });
 
     if (!exam) {
@@ -40,14 +40,14 @@ const parseFromFile = async (req: Request, res: Response) => {
     const data = new FormData();
     data.append("file", req.file.buffer, {
         filename: req.file.originalname,
-        contentType: req.file.mimetype,
+        contentType: req.file.mimetype
     });
     const options_json = {
         math_inline_delimiters: ["$", "$"],
         conversion_formats: {
-            "tex.zip": true,
+            "tex.zip": true
         },
-        numbers_default_to_math: true,
+        numbers_default_to_math: true
     };
     data.append("options_json", JSON.stringify(options_json));
 
@@ -58,9 +58,9 @@ const parseFromFile = async (req: Request, res: Response) => {
         headers: {
             app_key: process.env["MATHPIX_KEY"],
             "Content-Type": "multipart/form-data",
-            ...data.getHeaders(),
+            ...data.getHeaders()
         },
-        data: data,
+        data: data
     };
     const pdf = await axios.request(config);
     const id = pdf.data.pdf_id;
@@ -73,7 +73,7 @@ const parseFromFile = async (req: Request, res: Response) => {
     } catch (error) {
         return res.status(202).send({
             id: id,
-            message: "PDF not processed yet, please try again later using id",
+            message: "PDF not processed yet, please try again later using id"
         });
     }
     const questions = parseQuestions(content, Number(choices));
@@ -91,7 +91,7 @@ const parseFromLink = async (req: Request, res: Response) => {
 
     const file = await axios.get(link, {
         responseType: "arraybuffer",
-        maxContentLength: 5 * 1024 * 1024,
+        maxContentLength: 5 * 1024 * 1024
     });
 
     const contentType = file.headers["content-type"];
@@ -103,24 +103,24 @@ const parseFromLink = async (req: Request, res: Response) => {
     const headers = {
         app_id: process.env["MATHPIX_ID"],
         app_key: process.env["MATHPIX_KEY"],
-        "Content-Type": "application/json",
+        "Content-Type": "application/json"
     };
     const pdf = await axios.post(
         "https://api.mathpix.com/v3/pdf",
         {
             url: link,
             conversion_formats: {
-                "tex.zip": true,
+                "tex.zip": true
             },
             enable_spell_check: false,
             enable_tables_fallback: false,
             auto_number_sections: false,
             numbers_default_to_math: true,
-            math_inline_delimiters: ["$", "$"],
+            math_inline_delimiters: ["$", "$"]
         },
         {
-            headers: headers,
-        },
+            headers: headers
+        }
     );
     const id = pdf.data.pdf_id;
 
@@ -132,7 +132,7 @@ const parseFromLink = async (req: Request, res: Response) => {
     } catch (error) {
         return res.status(202).send({
             id: id,
-            message: "PDF not processed yet, please try again later using id",
+            message: "PDF not processed yet, please try again later using id"
         });
     }
     const questions = parseQuestions(content, choices);
@@ -165,7 +165,7 @@ const getIdResults = async (req: Request, res: Response) => {
     } catch (error) {
         return res.status(202).send({
             id: pdfId,
-            message: "PDF not processed yet, please try again later using id",
+            message: "PDF not processed yet, please try again later using id"
         });
     }
     const questions = parseQuestions(content, choices);

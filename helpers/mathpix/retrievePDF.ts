@@ -4,11 +4,11 @@ import APIError from "../../middleware/errors/APIError.js";
 const getPDFResult = async (pdf_id: string) => {
     const headers = {
         app_id: process.env["MATHPIX_ID"],
-        app_key: process.env["MATHPIX_KEY"],
+        app_key: process.env["MATHPIX_KEY"]
     };
     const url = "https://api.mathpix.com/v3/pdf/".concat(pdf_id);
     const response = await axios.get(url, {
-        headers: headers,
+        headers: headers
     });
     if (response.data.error) {
         throw new APIError("Requested PDF not found", 404);
@@ -18,7 +18,7 @@ const getPDFResult = async (pdf_id: string) => {
     }
 
     const content = await axios.get(url.concat(".tex"), {
-        headers: headers,
+        headers: headers
     });
 
     return content.data;

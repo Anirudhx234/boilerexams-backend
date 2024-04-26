@@ -10,90 +10,113 @@ import { z } from "zod";
 import prisma from "../prisma/prisma.js";
 import Resolver from "../helpers/resolver.js";
 
-export const AnswerChoiceStats = z
-    .preprocess((stats) => {
-        return stats ?? {
-            count: 0
-        };
-    }, z.object({
+export const AnswerChoiceStats = z.preprocess(
+    (stats) => {
+        return (
+            stats ?? {
+                count: 0,
+            }
+        );
+    },
+    z.object({
         id: z.string().uuid().optional(),
         index: z.number().int().optional(),
         count: z.number().default(0),
-    }));
+    }),
+);
 
-
-export const SubmissionStats = z
-    .preprocess((stats) => {
-        return stats ?? {
-            count: 0,
-            timeSpent: 0n,
-            timeSpentVideo: 0n
-        };
-    }, z.object({
+export const SubmissionStats = z.preprocess(
+    (stats) => {
+        return (
+            stats ?? {
+                count: 0,
+                timeSpent: 0n,
+                timeSpentVideo: 0n,
+            }
+        );
+    },
+    z.object({
         id: z.string().uuid().optional(),
         count: z.number().default(1),
         timeSpent: z.coerce.bigint().default(0n),
         timeSpentVideo: z.coerce.bigint().default(0n),
-    }));
+    }),
+);
 
-export const QuestionStats = z
-    .preprocess((stats) => {
-        return stats ?? {
-            count: 0,
-            submissions: 0,
-            submissionsCorrect: 0,
-            timeSpent: 0n,
-            timeSpentVideo: 0n
-        };
-    }, SubmissionStats.innerType().extend({
+export const QuestionStats = z.preprocess(
+    (stats) => {
+        return (
+            stats ?? {
+                count: 0,
+                submissions: 0,
+                submissionsCorrect: 0,
+                timeSpent: 0n,
+                timeSpentVideo: 0n,
+            }
+        );
+    },
+    SubmissionStats.innerType().extend({
         submissions: z.number().default(0),
         submissionsCorrect: z.number().default(0),
-    }));
+    }),
+);
 
-export const ExamStats = z
-    .preprocess((stats) => {
-        return stats ?? {
-            count: 0,
-            questions: 0,
-            submissions: 0,
-            submissionsCorrect: 0,
-            timeSpent: 0n,
-            timeSpentVideo: 0n
-        };
-    }, QuestionStats.innerType().extend({
+export const ExamStats = z.preprocess(
+    (stats) => {
+        return (
+            stats ?? {
+                count: 0,
+                questions: 0,
+                submissions: 0,
+                submissionsCorrect: 0,
+                timeSpent: 0n,
+                timeSpentVideo: 0n,
+            }
+        );
+    },
+    QuestionStats.innerType().extend({
         questions: z.number().default(0),
-    }));
+    }),
+);
 
-export const TopicStats = z
-    .preprocess((stats) => {
-        return stats ?? {
-            count: 0,
-            questions: 0,
-            submissions: 0,
-            submissionsCorrect: 0,
-            timeSpent: 0n,
-            timeSpentVideo: 0n
-        };
-    }, QuestionStats.innerType().extend({
+export const TopicStats = z.preprocess(
+    (stats) => {
+        return (
+            stats ?? {
+                count: 0,
+                questions: 0,
+                submissions: 0,
+                submissionsCorrect: 0,
+                timeSpent: 0n,
+                timeSpentVideo: 0n,
+            }
+        );
+    },
+    QuestionStats.innerType().extend({
         questions: z.number().default(0),
-    }));
+    }),
+);
 
-export const CourseStats = z
-    .preprocess((stats) => {
-        return stats ?? {
-            count: 0,
-            exams: 0,
-            topics: 0,
-            questions: 0,
-            submissions: 0,
-            submissionsCorrect: 0,
-            timeSpent: 0n,
-            timeSpentVideo: 0n
-        };
-    }, ExamStats.innerType().extend({
+export const CourseStats = z.preprocess(
+    (stats) => {
+        return (
+            stats ?? {
+                count: 0,
+                exams: 0,
+                topics: 0,
+                questions: 0,
+                submissions: 0,
+                submissionsCorrect: 0,
+                timeSpent: 0n,
+                timeSpentVideo: 0n,
+            }
+        );
+    },
+    ExamStats.innerType().extend({
         exams: z.number().default(0),
-        topics: z.number().default(0)
-}));
+        topics: z.number().default(0),
+    }),
+);
 
 export const HourlyStats = z.object({
     x: z.number(),
@@ -210,7 +233,9 @@ function parseOptions(req: Request) {
     const limit = req.query.limit ? Number.parseInt(<string>req.query.limit) : undefined;
     const skip = req.query.skip ? Number.parseInt(<string>req.query.skip) : 0;
 
-    if (sort != "asc" && sort != "desc") throw new APIError('Invalid Query Param Order must be "asc", "desc" or undefined', 400);
+    if (sort != "asc" && sort != "desc") {
+        throw new APIError('Invalid Query Param Order must be "asc", "desc" or undefined', 400);
+    }
 
     return {
         before: before,

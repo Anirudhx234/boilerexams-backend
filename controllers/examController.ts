@@ -1,19 +1,19 @@
-import APIError from "../middleware/errors/APIError.js";
-import { FullQuestion, PartialQuestion } from "./questionController.js";
 import { Request, Response } from "express";
-import { UpsertResourceOptions, upsertResources } from "./resourceController.js";
-import { ReorderQuestions } from "../prisma/schema.js";
 import { Season } from "@prisma/client";
 import { z } from "zod";
+import prisma from "../prisma/prisma.js";
+import { ReorderQuestions } from "../prisma/schema.js";
 import FlagEncoder from "../helpers/encoder.js";
 import Formatter from "../helpers/formatter.js";
-import prisma from "../prisma/prisma.js";
-import Resolver from "../helpers/resolver.js";
 import savePDFtoExam from "../helpers/mathpix/savePDFtoExam.js";
+import Resolver from "../helpers/resolver.js";
+import APIError from "../middleware/errors/APIError.js";
+import { FullQuestion, PartialQuestion } from "./questionController.js";
+import { UpsertResourceOptions, upsertResources } from "./resourceController.js";
 
 export const ExamFlags = z.object({
     published: z.boolean().default(false),
-    practice: z.boolean().default(false),
+    practice: z.boolean().default(false)
 });
 
 export const CreateExamOptions = z.object({
@@ -21,7 +21,7 @@ export const CreateExamOptions = z.object({
     year: z.number(),
     season: z.nativeEnum(Season),
     disclaimer: z.string().optional().nullable(),
-    flags: ExamFlags.optional().default({}),
+    flags: ExamFlags.optional().default({})
 });
 
 export const UpdateExamOptions = z.object({
@@ -30,7 +30,7 @@ export const UpdateExamOptions = z.object({
     season: z.nativeEnum(Season).optional(),
     disclaimer: z.string().optional().nullable(),
     flags: ExamFlags.optional(),
-    resources: z.array(UpsertResourceOptions).optional(),
+    resources: z.array(UpsertResourceOptions).optional()
 });
 
 export async function getExam(req: Request, res: Response) {
@@ -40,9 +40,9 @@ export async function getExam(req: Request, res: Response) {
             resources: true,
             questions: {
                 select: PartialQuestion,
-                orderBy: [{ number: "asc" }],
-            },
-        },
+                orderBy: [{ number: "asc" }]
+            }
+        }
     });
 
     if (!req.sendUnpublished && !exam.flags.published) {
@@ -52,8 +52,8 @@ export async function getExam(req: Request, res: Response) {
     res.status(200).send(
         Formatter.exam({
             data: exam,
-            sendUnpublished: req.sendUnpublished,
-        }),
+            sendUnpublished: req.sendUnpublished
+        })
     );
 }
 
@@ -65,27 +65,27 @@ export async function getAllExams(req: Request, res: Response) {
                 select: {
                     id: true,
                     number: true,
-                    flags: true,
+                    flags: true
                 },
                 orderBy: {
-                    number: "asc",
-                },
-            },
+                    number: "asc"
+                }
+            }
         },
-        orderBy: [{ year: "asc" }, { season: "asc" }, { number: "asc" }],
+        orderBy: [{ year: "asc" }, { season: "asc" }, { number: "asc" }]
     });
 
     res.status(200).send(
         Formatter.exams({
             data: exams,
-            sendUnpublished: req.sendUnpublished,
-        }),
+            sendUnpublished: req.sendUnpublished
+        })
     );
 }
 
 export async function getExamTopics(req: Request, res: Response) {
     const exam = await prisma.exam.findUniqueOrThrow({
-        where: await Resolver.exam(req),
+        where: await Resolver.exam(req)
     });
 
     if (!req.sendUnpublished && !exam.flags.published) {
@@ -97,28 +97,27 @@ export async function getExamTopics(req: Request, res: Response) {
             questions: {
                 some: {
                     question: {
-                        examId: exam.id,
-                    },
-                },
-            },
+                        examId: exam.id
+                    }
+                }
+            }
         },
         orderBy: {
-            name: "asc",
-        },
+            name: "asc"
+        }
     });
 
     res.status(200).send(
         Formatter.topics({
             data: topics,
-            sendUnpublished: req.sendUnpublished,
-        }),
+            sendUnpublished: req.sendUnpublished
+        })
     );
 }
 
-
 export async function getExamQuestions(req: Request, res: Response) {
     const exam = await prisma.exam.findUniqueOrThrow({
-        where: await Resolver.exam(req),
+        where: await Resolver.exam(req)
     });
 
     if (!req.sendUnpublished && !exam.flags.published) {
@@ -127,19 +126,19 @@ export async function getExamQuestions(req: Request, res: Response) {
 
     const questions = await prisma.question.findMany({
         where: {
-            examId: exam.id,
+            examId: exam.id
         },
         include: FullQuestion,
         orderBy: {
-            number: "asc",
-        },
+            number: "asc"
+        }
     });
 
     res.status(200).send(
         Formatter.questions({
             data: questions,
-            sendUnpublished: req.sendUnpublished,
-        }),
+            sendUnpublished: req.sendUnpublished
+        })
     );
 }
 
@@ -147,7 +146,7 @@ export async function createExam(req: Request, res: Response) {
     const options = CreateExamOptions.parse(req.body);
 
     const course = await prisma.course.findUnique({
-        where: Resolver.course(req),
+        where: Resolver.course(req)
     });
 
     if (!course) throw new APIError(`Course not found`, 404);
@@ -156,11 +155,11 @@ export async function createExam(req: Request, res: Response) {
         data: {
             ...options,
             courseId: course.id,
-            flags: FlagEncoder.exam(options.flags),
+            flags: FlagEncoder.exam(options.flags)
         },
         include: {
-            questions: true,
-        },
+            questions: true
+        }
     });
 
     res.status(200).send(exam);
@@ -174,18 +173,18 @@ export async function updateExam(req: Request, res: Response) {
         data: {
             ...options,
             flags: options.flags ? FlagEncoder.exam(options.flags) : options.flags,
-            resources: upsertResources(options.resources),
+            resources: upsertResources(options.resources)
         },
         include: {
-            resources: true,
-        },
+            resources: true
+        }
     });
 
     res.status(200).send(
         Formatter.exam({
             data: updatedExam,
-            sendUnpublished: req.sendUnpublished,
-        }),
+            sendUnpublished: req.sendUnpublished
+        })
     );
 }
 
@@ -197,10 +196,10 @@ export async function reorderExamQuestions(req: Request, res: Response) {
             questions: {
                 select: {
                     id: true,
-                    number: true,
-                },
-            },
-        },
+                    number: true
+                }
+            }
+        }
     });
 
     const options = ReorderQuestions.parse(req.body);
@@ -209,25 +208,23 @@ export async function reorderExamQuestions(req: Request, res: Response) {
         exam.questions.map((question) => {
             return prisma.question.update({
                 where: {
-                    id: question.id,
+                    id: question.id
                 },
                 data: {
-                    number: options.indexOf(question.id) + 1,
+                    number: options.indexOf(question.id) + 1
                 },
-                select: PartialQuestion,
+                select: PartialQuestion
             });
-        }),
+        })
     );
 
     res.status(200).send(
         Formatter.questions({
             data: questions,
-            sendUnpublished: req.sendUnpublished,
-        }),
+            sendUnpublished: req.sendUnpublished
+        })
     );
 }
-
-
 
 export async function toggleExamPublished(req: Request, res: Response) {
     const exam = await prisma.exam.findUniqueOrThrow({
@@ -241,7 +238,7 @@ export async function toggleExamPublished(req: Request, res: Response) {
                     flags: true
                 }
             }
-        },
+        }
     });
 
     const status = !exam.flags.published;
@@ -251,33 +248,33 @@ export async function toggleExamPublished(req: Request, res: Response) {
         // 2. Update existing questions
         await prisma.exam.update({
             where: {
-                id: exam.id,
+                id: exam.id
             },
             data: {
                 flags: FlagEncoder.exam({
                     ...exam.flags,
-                    published: status,
-                }),
+                    published: status
+                })
             }
         });
 
         for (const question of exam.questions) {
             await prisma.question.update({
                 where: {
-                    id: question.id,
+                    id: question.id
                 },
                 data: {
                     flags: FlagEncoder.question({
                         ...question.flags,
-                        published: status,
-                    }),
-                },
+                        published: status
+                    })
+                }
             });
         }
     });
 
     res.status(200).send({
-        message: `Exam is now ${status ? "published" : "unpublished"}`,
+        message: `Exam is now ${status ? "published" : "unpublished"}`
     });
 }
 
@@ -289,11 +286,11 @@ export async function attachPDFToExam(req: Request, res: Response) {
     }
     const exam = await savePDFtoExam(examId, req.file.buffer, req.file.mimetype);
     res.status(200).send(exam);
-};
+}
 
 export async function deleteExam(req: Request, res: Response) {
     const exam = await prisma.exam.delete({
-        where: await Resolver.exam(req),
+        where: await Resolver.exam(req)
     });
 
     if (!exam) {

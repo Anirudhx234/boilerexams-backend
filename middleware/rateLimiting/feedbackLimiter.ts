@@ -1,7 +1,7 @@
-import { rateLimit } from "express-rate-limit";
-import isWhitelisted from "../auth/isWhiteListed.js";
-import isAuthorized from "../auth/isAuthorized.js";
 import { Role } from "@prisma/client";
+import { rateLimit } from "express-rate-limit";
+import isAuthorized from "../auth/isAuthorized.js";
+import isWhitelisted from "../auth/isWhiteListed.js";
 
 const feedbackLimiter = rateLimit({
     windowMs: 60 * 1000,
@@ -14,7 +14,7 @@ const feedbackLimiter = rateLimit({
         }
 
         return isAuthorized(req.user, Role.CONTENT);
-    },
+    }
 });
 
 export default feedbackLimiter;

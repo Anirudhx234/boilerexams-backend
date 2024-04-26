@@ -14,7 +14,7 @@ export default class FlagDecoder {
     public static exam(flags: number): z.infer<typeof ExamFlags> {
         return {
             published: ((flags >> 0) & 1) === 1,
-            practice: ((flags >> 1) & 1) === 1,
+            practice: ((flags >> 1) & 1) === 1
         };
     }
 
@@ -22,7 +22,7 @@ export default class FlagDecoder {
         return {
             published: ((flags >> 0) & 1) === 1,
             disableRandomAnswers: ((flags >> 1) & 1) === 1,
-            answersStartHidden: ((flags >> 2) & 1) === 1,
+            answersStartHidden: ((flags >> 2) & 1) === 1
         };
     }
 }

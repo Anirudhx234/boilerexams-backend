@@ -1,11 +1,11 @@
-import session, { type SessionOptionsExtended } from "express-session";
 import connect from "connect-pg-simple";
+import session, { type SessionOptionsExtended } from "express-session";
 
 const sessionOptions: SessionOptionsExtended = {
     store: new (connect(session))({
         conString: process.env["DATABASE_URL"],
         tableName: "Session",
-        createTableIfMissing: true,
+        createTableIfMissing: true
     }),
     secret: process.env["SESSION_SECRET"] || "",
     resave: false,
@@ -14,9 +14,9 @@ const sessionOptions: SessionOptionsExtended = {
         httpOnly: true,
         sameSite: "strict",
         secure: false,
-        maxAge: 7 * 24 * 60 * 60 * 1000,
+        maxAge: 7 * 24 * 60 * 60 * 1000
     },
-    name: "sessionId",
+    name: "sessionId"
 };
 
 if (process.env["REMOTE"] === "enabled") {

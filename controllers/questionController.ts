@@ -1,79 +1,77 @@
-import APIError from "../middleware/errors/APIError.js";
-import { connectOrCreateResources, UpsertResourceOptions, upsertResources } from "./resourceController.js";
-import { upsertOrDisconnectTopics, UpsertTopic } from "./topicController.js";
 import { Request, Response } from "express";
 import { QuestionType } from "@prisma/client";
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
+import prisma from "../prisma/prisma.js";
 import FlagEncoder from "../helpers/encoder.js";
 import Formatter from "../helpers/formatter.js";
-import prisma from "../prisma/prisma.js";
 import Resolver from "../helpers/resolver.js";
+import APIError from "../middleware/errors/APIError.js";
+import { connectOrCreateResources, UpsertResourceOptions, upsertResources } from "./resourceController.js";
+import { upsertOrDisconnectTopics, UpsertTopic } from "./topicController.js";
 
 export const QuestionFlags = z.object({
-    published:              z.boolean().default(false),
-    disableRandomAnswers:   z.boolean().default(true),
-    answersStartHidden:     z.boolean().default(true)
+    published: z.boolean().default(false),
+    disableRandomAnswers: z.boolean().default(true),
+    answersStartHidden: z.boolean().default(true)
 });
 
 export const ParentData = z.object({
-    body:           z.string().optional(),
-    solution:       z.undefined(),
-    numberingType:  z.enum([ "LOWERCASE", "UPPERCASE", "ROMAN_LOWERCASE", "ROMAN_UPPERCASE", "NUMBER" ])
+    body: z.string().optional(),
+    solution: z.undefined(),
+    numberingType: z.enum(["LOWERCASE", "UPPERCASE", "ROMAN_LOWERCASE", "ROMAN_UPPERCASE", "NUMBER"])
 });
 
 export const MultipleChoiceData = z.object({
-    body:           z.string().optional(),
-    solution:       z.array(z.number()),
+    body: z.string().optional(),
+    solution: z.array(z.number())
 });
 
 export const FreeResponseData = z.object({
-    body:       z.string().optional(),
-    solution:   z.string().optional(),
+    body: z.string().optional(),
+    solution: z.string().optional()
 });
 
 export const ShortAnswerData = FreeResponseData;
 
 export const FillInBlankData = z.object({
-    body:       z.string().optional(),
-    solution:   z.array(z.string()),
+    body: z.string().optional(),
+    solution: z.array(z.string())
 });
 
-export const QuestionData = z.union([
-    ParentData, MultipleChoiceData, FreeResponseData, ShortAnswerData, FillInBlankData
-]);
+export const QuestionData = z.union([ParentData, MultipleChoiceData, FreeResponseData, ShortAnswerData, FillInBlankData]);
 
 export const UpsertAnswerChoiceOptions = z.object({
-    id:         z.string().default(randomUUID),
-    index:      z.number(),
-    body:       z.string().optional().nullable(),
-    resources:  z.array(UpsertResourceOptions).optional(),
+    id: z.string().default(randomUUID),
+    index: z.number(),
+    body: z.string().optional().nullable(),
+    resources: z.array(UpsertResourceOptions).optional()
 });
 
 export const UpsertExplanationOptions = z.object({
-    id:         z.string().uuid().default(randomUUID),
-    body:       z.string().optional().nullable(),
-    resources:  z.array(UpsertResourceOptions).optional()
+    id: z.string().uuid().default(randomUUID),
+    body: z.string().optional().nullable(),
+    resources: z.array(UpsertResourceOptions).optional()
 });
 
 export const CreateQuestionOptions = z.object({
-    type:       z.nativeEnum(QuestionType).default(QuestionType.MULTIPLE_CHOICE),
-    data:       QuestionData,
-    number:     z.number().min(1),
-    courseId:   z.string().uuid(),
-    examId:     z.string().uuid(),
-    parentId:   z.string().uuid().optional().nullable(),
-    flags:      QuestionFlags.optional().default({  }),
+    type: z.nativeEnum(QuestionType).default(QuestionType.MULTIPLE_CHOICE),
+    data: QuestionData,
+    number: z.number().min(1),
+    courseId: z.string().uuid(),
+    examId: z.string().uuid(),
+    parentId: z.string().uuid().optional().nullable(),
+    flags: QuestionFlags.optional().default({})
 });
 
 export const UpdateQuestionOptions = z.object({
-    type:           z.nativeEnum(QuestionType).optional(),
-    data:           QuestionData.optional(),
-    flags:          QuestionFlags.optional(),
-    topics:         z.array(UpsertTopic).optional(),
-    resources:      z.array(UpsertResourceOptions).optional(),
-    answerChoices:  z.array(UpsertAnswerChoiceOptions).optional().optional(),
-    explanation:    UpsertExplanationOptions.optional()
+    type: z.nativeEnum(QuestionType).optional(),
+    data: QuestionData.optional(),
+    flags: QuestionFlags.optional(),
+    topics: z.array(UpsertTopic).optional(),
+    resources: z.array(UpsertResourceOptions).optional(),
+    answerChoices: z.array(UpsertAnswerChoiceOptions).optional().optional(),
+    explanation: UpsertExplanationOptions.optional()
 });
 
 export const FullQuestion = {
@@ -137,7 +135,7 @@ export const PartialQuestion = {
         select: {
             id: true,
             number: true,
-            flags: true,
+            flags: true
         }
     }
 };
@@ -168,19 +166,19 @@ export async function createQuestion(req: Request, res: Response) {
                 ...options,
                 flags: FlagEncoder.question(options.flags),
                 explanation: {
-                    create: {
-
-                    }
+                    create: {}
                 }
             },
             include: FullQuestion
         });
     });
 
-    res.status(200).send(Formatter.question({
-        data: question,
-        sendUnpublished: req.sendUnpublished
-    }));
+    res.status(200).send(
+        Formatter.question({
+            data: question,
+            sendUnpublished: req.sendUnpublished
+        })
+    );
 }
 
 export async function getQuestion(req: Request, res: Response) {
@@ -193,10 +191,12 @@ export async function getQuestion(req: Request, res: Response) {
         throw new APIError("Question not found", 404);
     }
 
-    res.status(200).send(Formatter.question({
-        data: question,
-        sendUnpublished: req.sendUnpublished
-    }));
+    res.status(200).send(
+        Formatter.question({
+            data: question,
+            sendUnpublished: req.sendUnpublished
+        })
+    );
 }
 
 export async function updateQuestion(req: Request, res: Response) {
@@ -221,7 +221,12 @@ export async function updateQuestion(req: Request, res: Response) {
             ...options,
             number: undefined, // Block update to question number
             flags: options.flags ? FlagEncoder.question(options.flags) : options.flags,
-            topics: upsertOrDisconnectTopics(question.id, question.courseId, question.topics.map(topic => topic.topicId), options.topics),
+            topics: upsertOrDisconnectTopics(
+                question.id,
+                question.courseId,
+                question.topics.map((topic) => topic.topicId),
+                options.topics
+            ),
             resources: upsertResources(options.resources),
             answerChoices: upsertAnswerChoices(options.answerChoices),
             explanation: upsertExplanation(options.explanation)
@@ -229,10 +234,12 @@ export async function updateQuestion(req: Request, res: Response) {
         include: FullQuestion
     });
 
-    res.status(200).send(Formatter.question({
-        data: updatedQuestion,
-        sendUnpublished: req.sendUnpublished
-    }));
+    res.status(200).send(
+        Formatter.question({
+            data: updatedQuestion,
+            sendUnpublished: req.sendUnpublished
+        })
+    );
 }
 
 export async function toggleQuestionPublished(req: Request, res: Response) {
@@ -261,18 +268,18 @@ export async function toggleQuestionPublished(req: Request, res: Response) {
 
     await prisma.question.update({
         where: {
-            id: question.id,
+            id: question.id
         },
         data: {
             flags: FlagEncoder.question({
                 ...question.flags,
                 published: status
             })
-        },
+        }
     });
 
     res.status(200).send({
-        message: `Question is now ${status ? "published" : "unpublished"}`,
+        message: `Question is now ${status ? "published" : "unpublished"}`
     });
 }
 
@@ -327,7 +334,7 @@ export async function deleteAnswerChoice(req: Request, res: Response) {
 
 function upsertAnswerChoices(answerChoices?: z.infer<typeof UpsertAnswerChoiceOptions>[]) {
     return {
-        upsert: answerChoices?.map(ac => {
+        upsert: answerChoices?.map((ac) => {
             return {
                 where: {
                     id: ac.id
@@ -348,19 +355,21 @@ function upsertAnswerChoices(answerChoices?: z.infer<typeof UpsertAnswerChoiceOp
 }
 
 function upsertExplanation(explanation?: z.infer<typeof UpsertExplanationOptions>) {
-    return explanation ? {
-        upsert: {
-            where: {
-                id: explanation.id
-            },
-            create: {
-                body: explanation.body,
-                resources: connectOrCreateResources(explanation.resources)
-            },
-            update: {
-                body: explanation.body,
-                resources: upsertResources(explanation.resources)
-            }
-        }
-    } : explanation;
+    return explanation
+        ? {
+              upsert: {
+                  where: {
+                      id: explanation.id
+                  },
+                  create: {
+                      body: explanation.body,
+                      resources: connectOrCreateResources(explanation.resources)
+                  },
+                  update: {
+                      body: explanation.body,
+                      resources: upsertResources(explanation.resources)
+                  }
+              }
+          }
+        : explanation;
 }

@@ -1,12 +1,12 @@
-import prisma from "../prisma/prisma.js";
-import { Role } from "@prisma/client";
 import { Request, Response } from "express";
-import APIError from "../middleware/errors/APIError.js";
+import { Role } from "@prisma/client";
 import { z } from "zod";
+import prisma from "../prisma/prisma.js";
+import APIError from "../middleware/errors/APIError.js";
 
 export const UpdateUserSchema = z.object({
     userId: z.string(),
-    role: z.nativeEnum(Role),
+    role: z.nativeEnum(Role)
 });
 
 export const AssignCourseOptions = z.array(z.string().uuid());
@@ -14,11 +14,11 @@ export const AssignCourseOptions = z.array(z.string().uuid());
 export async function getMe(req: Request, res: Response) {
     const user = await prisma.user.findUniqueOrThrow({
         where: {
-            id: req.user.id,
+            id: req.user.id
         },
         include: {
-            courses: true,
-        },
+            courses: true
+        }
     });
 
     return res.status(200).send(user);
@@ -29,11 +29,11 @@ export async function getUser(req: Request, res: Response) {
 
     const user = await prisma.user.findUniqueOrThrow({
         where: {
-            id: userId,
+            id: userId
         },
         include: {
-            courses: true,
-        },
+            courses: true
+        }
     });
 
     res.status(200).send(user);
@@ -42,9 +42,9 @@ export async function getUser(req: Request, res: Response) {
 export async function getAllUsers(req: Request, res: Response) {
     const users = await prisma.user.findMany({
         include: {
-            courses: true,
+            courses: true
         },
-        orderBy: [{ role: "desc" }, { name: "asc" }],
+        orderBy: [{ role: "desc" }, { name: "asc" }]
     });
 
     res.status(200).send(users);
@@ -55,14 +55,14 @@ export async function updateUserRole(req: Request, res: Response) {
 
     const user = await prisma.user.update({
         where: {
-            id: userId,
+            id: userId
         },
         data: {
-            role: role,
+            role: role
         },
         include: {
-            courses: true,
-        },
+            courses: true
+        }
     });
     if (!user) {
         throw new APIError("User not found", 404);
@@ -81,17 +81,17 @@ export async function assignUserCourses(req: Request, res: Response) {
         where: {
             id: userId,
             role: {
-                in: validRoles,
-            },
+                in: validRoles
+            }
         },
         data: {
             courses: {
-                set: options.map((courseId) => ({ id: courseId })),
-            },
+                set: options.map((courseId) => ({ id: courseId }))
+            }
         },
         include: {
-            courses: true,
-        },
+            courses: true
+        }
     });
 
     if (!user) {
@@ -106,8 +106,8 @@ export async function deleteUser(req: Request, res: Response) {
 
     const user = await prisma.user.delete({
         where: {
-            id: userId,
-        },
+            id: userId
+        }
     });
 
     res.status(200).send(user);

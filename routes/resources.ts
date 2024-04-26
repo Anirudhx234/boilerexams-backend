@@ -1,9 +1,9 @@
 import express from "express";
+import { Role } from "@prisma/client";
+import authHandler from "../middleware/auth/authHandler.js";
+import upload from "../middleware/multer/file.js";
 import asyncWrapper from "../middleware/wrappers/asyncWrapper.js";
 import { deleteResource, getResource, uploadFile, upsertResource } from "../controllers/resourceController.js";
-import upload from "../middleware/multer/file.js";
-import authHandler from "../middleware/auth/authHandler.js";
-import { Role } from "@prisma/client";
 
 const router = express.Router();
 

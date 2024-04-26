@@ -1,15 +1,15 @@
+import express from "express";
 import { Role } from "@prisma/client";
+import authHandler from "../middleware/auth/authHandler.js";
+import sendPublished from "../middleware/auth/sendPublished.js";
+import asyncWrapper from "../middleware/wrappers/asyncWrapper.js";
 import {
     deleteAnswerChoice,
     deleteQuestion,
     getQuestion,
     toggleQuestionPublished,
-    updateQuestion,
+    updateQuestion
 } from "../controllers/questionController.js";
-import asyncWrapper from "../middleware/wrappers/asyncWrapper.js";
-import authHandler from "../middleware/auth/authHandler.js";
-import express from "express";
-import sendPublished from "../middleware/auth/sendPublished.js";
 
 const router = express.Router();
 

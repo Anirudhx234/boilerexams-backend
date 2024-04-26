@@ -1,3 +1,9 @@
+import express from "express";
+import { Role } from "@prisma/client";
+import authHandler from "../middleware/auth/authHandler.js";
+import sendPublished from "../middleware/auth/sendPublished.js";
+import cache from "../middleware/cache/caching.js";
+import asyncWrapper from "../middleware/wrappers/asyncWrapper.js";
 import {
     createCourse,
     deleteCourse,
@@ -5,7 +11,8 @@ import {
     getCourse,
     getCourseEvents,
     getCourseExams,
-    getCourseTopics, getCourseTopicsByExam,
+    getCourseTopics,
+    getCourseTopicsByExam,
     getSubjects,
     toggleCoursePublished,
     updateCourse
@@ -14,19 +21,14 @@ import {
     createExam,
     deleteExam,
     getExam,
-    getExamQuestions, getExamTopics,
+    getExamQuestions,
+    getExamTopics,
     reorderExamQuestions,
     toggleExamPublished,
     updateExam
 } from "../controllers/examController.js";
 import { createQuestion, getQuestion, updateQuestion } from "../controllers/questionController.js";
 import { createTopic, getTopic, getTopicQuestions, reorderTopicQuestions } from "../controllers/topicController.js";
-import { Role } from "@prisma/client";
-import asyncWrapper from "../middleware/wrappers/asyncWrapper.js";
-import authHandler from "../middleware/auth/authHandler.js";
-import cache from "../middleware/cache/caching.js";
-import express from "express";
-import sendPublished from "../middleware/auth/sendPublished.js";
 
 const router = express.Router();
 

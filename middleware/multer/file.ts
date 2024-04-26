@@ -1,5 +1,6 @@
+// Don't remove this
+import { Express } from "express";
 import multer from "multer";
-import { Express } from "express"; // Don't remove this
 import APIError from "../errors/APIError.js";
 
 const storage = multer.memoryStorage();
@@ -20,8 +21,8 @@ const upload = multer({
     storage: storage,
     fileFilter: fileFilter,
     limits: {
-        fileSize: 5 * megabyte,
-    },
+        fileSize: 5 * megabyte
+    }
 });
 
 export default upload;
