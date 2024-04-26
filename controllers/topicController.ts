@@ -39,6 +39,8 @@ export async function getAllTopics(req: Request, res: Response) {
 }
 
 export async function getTopic(req: Request, res: Response) {
+    req.params.topic = req.params["0"];
+
     const topic = await prisma.topic.findUniqueOrThrow({
         where: await Resolver.topic(req),
         include: {
@@ -61,6 +63,8 @@ export async function getTopic(req: Request, res: Response) {
 }
 
 export async function getTopicQuestions(req: Request, res: Response) {
+    req.params.topic = req.params["0"];
+
     const topic = await prisma.topic.findUniqueOrThrow({
         where: await Resolver.topic(req),
     });
@@ -117,6 +121,7 @@ export async function createTopic(req: Request, res: Response) {
 }
 
 export async function updateTopic(req: Request, res: Response) {
+    req.params.topic = req.params["0"];
     const options = UpsertTopic.parse(req.body);
 
     const topic = await prisma.topic.update({
@@ -130,6 +135,8 @@ export async function updateTopic(req: Request, res: Response) {
 }
 
 export async function reorderTopicQuestions(req: Request, res: Response) {
+    req.params.topic = req.params["0"];
+
     const topic = await prisma.topic.findUniqueOrThrow({
         where: await Resolver.topic(req),
         select: {
@@ -161,6 +168,7 @@ export async function reorderTopicQuestions(req: Request, res: Response) {
 }
 
 export async function setTopicQuestions(req: Request, res: Response) {
+    req.params.topic = req.params["0"];
     const options = SetTopicQuestionsOptions.parse(req.body);
 
     const topic = await prisma.topic.findUniqueOrThrow({
@@ -199,6 +207,8 @@ export async function setTopicQuestions(req: Request, res: Response) {
 }
 
 export async function deleteTopic(req: Request, res: Response) {
+    req.params.topic = req.params["0"];
+
     const topic = await prisma.topic.delete({
         where: await Resolver.topic(req)
     });

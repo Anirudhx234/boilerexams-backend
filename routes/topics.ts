@@ -9,10 +9,10 @@ const router = express.Router();
 
 router.get("/", sendPublished, asyncWrapper(getAllTopics));
 
-router.put("/:topic", authHandler(Role.CONTENT), asyncWrapper(updateTopic));
+router.put("/*/set-questions", authHandler(Role.CONTENT), asyncWrapper(setTopicQuestions));
 
-router.put("/:topic/set-questions", authHandler(Role.CONTENT), asyncWrapper(setTopicQuestions));
+router.put("/*", authHandler(Role.CONTENT), asyncWrapper(updateTopic));
 
-router.delete("/:topic", authHandler(Role.CONTENT), asyncWrapper(deleteTopic));
+router.delete("/*", authHandler(Role.CONTENT), asyncWrapper(deleteTopic));
 
 export default router;

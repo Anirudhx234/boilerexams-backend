@@ -42,9 +42,9 @@ router.get("/:course/topics", sendPublished, cache(minute), asyncWrapper(getCour
 
 router.get("/:course/topics/exams", sendPublished, cache(minute), asyncWrapper(getCourseTopicsByExam));
 
-router.get("/:course/topics/:topic", sendPublished, cache(minute), asyncWrapper(getTopic));
+router.get("/:course/topics/*/questions", sendPublished, cache(minute), asyncWrapper(getTopicQuestions));
 
-router.get("/:course/topics/:topic/questions", sendPublished, cache(minute), asyncWrapper(getTopicQuestions));
+router.get("/:course/topics/*", sendPublished, cache(minute), asyncWrapper(getTopic));
 
 router.get("/:course/exams", sendPublished, cache(minute), asyncWrapper(getCourseExams));
 
@@ -80,7 +80,7 @@ router.post("/:course/exams/:exam/reorder-questions", authHandler(Role.CONTENT),
 
 router.post("/:course/exams/:exam/questions", authHandler(Role.CONTENT), asyncWrapper(createQuestion));
 
-router.post("/:course/topics/:topic/reorder-questions", authHandler(Role.CONTENT), asyncWrapper(reorderTopicQuestions));
+router.post("/:course/topics/*/reorder-questions", authHandler(Role.CONTENT), asyncWrapper(reorderTopicQuestions));
 
 router.delete("/:course", authHandler(Role.CONTENT), asyncWrapper(deleteCourse));
 

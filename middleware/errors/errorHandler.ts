@@ -2,7 +2,7 @@ import { Prisma } from "@prisma/client";
 import type { NextFunction, Request, Response } from "express";
 import APIError from "./APIError.js";
 import axios from "axios";
-import {MulterError} from "multer";
+import { MulterError } from "multer";
 import { ZodError } from "zod";
 
 export default async function errorHandler(error: unknown, req: Request, res: Response, _next: NextFunction) {
@@ -68,10 +68,12 @@ export default async function errorHandler(error: unknown, req: Request, res: Re
         errorResponse.fullError = err.errors;
 
         try {
-            await axios.post(`${process.env["DISCORD_URL"]}/error`, {
-                ...err.format(),
-                path: req.path
-            });
+            if (process.env["NODE_ENV"] === "production") {
+                await axios.post(`${process.env["DISCORD_URL"]}/error`, {
+                    ...err.format(),
+                    path: req.path
+                });
+            }
         } catch {
             console.log("Unable to POST error to Discord");
         }
@@ -80,10 +82,12 @@ export default async function errorHandler(error: unknown, req: Request, res: Re
     }
 
     try {
-        await axios.post(`${process.env["DISCORD_URL"]}/error`, {
-            stackTrace: error.stack,
-            path: req.path
-        });
+        if (process.env["NODE_ENV"] === "production") {
+            await axios.post(`${process.env["DISCORD_URL"]}/error`, {
+                stackTrace: error.stack,
+                path: req.path
+            });
+        }
     } catch {
         console.log("Unable to POST error to Discord");
     }
