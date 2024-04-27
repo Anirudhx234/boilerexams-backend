@@ -128,6 +128,7 @@ export const PartialQuestion = {
     number: true,
     flags: true,
     stats: true,
+    type: true,
     topics: {
         include: {
             topic: true
