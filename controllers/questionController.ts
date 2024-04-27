@@ -184,7 +184,7 @@ export async function createQuestion(req: Request, res: Response) {
 
 export async function getQuestion(req: Request, res: Response) {
     const question = await prisma.question.findFirstOrThrow({
-        where: await Resolver.question(req),
+        where: await Resolver.question(req.params),
         include: FullQuestion
     });
 
@@ -204,7 +204,7 @@ export async function updateQuestion(req: Request, res: Response) {
     const options = UpdateQuestionOptions.parse(req.body);
 
     const question = await prisma.question.findFirstOrThrow({
-        where: await Resolver.question(req),
+        where: await Resolver.question(req.params),
         include: {
             topics: {
                 include: {
@@ -245,7 +245,7 @@ export async function updateQuestion(req: Request, res: Response) {
 
 export async function toggleQuestionPublished(req: Request, res: Response) {
     const question = await prisma.question.findFirstOrThrow({
-        where: await Resolver.question(req),
+        where: await Resolver.question(req.params),
         select: {
             id: true,
             exam: {
@@ -286,7 +286,7 @@ export async function toggleQuestionPublished(req: Request, res: Response) {
 
 export async function deleteQuestion(req: Request, res: Response) {
     const question = await prisma.question.findFirstOrThrow({
-        where: await Resolver.question(req)
+        where: await Resolver.question(req.params)
     });
 
     await prisma.$transaction(async (prisma) => {

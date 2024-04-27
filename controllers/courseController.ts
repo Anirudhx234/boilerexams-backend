@@ -77,8 +77,9 @@ export async function getSubjects(req: Request, res: Response) {
 }
 
 export async function getCourse(req: Request, res: Response) {
+
     const course = await prisma.course.findUniqueOrThrow({
-        where: Resolver.course(req),
+        where: Resolver.course(req.params),
         include: {
             events: {
                 orderBy: {
@@ -131,7 +132,7 @@ export async function getAllCourses(req: Request, res: Response) {
 
 export async function getCourseExams(req: Request, res: Response) {
     const course = await prisma.course.findUniqueOrThrow({
-        where: Resolver.course(req)
+        where: Resolver.course(req.params)
     });
 
     if (!req.sendUnpublished && !course.flags.published) {
@@ -172,7 +173,7 @@ export async function getCourseExams(req: Request, res: Response) {
 
 export async function getCourseTopics(req: Request, res: Response) {
     const course = await prisma.course.findUniqueOrThrow({
-        where: Resolver.course(req)
+        where: Resolver.course(req.params)
     });
 
     if (!req.sendUnpublished && !course.flags.published) {
@@ -217,7 +218,7 @@ export async function getCourseTopics(req: Request, res: Response) {
 
 export async function getCourseTopicsByExam(req: Request, res: Response) {
     const course = await prisma.course.findUniqueOrThrow({
-        where: Resolver.course(req)
+        where: Resolver.course(req.params)
     });
 
     if (!req.sendUnpublished && !course.flags.published) {
@@ -292,7 +293,7 @@ export async function getCourseEvents(req: Request, res: Response) {
     const options = EventQueryParams.parse(req.query);
 
     const course = await prisma.course.findUniqueOrThrow({
-        where: Resolver.course(req),
+        where: Resolver.course(req.params),
         select: {
             id: true,
             flags: true
@@ -351,7 +352,7 @@ export async function updateCourse(req: Request, res: Response) {
     const options = UpdateCourseOptions.parse(req.body);
 
     const course = await prisma.course.update({
-        where: Resolver.course(req),
+        where: Resolver.course(req.params),
         data: {
             ...options,
             flags: options.flags ? FlagEncoder.course(options.flags) : undefined,
@@ -369,7 +370,7 @@ export async function updateCourse(req: Request, res: Response) {
 
 export async function toggleCoursePublished(req: Request, res: Response) {
     const course = await prisma.course.findUnique({
-        where: Resolver.course(req),
+        where: Resolver.course(req.params),
         select: {
             id: true,
             name: true,
@@ -402,7 +403,7 @@ export async function toggleCoursePublished(req: Request, res: Response) {
 
 export async function deleteCourse(req: Request, res: Response) {
     const course = await prisma.course.delete({
-        where: Resolver.course(req)
+        where: Resolver.course(req.params)
     });
 
     if (!course) {

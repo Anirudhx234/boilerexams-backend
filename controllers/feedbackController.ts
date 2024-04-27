@@ -191,7 +191,7 @@ export async function reportBug(req: Request, res: Response) {
 
 export async function reportQuestion(req: Request, res: Response) {
     const question = await prisma.question.findFirstOrThrow({
-        where: await Resolver.question(req),
+        where: await Resolver.question(req.params),
         include: {
             course: {
                 select: {
@@ -263,7 +263,7 @@ export async function createVideoFeedback(req: Request, res: Response) {
     const options = VideoFeedbackData.parse(req.body);
 
     const question = await prisma.question.findFirstOrThrow({
-        where: await Resolver.question(req),
+        where: await Resolver.question(req.params),
         select: {
             id: true,
             examId: true,
@@ -320,7 +320,7 @@ export async function deleteFeedback(req: Request, res: Response) {
 async function getCourseSafe(req: Request) {
     try {
         return await prisma.course.findUniqueOrThrow({
-            where: Resolver.course(req)
+            where: Resolver.course(req.params)
         });
     } catch {
         return undefined;

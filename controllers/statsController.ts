@@ -249,7 +249,7 @@ function parseOptions(req: Request) {
 async function getCourseSafe(req: Request) {
     try {
         return await prisma.course.findUniqueOrThrow({
-            where: Resolver.course(req),
+            where: Resolver.course(req.params),
         });
     } catch {
         return undefined;
@@ -259,7 +259,7 @@ async function getCourseSafe(req: Request) {
 async function getExamSafe(req: Request) {
     try {
         return await prisma.exam.findUniqueOrThrow({
-            where: await Resolver.exam(req),
+            where: await Resolver.exam(req.params),
         });
     } catch {
         return undefined;
@@ -269,7 +269,7 @@ async function getExamSafe(req: Request) {
 async function getTopicSafe(req: Request) {
     try {
         return await prisma.topic.findUniqueOrThrow({
-            where: await Resolver.topic(req),
+            where: await Resolver.topic(req.params),
         });
     } catch {
         return undefined;
@@ -279,7 +279,7 @@ async function getTopicSafe(req: Request) {
 async function getQuestionSafe(req: Request) {
     try {
         return await prisma.question.findFirstOrThrow({
-            where: await Resolver.question(req),
+            where: await Resolver.question(req.params),
         });
     } catch {
         return undefined;

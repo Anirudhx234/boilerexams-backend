@@ -3,6 +3,7 @@ import { Season } from "@prisma/client";
 import { z } from "zod";
 import prisma from "../prisma/prisma.js";
 import APIError from "../middleware/errors/APIError.js";
+import { ParamsDictionary } from "express-serve-static-core";
 
 export const CourseResolvable = z.union([
     z.object({
@@ -53,14 +54,18 @@ export const QuestionResolvable = z.union([
     })
 ]);
 
+const CourseParams = z.object({
+    course: z.string()
+});
+
 export default class Resolver {
     private static uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i; // uuid
     private static abbreviationNumberRegex = /^([a-zA-Z]+)([1-9]\d{4})$/; // ABC10000
     private static numberYearSeasonRegex = /^([a-zA-Z]+)-(\d{4})-(\d)$/; // Spring-1970-1
 
     // Resolve a Course from either id or abbreviation_number
-    public static course(req: Request) {
-        const { course } = req.params;
+    public static course(params: ParamsDictionary) {
+        const { course } = params;
         if (Resolver.uuidRegex.test(course)) {
             // If input matches UUIDv4, return object with id and null for abbreviation and number
             return CourseResolvable.parse({
@@ -86,8 +91,8 @@ export default class Resolver {
     }
 
     // Resolve an Exam from either id or number_year_season and course
-    public static async exam(req: Request) {
-        const { exam, course } = req.params;
+    public static async exam(params: ParamsDictionary) {
+        const { exam, course } = params;
         if (Resolver.uuidRegex.test(exam)) {
             // If input matches UUIDv4, return object with id and null for abbreviation and number
             return ExamResolvable.parse({
@@ -103,7 +108,7 @@ export default class Resolver {
             const number = matches?.[3].toLowerCase() === "final" ? 0 : matches?.[3];
 
             const course = await prisma.course.findUnique({
-                where: Resolver.course(req)
+                where: Resolver.course(params)
             });
 
             if (!course) {
@@ -124,8 +129,8 @@ export default class Resolver {
     }
 
     // Resolve a Topic from either id or name and course
-    public static async topic(req: Request) {
-        const { topic, course } = req.params;
+    public static async topic(params: ParamsDictionary) {
+        const { topic, course } = params;
         if (Resolver.uuidRegex.test(topic)) {
             // If input matches UUIDv4, return object with id and null for abbreviation and number
             return TopicResolvable.parse({
@@ -137,7 +142,7 @@ export default class Resolver {
             const name = topic;
 
             const course = await prisma.course.findUnique({
-                where: Resolver.course(req)
+                where: Resolver.course(params)
             });
 
             if (!course) {
@@ -156,8 +161,8 @@ export default class Resolver {
     }
 
     // Resolve a Question from either id or number and Exam
-    public static async question(req: Request) {
-        const { question, topic, exam, course } = req.params;
+    public static async question(params: ParamsDictionary) {
+        const { question, topic, exam, course } = params;
         if (Resolver.uuidRegex.test(question)) {
             return QuestionResolvable.parse({
                 id: question
@@ -166,7 +171,7 @@ export default class Resolver {
 
         if (topic) {
             const topic = await prisma.topic.findUnique({
-                where: await Resolver.topic(req)
+                where: await Resolver.topic(params)
             });
 
             if (!topic) {
@@ -193,7 +198,7 @@ export default class Resolver {
 
         if (exam) {
             const exam = await prisma.exam.findUnique({
-                where: await Resolver.exam(req)
+                where: await Resolver.exam(params)
             });
 
             if (!exam) {

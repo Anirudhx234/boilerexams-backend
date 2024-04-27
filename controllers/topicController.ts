@@ -42,7 +42,7 @@ export async function getTopic(req: Request, res: Response) {
     req.params.topic = req.params["0"];
 
     const topic = await prisma.topic.findUniqueOrThrow({
-        where: await Resolver.topic(req),
+        where: await Resolver.topic(req.params),
         include: {
             questions: {
                 include: {
@@ -66,7 +66,7 @@ export async function getTopicQuestions(req: Request, res: Response) {
     req.params.topic = req.params["0"];
 
     const topic = await prisma.topic.findUniqueOrThrow({
-        where: await Resolver.topic(req)
+        where: await Resolver.topic(req.params)
     });
 
     const relations = await prisma.questionToTopic.findMany({
@@ -95,7 +95,7 @@ export async function createTopic(req: Request, res: Response) {
     const options = UpsertTopic.parse(req.body);
 
     const course = await prisma.course.findUnique({
-        where: Resolver.course(req)
+        where: Resolver.course(req.params)
     });
 
     if (!course) throw new APIError(`Course not found`, 404);
@@ -125,7 +125,7 @@ export async function updateTopic(req: Request, res: Response) {
     const options = UpsertTopic.parse(req.body);
 
     const topic = await prisma.topic.update({
-        where: await Resolver.topic(req),
+        where: await Resolver.topic(req.params),
         data: {
             ...options
         }
@@ -138,7 +138,7 @@ export async function reorderTopicQuestions(req: Request, res: Response) {
     req.params.topic = req.params["0"];
 
     const topic = await prisma.topic.findUniqueOrThrow({
-        where: await Resolver.topic(req),
+        where: await Resolver.topic(req.params),
         select: {
             id: true,
             questions: true
@@ -172,7 +172,7 @@ export async function setTopicQuestions(req: Request, res: Response) {
     const options = SetTopicQuestionsOptions.parse(req.body);
 
     const topic = await prisma.topic.findUniqueOrThrow({
-        where: await Resolver.topic(req)
+        where: await Resolver.topic(req.params)
     });
 
     const updatedTopic = await prisma.topic.update({
@@ -212,7 +212,7 @@ export async function deleteTopic(req: Request, res: Response) {
     req.params.topic = req.params["0"];
 
     const topic = await prisma.topic.delete({
-        where: await Resolver.topic(req)
+        where: await Resolver.topic(req.params)
     });
 
     if (!topic) {
