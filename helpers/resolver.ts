@@ -3,7 +3,10 @@ import { Season } from "@prisma/client";
 import { z } from "zod";
 import prisma from "../prisma/prisma.js";
 import APIError from "../middleware/errors/APIError.js";
-import { ParamsDictionary } from "express-serve-static-core";
+
+export interface ParamsDictionary {
+    [key: string]: string;
+}
 
 export const CourseResolvable = z.union([
     z.object({
