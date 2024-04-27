@@ -8,7 +8,7 @@ const globalLimiter = rateLimit({
     legacyHeaders: false,
     skip: (req) => {
         return isWhitelisted(req);
-    },
+    }
 });
 
 export default globalLimiter;

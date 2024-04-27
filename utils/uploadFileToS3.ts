@@ -1,15 +1,15 @@
+import { S3 } from "@aws-sdk/client-s3";
+import { Upload } from "@aws-sdk/lib-storage";
 import { nanoid } from "nanoid";
 import APIError from "../middleware/errors/APIError.js";
-import { Upload } from "@aws-sdk/lib-storage";
-import { S3 } from "@aws-sdk/client-s3";
 
 function s3Client() {
     const config = {
         credentials: {
             accessKeyId: process.env["AWS_ACCESS_KEY_ID"] ?? "",
-            secretAccessKey: process.env["AWS_SECRET_ACCESS_KEY"] ?? "",
+            secretAccessKey: process.env["AWS_SECRET_ACCESS_KEY"] ?? ""
         },
-        region: "us-east-2",
+        region: "us-east-2"
     };
 
     return new S3(config);
@@ -27,17 +27,17 @@ export async function uploadFileToS3(buffer: Buffer, contentType: string) {
         Key: nanoid(),
         Body: buffer,
         ACL: "public-read-write",
-        ContentType: contentType,
+        ContentType: contentType
     };
 
     await new Upload({
         client: s3,
-        params,
+        params
     }).done();
 
     return {
         Location: `https://${params.Bucket}.s3.us-east-2.amazonaws.com/${params.Key}`,
-        Key: params.Key,
+        Key: params.Key
     };
 }
 
@@ -46,7 +46,7 @@ export async function deleteFileFromS3(key: string) {
 
     const params = {
         Bucket: process.env["AWS_BUCKET_NAME"] ?? "",
-        Key: key,
+        Key: key
     };
 
     await s3.deleteObject(params);

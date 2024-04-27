@@ -1,5 +1,5 @@
-import APIError from "../middleware/errors/APIError.js";
 import axios from "axios";
+import APIError from "../middleware/errors/APIError.js";
 
 export type PurdueIoCourse = {
     Id: string;

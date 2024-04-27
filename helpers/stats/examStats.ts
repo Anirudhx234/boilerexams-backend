@@ -1,5 +1,5 @@
-import prisma from "../../prisma/prisma.js";
 import { z } from "zod";
+import prisma from "../../prisma/prisma.js";
 import { ExamStats } from "../../controllers/statsController.js";
 
 export async function examStats(options: ExamStatsOptions): Promise<z.infer<typeof ExamStats>[]> {

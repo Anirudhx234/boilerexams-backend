@@ -1,20 +1,20 @@
-import { AnswerChoiceStats, CourseStats, ExamStats, QuestionStats, TopicStats } from "../controllers/statsController.js";
-import { deleteFileFromS3 } from "../utils/uploadFileToS3.js";
 import { Application, Feedback, PrismaClient } from "@prisma/client";
-import { UrlResourceData } from "../controllers/resourceController.js";
-import FlagDecoder from "../helpers/decoder.js";
 import { z } from "zod";
+import FlagDecoder from "../helpers/decoder.js";
+import { FeatureRequestData } from "../controllers/feedbackController.js";
+import { UrlResourceData } from "../controllers/resourceController.js";
+import { AnswerChoiceStats, CourseStats, ExamStats, QuestionStats, TopicStats } from "../controllers/statsController.js";
+import { DiscordAPI } from "../services/discord.api.js";
+import applicationTemplate from "../utils/emailTemplates/application.js";
 import bugSubmissionTemplate from "../utils/emailTemplates/bugSubmission.js";
 import sendMail from "../utils/sendMail.js";
-import { DiscordAPI } from "../services/discord.api.js";
-import { FeatureRequestData } from "../controllers/feedbackController.js";
-import applicationTemplate from "../utils/emailTemplates/application.js";
+import { deleteFileFromS3 } from "../utils/uploadFileToS3.js";
 
 const prisma = new PrismaClient();
 
 export default prisma
     .$extends({
-        model: {},
+        model: {}
     })
     .$extends({
         query: {
@@ -22,8 +22,8 @@ export default prisma
                 async update({ query, args }) {
                     const oldResource = await prisma.resource.findUniqueOrThrow({
                         where: {
-                            id: args.where.id,
-                        },
+                            id: args.where.id
+                        }
                     });
                     const newResource = await query(args);
 
@@ -53,11 +53,11 @@ export default prisma
                     }
 
                     return resource;
-                },
+                }
             },
             feedback: {
                 async create({ query, args }) {
-                    const feedback = await query(args) as Feedback;
+                    const feedback = (await query(args)) as Feedback;
                     const dataParse = FeatureRequestData.safeParse(feedback.data);
 
                     if (!dataParse.success) return feedback;
@@ -68,7 +68,7 @@ export default prisma
                         const emailOptions = {
                             to: emailParse.data,
                             subject: `Bug Report: ${feedback.id}`,
-                            html: bugSubmissionTemplate(feedback.id, dataParse.data.title),
+                            html: bugSubmissionTemplate(feedback.id, dataParse.data.title)
                         };
 
                         await sendMail(emailOptions);
@@ -80,12 +80,12 @@ export default prisma
             },
             application: {
                 async create({ query, args }) {
-                    const application = await query(args) as Application;
+                    const application = (await query(args)) as Application;
 
                     const emailOptions = {
                         to: application.email,
                         subject: `Application Received Confirmation`,
-                        html: applicationTemplate(application.id, application.name),
+                        html: applicationTemplate(application.id, application.name)
                     };
 
                     await sendMail(emailOptions);
@@ -116,7 +116,7 @@ export default prisma
                     needs: { flags: true },
                     compute(course) {
                         return FlagDecoder.course(course.flags); // Overwrite flag field with computed flags
-                    },
+                    }
                 },
                 secondaryColor: {
                     // Compute secondaryColor
@@ -143,7 +143,7 @@ export default prisma
                         const bb = b.toString(16).length === 1 ? `0${b.toString(16)}` : b.toString(16);
 
                         return `#${rr}${gg}${bb}`;
-                    },
+                    }
                 },
                 stats: {
                     needs: { stats: true },
@@ -156,8 +156,8 @@ export default prisma
                             accuracy: accuracy,
                             difficulty: difficulty
                         };
-                    },
-                },
+                    }
+                }
             },
             exam: {
                 // Modify exam query
@@ -165,7 +165,7 @@ export default prisma
                     needs: { flags: true },
                     compute(exam) {
                         return FlagDecoder.exam(exam.flags); // Overwrite flag field with computed flags
-                    },
+                    }
                 },
                 stats: {
                     needs: { stats: true },
@@ -178,8 +178,8 @@ export default prisma
                             accuracy: accuracy,
                             difficulty: difficulty
                         };
-                    },
-                },
+                    }
+                }
             },
             question: {
                 // Modify question query
@@ -187,7 +187,7 @@ export default prisma
                     needs: { flags: true },
                     compute(question) {
                         return FlagDecoder.question(question.flags); // Overwrite flag field with computed flags
-                    },
+                    }
                 },
                 stats: {
                     needs: { stats: true },
@@ -200,8 +200,8 @@ export default prisma
                             accuracy: accuracy,
                             difficulty: difficulty
                         };
-                    },
-                },
+                    }
+                }
             },
             topic: {
                 stats: {
@@ -215,18 +215,18 @@ export default prisma
                             accuracy: accuracy,
                             difficulty: difficulty
                         };
-                    },
-                },
+                    }
+                }
             },
             answerChoice: {
                 stats: {
                     needs: { stats: true },
                     compute(answerChoice) {
                         return AnswerChoiceStats.parse(answerChoice.stats);
-                    },
-                },
-            },
-        },
+                    }
+                }
+            }
+        }
     });
 
 function calcAccuracy(submissions: number, submissionsCorrect: number) {
@@ -236,5 +236,5 @@ function calcAccuracy(submissions: number, submissionsCorrect: number) {
 function calcDifficulty(submissions: number, submissionsCorrect: number) {
     const baselineSubmissions = submissions + 100;
     const baselineSubmissionsCorrect = submissionsCorrect + 50;
-    return 1.25 - (baselineSubmissionsCorrect / baselineSubmissions);
+    return 1.25 - baselineSubmissionsCorrect / baselineSubmissions;
 }

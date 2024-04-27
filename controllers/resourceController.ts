@@ -1,22 +1,22 @@
 import { Request, Response } from "express";
-import APIError from "../middleware/errors/APIError.js";
 import { ResourceType } from "@prisma/client";
+import axios from "axios";
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
-import axios from "axios";
 import prisma from "../prisma/prisma.js";
+import APIError from "../middleware/errors/APIError.js";
 import uploadFileToS3 from "../utils/uploadFileToS3.js";
 
 export const CodeResourceData = z.object({
     language: z.enum(["C", "JAVA", "PYTHON", "TEXT"]),
-    content: z.string(),
+    content: z.string()
 });
 
 export const UrlResourceData = z.object({
     url: z.string().url(),
     key: z.string().optional(),
     mathpixId: z.string().optional(),
-    altText: z.string().optional(),
+    altText: z.string().optional()
 });
 
 export const UpsertResourceOptions = z.object({
@@ -28,7 +28,7 @@ export const UpsertResourceOptions = z.object({
     answerChoiceId: z.string().uuid().nullable().optional(),
     applicationId: z.string().uuid().nullable().optional(),
     type: z.nativeEnum(ResourceType),
-    data: z.union([CodeResourceData, UrlResourceData]),
+    data: z.union([CodeResourceData, UrlResourceData])
 });
 
 const fileBasedResources: ResourceType[] = [ResourceType.LOGO, ResourceType.IMAGE, ResourceType.PDF];
@@ -50,8 +50,8 @@ export async function getResource(req: Request, res: Response) {
 
     const resource = await prisma.resource.findUnique({
         where: {
-            id: resourceId,
-        },
+            id: resourceId
+        }
     });
 
     res.status(200).send(resource);
@@ -70,7 +70,7 @@ export async function upsertResource(req: Request, res: Response) {
         if (!data.key) {
             const image = await axios.get(data.url, {
                 responseType: "arraybuffer",
-                maxContentLength: 5 * megabyte,
+                maxContentLength: 5 * megabyte
             });
 
             const contentType = image.headers["content-type"];
@@ -88,14 +88,14 @@ export async function upsertResource(req: Request, res: Response) {
 
     const resource = await prisma.resource.upsert({
         where: {
-            id: options.id,
+            id: options.id
         },
         create: {
-            ...options,
+            ...options
         },
         update: {
-            ...options,
-        },
+            ...options
+        }
     });
 
     res.status(200).send(resource);
@@ -106,8 +106,8 @@ export async function deleteResource(req: Request, res: Response) {
 
     const resource = await prisma.resource.delete({
         where: {
-            id: resourceId,
-        },
+            id: resourceId
+        }
     });
 
     res.status(200).send(resource);
@@ -118,14 +118,14 @@ export function connectOrCreateResources(resources?: z.infer<typeof UpsertResour
         connectOrCreate: resources?.map((resource) => {
             return {
                 where: {
-                    id: resource.id,
+                    id: resource.id
                 },
                 create: {
                     type: resource.type,
-                    data: resource.data,
-                },
+                    data: resource.data
+                }
             };
-        }),
+        })
     };
 }
 
@@ -134,17 +134,17 @@ export function upsertResources(resources?: z.infer<typeof UpsertResourceOptions
         upsert: resources?.map((resource) => {
             return {
                 where: {
-                    id: resource.id,
+                    id: resource.id
                 },
                 create: {
                     type: resource.type,
-                    data: resource.data,
+                    data: resource.data
                 },
                 update: {
                     type: resource.type,
-                    data: resource.data,
-                },
+                    data: resource.data
+                }
             };
-        }),
+        })
     };
 }

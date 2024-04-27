@@ -1,9 +1,9 @@
-import { Prisma } from "@prisma/client";
 import type { NextFunction, Request, Response } from "express";
-import APIError from "./APIError.js";
+import { Prisma } from "@prisma/client";
 import axios from "axios";
 import { MulterError } from "multer";
 import { ZodError } from "zod";
+import APIError from "./APIError.js";
 
 export default async function errorHandler(error: unknown, req: Request, res: Response, _next: NextFunction) {
     if (!(error instanceof Error)) {
@@ -13,7 +13,7 @@ export default async function errorHandler(error: unknown, req: Request, res: Re
 
     const errorResponse: ErrorResponse = {
         message: error.message,
-        fullError: {},
+        fullError: {}
     };
 
     if (req.user) {
@@ -96,4 +96,3 @@ export default async function errorHandler(error: unknown, req: Request, res: Re
     errorResponse.message = "An unknown error occurred";
     return res.status(500).json(errorResponse);
 }
-

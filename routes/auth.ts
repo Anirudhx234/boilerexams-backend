@@ -1,8 +1,7 @@
 import express from "express";
 import { Request, Response } from "express";
+import { Role } from "@prisma/client";
 import passport from "passport";
-import authTester from "../middleware/auth/authTester.js";
-import asyncWrapper from "../middleware/wrappers/asyncWrapper.js";
 import {
     localSignup,
     localLogin,
@@ -14,7 +13,8 @@ import {
     createLocalAccount
 } from "../middleware/auth/authController.js";
 import authHandler from "../middleware/auth/authHandler.js";
-import { Role } from "@prisma/client";
+import authTester from "../middleware/auth/authTester.js";
+import asyncWrapper from "../middleware/wrappers/asyncWrapper.js";
 
 const router = express.Router();
 

@@ -64,7 +64,7 @@ const bugSubmissionTemplate = (id: string, title: string) => {
 </body>
 </html>
 
-    `
+    `;
 };
 
 export default bugSubmissionTemplate;

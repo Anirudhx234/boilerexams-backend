@@ -6,7 +6,7 @@ export default class Formatter {
             ...options.data,
             exams: Formatter.exams({ ...options, data: options.data.exams }),
             topics: Formatter.topics({ ...options, data: options.data.topics }),
-            questions: Formatter.questions({ ...options, data: options.data.questions }),
+            questions: Formatter.questions({ ...options, data: options.data.questions })
         };
     }
 
@@ -20,7 +20,7 @@ export default class Formatter {
     public static exam(options: FormatterOptions<PotentialExam>): FormattedExam {
         return {
             ...options.data,
-            questions: Formatter.questions({ ...options, data: options.data?.questions }),
+            questions: Formatter.questions({ ...options, data: options.data?.questions })
         };
     }
 
@@ -35,7 +35,7 @@ export default class Formatter {
         const questions = Formatter.questionsToTopics({ ...options, data: options.data.questions });
         return {
             ...options.data,
-            questions: questions?.map((relation) => relation.question)?.filter((question) => question) as FormattedQuestion[],
+            questions: questions?.map((relation) => relation.question)?.filter((question) => question) as FormattedQuestion[]
         };
     }
 
@@ -52,7 +52,7 @@ export default class Formatter {
                 ? {
                       ...(options.data.data as object),
                       explanationText: undefined, // ToDo temporary fix
-                      answerChoices: Formatter.answerChoices({ ...options, data: options.data.answerChoices }),
+                      answerChoices: Formatter.answerChoices({ ...options, data: options.data.answerChoices })
                   }
                 : undefined,
             course: options.data.course ? Formatter.course({ ...options, data: options.data.course }) : undefined,
@@ -60,7 +60,7 @@ export default class Formatter {
             answerChoices: undefined,
             resources: options.data.resources,
             children: Formatter.questions({ ...options, data: options.data.children }),
-            topics: topics?.map((relation) => relation.topic)?.filter((topic) => topic) as FormattedTopic[],
+            topics: topics?.map((relation) => relation.topic)?.filter((topic) => topic) as FormattedTopic[]
         };
     }
 
@@ -74,7 +74,7 @@ export default class Formatter {
     public static answerChoice(options: FormatterOptions<PotentialAnswerChoice>): FormattedAnswerChoice {
         return {
             ...options.data,
-            question: options.data.question ? Formatter.question({ ...options, data: options.data.question }) : undefined,
+            question: options.data.question ? Formatter.question({ ...options, data: options.data.question }) : undefined
         };
     }
 
@@ -87,7 +87,7 @@ export default class Formatter {
         return {
             ...options.data,
             topic: options.data.topic ? Formatter.topic({ ...options, data: options.data.topic }) : undefined,
-            question: options.data.question ? Formatter.question({ ...options, data: options.data.question }) : undefined,
+            question: options.data.question ? Formatter.question({ ...options, data: options.data.question }) : undefined
         };
     }
 

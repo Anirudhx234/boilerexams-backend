@@ -14,7 +14,7 @@ const isAuthorized = (user: User, role: string) => {
         [Role.USER]: 1,
         [Role.PROFESSOR]: 2,
         [Role.CONTENT]: 3,
-        [Role.ADMIN]: 4,
+        [Role.ADMIN]: 4
     };
 
     const userLevel = levels[user.role];

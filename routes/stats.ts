@@ -1,14 +1,14 @@
 import express from "express";
+import cache from "../middleware/cache/caching.js";
+import asyncWrapper from "../middleware/wrappers/asyncWrapper.js";
 import {
     generalStats,
     getCourseStats,
     getExamStats,
     getHourlySubmissionStats,
     getQuestionStats,
-    getTopicStats,
+    getTopicStats
 } from "../controllers/statsController.js";
-import asyncWrapper from "../middleware/wrappers/asyncWrapper.js";
-import cache from "../middleware/cache/caching.js";
 
 const router = express.Router();
 

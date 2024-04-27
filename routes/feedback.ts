@@ -1,3 +1,8 @@
+import express from "express";
+import { Role } from "@prisma/client";
+import authHandler from "../middleware/auth/authHandler.js";
+import upload from "../middleware/multer/file.js";
+import asyncWrapper from "../middleware/wrappers/asyncWrapper.js";
 import {
     createApplication,
     createVideoFeedback,
@@ -8,13 +13,9 @@ import {
     reportBug,
     reportQuestion,
     requestCourse,
-    requestFeature, updateFeedbackStatus
+    requestFeature,
+    updateFeedbackStatus
 } from "../controllers/feedbackController.js";
-import asyncWrapper from "../middleware/wrappers/asyncWrapper.js";
-import upload from "../middleware/multer/file.js";
-import express from "express";
-import authHandler from "../middleware/auth/authHandler.js";
-import { Role } from "@prisma/client";
 
 const router = express.Router();
 

@@ -1,6 +1,6 @@
-import prisma from "../../../prisma/prisma.js";
 import { AccountType, type User } from "@prisma/client";
 import { Strategy } from "passport-discord";
+import prisma from "../../../prisma/prisma.js";
 
 const discordPassport = (passport) => {
     passport.serializeUser((user: User, done: any) => {
@@ -11,8 +11,8 @@ const discordPassport = (passport) => {
         try {
             const user = await prisma.user.findUnique({
                 where: {
-                    id: id,
-                },
+                    id: id
+                }
             });
             if (!user) {
                 throw new Error("User not found");
@@ -29,15 +29,15 @@ const discordPassport = (passport) => {
                 clientID: process.env["DISCORD_CLIENT_ID"],
                 clientSecret: process.env["DISCORD_CLIENT_SECRET"],
                 callbackURL: `${process.env["API_URL"]}/auth/discord/redirect`,
-                scope: ["identify", "email"],
+                scope: ["identify", "email"]
             },
             async (accessToken: string, refreshToken: string, profile: any, done: any) => {
                 try {
                     const user = await prisma.user.findFirst({
                         where: {
                             accountType: AccountType.DISCORD,
-                            accountId: profile.id,
-                        },
+                            accountId: profile.id
+                        }
                     });
 
                     let profilePicture: string;
@@ -54,29 +54,29 @@ const discordPassport = (passport) => {
                                 email: profile.email,
                                 profilePicture: profilePicture,
                                 accountType: AccountType.DISCORD,
-                                accountId: profile.id,
-                            },
+                                accountId: profile.id
+                            }
                         });
                         done(null, newUser);
                     } else {
                         await prisma.user.updateMany({
                             where: {
                                 accountType: AccountType.DISCORD,
-                                accountId: profile.id,
+                                accountId: profile.id
                             },
                             data: {
                                 name: profile.username,
                                 email: profile.email,
-                                profilePicture: profilePicture,
-                            },
+                                profilePicture: profilePicture
+                            }
                         });
                         done(null, user);
                     }
                 } catch (error) {
                     done(error, null);
                 }
-            },
-        ),
+            }
+        )
     );
 };
 

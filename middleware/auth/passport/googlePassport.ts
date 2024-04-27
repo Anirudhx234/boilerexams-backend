@@ -1,6 +1,6 @@
-import prisma from "../../../prisma/prisma.js";
 import { AccountType, type User } from "@prisma/client";
 import { Strategy } from "passport-google-oauth20";
+import prisma from "../../../prisma/prisma.js";
 
 const googlePassport = (passport) => {
     passport.serializeUser((user: User, done: any) => {
@@ -11,8 +11,8 @@ const googlePassport = (passport) => {
         try {
             const user = await prisma.user.findUnique({
                 where: {
-                    id: id,
-                },
+                    id: id
+                }
             });
             if (!user) {
                 throw new Error("User not found");
@@ -29,15 +29,15 @@ const googlePassport = (passport) => {
                 clientID: process.env["GOOGLE_CLIENT_ID"],
                 clientSecret: process.env["GOOGLE_CLIENT_SECRET"],
                 callbackURL: `${process.env["API_URL"]}/auth/google/redirect`,
-                scope: ["profile", "email"],
+                scope: ["profile", "email"]
             },
             async (accessToken: string, refreshToken: string, profile: any, done: any) => {
                 try {
                     const user = await prisma.user.findFirst({
                         where: {
                             accountType: AccountType.GOOGLE,
-                            accountId: profile.id,
-                        },
+                            accountId: profile.id
+                        }
                     });
 
                     let profilePicture: string;
@@ -54,29 +54,29 @@ const googlePassport = (passport) => {
                                 email: profile.emails[0].value,
                                 profilePicture: profilePicture,
                                 accountType: AccountType.GOOGLE,
-                                accountId: profile.id,
-                            },
+                                accountId: profile.id
+                            }
                         });
                         done(null, newUser);
                     } else {
                         await prisma.user.updateMany({
                             where: {
                                 accountType: AccountType.GOOGLE,
-                                accountId: profile.id,
+                                accountId: profile.id
                             },
                             data: {
                                 name: profile.displayName,
                                 email: profile.emails[0].value,
-                                profilePicture: profilePicture,
-                            },
+                                profilePicture: profilePicture
+                            }
                         });
                         done(null, user);
                     }
                 } catch (error) {
                     done(error, null);
                 }
-            },
-        ),
+            }
+        )
     );
 };
 

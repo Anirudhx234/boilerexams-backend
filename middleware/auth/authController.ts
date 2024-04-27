@@ -1,23 +1,21 @@
-import APIError from "../errors/APIError.js";
-import { AccountType, Role } from "@prisma/client";
 import type { NextFunction, Request, Response } from "express";
+import { AccountType, Role } from "@prisma/client";
 import { randomBytes } from "crypto";
+import passport from "passport";
 import { URL } from "url";
 import { z } from "zod";
-import hashString from "../../utils/hashString.js";
-import passport from "passport";
 import prisma from "../../prisma/prisma.js";
 import resetPasswordTemplate from "../../utils/emailTemplates/resetPassword.js";
+import hashString from "../../utils/hashString.js";
 import sendEmail from "../../utils/sendMail.js";
+import APIError from "../errors/APIError.js";
 
 export const LocalSignupOptions = z.object({
     name: z.string(),
     email: z.string().email({ message: "Invalid email" }),
-    password: z
-        .string()
-        .regex(/^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$/, {
-            message: `Password must contain at least 8 characters consisting of at least 1 uppercase letter, 1 lowercase letter, 1 number, and 1 special character`,
-        }),
+    password: z.string().regex(/^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$/, {
+        message: `Password must contain at least 8 characters consisting of at least 1 uppercase letter, 1 lowercase letter, 1 number, and 1 special character`
+    })
 });
 
 export const CreateLocalOptions = LocalSignupOptions.extend({
@@ -30,8 +28,8 @@ export const ChangePasswordOptions = z.object({
     d: z.string(),
     h: z.string(),
     newPassword: z.string().regex(/^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$/, {
-        message: `Password must contain at least 8 characters consisting of at least 1 uppercase letter, 1 lowercase letter, 1 number, and 1 special character`,
-    }),
+        message: `Password must contain at least 8 characters consisting of at least 1 uppercase letter, 1 lowercase letter, 1 number, and 1 special character`
+    })
 });
 
 const base64Encode = (data: string) => {
@@ -85,23 +83,23 @@ export async function createLocalAccount(req: Request, res: Response) {
             localAccount: {
                 create: {
                     password: hashedPassword,
-                    salt: salt,
-                },
+                    salt: salt
+                }
             },
             courses: {
-                connect: courses?.map(courseId => {
+                connect: courses?.map((courseId) => {
                     return {
                         id: courseId
                     };
                 })
             }
-        },
+        }
     });
 
     res.status(200).send(newUser);
 }
 
-export async function localSignup(req: Request, res: Response){
+export async function localSignup(req: Request, res: Response) {
     const { name, email, password } = LocalSignupOptions.parse(req.body);
 
     const salt = randomBytes(16);
@@ -116,10 +114,10 @@ export async function localSignup(req: Request, res: Response){
             localAccount: {
                 create: {
                     password: hashedPassword,
-                    salt: salt,
-                },
-            },
-        },
+                    salt: salt
+                }
+            }
+        }
     });
 
     res.status(200).send(newUser);
@@ -129,7 +127,7 @@ export async function localLogin(req: Request, res: Response, next: NextFunction
     const authenticator = passport.authenticate("local", {
         successReturnToOrRedirect: "/auth/test",
         failureRedirect: "/auth/test",
-        failureMessage: true,
+        failureMessage: true
     });
     authenticator(req, res, next);
 }
@@ -140,11 +138,11 @@ export async function resetPassword(req: Request, res: Response) {
     const user = await prisma.user.findFirst({
         where: {
             email: email,
-            accountType: AccountType.LOCAL,
+            accountType: AccountType.LOCAL
         },
         include: {
-            localAccount: true,
-        },
+            localAccount: true
+        }
     });
     if (!user || !user.localAccount) {
         throw new APIError("User not found", 404);
@@ -157,7 +155,7 @@ export async function resetPassword(req: Request, res: Response) {
         userId: user.id,
         date: today,
         // lastLogin: user.lastLoginDate.toISOString(),
-        salt: user.localAccount.salt,
+        salt: user.localAccount.salt
     };
     const hash = await hashString(JSON.stringify(data), Buffer.from(process.env["SESSION_SECRET"] ?? "", "hex"));
 
@@ -166,7 +164,7 @@ export async function resetPassword(req: Request, res: Response) {
     const options = {
         to: email,
         subject: "Reset Password",
-        html: resetPasswordTemplate(resetLink),
+        html: resetPasswordTemplate(resetLink)
     };
     await sendEmail(options);
 
@@ -192,11 +190,11 @@ export async function changePassword(req: Request, res: Response) {
     const user = await prisma.user.findFirst({
         where: {
             id: userId,
-            accountType: AccountType.LOCAL,
+            accountType: AccountType.LOCAL
         },
         include: {
-            localAccount: true,
-        },
+            localAccount: true
+        }
     });
     if (!user || !user.localAccount) {
         throw new APIError("User not found", 404);
@@ -206,7 +204,7 @@ export async function changePassword(req: Request, res: Response) {
         userId: user.id,
         date: date,
         // lastLogin: user.lastLoginDate.toISOString(),
-        salt: user.localAccount.salt,
+        salt: user.localAccount.salt
     };
     const hash = await hashString(JSON.stringify(data), Buffer.from(process.env["SESSION_SECRET"] ?? "", "hex"));
 
@@ -219,12 +217,12 @@ export async function changePassword(req: Request, res: Response) {
 
     await prisma.localAccount.update({
         where: {
-            userId: userId,
+            userId: userId
         },
         data: {
             password: hashedPassword,
-            salt: salt,
-        },
+            salt: salt
+        }
     });
 
     res.status(200).send({ message: "Password changed successfully" });

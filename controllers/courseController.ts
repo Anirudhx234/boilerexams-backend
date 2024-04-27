@@ -1,14 +1,14 @@
-import APIError from "../middleware/errors/APIError.js";
-import { connectOrCreateResources, UpsertResourceOptions, upsertResources } from "./resourceController.js";
 import { Request, Response } from "express";
-import { EventQueryParams } from "./eventController.js";
-import { PurdueIoAPI } from "../services/purdue.io.js";
 import { StudyMode } from "@prisma/client";
 import { z } from "zod";
+import prisma from "../prisma/prisma.js";
 import FlagEncoder from "../helpers/encoder.js";
 import Formatter from "../helpers/formatter.js";
-import prisma from "../prisma/prisma.js";
 import Resolver from "../helpers/resolver.js";
+import APIError from "../middleware/errors/APIError.js";
+import { PurdueIoAPI } from "../services/purdue.io.js";
+import { EventQueryParams } from "./eventController.js";
+import { connectOrCreateResources, UpsertResourceOptions, upsertResources } from "./resourceController.js";
 
 export const CourseFlags = z.object({
     published: z.boolean().default(false),
@@ -22,7 +22,7 @@ export const CreateCourseOptions = z.object({
     disclaimer: z.string().optional().nullable(),
     studyModes: z.array(z.nativeEnum(StudyMode)).default([StudyMode.EXAM, StudyMode.TIMED_EXAM, StudyMode.TOPIC]),
     resources: z.array(UpsertResourceOptions).optional(),
-    flags: CourseFlags.optional().default({}),
+    flags: CourseFlags.optional().default({})
 });
 
 export const UpdateCourseOptions = z.object({
@@ -30,27 +30,27 @@ export const UpdateCourseOptions = z.object({
     disclaimer: z.string().optional().nullable(),
     studyModes: z.array(z.nativeEnum(StudyMode)).optional(),
     resources: z.array(UpsertResourceOptions).optional(),
-    flags: CourseFlags.optional(),
+    flags: CourseFlags.optional()
 });
 
 export async function getSubjects(req: Request, res: Response) {
     const courses = await prisma.course.findMany({
         orderBy: [
             {
-                subject: "asc",
+                subject: "asc"
             },
             {
-                number: "asc",
-            },
+                number: "asc"
+            }
         ],
         include: {
-            resources: true,
-        },
+            resources: true
+        }
     });
 
     const formattedCourses = Formatter.courses({
         data: courses,
-        sendUnpublished: req.sendUnpublished,
+        sendUnpublished: req.sendUnpublished
     });
 
     const subjects = formattedCourses?.reduce((acc, course) => {
@@ -59,7 +59,7 @@ export async function getSubjects(req: Request, res: Response) {
         if (!acc[subjectName]) {
             acc[subjectName] = {
                 subject: subjectName,
-                courses: [],
+                courses: []
             };
         }
         acc[subjectName].courses.push(course);
@@ -82,11 +82,11 @@ export async function getCourse(req: Request, res: Response) {
         include: {
             events: {
                 orderBy: {
-                    start: "asc",
-                },
+                    start: "asc"
+                }
             },
-            resources: true,
-        },
+            resources: true
+        }
     });
 
     if (!req.sendUnpublished && !course.flags.published) {
@@ -96,8 +96,8 @@ export async function getCourse(req: Request, res: Response) {
     res.status(200).send(
         Formatter.course({
             data: course,
-            sendUnpublished: req.sendUnpublished,
-        }),
+            sendUnpublished: req.sendUnpublished
+        })
     );
 }
 
@@ -105,33 +105,33 @@ export async function getAllCourses(req: Request, res: Response) {
     const courses = await prisma.course.findMany({
         orderBy: [
             {
-                subject: "asc",
+                subject: "asc"
             },
             {
-                number: "asc",
-            },
+                number: "asc"
+            }
         ],
         include: {
             events: {
                 orderBy: {
-                    start: "asc",
-                },
+                    start: "asc"
+                }
             },
-            resources: true,
-        },
+            resources: true
+        }
     });
 
     res.status(200).send(
         Formatter.courses({
             data: courses,
-            sendUnpublished: req.sendUnpublished,
-        }),
+            sendUnpublished: req.sendUnpublished
+        })
     );
 }
 
 export async function getCourseExams(req: Request, res: Response) {
     const course = await prisma.course.findUniqueOrThrow({
-        where: Resolver.course(req),
+        where: Resolver.course(req)
     });
 
     if (!req.sendUnpublished && !course.flags.published) {
@@ -144,7 +144,7 @@ export async function getCourseExams(req: Request, res: Response) {
 
     const exams = await prisma.exam.findMany({
         where: {
-            courseId: course.id,
+            courseId: course.id
         },
         include: {
             resources: true,
@@ -152,76 +152,27 @@ export async function getCourseExams(req: Request, res: Response) {
                 select: {
                     id: true,
                     number: true,
-                    flags: true,
+                    flags: true
                 },
                 orderBy: {
-                    number: "asc",
-                },
-            },
+                    number: "asc"
+                }
+            }
         },
-        orderBy: [
-            { year: "asc" },
-            { season: "asc" },
-            { number: "asc" }
-        ],
+        orderBy: [{ year: "asc" }, { season: "asc" }, { number: "asc" }]
     });
 
     res.status(200).send(
         Formatter.exams({
             data: exams,
             sendUnpublished: req.sendUnpublished
-        }),
+        })
     );
 }
 
 export async function getCourseTopics(req: Request, res: Response) {
     const course = await prisma.course.findUniqueOrThrow({
-        where: Resolver.course(req),
-    });
-
-    if (!req.sendUnpublished && !course.flags.published) {
-        throw new APIError("Course not found", 404);
-    }
-
-    if (!course.studyModes.includes(StudyMode.TOPIC) && !req.sendUnpublished) {
-        throw new APIError("Route disabled for this course", 403);
-    }
-
-    const topics = await prisma.topic.findMany({
-        where: {
-            courseId: course.id,
-        },
-        include: {
-            questions: {
-                include: {
-                    question: {
-                        select: {
-                            id: true,
-                            flags: true,
-                        },
-                    },
-                },
-                orderBy: {
-                    number: "asc",
-                },
-            },
-        },
-        orderBy: {
-            name: "asc",
-        },
-    });
-
-    res.status(200).send(
-        Formatter.topics({
-            data: topics,
-            sendUnpublished: req.sendUnpublished,
-        }),
-    );
-}
-
-export async function getCourseTopicsByExam(req: Request, res: Response) {
-    const course = await prisma.course.findUniqueOrThrow({
-        where: Resolver.course(req),
+        where: Resolver.course(req)
     });
 
     if (!req.sendUnpublished && !course.flags.published) {
@@ -242,27 +193,74 @@ export async function getCourseTopicsByExam(req: Request, res: Response) {
                     question: {
                         select: {
                             id: true,
-                            flags: true,
-                            exam: {
-                                select: {
-                                    number: true,
-                                    flags: true
+                            flags: true
+                        }
+                    }
+                },
+                orderBy: {
+                    number: "asc"
+                }
+            }
+        },
+        orderBy: {
+            name: "asc"
+        }
+    });
+
+    res.status(200).send(
+        Formatter.topics({
+            data: topics,
+            sendUnpublished: req.sendUnpublished
+        })
+    );
+}
+
+export async function getCourseTopicsByExam(req: Request, res: Response) {
+    const course = await prisma.course.findUniqueOrThrow({
+        where: Resolver.course(req)
+    });
+
+    if (!req.sendUnpublished && !course.flags.published) {
+        throw new APIError("Course not found", 404);
+    }
+
+    if (!course.studyModes.includes(StudyMode.TOPIC) && !req.sendUnpublished) {
+        throw new APIError("Route disabled for this course", 403);
+    }
+
+    const topics = await prisma.topic
+        .findMany({
+            where: {
+                courseId: course.id
+            },
+            include: {
+                questions: {
+                    include: {
+                        question: {
+                            select: {
+                                id: true,
+                                flags: true,
+                                exam: {
+                                    select: {
+                                        number: true,
+                                        flags: true
+                                    }
                                 }
                             }
                         }
                     }
-                },
+                }
             },
-        },
-        orderBy: {
-            name: "asc",
-        },
-    }).then(topics => {
-        return Formatter.topics({
-            data: topics,
-            sendUnpublished: req.sendUnpublished,
+            orderBy: {
+                name: "asc"
+            }
+        })
+        .then((topics) => {
+            return Formatter.topics({
+                data: topics,
+                sendUnpublished: req.sendUnpublished
+            });
         });
-    });
 
     const buckets = {}; // buckets["i"] will be an array of topics on exam i
 
@@ -277,7 +275,7 @@ export async function getCourseTopicsByExam(req: Request, res: Response) {
             }
             buckets[examNumber].push({
                 ...topic,
-                questions: topic.questions?.map(question => {
+                questions: topic.questions?.map((question) => {
                     return {
                         ...question,
                         exam: undefined // Shave off extra info
@@ -297,8 +295,8 @@ export async function getCourseEvents(req: Request, res: Response) {
         where: Resolver.course(req),
         select: {
             id: true,
-            flags: true,
-        },
+            flags: true
+        }
     });
 
     if (!req.sendUnpublished && !course.flags.published) {
@@ -308,11 +306,11 @@ export async function getCourseEvents(req: Request, res: Response) {
     const events = await prisma.event.findMany({
         where: {
             ...options,
-            courseId: course.id,
+            courseId: course.id
         },
         orderBy: {
-            start: "asc",
-        },
+            start: "asc"
+        }
     });
 
     res.status(200).send(events);
@@ -331,21 +329,21 @@ export async function createCourse(req: Request, res: Response) {
             name: purdueIoCourse.Title,
             subject: purdueIoSubject.Name,
             flags: FlagEncoder.course(options.flags),
-            resources: connectOrCreateResources(options.resources),
+            resources: connectOrCreateResources(options.resources)
         },
         include: {
             exams: true,
             topics: true,
             questions: true,
-            resources: true,
-        },
+            resources: true
+        }
     });
 
     res.status(200).send(
         Formatter.course({
             data: course,
-            sendUnpublished: req.sendUnpublished,
-        }),
+            sendUnpublished: req.sendUnpublished
+        })
     );
 }
 
@@ -357,15 +355,15 @@ export async function updateCourse(req: Request, res: Response) {
         data: {
             ...options,
             flags: options.flags ? FlagEncoder.course(options.flags) : undefined,
-            resources: upsertResources(options.resources),
-        },
+            resources: upsertResources(options.resources)
+        }
     });
 
     res.status(200).send(
         Formatter.course({
             data: course,
-            sendUnpublished: req.sendUnpublished,
-        }),
+            sendUnpublished: req.sendUnpublished
+        })
     );
 }
 
@@ -375,8 +373,8 @@ export async function toggleCoursePublished(req: Request, res: Response) {
         select: {
             id: true,
             name: true,
-            flags: true,
-        },
+            flags: true
+        }
     });
 
     if (!course) {
@@ -387,24 +385,24 @@ export async function toggleCoursePublished(req: Request, res: Response) {
 
     await prisma.course.update({
         where: {
-            id: course.id,
+            id: course.id
         },
         data: {
             flags: FlagEncoder.course({
                 ...course.flags,
-                published: status,
-            }),
-        },
+                published: status
+            })
+        }
     });
 
     res.status(200).send({
-        message: `${course.name} is now ${status ? "published" : "unpublished"}`,
+        message: `${course.name} is now ${status ? "published" : "unpublished"}`
     });
 }
 
 export async function deleteCourse(req: Request, res: Response) {
     const course = await prisma.course.delete({
-        where: Resolver.course(req),
+        where: Resolver.course(req)
     });
 
     if (!course) {

@@ -62,6 +62,7 @@ const applicationTemplate = (id: string, name: string) => {
         </div>
     </body>
     </html>
-    `};
+    `;
+};
 
 export default applicationTemplate;

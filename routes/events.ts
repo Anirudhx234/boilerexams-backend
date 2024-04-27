@@ -1,4 +1,7 @@
 import express from "express";
+import { Role } from "@prisma/client";
+import authHandler from "../middleware/auth/authHandler.js";
+import asyncWrapper from "../middleware/wrappers/asyncWrapper.js";
 import {
     getEvents,
     getEvent,
@@ -6,11 +9,8 @@ import {
     batchCreateEvent,
     updateEvent,
     deleteAllEvents,
-    deleteEvent,
+    deleteEvent
 } from "../controllers/eventController.js";
-import asyncWrapper from "../middleware/wrappers/asyncWrapper.js";
-import authHandler from "../middleware/auth/authHandler.js";
-import { Role } from "@prisma/client";
 
 const router = express.Router();
 

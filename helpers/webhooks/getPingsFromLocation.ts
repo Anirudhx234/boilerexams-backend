@@ -4,7 +4,7 @@ enum Ping {
     Trevin = "<@534143614993956865>",
     Thomas = "<@341741687065804812>",
     Chris = "<@455084750487683102>",
-    Frontend = "<@&1078747995979403326>",
+    Frontend = "<@&1078747995979403326>"
 }
 
 const getPingsFromLocation = (location: string) => {

@@ -1,12 +1,9 @@
-import { z } from "zod";
-import { QuestionType } from "@prisma/client";
 import type { Request, Response } from "express";
+import { QuestionType } from "@prisma/client";
+import { z } from "zod";
 import prisma from "../prisma/prisma.js";
-import Resolver from "../helpers/resolver.js";
 import { Epoch } from "../prisma/schema.js";
 import { QuestionData } from "./questionController.js";
-import { DiscordAPI } from "../services/discord.api.js";
-import axios from "axios";
 
 export const MultipleChoiceSubmissionData = z.array(z.number());
 
@@ -23,38 +20,40 @@ export const ParentSubmissionData = z.array(
             MultipleChoiceSubmissionData,
             FreeResponseSubmissionData,
             ShortAnswerSubmissionData,
-            FillInBlankSubmissionData,
-        ]),
-    }),
+            FillInBlankSubmissionData
+        ])
+    })
 );
 
 export const UpdateSubmissionOptions = z.object({
     id: z.string().uuid().optional(),
     timeSpentVideo: z.preprocess(coerceBigIntSafely, z.bigint().optional()),
-    timeSpentModal: z.preprocess(coerceBigIntSafely, z.bigint().optional()),
+    timeSpentModal: z.preprocess(coerceBigIntSafely, z.bigint().optional())
 });
 
-export const CreateSubmissionOptions = z.object({
-    id: z.string().uuid().optional(),
-    type: z.nativeEnum(QuestionType),
-    questionId: z.string().uuid(),
-    userSolution: z.union([
-        ParentSubmissionData,
-        MultipleChoiceSubmissionData,
-        FreeResponseSubmissionData,
-        ShortAnswerSubmissionData,
-        FillInBlankSubmissionData,
-    ]),
-    timeStarted: z.coerce.date().min(Epoch, "value too old"),
-    timeEnded: z.coerce.date(),
-    timeSpent: z.preprocess(coerceBigIntSafely, z.bigint()),
-    timeSpentVideo: z.preprocess(coerceBigIntSafely, z.bigint().default(0n)),
-    timeSpentModal: z.preprocess(coerceBigIntSafely, z.bigint().default(0n)),
-    osFamily: z.string().optional(),
-}).refine(options => {
-    const difference = options.timeEnded.getTime() - options.timeStarted.getTime();
-    return difference >= options.timeSpent;
-}, "timeSpent did not exceed difference between timeStarted and timeEnded");
+export const CreateSubmissionOptions = z
+    .object({
+        id: z.string().uuid().optional(),
+        type: z.nativeEnum(QuestionType),
+        questionId: z.string().uuid(),
+        userSolution: z.union([
+            ParentSubmissionData,
+            MultipleChoiceSubmissionData,
+            FreeResponseSubmissionData,
+            ShortAnswerSubmissionData,
+            FillInBlankSubmissionData
+        ]),
+        timeStarted: z.coerce.date().min(Epoch, "value too old"),
+        timeEnded: z.coerce.date(),
+        timeSpent: z.preprocess(coerceBigIntSafely, z.bigint()),
+        timeSpentVideo: z.preprocess(coerceBigIntSafely, z.bigint().default(0n)),
+        timeSpentModal: z.preprocess(coerceBigIntSafely, z.bigint().default(0n)),
+        osFamily: z.string().optional()
+    })
+    .refine((options) => {
+        const difference = options.timeEnded.getTime() - options.timeStarted.getTime();
+        return difference >= options.timeSpent;
+    }, "timeSpent did not exceed difference between timeStarted and timeEnded");
 
 export async function createSubmission(req: Request, res: Response) {
     const options = CreateSubmissionOptions.parse(req.body);
@@ -62,7 +61,7 @@ export async function createSubmission(req: Request, res: Response) {
     const question = await prisma.question.findFirstOrThrow({
         where: {
             id: options.questionId
-        },
+        }
     });
 
     const data = QuestionData.parse(question.data);
@@ -73,11 +72,11 @@ export async function createSubmission(req: Request, res: Response) {
             ...options,
             type: question.type,
             correct: correct,
-            questionId: question.id,
+            questionId: question.id
         },
         include: {
-            question: true,
-        },
+            question: true
+        }
     });
 
     res.status(200).send(submission);
@@ -92,8 +91,8 @@ export async function batchCreateSubmission(req: Request, res: Response) {
         const submissionPromises = options.map(async (option) => {
             const question = await prisma.question.findUniqueOrThrow({
                 where: {
-                    id: option.questionId,
-                },
+                    id: option.questionId
+                }
             });
             const data = QuestionData.parse(question.data);
             const correct = checkUserSolution(question.type, option.userSolution, data.solution);
@@ -103,11 +102,11 @@ export async function batchCreateSubmission(req: Request, res: Response) {
                     ...option,
                     type: question.type,
                     correct: correct,
-                    questionId: question.id,
+                    questionId: question.id
                 },
                 include: {
-                    question: true,
-                },
+                    question: true
+                }
             });
         });
 
@@ -123,11 +122,11 @@ export async function updateSubmission(req: Request, res: Response) {
 
     const submission = await prisma.submission.update({
         where: {
-            id: submissionId,
+            id: submissionId
         },
         data: {
-            ...options,
-        },
+            ...options
+        }
     });
 
     res.status(200).send(submission);
