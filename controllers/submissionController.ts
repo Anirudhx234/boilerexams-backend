@@ -54,7 +54,7 @@ export const CreateSubmissionOptions = z.object({
 }).refine(options => {
     const difference = options.timeEnded.getTime() - options.timeStarted.getTime();
     return difference >= options.timeSpent;
-}, "timeSpent did not exceed difference between timeStarted and timeEnded");
+}, "timeSpent exceeded difference between timeStarted and timeEnded");
 
 export async function createSubmission(req: Request, res: Response) {
     const options = CreateSubmissionOptions.parse(req.body);
