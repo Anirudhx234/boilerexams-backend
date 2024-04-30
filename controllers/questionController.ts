@@ -70,7 +70,8 @@ export const UpdateQuestionOptions = z.object({
     topics:         z.array(UpsertTopic).optional(),
     resources:      z.array(UpsertResourceOptions).optional(),
     answerChoices:  z.array(UpsertAnswerChoiceOptions).optional().optional(),
-    explanation:    UpsertExplanationOptions.optional()
+    explanation:    UpsertExplanationOptions.optional(),
+    disclaimer:     z.string().optional()
 });
 
 export const FullQuestion = {
