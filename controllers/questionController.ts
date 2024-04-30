@@ -71,7 +71,7 @@ export const UpdateQuestionOptions = z.object({
     resources:      z.array(UpsertResourceOptions).optional(),
     answerChoices:  z.array(UpsertAnswerChoiceOptions).optional().optional(),
     explanation:    UpsertExplanationOptions.optional(),
-    disclaimer:     z.string().optional()
+    disclaimer:     z.string().optional().nullable()
 });
 
 export const FullQuestion = {
