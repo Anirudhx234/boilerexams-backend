@@ -1,16 +1,10 @@
 import { Request, Response } from "express";
-import { Season } from "@prisma/client";
 import { z } from "zod";
 import prisma from "../prisma/prisma.js";
-import { ReorderQuestions } from "../prisma/schema.js";
-import FlagEncoder from "../helpers/encoder.js";
 import Formatter from "../helpers/formatter.js";
-import savePDFtoExam from "../helpers/mathpix/savePDFtoExam.js";
 import Resolver from "../helpers/resolver.js";
 import APIError from "../middleware/errors/APIError.js";
 import { FullQuestion, PartialQuestion } from "./questionController.js";
-import { UpsertResourceOptions, upsertResources } from "./resourceController.js";
-import questions from "../routes/questions.js";
 
 const HalfHour = 30 * 60 * 1000;
 const FourHours = 4 * 60 * 60 * 1000;
@@ -149,6 +143,7 @@ export async function createCustomExam(req: Request, res: Response) {
             courseId: course.id,
         },
         include: {
+            course: true,
             questions: true
         }
     });
