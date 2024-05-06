@@ -141,6 +141,13 @@ export async function createCustomExam(req: Request, res: Response) {
         data: {
             ...options,
             courseId: course.id,
+            questions: {
+                connect: options.questionIds.map(questionId => {
+                    return {
+                        id: questionId
+                    }
+                })
+            },
         },
         include: {
             course: true,
