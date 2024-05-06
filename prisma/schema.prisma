@@ -10,7 +10,7 @@ datasource db {
 }
 
 model Course {
-  id           String      @id @default(uuid())
+  id           String       @id @default(uuid())
   abbreviation String
   number       Int
   name         String
@@ -25,8 +25,9 @@ model Course {
   questions    Question[]
   topics       Topic[]
   resources    Resource[]
-  users        User[]      @relation("CourseToUser")
+  users        User[]       @relation("CourseToUser")
   stats        Json?
+  CustomExam   CustomExam[]
 
   @@unique([abbreviation, number])
 }
@@ -46,6 +47,21 @@ model Exam {
   stats      Json?
 
   @@unique([number, year, season, courseId])
+}
+
+model CustomExam {
+  id           String     @id @default(uuid())
+  data         Json
+  name         String
+  author       String
+  courseId     String
+  course       Course     @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  questions    Question[] @relation("CustomExamToQuestion")
+  createdAt    DateTime   @default(now())
+  referencedAt DateTime   @default(now())
+  stats        Json?
+
+  @@unique([name, courseId])
 }
 
 model Question {
@@ -68,6 +84,7 @@ model Question {
   submissions   Submission[]
   resources     Resource[]
   answerChoices AnswerChoice[]
+  customExams   CustomExam[]      @relation("CustomExamToQuestion")
   stats         Json?
 
   @@unique([number, examId, parentId])
@@ -124,6 +141,7 @@ model Resource {
   explanation    Explanation?  @relation(fields: [explanationId], references: [id], onDelete: Cascade)
   application    Application?  @relation(fields: [applicationId], references: [id], onDelete: Cascade)
   answerChoice   AnswerChoice? @relation(fields: [answerChoiceId], references: [id], onDelete: Cascade)
+  customExamId   String?
 }
 
 model Topic {
@@ -138,20 +156,21 @@ model Topic {
 }
 
 model Feedback {
-  id         String         @id @default(uuid())
-  type       FeedbackType
-  status     FeedbackStatus @default(OPEN)
-  data       Json
-  userId     String?
-  courseId   String?
-  examId     String?
-  questionId String?
-  createdAt  DateTime       @default(now())
-  updatedAt  DateTime       @updatedAt
-  course     Course?        @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  exam       Exam?          @relation(fields: [examId], references: [id], onDelete: Cascade)
-  question   Question?      @relation(fields: [questionId], references: [id], onDelete: Cascade)
-  user       User?          @relation(fields: [userId], references: [id])
+  id           String         @id @default(uuid())
+  type         FeedbackType
+  status       FeedbackStatus @default(OPEN)
+  data         Json
+  userId       String?
+  courseId     String?
+  examId       String?
+  questionId   String?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  course       Course?        @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  exam         Exam?          @relation(fields: [examId], references: [id], onDelete: Cascade)
+  question     Question?      @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  user         User?          @relation(fields: [userId], references: [id])
+  customExamId String?
 }
 
 model CourseRequest {

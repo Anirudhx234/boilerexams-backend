@@ -162,7 +162,12 @@ export async function createExam(req: Request, res: Response) {
         }
     });
 
-    res.status(200).send(exam);
+    res.status(200).send(
+        Formatter.exam({
+            data: exam,
+            sendUnpublished: req.sendUnpublished
+        })
+    );
 }
 
 export async function updateExam(req: Request, res: Response) {

@@ -8,7 +8,7 @@ import {
     createCourse,
     deleteCourse,
     getAllCourses,
-    getCourse,
+    getCourse, getCourseCustomExams,
     getCourseEvents,
     getCourseExams,
     getCourseTopics,
@@ -29,6 +29,12 @@ import {
 } from "../controllers/examController.js";
 import { createQuestion, getQuestion, updateQuestion } from "../controllers/questionController.js";
 import { createTopic, getTopic, getTopicQuestions, reorderTopicQuestions } from "../controllers/topicController.js";
+import {
+    createCustomExam, deleteCustomExam,
+    getCustomExam,
+    getCustomExamQuestions,
+    getCustomExamTopics
+} from "../controllers/customExamController.js";
 
 const router = express.Router();
 
@@ -60,6 +66,14 @@ router.get("/:course/exams/:exam/questions/:question", sendPublished, cache(minu
 
 router.get("/:course/events", sendPublished, cache(minute), asyncWrapper(getCourseEvents));
 
+router.get("/:course/customExams", sendPublished, cache(minute), asyncWrapper(getCourseCustomExams));
+
+router.get("/:course/customExams/:customExam", sendPublished, cache(minute), asyncWrapper(getCustomExam));
+
+router.get("/:course/customExams/:customExam/topics", sendPublished, cache(minute), asyncWrapper(getCustomExamTopics));
+
+router.get("/:course/customExams/:customExam/questions", sendPublished, cache(minute), asyncWrapper(getCustomExamQuestions));
+
 // Content Only Beyond this point
 
 router.put("/:course", authHandler(Role.CONTENT), asyncWrapper(updateCourse));
@@ -76,6 +90,8 @@ router.post("/", authHandler(Role.CONTENT), asyncWrapper(createCourse));
 
 router.post("/:course/exams", authHandler(Role.CONTENT), asyncWrapper(createExam));
 
+router.post("/:course/customExams", authHandler(Role.CONTENT), asyncWrapper(createCustomExam));
+
 router.post("/:course/topics", authHandler(Role.CONTENT), asyncWrapper(createTopic));
 
 router.post("/:course/exams/:exam/reorder-questions", authHandler(Role.CONTENT), asyncWrapper(reorderExamQuestions));
@@ -87,5 +103,7 @@ router.post("/:course/topics/*/reorder-questions", authHandler(Role.CONTENT), as
 router.delete("/:course", authHandler(Role.CONTENT), asyncWrapper(deleteCourse));
 
 router.delete("/:course/exams/:exam", authHandler(Role.CONTENT), asyncWrapper(deleteExam));
+
+router.delete("/:course/customExams/:customExam", authHandler(Role.CONTENT), asyncWrapper(deleteCustomExam));
 
 export default router;

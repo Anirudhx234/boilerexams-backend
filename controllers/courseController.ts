@@ -171,6 +171,46 @@ export async function getCourseExams(req: Request, res: Response) {
     );
 }
 
+export async function getCourseCustomExams(req: Request, res: Response) {
+    const course = await prisma.course.findUniqueOrThrow({
+        where: Resolver.course(req.params)
+    });
+
+    if (!req.sendUnpublished && !course.flags.published) {
+        throw new APIError("Course not found", 404);
+    }
+
+    if (!course.studyModes.includes(StudyMode.EXAM) && !req.sendUnpublished) {
+        throw new APIError("Route disabled for this course", 403);
+    }
+
+    const customExams = await prisma.customExam.findMany({
+        where: {
+            courseId: course.id
+        },
+        include: {
+            questions: {
+                select: {
+                    id: true,
+                    number: true,
+                    flags: true
+                },
+                orderBy: {
+                    number: "asc"
+                }
+            }
+        },
+        orderBy: [{ referencedAt: "asc" }, { createdAt: "asc" }]
+    });
+
+    res.status(200).send(
+        Formatter.customExams({
+            data: customExams,
+            sendUnpublished: req.sendUnpublished
+        })
+    );
+}
+
 export async function getCourseTopics(req: Request, res: Response) {
     const course = await prisma.course.findUniqueOrThrow({
         where: Resolver.course(req.params)

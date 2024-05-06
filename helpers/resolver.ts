@@ -1,6 +1,6 @@
 import { Request } from "express";
 import { Season } from "@prisma/client";
-import { z } from "zod";
+import { string, z } from "zod";
 import prisma from "../prisma/prisma.js";
 import APIError from "../middleware/errors/APIError.js";
 
@@ -33,6 +33,18 @@ export const ExamResolvable = z.union([
         })
     })
 ]);
+
+export const CustomExamResolvable = z.union([
+    z.object({
+        id: string().uuid()
+    }),
+    z.object({
+        name_courseId: z.object({
+            name: z.string(),
+            courseId: z.string().uuid()
+        })
+    })
+])
 
 export const TopicResolvable = z.union([
     z.object({
@@ -131,6 +143,37 @@ export default class Resolver {
         throw new APIError(`Exam could not be parsed: ${exam} ${course}`, 400);
     }
 
+    // Resolve a CustomExam from either id or name and course
+    public static async customExam(params: ParamsDictionary) {
+        const { customExam, course } = params;
+        if (Resolver.uuidRegex.test(customExam)) {
+            // If input matches UUIDv4, return object with id and null for abbreviation and number
+            return CustomExamResolvable.parse({
+                id: customExam
+            });
+        }
+
+        if (course) {
+            const name = customExam;
+
+            const course = await prisma.course.findUnique({
+                where: Resolver.course(params)
+            });
+
+            if (!course) {
+                throw new APIError(`Course not found ${course}`, 404);
+            }
+
+            return CustomExamResolvable.parse({
+                name_courseId: {
+                    name: name,
+                    courseId: course.id
+                }
+            });
+        }
+
+        throw new APIError(`CustomExam could not be parsed: ${customExam} ${course}`, 400);
+    }
     // Resolve a Topic from either id or name and course
     public static async topic(params: ParamsDictionary) {
         const { topic, course } = params;

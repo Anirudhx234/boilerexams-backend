@@ -1,4 +1,4 @@
-import { Application, Feedback, PrismaClient } from "@prisma/client";
+import { Application, CustomExam, Feedback, PrismaClient } from "@prisma/client";
 import { z } from "zod";
 import FlagDecoder from "../helpers/decoder.js";
 import { FeatureRequestData } from "../controllers/feedbackController.js";
@@ -80,7 +80,7 @@ export default prisma
             },
             application: {
                 async create({ query, args }) {
-                    const application = (await query(args)) as Application;
+                    const application = await query(args) as Application;
 
                     const emailOptions = {
                         to: application.email,
@@ -106,6 +106,13 @@ export default prisma
                     await DiscordAPI.updateCourseRequests(courseRequests);
                     return request;
                 }
+            },
+            customExam: {
+                async create({ query, args }) {
+                    const customExam = await query(args) as CustomExam;
+                    await DiscordAPI.createCustomExam(customExam);
+                    return customExam;
+                },
             }
         },
         result: {

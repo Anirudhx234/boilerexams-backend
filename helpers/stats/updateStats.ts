@@ -35,9 +35,6 @@ async function updateStats() {
     const qStats = await questionStats(options);
     const acStats = await answerChoiceStats(options);
 
-    console.log(`Stats update started at ${Date.now()}`);
-
-    console.log("Updating Courses");
     for (const stat of cStats) {
         await prisma.course.update({
             where: {
@@ -53,7 +50,6 @@ async function updateStats() {
         });
     }
 
-    console.log("Updating Exams");
     for (const stat of eStats) {
         await prisma.exam.update({
             where: {
@@ -69,7 +65,6 @@ async function updateStats() {
         });
     }
 
-    console.log("Updating Topics");
     for (const stat of tStats) {
         await prisma.topic.update({
             where: {
@@ -86,7 +81,7 @@ async function updateStats() {
         });
     }
 
-    console.log("Updating Questions");
+
     for (const stat of qStats) {
         await prisma.question.update({
             where: {
@@ -102,7 +97,6 @@ async function updateStats() {
         });
     }
 
-    console.log("Updating AnswerChoices");
     for (const stat of acStats) {
         await prisma.answerChoice.update({
             where: {
@@ -117,6 +111,4 @@ async function updateStats() {
             }
         });
     }
-
-    console.log(`Stats update completed at ${Date.now()}`);
 }

@@ -31,6 +31,20 @@ export default class Formatter {
             .map((exam) => Formatter.exam({ ...options, data: exam }));
     }
 
+    public static customExam(options: FormatterOptions<PotentialCustomExam>): FormattedCustomExam {
+        return {
+            ...options.data,
+            course: options.data.course ? Formatter.course({ ...options, data: options.data.course }) : undefined,
+            questions: Formatter.questions({ ...options, data: options.data?.questions })
+        };
+    }
+
+    public static customExams(options: FormatterOptions<PotentialCustomExam[] | undefined>) {
+        if (!options.data) return undefined;
+        return options.data
+            .map((customExam) => Formatter.customExam({ ...options, data: customExam }));
+    }
+
     public static topic(options: FormatterOptions<PotentialTopic>): FormattedTopic {
         const questions = Formatter.questionsToTopics({ ...options, data: options.data.questions });
         return {
@@ -110,6 +124,11 @@ interface FormattedCourse {
     questions?: FormattedQuestion[];
 }
 
+interface FormattedCustomExam {
+    course?: FormattedCourse;
+    questions?: FormattedQuestion[];
+}
+
 interface FormattedExam {
     flags: ExamFlags;
     number?: number;
@@ -174,6 +193,12 @@ interface PotentialExam {
     id?: string;
     flags: ExamFlags;
     resources?: unknown[];
+    questions?: PotentialQuestion[];
+}
+
+interface PotentialCustomExam {
+    id?: string;
+    course?: PotentialCourse;
     questions?: PotentialQuestion[];
 }
 
