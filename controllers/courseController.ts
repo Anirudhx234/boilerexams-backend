@@ -9,6 +9,7 @@ import APIError from "../middleware/errors/APIError.js";
 import { PurdueIoAPI } from "../services/purdue.io.js";
 import { EventQueryParams } from "./eventController.js";
 import { connectOrCreateResources, UpsertResourceOptions, upsertResources } from "./resourceController.js";
+import { PartialQuestion } from "./questionController.js";
 
 export const CourseFlags = z.object({
     published: z.boolean().default(false),
@@ -150,11 +151,7 @@ export async function getCourseExams(req: Request, res: Response) {
         include: {
             resources: true,
             questions: {
-                select: {
-                    id: true,
-                    number: true,
-                    flags: true
-                },
+                select: PartialQuestion,
                 orderBy: {
                     number: "asc"
                 }
@@ -190,11 +187,7 @@ export async function getCourseCustomExams(req: Request, res: Response) {
         },
         include: {
             questions: {
-                select: {
-                    id: true,
-                    number: true,
-                    flags: true
-                },
+                select: PartialQuestion,
                 orderBy: {
                     number: "asc"
                 }
@@ -232,10 +225,7 @@ export async function getCourseTopics(req: Request, res: Response) {
             questions: {
                 include: {
                     question: {
-                        select: {
-                            id: true,
-                            flags: true
-                        }
+                        select: PartialQuestion
                     }
                 },
                 orderBy: {
