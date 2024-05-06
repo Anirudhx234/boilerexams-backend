@@ -74,6 +74,9 @@ router.get("/:course/custom-exams/:customExam/topics", sendPublished, cache(minu
 
 router.get("/:course/custom-exams/:customExam/questions", sendPublished, cache(minute), asyncWrapper(getCustomExamQuestions));
 
+// Exception
+router.post("/:course/custom-exams", asyncWrapper(createCustomExam));
+
 // Content Only Beyond this point
 
 router.put("/:course", authHandler(Role.CONTENT), asyncWrapper(updateCourse));
@@ -89,8 +92,6 @@ router.put("/:course/exams/:exam/questions/:question", authHandler(Role.CONTENT)
 router.post("/", authHandler(Role.CONTENT), asyncWrapper(createCourse));
 
 router.post("/:course/exams", authHandler(Role.CONTENT), asyncWrapper(createExam));
-
-router.post("/:course/custom-exams", authHandler(Role.CONTENT), asyncWrapper(createCustomExam));
 
 router.post("/:course/topics", authHandler(Role.CONTENT), asyncWrapper(createTopic));
 
