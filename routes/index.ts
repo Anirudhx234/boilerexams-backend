@@ -14,6 +14,7 @@ import stats from "./stats.js";
 import submissions from "./submissions.js";
 import topics from "./topics.js";
 import users from "./users.js";
+import customExams from "./customExams.js";
 
 const router = express.Router();
 
@@ -29,6 +30,8 @@ router.use("/feedback", feedbackLimiter, feedback);
 router.use("/courses", courses);
 
 router.use("/exams", exams);
+
+router.use("/custom-exams", customExams);
 
 router.use("/topics", topics);
 

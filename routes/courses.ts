@@ -66,13 +66,13 @@ router.get("/:course/exams/:exam/questions/:question", sendPublished, cache(minu
 
 router.get("/:course/events", sendPublished, cache(minute), asyncWrapper(getCourseEvents));
 
-router.get("/:course/customExams", sendPublished, cache(minute), asyncWrapper(getCourseCustomExams));
+router.get("/:course/custom-exams", sendPublished, cache(minute), asyncWrapper(getCourseCustomExams));
 
-router.get("/:course/customExams/:customExam", sendPublished, cache(minute), asyncWrapper(getCustomExam));
+router.get("/:course/custom-exams/:customExam", sendPublished, cache(minute), asyncWrapper(getCustomExam));
 
-router.get("/:course/customExams/:customExam/topics", sendPublished, cache(minute), asyncWrapper(getCustomExamTopics));
+router.get("/:course/custom-exams/:customExam/topics", sendPublished, cache(minute), asyncWrapper(getCustomExamTopics));
 
-router.get("/:course/customExams/:customExam/questions", sendPublished, cache(minute), asyncWrapper(getCustomExamQuestions));
+router.get("/:course/custom-exams/:customExam/questions", sendPublished, cache(minute), asyncWrapper(getCustomExamQuestions));
 
 // Content Only Beyond this point
 
@@ -90,7 +90,7 @@ router.post("/", authHandler(Role.CONTENT), asyncWrapper(createCourse));
 
 router.post("/:course/exams", authHandler(Role.CONTENT), asyncWrapper(createExam));
 
-router.post("/:course/customExams", authHandler(Role.CONTENT), asyncWrapper(createCustomExam));
+router.post("/:course/custom-exams", authHandler(Role.CONTENT), asyncWrapper(createCustomExam));
 
 router.post("/:course/topics", authHandler(Role.CONTENT), asyncWrapper(createTopic));
 
@@ -104,6 +104,6 @@ router.delete("/:course", authHandler(Role.CONTENT), asyncWrapper(deleteCourse))
 
 router.delete("/:course/exams/:exam", authHandler(Role.CONTENT), asyncWrapper(deleteExam));
 
-router.delete("/:course/customExams/:customExam", authHandler(Role.CONTENT), asyncWrapper(deleteCustomExam));
+router.delete("/:course/custom-exams/:customExam", authHandler(Role.CONTENT), asyncWrapper(deleteCustomExam));
 
 export default router;
