@@ -20,7 +20,7 @@ export const CreateCustomExamOptions = z.object({
     name: z.string().max(32),
     author: z.string().max(24),
     courseId: z.string().uuid(),
-    questionIds: z.string().uuid(),
+    questionIds: z.array(z.string().uuid()),
 });
 
 export async function getCustomExam(req: Request, res: Response) {
