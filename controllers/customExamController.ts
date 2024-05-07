@@ -139,7 +139,9 @@ export async function createCustomExam(req: Request, res: Response) {
 
     const customExam = await prisma.customExam.create({
         data: {
-            ...options,
+            name: options.name,
+            author: options.author,
+            data: options.data,
             courseId: course.id,
             questions: {
                 connect: options.questionIds.map(questionId => {
