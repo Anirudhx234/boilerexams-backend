@@ -7,11 +7,12 @@ import { QuestionData } from "./questionController.js";
 
 export const MultipleChoiceSubmissionData = z.array(z.number());
 
-export const FreeResponseSubmissionData = z.string().optional();
+export const FreeResponseSubmissionData = z.boolean().optional();
 
-export const ShortAnswerSubmissionData = FreeResponseSubmissionData;
+export const ShortAnswerSubmissionData = z.string().optional();
 
 export const FillInBlankSubmissionData = z.array(z.string());
+
 
 export const ParentSubmissionData = z.array(
     z.object({
@@ -143,8 +144,9 @@ function checkUserSolution(type: QuestionType, userSolution?: unknown, solution?
                     if (parseSolution.includes(entry)) continue;
                     return false;
                 }
+                break;
             }
-            break;
+
 
         case QuestionType.SHORT_ANSWER:
             {
@@ -152,8 +154,9 @@ function checkUserSolution(type: QuestionType, userSolution?: unknown, solution?
                 const parsedSolution = ShortAnswerSubmissionData.parse(solution);
                 if (!parsedUserSolution || parsedUserSolution.length < 1) return false;
                 if (parsedUserSolution != parsedSolution) return false;
+                break;
             }
-            break;
+
 
         case QuestionType.FILL_IN_BLANK:
             {
@@ -166,8 +169,15 @@ function checkUserSolution(type: QuestionType, userSolution?: unknown, solution?
                         return false;
                     }
                 }
+                break;
             }
+
+
+        case QuestionType.FREE_RESPONSE: {
+            const parsedUserSolution = FreeResponseSubmissionData.parse(userSolution);
+            if (!parsedUserSolution) return false; // yeah, I know
             break;
+        }
 
         default: {
             return false;
