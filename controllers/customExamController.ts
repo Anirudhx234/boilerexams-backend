@@ -5,6 +5,7 @@ import Formatter from "../helpers/formatter.js";
 import Resolver from "../helpers/resolver.js";
 import APIError from "../middleware/errors/APIError.js";
 import { FullQuestion, PartialQuestion } from "./questionController.js";
+import Scheduler from "../helpers/scheduler.js";
 
 const HalfHour = 30 * 60 * 1000;
 const FourHours = 4 * 60 * 60 * 1000;
@@ -174,4 +175,38 @@ export async function deleteCustomExam(req: Request, res: Response) {
         throw new APIError("CustomExam not found", 404);
     }
     res.status(200).send(exam);
+}
+
+async function purgeCustomExams() {
+    const second = 1000;
+    const minute = 60 * second;
+    const hour = 60 * minute;
+    const day = 24 * hour;
+    const twoWeeksAgo = new Date(Date.now() - (14 * day));
+
+    await prisma.customExam.deleteMany({
+        where: {
+            referencedAt: {
+                lte: twoWeeksAgo
+            }
+        }
+    });
+}
+
+export function schedulePurgeCustomExams() {
+    const date = new Date(); // Current date and time
+    const second = 1000;
+    const minute = 60 * second;
+    const hour = 60 * minute;
+
+    if (date.getMinutes() === 0) {
+        // Schedule every hour on the hour
+        Scheduler.schedule(purgeCustomExams, 0, hour);
+    } else {
+        date.setHours(date.getHours() + 1);
+        date.setMinutes(0);
+        date.setSeconds(0);
+        const difference = date.getTime() - new Date().getTime();
+        Scheduler.schedule(purgeCustomExams, difference, hour);
+    }
 }

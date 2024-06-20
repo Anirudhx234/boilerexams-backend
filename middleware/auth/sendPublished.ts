@@ -5,12 +5,12 @@ const sendPublished = asyncWrapper(async (req: Request, res: Response, next: Nex
     if (req.user) {
         req.session._garbage = Date();
         req.session.touch();
-        if (["ADMIN", "CONTENT"].includes(req.user.role)) {
+        if (["ADMIN", "CONTENT", "TESTER"].includes(req.user.role)) {
             req.sendUnpublished = true;
-            return next();
         }
+    } else {
+        req.sendUnpublished = false;
     }
-    req.sendUnpublished = false;
     return next();
 });
 

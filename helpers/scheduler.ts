@@ -7,6 +7,7 @@ export default class Scheduler {
             try {
                 await next(...args);
             } catch (error: unknown) {
+                console.log("Scheduled Function Error");
                 console.log(error);
             }
             if (interval > 0) {
@@ -14,6 +15,7 @@ export default class Scheduler {
                     try {
                         await next(...args);
                     } catch (error: unknown) {
+                        console.log("Scheduled Function Error");
                         console.log(error);
                     }
                 }, interval);

@@ -1,5 +1,11 @@
 import { JsonValue } from "@prisma/client/runtime/library.js";
 
+/**
+ * Formatter
+ * The purpose of the formatter class is to take data pulled from prisma and format it to match Frontend Client data
+ * schema. At the same time, it can filter out data that shouldn't be visible to the requester. It introduces helper
+ * methods for either a single entity or an array of entities.
+ */
 export default class Formatter {
     public static course(options: FormatterOptions<PotentialCourse>): FormattedCourse {
         return {

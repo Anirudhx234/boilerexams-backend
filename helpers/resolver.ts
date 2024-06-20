@@ -1,4 +1,3 @@
-import { Request } from "express";
 import { Season } from "@prisma/client";
 import { string, z } from "zod";
 import prisma from "../prisma/prisma.js";

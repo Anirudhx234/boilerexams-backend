@@ -95,7 +95,7 @@ export async function assignUserCourses(req: Request, res: Response) {
     });
 
     if (!user) {
-        throw new APIError("User must have role CONTENT or PROFESSOR or ADMIN", 403);
+        throw new APIError("User must have role other than USER", 403);
     }
 
     res.status(200).send(user);
