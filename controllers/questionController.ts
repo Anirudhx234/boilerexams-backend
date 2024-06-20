@@ -136,7 +136,9 @@ export const PartialQuestion = {
         select: {
             id: true,
             number: true,
-            flags: true
+            flags: true,
+            stats: true,
+            type: true,
         }
     }
 };

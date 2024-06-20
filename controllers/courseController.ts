@@ -269,8 +269,7 @@ export async function getCourseTopicsByExam(req: Request, res: Response) {
                     include: {
                         question: {
                             select: {
-                                id: true,
-                                flags: true,
+                                ...PartialQuestion,
                                 exam: {
                                     select: {
                                         number: true,
