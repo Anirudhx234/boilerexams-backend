@@ -19,7 +19,6 @@ export const CustomExamData = z.object({
 export const CreateCustomExamOptions = z.object({
     data: CustomExamData,
     name: z.string().max(32),
-    author: z.string().max(24),
     courseId: z.string().uuid(),
     questionIds: z.array(z.string().uuid()),
 });
@@ -71,7 +70,7 @@ export async function getAllCustomExams(req: Request, res: Response) {
 }
 
 export async function getCustomExamTopics(req: Request, res: Response) {
-const customExam = await prisma.customExam.findUniqueOrThrow({
+    const customExam = await prisma.customExam.findUniqueOrThrow({
         where: await Resolver.customExam(req.params)
     });
 
@@ -141,7 +140,6 @@ export async function createCustomExam(req: Request, res: Response) {
     const customExam = await prisma.customExam.create({
         data: {
             name: options.name,
-            author: options.author,
             data: options.data,
             courseId: course.id,
             questions: {
