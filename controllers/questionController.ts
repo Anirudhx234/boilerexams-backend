@@ -202,6 +202,43 @@ export async function getQuestion(req: Request, res: Response) {
     );
 }
 
+export async function searchQuestion(req: Request, res: Response) {
+    const keywords = z.string().parse(req.body);
+
+    const questions: PotentialQuestion[] = await prisma.$queryRaw`
+        select
+            "q"."id" as "questionId",
+            "c"."abbreviation" || "c"."number" as "course",
+            "e"."season" || '-' || "e"."year" || '-' || case when "e"."number" = 0 then 'Final' else "e"."number"::text end as "exam",
+            jsonb_agg(distinct "ac") as "asnwerChoices",
+            array_remove(array_agg(distinct "topicals"."name"), NULL) as "topics"
+        from "Question" as "q"
+                 inner join "Course" as "c" on "c"."id" = "q"."courseId"
+                 inner join "Exam" as "e" on "e"."id" = "q"."examId"
+                 inner join "AnswerChoice" as "ac" on "ac"."questionId" = "q"."id"
+                 left join lateral (
+            select "t"."name"
+            from "Topic" as "t"
+                     inner join "QuestionToTopic" as "qtt" on "qtt"."topicId" = "t"."id"
+            where "qtt"."questionId" = "q"."id"
+                ) as "topicals" on (true)
+        where
+            "q"."bodyVector" @@ to_tsquery(${keywords})
+          and "q"."flags" & 1 = 1
+        group by
+            "q"."id",
+            "c"."abbreviation" || "c"."number",
+            "e"."season" || '-' || "e"."year" || '-' || case when "e"."number" = 0 then 'Final' else "e"."number"::text end;
+    `;
+
+    res.status(200).send(
+        Formatter.questions({
+            data: questions,
+            sendUnpublished: req.sendUnpublished
+        })
+    );
+}
+
 export async function updateQuestion(req: Request, res: Response) {
     const options = UpdateQuestionOptions.parse(req.body);
 
@@ -335,6 +372,7 @@ export async function deleteAnswerChoice(req: Request, res: Response) {
     res.status(200).send(answerChoice);
 }
 
+// Generalize any prisma call that should upsert Answer Choices
 function upsertAnswerChoices(answerChoices?: z.infer<typeof UpsertAnswerChoiceOptions>[]) {
     return {
         upsert: answerChoices?.map((ac) => {
@@ -357,6 +395,7 @@ function upsertAnswerChoices(answerChoices?: z.infer<typeof UpsertAnswerChoiceOp
     };
 }
 
+// Generalize any prisma call that should upsert Explanations
 function upsertExplanation(explanation?: z.infer<typeof UpsertExplanationOptions>) {
     return explanation
         ? {

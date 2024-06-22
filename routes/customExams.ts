@@ -2,9 +2,7 @@ import express from "express";
 import { Role } from "@prisma/client";
 import authHandler from "../middleware/auth/authHandler.js";
 import sendPublished from "../middleware/auth/sendPublished.js";
-import upload from "../middleware/multer/file.js";
 import asyncWrapper from "../middleware/wrappers/asyncWrapper.js";
-import { deleteExam, getAllExams, getExam, getExamQuestions, getExamTopics, attachPDFToExam } from "../controllers/examController.js";
 import {
     deleteCustomExam,
     getAllCustomExams,

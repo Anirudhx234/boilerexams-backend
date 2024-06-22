@@ -107,13 +107,6 @@ export default prisma
                     return request;
                 }
             },
-            customExam: {
-                async create({ query, args }) {
-                    const customExam = await query(args) as CustomExam;
-                    await DiscordAPI.createCustomExam(customExam);
-                    return customExam;
-                },
-            }
         },
         result: {
             // Extension of result allows us to modify result of a fetch query

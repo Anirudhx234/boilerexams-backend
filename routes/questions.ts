@@ -7,6 +7,7 @@ import {
     deleteAnswerChoice,
     deleteQuestion,
     getQuestion,
+    searchQuestion,
     toggleQuestionPublished,
     updateQuestion
 } from "../controllers/questionController.js";
@@ -18,6 +19,8 @@ router.get("/:question", sendPublished, asyncWrapper(getQuestion));
 router.put("/:question", authHandler(Role.CONTENT), asyncWrapper(updateQuestion));
 
 router.put("/:question/toggle-published", authHandler(Role.CONTENT), asyncWrapper(toggleQuestionPublished));
+
+router.post("/search", sendPublished, asyncWrapper(searchQuestion));
 
 router.delete("/:question", authHandler(Role.CONTENT), asyncWrapper(deleteQuestion));
 
