@@ -210,6 +210,7 @@ export async function searchQuestion(req: Request, res: Response) {
     const questions = await prisma.$queryRaw`
         select
             "q"."id" as "questionId",
+            "q"."data"->>'body'
             "c"."abbreviation" || "c"."number" as "course",
             "e"."season" || '-' || "e"."year" || '-' || case when "e"."number" = 0 then 'Final' else "e"."number"::text end as "exam",
             jsonb_agg(distinct "ac") as "asnwerChoices",
@@ -221,7 +222,6 @@ export async function searchQuestion(req: Request, res: Response) {
                  left join lateral (
             select 
                 "t"."name"
-                "q"."data"->>'body'
             from "Topic" as "t"
                      inner join "QuestionToTopic" as "qtt" on "qtt"."topicId" = "t"."id"
             where "qtt"."questionId" = "q"."id"
