@@ -208,31 +208,34 @@ export async function searchQuestion(req: Request, res: Response) {
     }).parse(req.body);
 
     const questions = await prisma.$queryRaw`
-        select
-            "q"."id" as "questionId",
-            "q"."data"->>'body'
-            "c"."abbreviation" || "c"."number" as "course",
-            "e"."season" || '-' || "e"."year" || '-' || case when "e"."number" = 0 then 'Final' else "e"."number"::text end as "exam",
-            jsonb_agg(distinct "ac") as "asnwerChoices",
-            array_remove(array_agg(distinct "topicals"."name"), NULL) as "topics"
-        from "Question" as "q"
-                 inner join "Course" as "c" on "c"."id" = "q"."courseId"
-                 inner join "Exam" as "e" on "e"."id" = "q"."examId"
-                 inner join "AnswerChoice" as "ac" on "ac"."questionId" = "q"."id"
-                 left join lateral (
-            select 
-                "t"."name"
-            from "Topic" as "t"
-                     inner join "QuestionToTopic" as "qtt" on "qtt"."topicId" = "t"."id"
-            where "qtt"."questionId" = "q"."id"
-                ) as "topicals" on (true)
-        where
-            "q"."bodyVector" @@ to_tsquery(${query})
-          and "q"."flags" & 1 = 1
-        group by
+        SELECT
+            "q"."id" AS "questionId",
+            "q"."data" - >> 'body' AS "body",
+            "c"."abbreviation" || "c"."number" AS "course",
+            "e"."season" || '-' || "e"."year" || '-' || CASE WHEN "e"."number" = 0 THEN 'Final' ELSE "e"."number" :: TEXT END AS "exam", 
+            jsonb_agg(DISTINCT "ac") AS "answerChoices", 
+            array_remove(array_agg(DISTINCT "topicals"."name"), NULL) AS "topics" 
+        FROM 
+            "Question" AS "q" 
+                INNER JOIN "Course" AS "c" ON "c"."id" = "q"."courseId" 
+                INNER JOIN "Exam" AS "e" ON "e"."id" = "q"."examId" 
+                INNER JOIN "AnswerChoice" AS "ac" ON "ac"."questionId" = "q"."id" 
+                LEFT JOIN lateral (
+                    SELECT 
+                        "t"."name" 
+                    FROM 
+                        "Topic" AS "t" 
+                            INNER JOIN "QuestionToTopic" AS "qtt" ON "qtt"."topicId" = "t"."id" 
+                        WHERE 
+                            "qtt"."questionId" = "q"."id"
+                ) AS "topicals" ON (TRUE) 
+        WHERE 
+            "q"."bodyVector" @@ to_tsquery(${ query})
+            AND "q"."flags" & 1 = 1
+        GROUP BY
             "q"."id",
             "c"."abbreviation" || "c"."number",
-            "e"."season" || '-' || "e"."year" || '-' || case when "e"."number" = 0 then 'Final' else "e"."number"::text end;
+            "e"."season" || '-' || "e"."year" || '-' || CASE WHEN "e"."number" = 0 THEN 'Final' ELSE "e"."number" :: TEXT END;
     `;
 
     res.status(200).send(questions);
@@ -398,19 +401,19 @@ function upsertAnswerChoices(answerChoices?: z.infer<typeof UpsertAnswerChoiceOp
 function upsertExplanation(explanation?: z.infer<typeof UpsertExplanationOptions>) {
     return explanation
         ? {
-              upsert: {
-                  where: {
-                      id: explanation.id
-                  },
-                  create: {
-                      body: explanation.body,
-                      resources: connectOrCreateResources(explanation.resources)
-                  },
-                  update: {
-                      body: explanation.body,
-                      resources: upsertResources(explanation.resources)
-                  }
-              }
-          }
+            upsert: {
+                where: {
+                    id: explanation.id
+                },
+                create: {
+                    body: explanation.body,
+                    resources: connectOrCreateResources(explanation.resources)
+                },
+                update: {
+                    body: explanation.body,
+                    resources: upsertResources(explanation.resources)
+                }
+            }
+        }
         : explanation;
 }
