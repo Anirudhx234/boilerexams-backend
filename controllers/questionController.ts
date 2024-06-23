@@ -231,12 +231,7 @@ export async function searchQuestion(req: Request, res: Response) {
             "e"."season" || '-' || "e"."year" || '-' || case when "e"."number" = 0 then 'Final' else "e"."number"::text end;
     `;
 
-    res.status(200).send(
-        Formatter.questions({
-            data: questions,
-            sendUnpublished: req.sendUnpublished
-        })
-    );
+    res.status(200).send(questions);
 }
 
 export async function updateQuestion(req: Request, res: Response) {
