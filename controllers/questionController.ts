@@ -208,22 +208,24 @@ export async function searchQuestion(req: Request, res: Response) {
     }).parse(req.body);
 
     //who cares about formatting
-    const questions = await prisma.$queryRaw` 
+    const questions = await prisma.$queryRaw`
         select
             "q"."id" as "questionId",
             "q"."data" ->> 'body' as "body",
             "c"."abbreviation" || "c"."number" as "course",
             "e"."season" || '-' || "e"."year" || '-' || case
-                when "e"."number" = 0 then 'Final'
-                else "e"."number" :: text
+            when "e"."number" = 0 then 'Final'
+            else "e"."number" :: text
             end as "exam",
             jsonb_agg(distinct "ac") as "answerChoices",
+            nullif(jsonb_agg(distinct "r"), '[null]') as "resources",
             array_remove(array_agg(distinct "topicals"."name"), NULL) as "topics"
         from
             "Question" as "q"
             inner join "Course" as "c" on "c"."id" = "q"."courseId"
             inner join "Exam" as "e" on "e"."id" = "q"."examId"
             inner join "AnswerChoice" as "ac" on "ac"."questionId" = "q"."id"
+            left join "Resource" as "r" on "r"."questionId" = "q"."id"
             left join lateral (
                 select
                     "t"."name"
@@ -235,14 +237,14 @@ export async function searchQuestion(req: Request, res: Response) {
             ) as "topicals" on (true)
         where
             "q"."bodyVector" @@ to_tsquery(${query})
-            and "q"."flags" & 1 = 1
-        group by
-            "q"."id",
-            "c"."abbreviation" || "c"."number",
-            "e"."season" || '-' || "e"."year" || '-' || case
+                and "q"."flags" & 1 = 1
+                group by
+                "q"."id",
+                "c"."abbreviation" || "c"."number",
+                "e"."season" || '-' || "e"."year" || '-' || case
                 when "e"."number" = 0 then 'Final'
                 else "e"."number" :: text
-    end;
+                end;
     `
 
     res.status(200).send(questions);
