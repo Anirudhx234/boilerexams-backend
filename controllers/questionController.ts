@@ -234,7 +234,7 @@ export async function searchQuestion(req: Request, res: Response) {
                     "qtt"."questionId" = "q"."id"
             ) as "topicals" on (true)
         where
-            "q"."bodyVector" @ @ to_tsquery(${query})
+            "q"."bodyVector" @@ to_tsquery(${query})
             and "q"."flags" & 1 = 1
         group by
             "q"."id",
