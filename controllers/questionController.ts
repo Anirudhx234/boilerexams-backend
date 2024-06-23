@@ -219,7 +219,9 @@ export async function searchQuestion(req: Request, res: Response) {
                  inner join "Exam" as "e" on "e"."id" = "q"."examId"
                  inner join "AnswerChoice" as "ac" on "ac"."questionId" = "q"."id"
                  left join lateral (
-            select "t"."name"
+            select 
+                "t"."name"
+                "q"."data"->>'body'
             from "Topic" as "t"
                      inner join "QuestionToTopic" as "qtt" on "qtt"."topicId" = "t"."id"
             where "qtt"."questionId" = "q"."id"
