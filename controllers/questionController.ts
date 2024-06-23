@@ -203,9 +203,11 @@ export async function getQuestion(req: Request, res: Response) {
 }
 
 export async function searchQuestion(req: Request, res: Response) {
-    const keywords = z.string().parse(req.body);
+    const { query } = z.object({
+        query: z.string()
+    }).parse(req.body);
 
-    const questions: PotentialQuestion[] = await prisma.$queryRaw`
+    const questions = await prisma.$queryRaw`
         select
             "q"."id" as "questionId",
             "c"."abbreviation" || "c"."number" as "course",
@@ -223,7 +225,7 @@ export async function searchQuestion(req: Request, res: Response) {
             where "qtt"."questionId" = "q"."id"
                 ) as "topicals" on (true)
         where
-            "q"."bodyVector" @@ to_tsquery(${keywords})
+            "q"."bodyVector" @@ to_tsquery(${query})
           and "q"."flags" & 1 = 1
         group by
             "q"."id",
