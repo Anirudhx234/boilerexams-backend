@@ -7,7 +7,6 @@ import APIError from "../middleware/errors/APIError.js";
 import { FullQuestion, PartialQuestion } from "./questionController.js";
 import Scheduler from "../helpers/scheduler.js";
 import FlagEncoder from "../helpers/encoder.js";
-import { flatten } from "lodash";
 
 const HalfHour = 30 * 60 * 1000;
 const FourHours = 4 * 60 * 60 * 1000;
@@ -31,10 +30,10 @@ export const CreateCustomExamOptions = z.object({
 });
 
 export const UpdateCustomExamOptions = z.object({
-    data: CustomExamData,
+    data: CustomExamData.optional(),
     name: z.string().max(32).optional(),
-    flags: CustomExamFlags,
-    questionIds: z.array(z.string().uuid()),
+    flags: CustomExamFlags.optional(),
+    questionIds: z.array(z.string().uuid()).optional(),
 });
 
 export async function getCustomExam(req: Request, res: Response) {
@@ -187,7 +186,7 @@ export async function updateCustomExam(req: Request, res: Response) {
             data: options.data,
             flags: FlagEncoder.customExam(options.flags),
             questions: {
-                set: options.questionIds.map(questionId => {
+                set: options.questionIds?.map(questionId => {
                     return {
                         id: questionId
                     }
