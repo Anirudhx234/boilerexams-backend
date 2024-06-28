@@ -86,6 +86,7 @@ interface PotentialExam {
 
 interface PotentialCustomExam {
     id?: string;
+    flags: CustomExamFlags;
     course?: PotentialCourse;
     questions?: PotentialQuestion[];
 }

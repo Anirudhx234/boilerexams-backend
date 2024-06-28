@@ -2,6 +2,7 @@ import { z } from "zod";
 import { CourseFlags } from "../controllers/courseController.js";
 import { ExamFlags } from "../controllers/examController.js";
 import { QuestionFlags } from "../controllers/questionController.js";
+import { CustomExamFlags } from "../controllers/customExamController.js";
 
 export default class FlagDecoder {
     public static course(flags: number): z.infer<typeof CourseFlags> {
@@ -15,6 +16,12 @@ export default class FlagDecoder {
         return {
             published: ((flags >> 0) & 1) === 1,
             practice: ((flags >> 1) & 1) === 1
+        };
+    }
+
+    public static customExam(flags: number): z.infer<typeof CustomExamFlags> {
+        return {
+            permanent: ((flags >> 0) & 1) === 1,
         };
     }
 

@@ -54,6 +54,7 @@ model CustomExam {
   data         Json
   name         String
   courseId     String
+  flags        Int
   course       Course     @relation(fields: [courseId], references: [id], onDelete: Cascade)
   questions    Question[] @relation("CustomExamToQuestion")
   createdAt    DateTime   @default(now())

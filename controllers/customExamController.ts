@@ -6,20 +6,33 @@ import Resolver from "../helpers/resolver.js";
 import APIError from "../middleware/errors/APIError.js";
 import { FullQuestion, PartialQuestion } from "./questionController.js";
 import Scheduler from "../helpers/scheduler.js";
+import FlagEncoder from "../helpers/encoder.js";
+import { flatten } from "lodash";
 
 const HalfHour = 30 * 60 * 1000;
 const FourHours = 4 * 60 * 60 * 1000;
 
+export const CustomExamFlags = z.object({
+    permanent: z.boolean().default(false)
+});
+
 export const CustomExamData = z.object({
     timeLimit: z.coerce.number().min(HalfHour).max(FourHours),
     length: z.enum([ "SHORT", "MEDIUM", "LONG" ]),
-    difficulty: z.enum([ "EASY", "MEDIUM", "HARD" ]),
+    difficulty: z.enum([ "EASY", "MEDIUM", "HARD" ])
 });
 
 export const CreateCustomExamOptions = z.object({
     data: CustomExamData,
     name: z.string().max(32),
+    flags: CustomExamFlags,
     courseId: z.string().uuid(),
+    questionIds: z.array(z.string().uuid()),
+});
+
+export const UpdateCustomExamOptions = z.object({
+    data: CustomExamData,
+    flags: CustomExamFlags,
     questionIds: z.array(z.string().uuid()),
 });
 
@@ -131,16 +144,15 @@ export async function getCustomExamQuestions(req: Request, res: Response) {
 export async function createCustomExam(req: Request, res: Response) {
     const options = CreateCustomExamOptions.parse(req.body);
 
-    const course = await prisma.course.findUnique({
+    const course = await prisma.course.findUniqueOrThrow({
         where: Resolver.course(req.params)
     });
-
-    if (!course) throw new APIError(`Course not found`, 404);
 
     const customExam = await prisma.customExam.create({
         data: {
             name: options.name,
             data: options.data,
+            flags: FlagEncoder.customExam(options.flags),
             courseId: course.id,
             questions: {
                 connect: options.questionIds.map(questionId => {
@@ -162,6 +174,34 @@ export async function createCustomExam(req: Request, res: Response) {
             sendUnpublished: req.sendUnpublished
         })
     );
+}
+
+export async function updateCustomExam(req: Request, res: Response) {
+    const options = UpdateCustomExamOptions.parse(req.body);
+
+    const customExam = await prisma.customExam.update({
+        where: {
+            id: req.params.id
+        },
+        data: {
+            data: options.data,
+            flags: FlagEncoder.customExam(options.flags),
+            questions: {
+                set: options.questionIds.map(questionId => {
+                    return {
+                        id: questionId
+                    }
+                }),
+            }
+        }
+    });
+
+    res.status(200).send(
+        Formatter.customExam({
+            data: customExam,
+            sendUnpublished: req.sendUnpublished
+        })
+    )
 }
 
 export async function deleteCustomExam(req: Request, res: Response) {
@@ -186,6 +226,9 @@ async function purgeCustomExams() {
         where: {
             referencedAt: {
                 lte: twoWeeksAgo
+            },
+            flags: {
+                lte: 0 // ToDo this won't work if we add more flags, I hate prisma
             }
         }
     });

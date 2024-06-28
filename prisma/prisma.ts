@@ -181,6 +181,14 @@ export default prisma
                     }
                 }
             },
+            customExam: {
+                flags: {
+                    needs: { flags: true },
+                    compute(customExam) {
+                        return FlagDecoder.customExam(customExam.flags); // Overwrite flag field with computed flags
+                    }
+                }
+            },
             question: {
                 // Modify question query
                 flags: {
