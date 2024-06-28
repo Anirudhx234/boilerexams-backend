@@ -184,7 +184,7 @@ export async function updateCustomExam(req: Request, res: Response) {
         data: {
             name: options.name,
             data: options.data,
-            flags: FlagEncoder.customExam(options.flags),
+            flags: options.flags ? FlagEncoder.customExam(options.flags) : undefined,
             questions: {
                 set: options.questionIds?.map(questionId => {
                     return {
