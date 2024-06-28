@@ -21,7 +21,7 @@ router.get("/:customExam/topics", asyncWrapper(getCustomExamTopics));
 
 router.get("/:customExam/questions", asyncWrapper(getCustomExamQuestions));
 
-router.post("/:customExam", authHandler(Role.CONTENT), asyncWrapper(updateCustomExam));
+router.put("/:customExam", authHandler(Role.CONTENT), asyncWrapper(updateCustomExam));
 
 router.delete("/:customExam", authHandler(Role.CONTENT), asyncWrapper(deleteCustomExam));
 

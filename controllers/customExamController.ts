@@ -32,6 +32,7 @@ export const CreateCustomExamOptions = z.object({
 
 export const UpdateCustomExamOptions = z.object({
     data: CustomExamData,
+    name: z.string().max(32).optional(),
     flags: CustomExamFlags,
     questionIds: z.array(z.string().uuid()),
 });
@@ -182,6 +183,7 @@ export async function updateCustomExam(req: Request, res: Response) {
     const customExam = await prisma.customExam.update({
         where: await Resolver.customExam(req.params),
         data: {
+            name: options.name,
             data: options.data,
             flags: FlagEncoder.customExam(options.flags),
             questions: {
