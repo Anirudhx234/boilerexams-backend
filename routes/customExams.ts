@@ -8,7 +8,7 @@ import {
     getAllCustomExams,
     getCustomExam,
     getCustomExamQuestions,
-    getCustomExamTopics
+    getCustomExamTopics, updateCustomExam
 } from "../controllers/customExamController.js";
 
 const router = express.Router();
@@ -20,6 +20,8 @@ router.get("/:customExam", sendPublished, asyncWrapper(getCustomExam));
 router.get("/:customExam/topics", asyncWrapper(getCustomExamTopics));
 
 router.get("/:customExam/questions", asyncWrapper(getCustomExamQuestions));
+
+router.post("/:customExam", authHandler(Role.CONTENT), asyncWrapper(updateCustomExam));
 
 router.delete("/:customExam", authHandler(Role.CONTENT), asyncWrapper(deleteCustomExam));
 

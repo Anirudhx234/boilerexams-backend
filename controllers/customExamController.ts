@@ -180,9 +180,7 @@ export async function updateCustomExam(req: Request, res: Response) {
     const options = UpdateCustomExamOptions.parse(req.body);
 
     const customExam = await prisma.customExam.update({
-        where: {
-            id: req.params.id
-        },
+        where: await Resolver.customExam(req.params),
         data: {
             data: options.data,
             flags: FlagEncoder.customExam(options.flags),
