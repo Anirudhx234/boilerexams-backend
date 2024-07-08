@@ -15,6 +15,7 @@ interface FormattedCourse {
 interface FormattedCustomExam {
     course?: FormattedCourse;
     questions?: FormattedQuestion[];
+    topics?: FormattedTopic[];
 }
 
 interface FormattedExam {
@@ -24,6 +25,7 @@ interface FormattedExam {
 }
 
 interface FormattedTopic {
+    name?: string;
     questions?: FormattedQuestion[];
 }
 

@@ -1,6 +1,6 @@
 /**
  * Formatter
- * The purpose of the formatter class is to take data pulled from prisma and format it to match Frontend Client data
+ * he purpose of the formatter class is to take data pulled from prisma and format it to match Frontend Client data
  * schema. At the same time, it can filter out data that shouldn't be visible to the requester. It introduces helper
  * methods for either a single entity or an array of entities.
  */
@@ -36,10 +36,17 @@ export default class Formatter {
     }
 
     public static customExam(options: FormatterOptions<PotentialCustomExam>): FormattedCustomExam {
+        // Hacky wacky but it works :P
+        const questionsToTopics = Formatter.questionsToTopics({ ...options, data: options.data.questions?.map(question => question.topics ?? []).flat() });
+        const topics = questionsToTopics?.map(topic => topic.topic).filter(topic => !!topic) as FormattedTopic[];
+        const uniqueTopics = new Set<string>();
+        topics.forEach(topic => { if (topic.name) uniqueTopics.add(topic.name) });
+        const value = Array.from(uniqueTopics);
         return {
             ...options.data,
             course: options.data.course ? Formatter.course({ ...options, data: options.data.course }) : undefined,
-            questions: Formatter.questions({ ...options, data: options.data?.questions })
+            questions: Formatter.questions({ ...options, data: options.data?.questions }),
+            topics: Array.from(uniqueTopics).map(name => { return { name: name } })
         };
     }
 
