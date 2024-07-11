@@ -53,7 +53,8 @@ export default class Formatter {
     public static customExams(options: FormatterOptions<PotentialCustomExam[] | undefined>) {
         if (!options.data) return undefined;
         return options.data
-            .map((customExam) => Formatter.customExam({ ...options, data: customExam }));
+            .map((customExam) => Formatter.customExam({ ...options, data: customExam }))
+            .filter(customExam => !options.permanentOnly || customExam.flags.permanent)
     }
 
     public static topic(options: FormatterOptions<PotentialTopic>): FormattedTopic {

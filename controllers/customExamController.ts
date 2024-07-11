@@ -4,7 +4,7 @@ import prisma from "../prisma/prisma.js";
 import Formatter from "../helpers/formatter.js";
 import Resolver from "../helpers/resolver.js";
 import APIError from "../middleware/errors/APIError.js";
-import { FullQuestion, PartialQuestion } from "./questionController.js";
+import { FullQuestion } from "./questionController.js";
 import Scheduler from "../helpers/scheduler.js";
 import FlagEncoder from "../helpers/encoder.js";
 
@@ -36,15 +36,24 @@ export const UpdateCustomExamOptions = z.object({
     questionIds: z.array(z.string().uuid()).optional(),
 });
 
+export const FullCustomExam = {
+    course: true,
+    questions: {
+        include: FullQuestion,
+        orderBy: {
+            number: "asc" as "asc" // Hahahaha, I'm not laughing
+        }
+    }
+}
+
 export async function getCustomExam(req: Request, res: Response) {
-    const customExam = await prisma.customExam.findUniqueOrThrow({
+    const { updateLastUsed, metadataOnly } = req.query;
+
+    const customExam = await prisma.customExam.update({
         where: await Resolver.customExam(req.params),
-        include: {
-            course: true,
-            questions: {
-                select: PartialQuestion,
-                orderBy: [{ number: "asc" }]
-            }
+        include: FullCustomExam,
+        data: {
+            referencedAt: Boolean(updateLastUsed) ? new Date() : undefined
         }
     });
 
@@ -58,19 +67,7 @@ export async function getCustomExam(req: Request, res: Response) {
 
 export async function getAllCustomExams(req: Request, res: Response) {
     const customExams = await prisma.customExam.findMany({
-        include: {
-            course: true,
-            questions: {
-                select: {
-                    id: true,
-                    number: true,
-                    flags: true
-                },
-                orderBy: {
-                    number: "asc"
-                }
-            }
-        },
+        include: FullCustomExam,
         orderBy: [{ referencedAt: "asc" }, { createdAt: "asc" }]
     });
 

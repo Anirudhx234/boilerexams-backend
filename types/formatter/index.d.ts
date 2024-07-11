@@ -1,7 +1,8 @@
 
 interface FormatterOptions<T> {
     data: T;
-    sendUnpublished: boolean;
+    sendUnpublished?: boolean;
+    permanentOnly?: boolean;
 }
 
 interface FormattedCourse {
@@ -13,6 +14,7 @@ interface FormattedCourse {
 }
 
 interface FormattedCustomExam {
+    flags: CustomExamFlags;
     course?: FormattedCourse;
     questions?: FormattedQuestion[];
     topics?: FormattedTopic[];

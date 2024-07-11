@@ -10,6 +10,7 @@ import { PurdueIoAPI } from "../services/purdue.io.js";
 import { EventQueryParams } from "./eventController.js";
 import { connectOrCreateResources, UpsertResourceOptions, upsertResources } from "./resourceController.js";
 import { PartialQuestion } from "./questionController.js";
+import { FullCustomExam } from "./customExamController.js";
 
 export const CourseFlags = z.object({
     published: z.boolean().default(false),
@@ -181,25 +182,21 @@ export async function getCourseCustomExams(req: Request, res: Response) {
         throw new APIError("Route disabled for this course", 403);
     }
 
+    const { permanentOnly } = req.query;
+
     const customExams = await prisma.customExam.findMany({
         where: {
-            courseId: course.id
+            courseId: course.id,
         },
-        include: {
-            questions: {
-                select: PartialQuestion,
-                orderBy: {
-                    number: "asc"
-                }
-            }
-        },
+        include: FullCustomExam,
         orderBy: [{ referencedAt: "asc" }, { createdAt: "asc" }]
     });
 
     res.status(200).send(
         Formatter.customExams({
             data: customExams,
-            sendUnpublished: req.sendUnpublished
+            sendUnpublished: req.sendUnpublished,
+            permanentOnly: Boolean(permanentOnly)
         })
     );
 }
