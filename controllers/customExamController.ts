@@ -40,9 +40,6 @@ export const FullCustomExam = {
     course: true,
     questions: {
         include: FullQuestion,
-        orderBy: {
-            number: "asc" as "asc" // Hahahaha, I'm not laughing
-        }
     }
 }
 
