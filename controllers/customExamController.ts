@@ -121,10 +121,7 @@ export async function getCustomExamQuestions(req: Request, res: Response) {
                 }
             }
         },
-        include: FullQuestion,
-        orderBy: {
-            number: "asc"
-        }
+        include: FullQuestion
     });
 
     res.status(200).send(
