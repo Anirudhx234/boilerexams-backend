@@ -8,7 +8,6 @@ import { FullQuestion } from "./questionController.js";
 import Scheduler from "../helpers/scheduler.js";
 import FlagEncoder from "../helpers/encoder.js";
 
-const HalfHour = 30 * 60 * 1000;
 const FourHours = 4 * 60 * 60 * 1000;
 
 export const CustomExamFlags = z.object({
@@ -16,7 +15,7 @@ export const CustomExamFlags = z.object({
 });
 
 export const CustomExamData = z.object({
-    timeLimit: z.coerce.number().min(HalfHour).max(FourHours),
+    timeLimit: z.coerce.number().min(0).max(FourHours),
     length: z.enum([ "SHORT", "MEDIUM", "LONG" ]),
     difficulty: z.enum([ "EASY", "MEDIUM", "HARD" ])
 });
