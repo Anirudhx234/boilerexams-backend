@@ -39,6 +39,9 @@ export async function getExam(req: Request, res: Response) {
         include: {
             resources: true,
             questions: {
+                where: {
+                    parentId: null
+                },
                 select: PartialQuestion,
                 orderBy: [{ number: "asc" }]
             }
@@ -62,10 +65,13 @@ export async function getAllExams(req: Request, res: Response) {
         include: {
             resources: true,
             questions: {
+                where: {
+                    parentId: null
+                },
                 select: {
                     id: true,
                     number: true,
-                    flags: true
+                    flags: true,
                 },
                 orderBy: {
                     number: "asc"
@@ -126,7 +132,8 @@ export async function getExamQuestions(req: Request, res: Response) {
 
     const questions = await prisma.question.findMany({
         where: {
-            examId: exam.id
+            examId: exam.id,
+            parentId: null
         },
         include: FullQuestion,
         orderBy: {
@@ -158,7 +165,11 @@ export async function createExam(req: Request, res: Response) {
             flags: FlagEncoder.exam(options.flags)
         },
         include: {
-            questions: true
+            questions: {
+                where: {
+                    parentId: null
+                }
+            }
         }
     });
 
@@ -199,6 +210,9 @@ export async function reorderExamQuestions(req: Request, res: Response) {
         select: {
             id: true,
             questions: {
+                where: {
+                    parentId: null
+                },
                 select: {
                     id: true,
                     number: true
@@ -238,6 +252,9 @@ export async function toggleExamPublished(req: Request, res: Response) {
             id: true,
             flags: true,
             questions: {
+                where: {
+                    parentId: null
+                },
                 select: {
                     id: true,
                     flags: true

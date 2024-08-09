@@ -38,6 +38,9 @@ export const UpdateCustomExamOptions = z.object({
 export const FullCustomExam = {
     course: true,
     questions: {
+        where: {
+            parentId: null
+        },
         include: FullQuestion,
     }
 }

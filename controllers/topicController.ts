@@ -20,6 +20,11 @@ export async function getAllTopics(req: Request, res: Response) {
     const topics = await prisma.topic.findMany({
         include: {
             questions: {
+                where: {
+                    question: {
+                        parentId: null
+                    }
+                },
                 include: {
                     question: true
                 },
@@ -45,6 +50,11 @@ export async function getTopic(req: Request, res: Response) {
         where: await Resolver.topic(req.params),
         include: {
             questions: {
+                where: {
+                    question: {
+                        parentId: null
+                    }
+                },
                 include: {
                     question: {
                         select: PartialQuestion
@@ -71,7 +81,10 @@ export async function getTopicQuestions(req: Request, res: Response) {
 
     const relations = await prisma.questionToTopic.findMany({
         where: {
-            topicId: topic.id
+            topicId: topic.id,
+            question: {
+                parentId: null
+            }
         },
         include: {
             question: {
@@ -107,6 +120,11 @@ export async function createTopic(req: Request, res: Response) {
         },
         include: {
             questions: {
+                where: {
+                    question: {
+                        parentId: null
+                    }
+                },
                 include: {
                     question: true
                 }
@@ -193,6 +211,11 @@ export async function setTopicQuestions(req: Request, res: Response) {
         },
         include: {
             questions: {
+                where: {
+                    question: {
+                        parentId: null
+                    }
+                },
                 include: {
                     question: true
                 }

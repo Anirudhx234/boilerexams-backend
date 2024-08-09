@@ -152,6 +152,9 @@ export async function getCourseExams(req: Request, res: Response) {
         include: {
             resources: true,
             questions: {
+                where: {
+                    parentId: null
+                },
                 select: PartialQuestion,
                 orderBy: {
                     number: "asc"
@@ -220,6 +223,11 @@ export async function getCourseTopics(req: Request, res: Response) {
         },
         include: {
             questions: {
+                where: {
+                    question: {
+                        parentId: null
+                    }
+                },
                 include: {
                     question: {
                         select: PartialQuestion
@@ -263,6 +271,11 @@ export async function getCourseTopicsByExam(req: Request, res: Response) {
             },
             include: {
                 questions: {
+                    where: {
+                        question: {
+                            parentId: null
+                        }
+                    },
                     include: {
                         question: {
                             select: {
