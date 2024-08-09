@@ -88,6 +88,7 @@ export async function getCustomExamTopics(req: Request, res: Response) {
             questions: {
                 some: {
                     question: {
+                        parentId: null,
                         customExams: {
                             some: {
                                 id: customExam.id
@@ -117,6 +118,7 @@ export async function getCustomExamQuestions(req: Request, res: Response) {
 
     const questions = await prisma.question.findMany({
         where: {
+            parentId: null,
             customExams: {
                 some: {
                     id: customExam.id
@@ -157,7 +159,11 @@ export async function createCustomExam(req: Request, res: Response) {
         },
         include: {
             course: true,
-            questions: true
+            questions: {
+                where: {
+                    parentId: null
+                }
+            }
         }
     });
 
