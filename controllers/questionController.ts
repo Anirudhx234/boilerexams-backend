@@ -252,6 +252,8 @@ export async function searchQuestion(req: Request, res: Response) {
 
 export async function updateQuestion(req: Request, res: Response) {
     const options = UpdateQuestionOptions.parse(req.body);
+    console.log(req.body.data)
+    console.log(options.data);
 
     const question = await prisma.question.findFirstOrThrow({
         where: await Resolver.question(req.params),
@@ -271,6 +273,7 @@ export async function updateQuestion(req: Request, res: Response) {
         data: {
             ...options,
             number: undefined, // Block update to question number
+            data: options.data,
             flags: options.flags ? FlagEncoder.question(options.flags) : options.flags,
             topics: upsertOrDisconnectTopics(
                 question.id,
