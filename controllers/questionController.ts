@@ -16,30 +16,28 @@ export const QuestionFlags = z.object({
     answersStartHidden: z.boolean().default(true)
 });
 
-export const ParentData = z.object({
-    body: z.string().optional(),
+export const BaseQuestionData = z.object({
+    body: z.string().optional()
+})
+
+export const MultipleChoiceData = BaseQuestionData.extend({
+    solution: z.array(z.number())
+});
+
+export const ParentData = BaseQuestionData.extend({
     solution: z.undefined(),
     numberingType: z.enum(["LOWERCASE", "UPPERCASE", "ROMAN_LOWERCASE", "ROMAN_UPPERCASE", "NUMBER"])
 });
 
-export const MultipleChoiceData = z.object({
-    body: z.string().optional(),
-    solution: z.array(z.number())
-});
-
-export const FreeResponseData = z.object({
-    body: z.string().optional(),
-    solution: z.string().optional()
-});
-
-export const ShortAnswerData = FreeResponseData;
-
-export const FillInBlankData = z.object({
-    body: z.string().optional(),
+export const FillInBlankData = BaseQuestionData.extend({
     solution: z.array(z.string())
 });
 
-export const QuestionData = z.union([ParentData, MultipleChoiceData, FreeResponseData, ShortAnswerData, FillInBlankData]);
+export const FreeResponseData = BaseQuestionData.extend({
+    solution: z.string().optional()
+});
+
+export const QuestionData = z.union([ParentData, MultipleChoiceData, FreeResponseData, FillInBlankData]);
 
 export const UpsertAnswerChoiceOptions = z.object({
     id: z.string().default(randomUUID),
@@ -72,7 +70,7 @@ export const UpdateQuestionOptions = z.object({
     resources: z.array(UpsertResourceOptions).optional(),
     answerChoices: z.array(UpsertAnswerChoiceOptions).optional().optional(),
     explanation: UpsertExplanationOptions.optional()
-}).strict();
+});
 
 export const FullQuestion = {
     resources: true,
