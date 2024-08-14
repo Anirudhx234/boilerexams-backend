@@ -12,8 +12,8 @@ import { upsertOrDisconnectTopics, UpsertTopic } from "./topicController.js";
 
 export const QuestionFlags = z.object({
     published: z.boolean().default(false),
-    disableRandomAnswers: z.boolean().default(true),
-    answersStartHidden: z.boolean().default(true)
+    disableRandomAnswers: z.boolean().default(false),
+    answersStartHidden: z.boolean().default(false)
 });
 
 export const BaseQuestionData = z.object({
