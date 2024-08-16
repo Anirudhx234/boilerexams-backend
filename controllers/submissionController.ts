@@ -187,7 +187,7 @@ async function checkUserSolution(type: QuestionType, userSolution?: unknown, sol
                 const correct = await checkUserSolution(child.type, childSolution.userSolution, questionData.solution);
                 if (!correct) return false;
             }
-            return true;
+            break;
         }
 
         default: {
@@ -195,7 +195,7 @@ async function checkUserSolution(type: QuestionType, userSolution?: unknown, sol
         }
     }
 
-    return false;
+    return true;
 }
 
 function coerceBigIntSafely(input?: unknown) {
