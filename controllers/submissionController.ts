@@ -13,7 +13,6 @@ export const ShortAnswerSubmissionData = z.string().optional();
 
 export const FillInBlankSubmissionData = z.array(z.string());
 
-
 export const ParentSubmissionData = z.array(
     z.object({
         id: z.string().uuid(),
@@ -66,7 +65,7 @@ export async function createSubmission(req: Request, res: Response) {
     });
 
     const data = QuestionData.parse(question.data);
-    const correct = checkUserSolution(question.type, options.userSolution, data.solution);
+    const correct = await checkUserSolution(question.type, options.userSolution, data.solution);
 
     const submission = await prisma.submission.create({
         data: {
@@ -96,7 +95,7 @@ export async function batchCreateSubmission(req: Request, res: Response) {
                 }
             });
             const data = QuestionData.parse(question.data);
-            const correct = checkUserSolution(question.type, option.userSolution, data.solution);
+            const correct = await checkUserSolution(question.type, option.userSolution, data.solution);
 
             return prisma.submission.create({
                 data: {
@@ -133,7 +132,7 @@ export async function updateSubmission(req: Request, res: Response) {
     res.status(200).send(submission);
 }
 
-function checkUserSolution(type: QuestionType, userSolution?: unknown, solution?: unknown) {
+async function checkUserSolution(type: QuestionType, userSolution?: unknown, solution?: unknown) {
     switch (type) {
         case QuestionType.MULTIPLE_CHOICE:
             {
@@ -147,7 +146,6 @@ function checkUserSolution(type: QuestionType, userSolution?: unknown, solution?
                 break;
             }
 
-
         case QuestionType.SHORT_ANSWER:
             {
                 const parsedUserSolution = ShortAnswerSubmissionData.parse(userSolution);
@@ -156,7 +154,6 @@ function checkUserSolution(type: QuestionType, userSolution?: unknown, solution?
                 if (parsedUserSolution != parsedSolution) return false;
                 break;
             }
-
 
         case QuestionType.FILL_IN_BLANK:
             {
@@ -172,11 +169,25 @@ function checkUserSolution(type: QuestionType, userSolution?: unknown, solution?
                 break;
             }
 
-
         case QuestionType.FREE_RESPONSE: {
             const parsedUserSolution = FreeResponseSubmissionData.parse(userSolution);
             if (!parsedUserSolution) return false; // yeah, I know
             break;
+        }
+
+        case QuestionType.PARENT: {
+            const parsedUserSolution = ParentSubmissionData.parse(userSolution);
+            for (const childSolution of parsedUserSolution) {
+                const child = await prisma.question.findUniqueOrThrow({
+                    where: {
+                        id: childSolution.id
+                    }
+                })
+                const questionData = QuestionData.parse(child.data);
+                const correct = await checkUserSolution(child.type, childSolution.userSolution, questionData.solution);
+                if (!correct) return false;
+            }
+            return true;
         }
 
         default: {
@@ -184,7 +195,7 @@ function checkUserSolution(type: QuestionType, userSolution?: unknown, solution?
         }
     }
 
-    return true;
+    return false;
 }
 
 function coerceBigIntSafely(input?: unknown) {
