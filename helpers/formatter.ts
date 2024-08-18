@@ -119,6 +119,10 @@ export default class Formatter {
 
     public static questionsToTopics(options: FormatterOptions<PotentialQuestionToTopic[] | undefined>) {
         if (!options.data) return undefined;
-        return options.data.map((relation) => Formatter.questionToTopic({ ...options, data: relation }));
+        return options.data
+            .map((relation) => Formatter.questionToTopic({ ...options, data: relation }))
+            .filter((relation) => {
+                return options.sendUnpublished || !relation.question || relation.question.flags.published;
+            });
     }
 }
