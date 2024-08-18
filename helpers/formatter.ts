@@ -1,12 +1,16 @@
-import { JsonValue } from "@prisma/client/runtime/library.js";
-
+/**
+ * Formatter
+ * he purpose of the formatter class is to take data pulled from prisma and format it to match Frontend Client data
+ * schema. At the same time, it can filter out data that shouldn't be visible to the requester. It introduces helper
+ * methods for either a single entity or an array of entities.
+ */
 export default class Formatter {
     public static course(options: FormatterOptions<PotentialCourse>): FormattedCourse {
         return {
             ...options.data,
             exams: Formatter.exams({ ...options, data: options.data.exams }),
             topics: Formatter.topics({ ...options, data: options.data.topics }),
-            questions: Formatter.questions({ ...options, data: options.data.questions }),
+            questions: Formatter.questions({ ...options, data: options.data.questions })
         };
     }
 
@@ -20,7 +24,7 @@ export default class Formatter {
     public static exam(options: FormatterOptions<PotentialExam>): FormattedExam {
         return {
             ...options.data,
-            questions: Formatter.questions({ ...options, data: options.data?.questions }),
+            questions: Formatter.questions({ ...options, data: options.data?.questions })
         };
     }
 
@@ -31,11 +35,33 @@ export default class Formatter {
             .map((exam) => Formatter.exam({ ...options, data: exam }));
     }
 
+    public static customExam(options: FormatterOptions<PotentialCustomExam>): FormattedCustomExam {
+        // Hacky wacky but it works :P
+        const questionsToTopics = Formatter.questionsToTopics({ ...options, data: options.data.questions?.map(question => question.topics ?? []).flat() });
+        const topics = questionsToTopics?.map(topic => topic.topic).filter(topic => !!topic) as FormattedTopic[];
+        const uniqueTopics = new Set<string>();
+        topics.forEach(topic => { if (topic.name) uniqueTopics.add(topic.name) });
+        const value = Array.from(uniqueTopics);
+        return {
+            ...options.data,
+            course: options.data.course ? Formatter.course({ ...options, data: options.data.course }) : undefined,
+            questions: Formatter.questions({ ...options, data: options.data?.questions }),
+            topics: Array.from(uniqueTopics).map(name => { return { name: name } })
+        };
+    }
+
+    public static customExams(options: FormatterOptions<PotentialCustomExam[] | undefined>) {
+        if (!options.data) return undefined;
+        return options.data
+            .map((customExam) => Formatter.customExam({ ...options, data: customExam }))
+            .filter(customExam => !options.permanentOnly || customExam.flags.permanent)
+    }
+
     public static topic(options: FormatterOptions<PotentialTopic>): FormattedTopic {
         const questions = Formatter.questionsToTopics({ ...options, data: options.data.questions });
         return {
             ...options.data,
-            questions: questions?.map((relation) => relation.question)?.filter((question) => question) as FormattedQuestion[],
+            questions: questions?.map((relation) => relation.question)?.filter((question) => question) as FormattedQuestion[]
         };
     }
 
@@ -52,7 +78,7 @@ export default class Formatter {
                 ? {
                       ...(options.data.data as object),
                       explanationText: undefined, // ToDo temporary fix
-                      answerChoices: Formatter.answerChoices({ ...options, data: options.data.answerChoices }),
+                      answerChoices: Formatter.answerChoices({ ...options, data: options.data.answerChoices })
                   }
                 : undefined,
             course: options.data.course ? Formatter.course({ ...options, data: options.data.course }) : undefined,
@@ -60,7 +86,7 @@ export default class Formatter {
             answerChoices: undefined,
             resources: options.data.resources,
             children: Formatter.questions({ ...options, data: options.data.children }),
-            topics: topics?.map((relation) => relation.topic)?.filter((topic) => topic) as FormattedTopic[],
+            topics: topics?.map((relation) => relation.topic)?.filter((topic) => topic) as FormattedTopic[]
         };
     }
 
@@ -74,7 +100,7 @@ export default class Formatter {
     public static answerChoice(options: FormatterOptions<PotentialAnswerChoice>): FormattedAnswerChoice {
         return {
             ...options.data,
-            question: options.data.question ? Formatter.question({ ...options, data: options.data.question }) : undefined,
+            question: options.data.question ? Formatter.question({ ...options, data: options.data.question }) : undefined
         };
     }
 
@@ -87,7 +113,7 @@ export default class Formatter {
         return {
             ...options.data,
             topic: options.data.topic ? Formatter.topic({ ...options, data: options.data.topic }) : undefined,
-            question: options.data.question ? Formatter.question({ ...options, data: options.data.question }) : undefined,
+            question: options.data.question ? Formatter.question({ ...options, data: options.data.question }) : undefined
         };
     }
 
@@ -99,93 +125,4 @@ export default class Formatter {
                 return options.sendUnpublished || !relation.question || relation.question.flags.published;
             });
     }
-}
-
-interface FormatterOptions<T> {
-    data: T;
-    sendUnpublished: boolean;
-}
-
-interface FormattedCourse {
-    subject?: string;
-    flags: CourseFlags;
-    exams?: FormattedExam[];
-    topics?: FormattedTopic[];
-    questions?: FormattedQuestion[];
-}
-
-interface FormattedExam {
-    flags: ExamFlags;
-    number?: number;
-    questions?: FormattedQuestion[];
-}
-
-interface FormattedTopic {
-    questions?: FormattedQuestion[];
-}
-
-interface FormattedQuestion {
-    data?: unknown;
-    course?: FormattedCourse;
-    exam?: FormattedExam;
-    flags: QuestionFlags;
-    children?: FormattedQuestion[];
-    topics?: FormattedTopic[];
-    resources?: unknown[];
-    answerChoices?: undefined;
-}
-
-interface FormattedAnswerChoice {
-    question?: FormattedQuestion;
-}
-
-interface FormattedQuestionToTopic {
-    topic?: FormattedTopic;
-    question?: FormattedQuestion;
-}
-
-interface PotentialQuestionToTopic {
-    topic?: PotentialTopic;
-    question?: PotentialQuestion;
-}
-
-interface PotentialAnswerChoice {
-    id?: string;
-    question?: PotentialQuestion;
-    resources?: unknown[];
-}
-
-interface PotentialQuestion {
-    id?: string;
-    parentId?: string | null;
-    course?: PotentialCourse;
-    exam?: PotentialExam;
-    flags: QuestionFlags;
-    data?: JsonValue;
-    children?: PotentialQuestion[];
-    answerChoices?: PotentialAnswerChoice[];
-    resources?: unknown[];
-    topics?: PotentialQuestionToTopic[];
-}
-
-interface PotentialTopic {
-    id?: string;
-    name: string;
-    questions?: PotentialQuestionToTopic[];
-}
-
-interface PotentialExam {
-    id?: string;
-    flags: ExamFlags;
-    resources?: unknown[];
-    questions?: PotentialQuestion[];
-}
-
-interface PotentialCourse {
-    id?: string;
-    flags: CourseFlags;
-    exams?: PotentialExam[];
-    topics?: PotentialTopic[];
-    questions?: PotentialQuestion[];
-    resources?: unknown[];
 }

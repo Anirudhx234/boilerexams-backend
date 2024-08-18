@@ -1,9 +1,9 @@
-import { Prisma } from "@prisma/client";
 import type { NextFunction, Request, Response } from "express";
-import APIError from "./APIError.js";
+import { Prisma } from "@prisma/client";
 import axios from "axios";
-import {MulterError} from "multer";
+import { MulterError } from "multer";
 import { ZodError } from "zod";
+import APIError from "./APIError.js";
 
 export default async function errorHandler(error: unknown, req: Request, res: Response, _next: NextFunction) {
     if (!(error instanceof Error)) {
@@ -13,7 +13,7 @@ export default async function errorHandler(error: unknown, req: Request, res: Re
 
     const errorResponse: ErrorResponse = {
         message: error.message,
-        fullError: {},
+        fullError: {}
     };
 
     if (req.user) {
@@ -53,7 +53,7 @@ export default async function errorHandler(error: unknown, req: Request, res: Re
     }
 
     if (error instanceof Prisma.PrismaClientValidationError) {
-        errorResponse.message = "Valid input not provided";
+        errorResponse.message = "Prisma: Valid input not provided";
         return res.status(400).json(errorResponse);
     }
 
@@ -64,14 +64,16 @@ export default async function errorHandler(error: unknown, req: Request, res: Re
 
     if (error instanceof ZodError) {
         const err = error as ZodError;
-        errorResponse.message = "Valid input not provided";
+        errorResponse.message = "Zod: Valid input not provided";
         errorResponse.fullError = err.errors;
 
         try {
-            await axios.post(`${process.env["DISCORD_URL"]}/error`, {
-                ...err.format(),
-                path: req.path
-            });
+            if (process.env["NODE_ENV"] === "production") {
+                await axios.post(`${process.env["DISCORD_URL"]}/error`, {
+                    ...err.format(),
+                    path: req.path
+                });
+            }
         } catch {
             console.log("Unable to POST error to Discord");
         }
@@ -80,10 +82,12 @@ export default async function errorHandler(error: unknown, req: Request, res: Re
     }
 
     try {
-        await axios.post(`${process.env["DISCORD_URL"]}/error`, {
-            stackTrace: error.stack,
-            path: req.path
-        });
+        if (process.env["NODE_ENV"] === "production") {
+            await axios.post(`${process.env["DISCORD_URL"]}/error`, {
+                stackTrace: error.stack,
+                path: req.path
+            });
+        }
     } catch {
         console.log("Unable to POST error to Discord");
     }
@@ -92,4 +96,3 @@ export default async function errorHandler(error: unknown, req: Request, res: Re
     errorResponse.message = "An unknown error occurred";
     return res.status(500).json(errorResponse);
 }
-

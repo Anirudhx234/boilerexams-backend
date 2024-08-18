@@ -1,8 +1,8 @@
-import prisma from "../prisma/prisma.js";
 import { Request, Response } from "express";
-import APIError from "../middleware/errors/APIError.js";
 import { EventType } from "@prisma/client";
 import { z } from "zod";
+import prisma from "../prisma/prisma.js";
+import APIError from "../middleware/errors/APIError.js";
 
 export const CreateEvent = z
     .object({
@@ -12,7 +12,7 @@ export const CreateEvent = z
         location: z.string().optional(),
         start: z.coerce.date(),
         end: z.coerce.date(),
-        courseId: z.string().uuid().optional(),
+        courseId: z.string().uuid().optional()
     })
     .refine((data) => {
         return data.start < data.end;
@@ -26,7 +26,7 @@ export const UpdateEvent = z
         location: z.string().optional(),
         start: z.coerce.date().optional(),
         end: z.coerce.date().optional(),
-        courseId: z.string().uuid().optional(),
+        courseId: z.string().uuid().optional()
     })
     .refine((data) => {
         if (data.start && data.end) {
@@ -38,7 +38,7 @@ export const UpdateEvent = z
 export const EventQueryParams = z.object({
     type: z.nativeEnum(EventType).optional(),
     before: z.preprocess(coerceDateSafely, z.date()).optional(),
-    after: z.preprocess(coerceDateSafely, z.date()).optional(),
+    after: z.preprocess(coerceDateSafely, z.date()).optional()
 });
 
 export async function getEvent(req: Request, res: Response) {
@@ -46,8 +46,8 @@ export async function getEvent(req: Request, res: Response) {
 
     const event = await prisma.event.findUnique({
         where: {
-            id: eventId,
-        },
+            id: eventId
+        }
     });
 
     if (!event) {
@@ -64,17 +64,17 @@ export async function getEvents(req: Request, res: Response) {
         where: {
             type: options.type,
             start: {
-                gte: options.after,
+                gte: options.after
             },
             end: {
-                lte: options.before,
-            },
+                lte: options.before
+            }
         },
         orderBy: [
             {
-                start: "asc",
-            },
-        ],
+                start: "asc"
+            }
+        ]
     });
 
     res.status(200).send(events);
@@ -85,8 +85,8 @@ export async function createEvent(req: Request, res: Response) {
 
     const event = await prisma.event.create({
         data: {
-            ...options,
-        },
+            ...options
+        }
     });
 
     res.status(200).send(event);
@@ -98,10 +98,10 @@ export async function batchCreateEvent(req: Request, res: Response) {
             const options = CreateEvent.parse(body);
             return prisma.event.create({
                 data: {
-                    ...options,
-                },
+                    ...options
+                }
             });
-        }),
+        })
     );
 
     res.status(200).send(events);
@@ -112,9 +112,9 @@ export async function updateEvent(req: Request, res: Response) {
 
     const event = await prisma.event.update({
         where: {
-            id: eventId,
+            id: eventId
         },
-        data: req.body,
+        data: req.body
     });
     if (!event) {
         throw new APIError("Event not found", 404);
@@ -128,8 +128,8 @@ export async function deleteEvent(req: Request, res: Response) {
 
     const event = await prisma.event.delete({
         where: {
-            id: eventId,
-        },
+            id: eventId
+        }
     });
     if (!event) {
         throw new APIError("Event not found", 404);

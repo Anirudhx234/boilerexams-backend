@@ -1,20 +1,17 @@
-import { z } from "zod";
-import { QuestionType } from "@prisma/client";
 import type { Request, Response } from "express";
+import { QuestionType } from "@prisma/client";
+import { z } from "zod";
 import prisma from "../prisma/prisma.js";
-import Resolver from "../helpers/resolver.js";
 import { Epoch } from "../prisma/schema.js";
 import { QuestionData } from "./questionController.js";
-import { DiscordAPI } from "../services/discord.api.js";
-import axios from "axios";
 
 export const MultipleChoiceSubmissionData = z.array(z.number());
 
-export const FreeResponseSubmissionData = z.string().optional();
+export const FreeResponseSubmissionData = z.boolean().optional();
 
-export const ShortAnswerSubmissionData = FreeResponseSubmissionData;
+export const ShortAnswerSubmissionData = z.string().optional();
 
-export const FillInBlankSubmissionData = FreeResponseSubmissionData;
+export const FillInBlankSubmissionData = z.array(z.string());
 
 export const ParentSubmissionData = z.array(
     z.object({
@@ -23,38 +20,40 @@ export const ParentSubmissionData = z.array(
             MultipleChoiceSubmissionData,
             FreeResponseSubmissionData,
             ShortAnswerSubmissionData,
-            FillInBlankSubmissionData,
-        ]),
-    }),
+            FillInBlankSubmissionData
+        ])
+    })
 );
 
 export const UpdateSubmissionOptions = z.object({
     id: z.string().uuid().optional(),
     timeSpentVideo: z.preprocess(coerceBigIntSafely, z.bigint().optional()),
-    timeSpentModal: z.preprocess(coerceBigIntSafely, z.bigint().optional()),
+    timeSpentModal: z.preprocess(coerceBigIntSafely, z.bigint().optional())
 });
 
-export const CreateSubmissionOptions = z.object({
-    id: z.string().uuid().optional(),
-    type: z.nativeEnum(QuestionType),
-    questionId: z.string().uuid(),
-    userSolution: z.union([
-        ParentSubmissionData,
-        MultipleChoiceSubmissionData,
-        FreeResponseSubmissionData,
-        ShortAnswerSubmissionData,
-        FillInBlankSubmissionData,
-    ]),
-    timeStarted: z.coerce.date().min(Epoch, "value too old"),
-    timeEnded: z.coerce.date(),
-    timeSpent: z.preprocess(coerceBigIntSafely, z.bigint()),
-    timeSpentVideo: z.preprocess(coerceBigIntSafely, z.bigint().default(0n)),
-    timeSpentModal: z.preprocess(coerceBigIntSafely, z.bigint().default(0n)),
-    osFamily: z.string().optional(),
-}).refine(options => {
-    const difference = options.timeEnded.getTime() - options.timeStarted.getTime();
-    return difference >= options.timeSpent;
-}, "timeSpent exceeded difference between timeStarted and timeEnded");
+export const CreateSubmissionOptions = z
+    .object({
+        id: z.string().uuid().optional(),
+        type: z.nativeEnum(QuestionType),
+        questionId: z.string().uuid(),
+        userSolution: z.union([
+            ParentSubmissionData,
+            MultipleChoiceSubmissionData,
+            FreeResponseSubmissionData,
+            ShortAnswerSubmissionData,
+            FillInBlankSubmissionData
+        ]),
+        timeStarted: z.coerce.date().min(Epoch, "value too old"),
+        timeEnded: z.coerce.date(),
+        timeSpent: z.preprocess(coerceBigIntSafely, z.bigint()),
+        timeSpentVideo: z.preprocess(coerceBigIntSafely, z.bigint().default(0n)),
+        timeSpentModal: z.preprocess(coerceBigIntSafely, z.bigint().default(0n)),
+        osFamily: z.string().optional()
+    })
+    .refine((options) => {
+        const difference = options.timeEnded.getTime() - options.timeStarted.getTime();
+        return difference >= options.timeSpent;
+    }, "timeSpent did not exceed difference between timeStarted and timeEnded");
 
 export async function createSubmission(req: Request, res: Response) {
     const options = CreateSubmissionOptions.parse(req.body);
@@ -62,22 +61,22 @@ export async function createSubmission(req: Request, res: Response) {
     const question = await prisma.question.findFirstOrThrow({
         where: {
             id: options.questionId
-        },
+        }
     });
 
     const data = QuestionData.parse(question.data);
-    const correct = checkUserSolution(question.type, options.userSolution, data.solution);
+    const correct = await checkUserSolution(question.type, options.userSolution, data.solution);
 
     const submission = await prisma.submission.create({
         data: {
             ...options,
             type: question.type,
             correct: correct,
-            questionId: question.id,
+            questionId: question.id
         },
         include: {
-            question: true,
-        },
+            question: true
+        }
     });
 
     res.status(200).send(submission);
@@ -92,22 +91,22 @@ export async function batchCreateSubmission(req: Request, res: Response) {
         const submissionPromises = options.map(async (option) => {
             const question = await prisma.question.findUniqueOrThrow({
                 where: {
-                    id: option.questionId,
-                },
+                    id: option.questionId
+                }
             });
             const data = QuestionData.parse(question.data);
-            const correct = checkUserSolution(question.type, option.userSolution, data.solution);
+            const correct = await checkUserSolution(question.type, option.userSolution, data.solution);
 
             return prisma.submission.create({
                 data: {
                     ...option,
                     type: question.type,
                     correct: correct,
-                    questionId: question.id,
+                    questionId: question.id
                 },
                 include: {
-                    question: true,
-                },
+                    question: true
+                }
             });
         });
 
@@ -123,38 +122,73 @@ export async function updateSubmission(req: Request, res: Response) {
 
     const submission = await prisma.submission.update({
         where: {
-            id: submissionId,
+            id: submissionId
         },
         data: {
-            ...options,
-        },
+            ...options
+        }
     });
 
     res.status(200).send(submission);
 }
 
-function checkUserSolution(type: QuestionType, userSolution?: unknown, solution?: unknown) {
+async function checkUserSolution(type: QuestionType, userSolution?: unknown, solution?: unknown) {
     switch (type) {
         case QuestionType.MULTIPLE_CHOICE:
             {
-                const parsedUserSolution = z.array(z.number()).parse(userSolution);
+                const parsedUserSolution = MultipleChoiceSubmissionData.parse(userSolution);
                 const parseSolution = z.array(z.number()).parse(solution);
                 if (parsedUserSolution.length < 1) return false;
                 for (const entry of parsedUserSolution) {
                     if (parseSolution.includes(entry)) continue;
                     return false;
                 }
+                break;
             }
-            break;
 
         case QuestionType.SHORT_ANSWER:
             {
-                const parsedUserSolution = z.string().parse(userSolution);
-                const parsedSolution = z.string().parse(solution);
-                if (parsedUserSolution.length < 1) return false;
-                if (parsedUserSolution != parsedSolution || parsedUserSolution) return false;
+                const parsedUserSolution = ShortAnswerSubmissionData.parse(userSolution);
+                const parsedSolution = ShortAnswerSubmissionData.parse(solution);
+                if (!parsedUserSolution || parsedUserSolution.length < 1) return false;
+                if (parsedUserSolution != parsedSolution) return false;
+                break;
+            }
+
+        case QuestionType.FILL_IN_BLANK:
+            {
+                const parsedUserSolution = FillInBlankSubmissionData.parse(userSolution);
+                const parsedSolution = FillInBlankSubmissionData.parse(solution);
+
+                for (let i = 0; i < parsedSolution.length; i++) {
+                    const values = parsedSolution[i].split("|");
+                    if (!values.includes(parsedUserSolution[i])) {
+                        return false;
+                    }
+                }
+                break;
+            }
+
+        case QuestionType.FREE_RESPONSE: {
+            const parsedUserSolution = FreeResponseSubmissionData.parse(userSolution);
+            if (!parsedUserSolution) return false; // yeah, I know
+            break;
+        }
+
+        case QuestionType.PARENT: {
+            const parsedUserSolution = ParentSubmissionData.parse(userSolution);
+            for (const childSolution of parsedUserSolution) {
+                const child = await prisma.question.findUniqueOrThrow({
+                    where: {
+                        id: childSolution.id
+                    }
+                })
+                const questionData = QuestionData.parse(child.data);
+                const correct = await checkUserSolution(child.type, childSolution.userSolution, questionData.solution);
+                if (!correct) return false;
             }
             break;
+        }
 
         default: {
             return false;

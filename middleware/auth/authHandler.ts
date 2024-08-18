@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import { Role } from "@prisma/client";
-import asyncWrapper from "../wrappers/asyncWrapper.js";
 import APIError from "../errors/APIError.js";
+import asyncWrapper from "../wrappers/asyncWrapper.js";
 import isWhitelisted from "./isWhiteListed.js";
 
 const authHandler = (role: string) =>
@@ -15,7 +15,7 @@ const authHandler = (role: string) =>
             [Role.PROFESSOR]: 2,
             [Role.GRAPHIC]: 3,
             [Role.CONTENT]: 4,
-            [Role.ADMIN]: 5,
+            [Role.ADMIN]: 5
         };
 
         if (isWhitelisted(req)) {

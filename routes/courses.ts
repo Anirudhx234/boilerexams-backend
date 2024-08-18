@@ -1,11 +1,18 @@
+import express from "express";
+import { Role } from "@prisma/client";
+import authHandler from "../middleware/auth/authHandler.js";
+import sendPublished from "../middleware/auth/sendPublished.js";
+import cache from "../middleware/cache/caching.js";
+import asyncWrapper from "../middleware/wrappers/asyncWrapper.js";
 import {
     createCourse,
     deleteCourse,
     getAllCourses,
-    getCourse,
+    getCourse, getCourseCustomExams,
     getCourseEvents,
     getCourseExams,
-    getCourseTopics, getCourseTopicsByExam,
+    getCourseTopics,
+    getCourseTopicsByExam,
     getSubjects,
     toggleCoursePublished,
     updateCourse
@@ -14,19 +21,20 @@ import {
     createExam,
     deleteExam,
     getExam,
-    getExamQuestions, getExamTopics,
+    getExamQuestions,
+    getExamTopics,
     reorderExamQuestions,
     toggleExamPublished,
     updateExam
 } from "../controllers/examController.js";
 import { createQuestion, getQuestion, updateQuestion } from "../controllers/questionController.js";
 import { createTopic, getTopic, getTopicQuestions, reorderTopicQuestions } from "../controllers/topicController.js";
-import { Role } from "@prisma/client";
-import asyncWrapper from "../middleware/wrappers/asyncWrapper.js";
-import authHandler from "../middleware/auth/authHandler.js";
-import cache from "../middleware/cache/caching.js";
-import express from "express";
-import sendPublished from "../middleware/auth/sendPublished.js";
+import {
+    createCustomExam, deleteCustomExam,
+    getCustomExam,
+    getCustomExamQuestions,
+    getCustomExamTopics
+} from "../controllers/customExamController.js";
 
 const router = express.Router();
 
@@ -42,9 +50,9 @@ router.get("/:course/topics", sendPublished, cache(minute), asyncWrapper(getCour
 
 router.get("/:course/topics/exams", sendPublished, cache(minute), asyncWrapper(getCourseTopicsByExam));
 
-router.get("/:course/topics/:topic", sendPublished, cache(minute), asyncWrapper(getTopic));
+router.get("/:course/topics/*/questions", sendPublished, cache(minute), asyncWrapper(getTopicQuestions));
 
-router.get("/:course/topics/:topic/questions", sendPublished, cache(minute), asyncWrapper(getTopicQuestions));
+router.get("/:course/topics/*", sendPublished, cache(minute), asyncWrapper(getTopic));
 
 router.get("/:course/exams", sendPublished, cache(minute), asyncWrapper(getCourseExams));
 
@@ -57,6 +65,17 @@ router.get("/:course/exams/:exam/questions", sendPublished, cache(minute), async
 router.get("/:course/exams/:exam/questions/:question", sendPublished, cache(minute), asyncWrapper(getQuestion));
 
 router.get("/:course/events", sendPublished, cache(minute), asyncWrapper(getCourseEvents));
+
+router.get("/:course/custom-exams", sendPublished, cache(minute), asyncWrapper(getCourseCustomExams));
+
+router.get("/:course/custom-exams/:customExam", sendPublished, cache(minute), asyncWrapper(getCustomExam));
+
+router.get("/:course/custom-exams/:customExam/topics", sendPublished, cache(minute), asyncWrapper(getCustomExamTopics));
+
+router.get("/:course/custom-exams/:customExam/questions", sendPublished, cache(minute), asyncWrapper(getCustomExamQuestions));
+
+// Exception
+router.post("/:course/custom-exams", asyncWrapper(createCustomExam));
 
 // Content Only Beyond this point
 
@@ -80,10 +99,12 @@ router.post("/:course/exams/:exam/reorder-questions", authHandler(Role.CONTENT),
 
 router.post("/:course/exams/:exam/questions", authHandler(Role.CONTENT), asyncWrapper(createQuestion));
 
-router.post("/:course/topics/:topic/reorder-questions", authHandler(Role.CONTENT), asyncWrapper(reorderTopicQuestions));
+router.post("/:course/topics/*/reorder-questions", authHandler(Role.CONTENT), asyncWrapper(reorderTopicQuestions));
 
 router.delete("/:course", authHandler(Role.CONTENT), asyncWrapper(deleteCourse));
 
 router.delete("/:course/exams/:exam", authHandler(Role.CONTENT), asyncWrapper(deleteExam));
+
+router.delete("/:course/custom-exams/:customExam", authHandler(Role.CONTENT), asyncWrapper(deleteCustomExam));
 
 export default router;

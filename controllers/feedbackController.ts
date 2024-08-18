@@ -1,37 +1,37 @@
-import APIError from "../middleware/errors/APIError.js";
-import { FeedbackStatus, FeedbackType, ResourceType } from "@prisma/client";
 import { Request, Response } from "express";
-import { PurdueIoAPI } from "../services/purdue.io.js";
+import { FeedbackStatus, FeedbackType, ResourceType } from "@prisma/client";
 import { z } from "zod";
 import prisma from "../prisma/prisma.js";
 import Resolver from "../helpers/resolver.js";
+import APIError from "../middleware/errors/APIError.js";
+import { PurdueIoAPI } from "../services/purdue.io.js";
 import uploadFileToS3 from "../utils/uploadFileToS3.js";
 
 export const FeatureRequestData = z.object({
-    title:      z.string(),
-    content:    z.string().max(2000),
-    contact:    z.string().max(50).optional(),
+    title: z.string(),
+    content: z.string().max(2000),
+    contact: z.string().max(50).optional()
 });
 
 export const QuestionReportData = FeatureRequestData.extend({
     title: z.string(),
-    userAgent:  z.string().default("No UserAgent"),
+    userAgent: z.string().default("No UserAgent")
 });
 
 export const BugReportData = QuestionReportData.extend({
-    location:   z.string(),
+    location: z.string()
 });
 
 export const VideoFeedbackData = z.object({
     explanationQuality: z.number().min(1).max(5),
-    productionQuality:  z.number().min(1).max(5),
-    recommended:        z.boolean(),
-    content:            z.string().optional()
+    productionQuality: z.number().min(1).max(5),
+    recommended: z.boolean(),
+    content: z.string().optional()
 });
 
 export const CourseRequestOptions = z.object({
-    abbreviation:   z.string().toUpperCase(),
-    number:         z.coerce.number().min(100).max(99999)
+    abbreviation: z.string().toUpperCase(),
+    number: z.coerce.number().min(100).max(99999)
 });
 
 const FeedbackInclude = {
@@ -90,10 +90,7 @@ export async function getManyFeedback(req: Request, res: Response) {
             courseId: course?.id
         },
         include: FeedbackInclude,
-        orderBy: [
-            { createdAt: "asc" },
-            { updatedAt: "asc" }
-        ]
+        orderBy: [{ createdAt: "asc" }, { updatedAt: "asc" }]
     });
 
     res.status(200).send(feedback);
@@ -120,7 +117,7 @@ export async function createApplication(req: Request, res: Response) {
                     type: ResourceType.PDF,
                     data: {
                         key: pdfData.Key,
-                        url: pdfData.Location,
+                        url: pdfData.Location
                     }
                 }
             }
@@ -141,9 +138,9 @@ export async function requestCourse(req: Request, res: Response) {
         where: {
             abbreviation_number: {
                 abbreviation: options.abbreviation,
-                number: options.number,
+                number: options.number
             }
-        },
+        }
     });
 
     if (existingCourse) {
@@ -155,20 +152,20 @@ export async function requestCourse(req: Request, res: Response) {
 
     const courseRequest = await prisma.courseRequest.upsert({
         where: {
-            id: course.Id,
+            id: course.Id
         },
         create: {
             id: course.Id,
             name: course.Title,
             subject: subject.Name,
             abbreviation: subject.Abbreviation,
-            number: Number(course.Number),
+            number: Number(course.Number)
         },
         update: {
             count: {
-                increment: 1, // Increment Request Count if CourseRequest exists
-            },
-        },
+                increment: 1 // Increment Request Count if CourseRequest exists
+            }
+        }
     });
 
     res.status(200).send(courseRequest);
@@ -184,7 +181,7 @@ export async function reportBug(req: Request, res: Response) {
             userId: user?.id,
             data: {
                 ...options
-            },
+            }
         },
         include: FeedbackInclude
     });
@@ -194,23 +191,23 @@ export async function reportBug(req: Request, res: Response) {
 
 export async function reportQuestion(req: Request, res: Response) {
     const question = await prisma.question.findFirstOrThrow({
-        where: await Resolver.question(req),
+        where: await Resolver.question(req.params),
         include: {
             course: {
                 select: {
                     abbreviation: true,
                     number: true,
-                    users: true,
-                },
+                    users: true
+                }
             },
             exam: {
                 select: {
                     season: true,
                     year: true,
-                    number: true,
-                },
+                    number: true
+                }
             }
-        },
+        }
     });
 
     const course = question.course;
@@ -266,7 +263,7 @@ export async function createVideoFeedback(req: Request, res: Response) {
     const options = VideoFeedbackData.parse(req.body);
 
     const question = await prisma.question.findFirstOrThrow({
-        where: await Resolver.question(req),
+        where: await Resolver.question(req.params),
         select: {
             id: true,
             examId: true,
@@ -298,7 +295,7 @@ export async function updateFeedbackStatus(req: Request, res: Response) {
 
     const feedback = await prisma.feedback.update({
         where: {
-            id: feedbackId,
+            id: feedbackId
         },
         data: {
             status: status
@@ -313,8 +310,8 @@ export async function deleteFeedback(req: Request, res: Response) {
 
     const videoFeedback = await prisma.feedback.delete({
         where: {
-            id: feedbackId,
-        },
+            id: feedbackId
+        }
     });
 
     res.status(200).send(videoFeedback);
@@ -323,7 +320,7 @@ export async function deleteFeedback(req: Request, res: Response) {
 async function getCourseSafe(req: Request) {
     try {
         return await prisma.course.findUniqueOrThrow({
-            where: Resolver.course(req),
+            where: Resolver.course(req.params)
         });
     } catch {
         return undefined;

@@ -1,15 +1,15 @@
 import express from "express";
-import type { Request, Response } from "express";
-import cors from "cors";
+import { Request, Response } from "express";
 import cookieParser from "cookie-parser";
+import cors from "cors";
 import session from "express-session";
 import passport from "passport";
+import { scheduleUpdateStats } from "./helpers/stats/updateStats.js";
+import initializePassport from "./middleware/auth/passport/index.js";
+import errorHandler from "./middleware/errors/errorHandler.js";
+import routes from "./routes/index.js";
 import corsOptions from "./utils/corsOptions.js";
 import sessionOptions from "./utils/sessionOptions.js";
-import initializePassport from "./middleware/auth/passport/index.js";
-import routes from "./routes/index.js";
-import errorHandler from "./middleware/errors/errorHandler.js";
-import { scheduleUpdateStats } from "./helpers/stats/updateStats.js";
 
 (BigInt.prototype as any).toJSON = function () {
     return this.toString();
@@ -39,7 +39,7 @@ app.get("/", (req: Request, res: Response) => {
 });
 
 app.get("/docs", (req: Request, res: Response) => {
-    res.redirect(process.env["DOCS_URL"] ?? "/")
+    res.redirect(process.env["DOCS_URL"] ?? "/");
 });
 
 app.use(routes);

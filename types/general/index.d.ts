@@ -12,6 +12,10 @@ interface ExamFlags {
     practice: boolean;
 }
 
+interface CustomExamFlags {
+    permanent: boolean;
+}
+
 interface QuestionFlags {
     published: boolean;
     disableRandomAnswers: boolean;

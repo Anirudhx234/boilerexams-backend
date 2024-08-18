@@ -1,9 +1,9 @@
 import express from "express";
 import { Role } from "@prisma/client";
-import { assignUserCourses, deleteUser, getAllUsers, getUser, getMe, updateUserRole } from "../controllers/userController.js";
-import asyncWrapper from "../middleware/wrappers/asyncWrapper.js";
 import authHandler from "../middleware/auth/authHandler.js";
 import authTester from "../middleware/auth/authTester.js";
+import asyncWrapper from "../middleware/wrappers/asyncWrapper.js";
+import { assignUserCourses, deleteUser, getAllUsers, getUser, getMe, updateUserRole } from "../controllers/userController.js";
 
 const router = express.Router();
 

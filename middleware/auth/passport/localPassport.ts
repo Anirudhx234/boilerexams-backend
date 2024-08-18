@@ -1,9 +1,9 @@
-import prisma from "../../../prisma/prisma.js";
 import { AccountType, type User } from "@prisma/client";
-import { Strategy } from "passport-local";
 import { timingSafeEqual } from "crypto";
-import APIError from "../../errors/APIError.js";
+import { Strategy } from "passport-local";
+import prisma from "../../../prisma/prisma.js";
 import hashString from "../../../utils/hashString.js";
+import APIError from "../../errors/APIError.js";
 
 const localPassport = (passport) => {
     passport.serializeUser((user: User, done: any) => {
@@ -14,8 +14,8 @@ const localPassport = (passport) => {
         try {
             const user = await prisma.user.findUnique({
                 where: {
-                    id: id,
-                },
+                    id: id
+                }
             });
             if (!user) {
                 throw new Error("User not found");
@@ -29,18 +29,18 @@ const localPassport = (passport) => {
     passport.use(
         new Strategy(
             {
-                usernameField: "email",
+                usernameField: "email"
             },
             async (username: string, password: string, done: any) => {
                 try {
                     const user = await prisma.user.findFirst({
                         where: {
                             email: username,
-                            accountType: AccountType.LOCAL,
+                            accountType: AccountType.LOCAL
                         },
                         include: {
-                            localAccount: true,
-                        },
+                            localAccount: true
+                        }
                     });
                     if (!user || !user.localAccount) {
                         throw new APIError("Incorrect email or password", 400);
@@ -55,8 +55,8 @@ const localPassport = (passport) => {
                 } catch (error) {
                     done(error, null);
                 }
-            },
-        ),
+            }
+        )
     );
 };
 

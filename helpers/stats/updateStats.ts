@@ -1,12 +1,12 @@
-import { Epoch } from "../../prisma/schema.js";
 import prisma from "../../prisma/prisma.js";
+import { Epoch } from "../../prisma/schema.js";
+import { AnswerChoiceStats, CourseStats, ExamStats, QuestionStats, TopicStats } from "../../controllers/statsController.js";
+import Scheduler from "../scheduler.js";
 import { answerChoiceStats } from "./answerChoiceStats.js";
+import { courseStats } from "./courseStats.js";
 import { examStats } from "./examStats.js";
 import { questionStats } from "./questionStats.js";
-import { courseStats } from "./courseStats.js";
-import Scheduler from "../scheduler.js";
 import { topicStats } from "./topicStats.js";
-import { AnswerChoiceStats, CourseStats, ExamStats, QuestionStats, TopicStats } from "../../controllers/statsController.js";
 
 export function scheduleUpdateStats() {
     const date = new Date(); // Current date and time
@@ -35,88 +35,80 @@ async function updateStats() {
     const qStats = await questionStats(options);
     const acStats = await answerChoiceStats(options);
 
-    console.log(`Stats update started at ${Date.now()}`);
-
-    console.log("Updating Courses");
     for (const stat of cStats) {
         await prisma.course.update({
             where: {
-                id: stat.id,
+                id: stat.id
             },
             data: {
                 stats: {
                     ...CourseStats.parse(stat),
                     count: undefined,
-                    id: undefined,
-                } as object,
-            },
+                    id: undefined
+                } as object
+            }
         });
     }
 
-    console.log("Updating Exams");
     for (const stat of eStats) {
         await prisma.exam.update({
             where: {
-                id: stat.id,
+                id: stat.id
             },
             data: {
                 stats: {
                     ...ExamStats.parse(stat),
                     count: undefined,
-                    id: undefined,
-                } as object,
-            },
+                    id: undefined
+                } as object
+            }
         });
     }
 
-    console.log("Updating Topics");
     for (const stat of tStats) {
         await prisma.topic.update({
             where: {
-                id: stat.id,
+                id: stat.id
             },
             data: {
                 stats: {
                     ...TopicStats.parse(stat),
                     count: undefined,
                     name: undefined,
-                    id: undefined,
-                } as object,
-            },
+                    id: undefined
+                } as object
+            }
         });
     }
 
-    console.log("Updating Questions");
+
     for (const stat of qStats) {
         await prisma.question.update({
             where: {
-                id: stat.id,
+                id: stat.id
             },
             data: {
                 stats: {
                     ...QuestionStats.parse(stat),
                     count: undefined,
-                    id: undefined,
-                } as object,
-            },
+                    id: undefined
+                } as object
+            }
         });
     }
 
-    console.log("Updating AnswerChoices");
     for (const stat of acStats) {
         await prisma.answerChoice.update({
             where: {
-                id: stat.id,
+                id: stat.id
             },
             data: {
                 stats: {
                     ...AnswerChoiceStats.parse(stat),
                     id: undefined,
-                    index: undefined,
-                },
-            },
+                    index: undefined
+                }
+            }
         });
     }
-
-    console.log(`Stats update completed at ${Date.now()}`);
 }

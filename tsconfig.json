@@ -16,6 +16,6 @@
         "typeRoots": ["./types"],
 
         // Latest Features
-        "allowJs": true,
-    },
+        "allowJs": true
+    }
 }

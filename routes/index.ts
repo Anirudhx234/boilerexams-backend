@@ -1,8 +1,11 @@
 import express from "express";
+import feedbackLimiter from "../middleware/rateLimiting/feedbackLimiter.js";
+import generalLimiter from "../middleware/rateLimiting/generalLimiter.js";
+import globalLimiter from "../middleware/rateLimiting/globalLimiter.js";
 import auth from "./auth.js";
 import courses from "./courses.js";
-import exams from "./exams.js";
 import events from "./events.js";
+import exams from "./exams.js";
 import feedback from "./feedback.js";
 import parsing from "./parsing.js";
 import questions from "./questions.js";
@@ -11,9 +14,7 @@ import stats from "./stats.js";
 import submissions from "./submissions.js";
 import topics from "./topics.js";
 import users from "./users.js";
-import feedbackLimiter from "../middleware/rateLimiting/feedbackLimiter.js";
-import generalLimiter from "../middleware/rateLimiting/generalLimiter.js";
-import globalLimiter from "../middleware/rateLimiting/globalLimiter.js";
+import customExams from "./customExams.js";
 
 const router = express.Router();
 
@@ -29,6 +30,8 @@ router.use("/feedback", feedbackLimiter, feedback);
 router.use("/courses", courses);
 
 router.use("/exams", exams);
+
+router.use("/custom-exams", customExams);
 
 router.use("/topics", topics);
 
