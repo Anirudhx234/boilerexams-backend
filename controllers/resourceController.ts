@@ -70,7 +70,7 @@ export async function upsertResource(req: Request, res: Response) {
         if (!data.key) {
             const image = await axios.get(data.url, {
                 responseType: "arraybuffer",
-                maxContentLength: 5 * megabyte
+                maxContentLength: 15 * megabyte
             });
 
             const contentType = image.headers["content-type"];

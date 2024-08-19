@@ -25,12 +25,7 @@ export default async function errorHandler(error: unknown, req: Request, res: Re
     if (error instanceof MulterError) {
         const err = error as MulterError;
         if (err.code == "LIMIT_FILE_SIZE") {
-            if (err.field === "image") {
-                errorResponse.message = "Image size must be under 1 MB";
-            } else if (err.field === "pdf") {
-                errorResponse.message = "PDF size must be under 5 MB";
-            }
-
+            errorResponse.message = "File size must be under 15 MB";
             return res.status(413).json(errorResponse);
         }
     }
