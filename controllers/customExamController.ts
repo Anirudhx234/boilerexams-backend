@@ -22,7 +22,7 @@ export const CustomExamData = z.object({
 
 export const CreateCustomExamOptions = z.object({
     data: CustomExamData,
-    name: z.string().max(32),
+    name: z.string().max(48),
     flags: CustomExamFlags,
     courseId: z.string().uuid(),
     questionIds: z.array(z.string().uuid()),
