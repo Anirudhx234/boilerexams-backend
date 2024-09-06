@@ -2,6 +2,7 @@ interface FormatterOptions<T> {
     data: T;
     sendUnpublished?: boolean;
     permanentOnly?: boolean;
+    prerender?: boolean;
 }
 
 interface FormattedCourse {
