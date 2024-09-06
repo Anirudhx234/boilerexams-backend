@@ -1,4 +1,4 @@
-import { S3 } from "@aws-sdk/client-s3";
+import { ObjectCannedACL, S3 } from "@aws-sdk/client-s3";
 import { Upload } from "@aws-sdk/lib-storage";
 import { nanoid } from "nanoid";
 import APIError from "../middleware/errors/APIError.js";
@@ -26,13 +26,13 @@ export async function uploadFileToS3(buffer: Buffer, contentType: string) {
         Bucket: process.env["AWS_BUCKET_NAME"] ?? "",
         Key: nanoid(),
         Body: buffer,
-        ACL: "public-read-write",
+        ACL: "public-read-write" as ObjectCannedACL,
         ContentType: contentType
     };
 
     await new Upload({
         client: s3,
-        params
+        params: params
     }).done();
 
     return {
