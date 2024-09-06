@@ -13,10 +13,10 @@ const randomNewLineString =
 const randomDollarSignString =
     "Nc65hh7zQkQkDFt1FIpNH2MHlijJ32OhALfCuMCzfv1WZQ8AbhBTnPdQ9HKboMVpKG469NyL7vO8FU0Suy9ZQw8KJG2T2T78";
 
-export default class KatexRenderer {
+export default class katexRenderer {
     public static tryRender(str: string = "", resources?: Array<Resource>, questionType?: QuestionType) {
         try {
-            return KatexRenderer.render(str, resources, questionType);
+            return katexRenderer.render(str, resources, questionType);
         } catch (err) {
             return str;
         }

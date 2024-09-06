@@ -76,13 +76,13 @@ export default class Formatter {
 
     public static question(options: FormatterOptions<PotentialQuestion>): FormattedQuestion {
         const topics = Formatter.questionsToTopics({ ...options, data: options.data.topics });
-        const data = QuestionData.parse(options.data.data);
+        const result = QuestionData.safeParse(options.data.data);
         return {
             ...options.data,
             data: options.data.data
                 ? {
                     ...(options.data.data as object),
-                    renderedBody: KatexRenderer.tryRender(data.body, options.data.resources as Resource[], options.data.type as QuestionType),
+                    renderedBody: result.success ? KatexRenderer.tryRender(result.data.body, options.data.resources as Resource[], options.data.type as QuestionType) : undefined,
                     explanationText: undefined, // ToDo temporary fix
                     answerChoices: Formatter.answerChoices({ ...options, data: options.data.answerChoices })
                 }
