@@ -1,6 +1,10 @@
+import KatexRenderer from "./katex/renderer.js";
+import { QuestionType, Resource } from "@prisma/client";
+import { QuestionData } from "../controllers/questionController.js";
+
 /**
  * Formatter
- * he purpose of the formatter class is to take data pulled from prisma and format it to match Frontend Client data
+ * the purpose of the formatter class is to take data pulled from prisma and format it to match Frontend Client data
  * schema. At the same time, it can filter out data that shouldn't be visible to the requester. It introduces helper
  * methods for either a single entity or an array of entities.
  */
@@ -72,14 +76,16 @@ export default class Formatter {
 
     public static question(options: FormatterOptions<PotentialQuestion>): FormattedQuestion {
         const topics = Formatter.questionsToTopics({ ...options, data: options.data.topics });
+        const data = QuestionData.parse(options.data.data);
         return {
             ...options.data,
             data: options.data.data
                 ? {
-                      ...(options.data.data as object),
-                      explanationText: undefined, // ToDo temporary fix
-                      answerChoices: Formatter.answerChoices({ ...options, data: options.data.answerChoices })
-                  }
+                    ...(options.data.data as object),
+                    renderedBody: KatexRenderer.tryRender(data.body, options.data.resources as Resource[], options.data.type as QuestionType),
+                    explanationText: undefined, // ToDo temporary fix
+                    answerChoices: Formatter.answerChoices({ ...options, data: options.data.answerChoices })
+                }
                 : undefined,
             course: options.data.course ? Formatter.course({ ...options, data: options.data.course }) : undefined,
             exam: options.data.exam ? Formatter.exam({ ...options, data: options.data.exam }) : undefined,

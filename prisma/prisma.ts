@@ -1,5 +1,6 @@
-import { Application, CustomExam, Feedback, PrismaClient } from "@prisma/client";
+import { Application, Feedback, PrismaClient } from "@prisma/client";
 import { z } from "zod";
+import katex from "katex";
 import FlagDecoder from "../helpers/decoder.js";
 import { FeatureRequestData } from "../controllers/feedbackController.js";
 import { UrlResourceData } from "../controllers/resourceController.js";
@@ -9,6 +10,7 @@ import applicationTemplate from "../utils/emailTemplates/application.js";
 import bugSubmissionTemplate from "../utils/emailTemplates/bugSubmission.js";
 import sendMail from "../utils/sendMail.js";
 import { deleteFileFromS3 } from "../utils/uploadFileToS3.js";
+import { QuestionData } from "../controllers/questionController.js";
 
 const prisma = new PrismaClient();
 

@@ -1,4 +1,3 @@
-
 interface FormatterOptions<T> {
     data: T;
     sendUnpublished?: boolean;
@@ -64,6 +63,7 @@ interface PotentialAnswerChoice {
 
 interface PotentialQuestion {
     id?: string;
+    type?: string;
     parentId?: string | null;
     course?: PotentialCourse;
     exam?: PotentialExam;
