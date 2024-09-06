@@ -192,11 +192,13 @@ export async function getQuestion(req: Request, res: Response) {
         throw new APIError("Question not found", 404);
     }
 
+    const { prerender } = req.params;
+
     res.status(200).send(
         Formatter.question({
             data: question,
             sendUnpublished: req.sendUnpublished,
-            prerender: req.params["prerender"] == "true"
+            prerender: prerender == "true"
         })
     );
 }
@@ -285,11 +287,13 @@ export async function updateQuestion(req: Request, res: Response) {
         include: FullQuestion
     });
 
+    const { prerender } = req.params;
+
     res.status(200).send(
         Formatter.question({
             data: updatedQuestion,
             sendUnpublished: req.sendUnpublished,
-            prerender: req.params["prerender"] == "true"
+            prerender: prerender == "true"
         })
     );
 }
