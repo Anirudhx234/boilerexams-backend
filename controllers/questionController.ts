@@ -198,7 +198,7 @@ export async function getQuestion(req: Request, res: Response) {
         Formatter.question({
             data: question,
             sendUnpublished: req.sendUnpublished,
-            prerender: prerender == "true"
+            prerender: true
         })
     );
 }
@@ -293,7 +293,7 @@ export async function updateQuestion(req: Request, res: Response) {
         Formatter.question({
             data: updatedQuestion,
             sendUnpublished: req.sendUnpublished,
-            prerender: prerender == "true"
+            prerender: true
         })
     );
 }
