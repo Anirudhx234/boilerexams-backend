@@ -252,9 +252,6 @@ export async function toggleExamPublished(req: Request, res: Response) {
             id: true,
             flags: true,
             questions: {
-                where: {
-                    parentId: null
-                },
                 select: {
                     id: true,
                     flags: true
