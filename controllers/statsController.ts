@@ -228,7 +228,7 @@ function formatStats(stats: { submissions: number; submissionsCorrect: number }[
 function parseOptions(req: Request) {
     const now = new Date();
     const before = req.query.before ? new Date(Number.parseInt(<string>req.query.before)) : now;
-    const after = req.query.after ? new Date(Number.parseInt(<string>req.query.before)) : Epoch;
+    const after = req.query.after ? new Date(Number.parseInt(<string>req.query.after)) : Epoch;
     const sort = req.query.sort ? <string>req.query.sort : "asc";
     const limit = req.query.limit ? Number.parseInt(<string>req.query.limit) : undefined;
     const skip = req.query.skip ? Number.parseInt(<string>req.query.skip) : 0;
