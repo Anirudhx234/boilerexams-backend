@@ -13,7 +13,7 @@ export const CodeResourceData = z.object({
 });
 
 export const UrlResourceData = z.object({
-    url: z.string().url(),
+    url: z.string().url().optional(),
     key: z.string().optional(),
     mathpixId: z.string().optional(),
     altText: z.string().optional()
