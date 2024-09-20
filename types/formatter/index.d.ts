@@ -43,7 +43,10 @@ interface FormattedQuestion {
 }
 
 interface FormattedAnswerChoice {
+    body: string | null;
     question?: FormattedQuestion;
+    renderedBody?: string;
+    resources?: unknown[];
 }
 
 interface FormattedQuestionToTopic {
@@ -58,6 +61,7 @@ interface PotentialQuestionToTopic {
 
 interface PotentialAnswerChoice {
     id?: string;
+    body: string | null;
     question?: PotentialQuestion;
     resources?: unknown[];
 }

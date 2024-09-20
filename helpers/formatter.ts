@@ -45,7 +45,6 @@ export default class Formatter {
         const topics = questionsToTopics?.map(topic => topic.topic).filter(topic => !!topic) as FormattedTopic[];
         const uniqueTopics = new Set<string>();
         topics.forEach(topic => { if (topic.name) uniqueTopics.add(topic.name) });
-        const value = Array.from(uniqueTopics);
         return {
             ...options.data,
             course: options.data.course ? Formatter.course({ ...options, data: options.data.course }) : undefined,
@@ -108,6 +107,9 @@ export default class Formatter {
     public static answerChoice(options: FormatterOptions<PotentialAnswerChoice>): FormattedAnswerChoice {
         return {
             ...options.data,
+            renderedBody: options.prerender && options.data.body
+                ? KatexRenderer.tryRender(options.data.body, options.data.resources as Resource[], options.data.question?.type as QuestionType)
+                : undefined,
             question: options.data.question ? Formatter.question({ ...options, data: options.data.question }) : undefined
         };
     }
