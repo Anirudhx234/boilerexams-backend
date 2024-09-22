@@ -4,7 +4,7 @@ import asyncWrapper from "../middleware/wrappers/asyncWrapper.js";
 import {
     generalStats,
     getCourseStats,
-    getExamStats,
+    getExamStats, getFeedbackStats,
     getHourlySubmissionStats,
     getQuestionStats,
     getTopicStats
@@ -63,5 +63,7 @@ router.get("/questions/:question", cache(10 * minute), asyncWrapper(getQuestionS
 router.get("/submissions/time", cache(10 * minute), asyncWrapper(getHourlySubmissionStats));
 
 router.get("/submissions/time/:course", cache(10 * minute), asyncWrapper(getHourlySubmissionStats));
+
+router.get("/feedback", cache(10 * minute), asyncWrapper(getFeedbackStats));
 
 export default router;
