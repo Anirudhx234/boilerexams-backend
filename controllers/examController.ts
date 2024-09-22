@@ -144,7 +144,8 @@ export async function getExamQuestions(req: Request, res: Response) {
     res.status(200).send(
         Formatter.questions({
             data: questions,
-            sendUnpublished: req.sendUnpublished
+            sendUnpublished: req.sendUnpublished,
+            prerender: true
         })
     );
 }
