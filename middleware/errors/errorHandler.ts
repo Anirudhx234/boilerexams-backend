@@ -4,6 +4,7 @@ import axios from "axios";
 import { MulterError } from "multer";
 import { ZodError } from "zod";
 import APIError from "./APIError.js";
+import { DiscordAPI } from "../../services/discord.api.js";
 
 export default async function errorHandler(error: unknown, req: Request, res: Response, _next: NextFunction) {
     if (!(error instanceof Error)) {
@@ -21,6 +22,8 @@ export default async function errorHandler(error: unknown, req: Request, res: Re
             errorResponse.fullError = error;
         }
     }
+
+    await DiscordAPI.reportError(error, req.path);
 
     if (error instanceof MulterError) {
         const err = error as MulterError;
@@ -61,17 +64,6 @@ export default async function errorHandler(error: unknown, req: Request, res: Re
         const err = error as ZodError;
         errorResponse.message = "Zod: Valid input not provided";
         errorResponse.fullError = err.errors;
-
-        try {
-            if (process.env["NODE_ENV"] === "production") {
-                await axios.post(`${process.env["DISCORD_URL"]}/error`, {
-                    ...err.format(),
-                    path: req.path
-                });
-            }
-        } catch {
-            console.log("Unable to POST error to Discord");
-        }
 
         return res.status(400).json(errorResponse);
     }
