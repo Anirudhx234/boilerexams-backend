@@ -21,7 +21,7 @@ export class DiscordAPI {
                     ...error,
                     path: path
                 },
-                env: ["NODE_ENV"],
+                env: process.env["NODE_ENV"],
                 location: "BACKEND"
             });
         } catch {
