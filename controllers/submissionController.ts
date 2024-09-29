@@ -3,7 +3,7 @@ import { QuestionType } from "@prisma/client";
 import { z } from "zod";
 import prisma from "../prisma/prisma.js";
 import { Epoch } from "../prisma/schema.js";
-import { QuestionData } from "./questionController.js";
+import { NumericalData, QuestionData } from "./questionController.js";
 
 export const MultipleChoiceSubmissionData = z.array(z.number());
 
@@ -13,6 +13,8 @@ export const ShortAnswerSubmissionData = z.string().optional();
 
 export const FillInBlankSubmissionData = z.array(z.string());
 
+export const NumericalSubmissionData = z.number().optional();
+
 export const ParentSubmissionData = z.array(
     z.object({
         id: z.string().uuid(),
@@ -20,7 +22,8 @@ export const ParentSubmissionData = z.array(
             MultipleChoiceSubmissionData,
             FreeResponseSubmissionData,
             ShortAnswerSubmissionData,
-            FillInBlankSubmissionData
+            FillInBlankSubmissionData,
+            NumericalSubmissionData
         ])
     })
 );
@@ -41,7 +44,8 @@ export const CreateSubmissionOptions = z
             MultipleChoiceSubmissionData,
             FreeResponseSubmissionData,
             ShortAnswerSubmissionData,
-            FillInBlankSubmissionData
+            FillInBlankSubmissionData,
+            NumericalSubmissionData
         ]),
         timeStarted: z.coerce.date().min(Epoch, "value too old"),
         timeEnded: z.coerce.date(),
@@ -190,6 +194,23 @@ async function checkUserSolution(type: QuestionType, userSolution?: unknown, sol
             break;
         }
 
+        case QuestionType.NUMERICAL: {
+            const parsedUserSolution = NumericalSubmissionData.parse(userSolution);
+            const parsedSolution = NumericalSubmissionData.parse(solution);
+            if (!parsedUserSolution || !parsedSolution) return false;
+            const questionData = QuestionData.parse(parsedSolution);
+            const numData = NumericalData.safeParse(questionData);
+            if (numData.success) {
+                const errorVal = numData.data.errorValue;
+                const sigfigs = numData.data.sigfigs;
+                if (Math.abs(parsedSolution - parsedUserSolution) < errorVal) return false;
+                if (sigfigs && !(getSignificantDigitCount(parsedUserSolution) == sigfigs)) return false;
+            } else {
+                return false;
+            }
+            break;
+        }
+
         default: {
             return false;
         }
@@ -201,4 +222,13 @@ async function checkUserSolution(type: QuestionType, userSolution?: unknown, sol
 function coerceBigIntSafely(input?: unknown) {
     if (input == undefined) return;
     return BigInt(String(input));
+}
+
+function getSignificantDigitCount(n) {
+    if (n == undefined) return;
+    n = Math.abs(n.toString().replace(".", "")); //remove decimal and make positive
+    if (n == 0) return 0;
+    while (n != 0 && n % 10 == 0) n /= 10; //kill the 0s at the end of n
+
+    return Math.floor(Math.log(n) / Math.log(10)) + 1; //get number of digits
 }
