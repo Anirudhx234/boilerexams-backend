@@ -34,7 +34,9 @@ export const FillInBlankData = BaseQuestionData.extend({
 });
 
 export const NumericalData = BaseQuestionData.extend({
-    solution: z.number().optional()
+    solution: z.number().optional(),
+    errorValue: z.number(),
+    sigfigs: z.number().int().optional()
 });
 
 export const FreeResponseData = BaseQuestionData.extend({
