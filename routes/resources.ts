@@ -11,7 +11,7 @@ router.get("/:resourceId", asyncWrapper(getResource));
 
 router.post("/files", upload.single("file"), authHandler(Role.GRAPHIC), asyncWrapper(uploadFile));
 
-router.put("/", upload.single("image"), authHandler(Role.GRAPHIC), asyncWrapper(upsertResource));
+router.put("/", upload.single("file"), authHandler(Role.GRAPHIC), asyncWrapper(upsertResource));
 
 router.delete("/:resourceId", authHandler(Role.GRAPHIC), asyncWrapper(deleteResource));
 

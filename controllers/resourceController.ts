@@ -13,7 +13,7 @@ export const CodeResourceData = z.object({
 });
 
 export const UrlResourceData = z.object({
-    url: z.string().url(),
+    url: z.string().url().optional(),
     key: z.string().optional(),
     mathpixId: z.string().optional(),
     altText: z.string().optional()
@@ -68,21 +68,34 @@ export async function upsertResource(req: Request, res: Response) {
         const data = UrlResourceData.parse(options.data);
 
         if (!data.key) {
-            const image = await axios.get(data.url, {
-                responseType: "arraybuffer",
-                maxContentLength: 15 * megabyte
-            });
+            if (!data.url) {
+                const file = req.file;
 
-            const contentType = image.headers["content-type"];
+                if (!file) {
+                    throw new APIError("File missing from request", 400);
+                }
 
-            if (!validFileTypes.includes(contentType)) {
-                throw new APIError("Image upload failed, link must be JPEG or PNG or PDF", 415);
+                const s3Data = await uploadFileToS3(file.buffer, file.mimetype);
+                data.key = s3Data.Key;
+                data.url = s3Data.Location;
+                options.data = data;
+            } else {
+                const image = await axios.get(data.url, {
+                    responseType: "arraybuffer",
+                    maxContentLength: 15 * megabyte
+                });
+
+                const contentType = image.headers["content-type"];
+
+                if (!validFileTypes.includes(contentType)) {
+                    throw new APIError("Image upload failed, link must be JPEG or PNG or PDF", 415);
+                }
+
+                const s3Data = await uploadFileToS3(image.data, contentType);
+                data.key = s3Data.Key;
+                data.url = s3Data.Location;
+                options.data = data;
             }
-
-            const s3Data = await uploadFileToS3(image.data, contentType);
-            data.key = s3Data.Key;
-            data.url = s3Data.Location;
-            options.data = data;
         }
     }
 

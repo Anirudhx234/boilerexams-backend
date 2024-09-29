@@ -13,4 +13,19 @@ export class DiscordAPI {
     public static async updateCourseRequests(courseRequests: CourseRequest[]) {
         await axios.post(`${process.env["DISCORD_URL"]}/course-requests`, courseRequests);
     }
+
+    public static async reportError(error: Error, path: string) {
+        try {
+            await axios.post(`${process.env["DISCORD_URL"]}/error`, {
+                error: {
+                    ...error,
+                    path: path
+                },
+                env: process.env["NODE_ENV"],
+                location: "BACKEND"
+            });
+        } catch {
+            console.log("Unable to send error to Discord");
+        }
+    }
 }

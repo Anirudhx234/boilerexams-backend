@@ -4,10 +4,11 @@ import axios from "axios";
 import { MulterError } from "multer";
 import { ZodError } from "zod";
 import APIError from "./APIError.js";
+import { DiscordAPI } from "../../services/discord.api.js";
 
 export default async function errorHandler(error: unknown, req: Request, res: Response, _next: NextFunction) {
     if (!(error instanceof Error)) {
-        res.status(500).send(`Unknown error type: ${typeof Error}`);
+        res.status(500).send(`Unknown error type: ${typeof error}`);
         return;
     }
 
@@ -21,6 +22,13 @@ export default async function errorHandler(error: unknown, req: Request, res: Re
             errorResponse.fullError = error;
         }
     }
+
+    if (error instanceof APIError) {
+        errorResponse.message = error.message;
+        return res.status(error.errorCode).json(errorResponse);
+    }
+
+    await DiscordAPI.reportError(error, req.path);
 
     if (error instanceof MulterError) {
         const err = error as MulterError;
@@ -52,39 +60,12 @@ export default async function errorHandler(error: unknown, req: Request, res: Re
         return res.status(400).json(errorResponse);
     }
 
-    if (error instanceof APIError) {
-        errorResponse.message = error.message;
-        return res.status(error.errorCode).json(errorResponse);
-    }
-
     if (error instanceof ZodError) {
         const err = error as ZodError;
         errorResponse.message = "Zod: Valid input not provided";
         errorResponse.fullError = err.errors;
 
-        try {
-            if (process.env["NODE_ENV"] === "production") {
-                await axios.post(`${process.env["DISCORD_URL"]}/error`, {
-                    ...err.format(),
-                    path: req.path
-                });
-            }
-        } catch {
-            console.log("Unable to POST error to Discord");
-        }
-
         return res.status(400).json(errorResponse);
-    }
-
-    try {
-        if (process.env["NODE_ENV"] === "production") {
-            await axios.post(`${process.env["DISCORD_URL"]}/error`, {
-                stackTrace: error.stack,
-                path: req.path
-            });
-        }
-    } catch {
-        console.log("Unable to POST error to Discord");
     }
 
     console.log(error);

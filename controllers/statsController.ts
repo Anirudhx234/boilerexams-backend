@@ -9,6 +9,7 @@ import { Epoch } from "../prisma/schema.js";
 import { z } from "zod";
 import prisma from "../prisma/prisma.js";
 import Resolver from "../helpers/resolver.js";
+import { FeedbackStatus, FeedbackType } from "@prisma/client";
 
 export const AnswerChoiceStats = z.preprocess(
     (stats) => {
@@ -210,6 +211,30 @@ export async function getHourlySubmissionStats(req: Request, res: Response) {
     res.status(200).json(stats);
 }
 
+export async function getFeedbackStats(req: Request, res: Response) {
+    const feedback = await prisma.feedback.findMany({
+        where: {
+            type: FeedbackType.QUESTION_REPORT
+        }
+    });
+
+    let open = 0;
+    let closed = 0;
+
+    for (let i = 0; i < feedback.length; i++) {
+        const report = feedback[i];
+        if (report.status == FeedbackStatus.OPEN) open++;
+        else closed++;
+    }
+
+    const stats = {
+        open: open,
+        closed: closed
+    }
+
+    res.status(200).send(stats);
+}
+
 function formatStats(stats: { submissions: number; submissionsCorrect: number }[], order: string, skip: number, limit?: number) {
     return stats
         .sort((a, b) => {
@@ -228,7 +253,7 @@ function formatStats(stats: { submissions: number; submissionsCorrect: number }[
 function parseOptions(req: Request) {
     const now = new Date();
     const before = req.query.before ? new Date(Number.parseInt(<string>req.query.before)) : now;
-    const after = req.query.after ? new Date(Number.parseInt(<string>req.query.before)) : Epoch;
+    const after = req.query.after ? new Date(Number.parseInt(<string>req.query.after)) : Epoch;
     const sort = req.query.sort ? <string>req.query.sort : "asc";
     const limit = req.query.limit ? Number.parseInt(<string>req.query.limit) : undefined;
     const skip = req.query.skip ? Number.parseInt(<string>req.query.skip) : 0;
