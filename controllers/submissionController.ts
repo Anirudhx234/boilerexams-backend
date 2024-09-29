@@ -205,6 +205,8 @@ async function checkUserSolution(type: QuestionType, userSolution?: unknown, sol
                 const sigfigs = numData.data.sigfigs;
                 if (Math.abs(parsedSolution - parsedUserSolution) < errorVal) return false;
                 if (sigfigs && !(getSignificantDigitCount(parsedUserSolution) == sigfigs)) return false;
+            } else {
+                return false;
             }
             break;
         }
