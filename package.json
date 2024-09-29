@@ -20,7 +20,7 @@
     "dev:remote": "npm run deploy && cross-env NODE_ENV=development REMOTE=enabled node dist/server.js",
     "prod": "npm run deploy && cross-env NODE_ENV=production REMOTE=enabled node dist/server.js",
     "bun-prod": "export NODE_ENV=production && bun --env-file=./.env.production --watch server.ts",
-    "bun-dev": "export NODE_ENV=development && bun --env-file=./.env.development --watch server.ts",
+    "bun-dev": "bun --env-file=./.env.development --watch server.ts",
     "bun-canary": "export NODE_ENV=canary && bun --env-file=./.env.canary --watch server.ts"
   },
   "type": "module",
@@ -32,7 +32,7 @@
     "@aws-sdk/client-s3": "^3.391.0",
     "@aws-sdk/lib-storage": "^3.391.0",
     "@prisma/client": "^5.3.1",
-    "axios": "1.6.8",
+    "axios": "^1.7.7",
     "connect-pg-simple": "^9.0.0",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",

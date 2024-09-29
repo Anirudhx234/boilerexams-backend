@@ -33,11 +33,15 @@ export const FillInBlankData = BaseQuestionData.extend({
     solution: z.array(z.string())
 });
 
+export const NumericalData = BaseQuestionData.extend({
+    solution: z.number().optional()
+});
+
 export const FreeResponseData = BaseQuestionData.extend({
     solution: z.string().optional()
 });
 
-export const QuestionData = z.union([ParentData, MultipleChoiceData, FreeResponseData, FillInBlankData]);
+export const QuestionData = z.union([ParentData, MultipleChoiceData, FreeResponseData, FillInBlankData, NumericalData]);
 
 export const UpsertAnswerChoiceOptions = z.object({
     id: z.string().default(randomUUID),

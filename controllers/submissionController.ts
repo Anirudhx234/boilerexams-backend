@@ -13,6 +13,8 @@ export const ShortAnswerSubmissionData = z.string().optional();
 
 export const FillInBlankSubmissionData = z.array(z.string());
 
+export const NumericalSubmissionData = z.number().optional();
+
 export const ParentSubmissionData = z.array(
     z.object({
         id: z.string().uuid(),
@@ -41,7 +43,8 @@ export const CreateSubmissionOptions = z
             MultipleChoiceSubmissionData,
             FreeResponseSubmissionData,
             ShortAnswerSubmissionData,
-            FillInBlankSubmissionData
+            FillInBlankSubmissionData,
+            NumericalSubmissionData
         ]),
         timeStarted: z.coerce.date().min(Epoch, "value too old"),
         timeEnded: z.coerce.date(),
@@ -187,6 +190,19 @@ async function checkUserSolution(type: QuestionType, userSolution?: unknown, sol
                 const correct = await checkUserSolution(child.type, childSolution.userSolution, questionData.solution);
                 if (!correct) return false;
             }
+            break;
+        }
+
+        case QuestionType.NUMERICAL: {
+            const parsedUserSolution = NumericalSubmissionData.parse(userSolution);
+            const parsedSolution = NumericalSubmissionData.parse(solution);
+            if (!parsedUserSolution) return false;
+            if (Math.abs(parsedSolution! - parsedUserSolution) > 0.1) return false;
+            const strParsedUserSolution = parsedUserSolution.toString()
+            const strParsedSolution = parsedSolution?.toString()
+            const solutionSigFigs = strParsedSolution?.length! - (strParsedSolution?.indexOf(".")! + 1)
+            const userSolutionSigFigs = strParsedUserSolution.length - (strParsedUserSolution.indexOf(".") + 1)
+            if (solutionSigFigs != userSolutionSigFigs) return false;
             break;
         }
 

@@ -256,6 +256,7 @@ enum QuestionType {
   FREE_RESPONSE
   SHORT_ANSWER
   FILL_IN_BLANK
+  NUMERICAL
 }
 
 enum ResourceType {
