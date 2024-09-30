@@ -199,15 +199,11 @@ async function checkUserSolution(type: QuestionType, userSolution?: unknown, sol
             const parsedSolution = NumericalSubmissionData.parse(solution);
             if (!parsedUserSolution || !parsedSolution) return false;
             const questionData = QuestionData.parse(parsedSolution);
-            const numData = NumericalData.safeParse(questionData);
-            if (numData.success) {
-                const errorVal = numData.data.errorValue;
-                const sigfigs = numData.data.sigfigs;
-                if (Math.abs(parsedSolution - parsedUserSolution) < errorVal) return false;
-                if (sigfigs && !(getSignificantDigitCount(parsedUserSolution) == sigfigs)) return false;
-            } else {
-                return false;
-            }
+            const numData = NumericalData.parse(questionData);
+            const errorVal = numData.errorValue;
+            const sigfigs = numData.sigfigs;
+            if (Math.abs(parsedSolution - parsedUserSolution) > errorVal) return false;
+            if (sigfigs && !(getSignificantDigitCount(parsedUserSolution) == sigfigs)) return false;
             break;
         }
 
