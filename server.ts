@@ -17,7 +17,7 @@ import sessionOptions from "./utils/sessionOptions.js";
 
 const app = express();
 
-app.use(cors(corsOptions));
+app.use(cors());
 
 initializePassport(passport);
 
