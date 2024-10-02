@@ -145,7 +145,7 @@ export async function getExamQuestions(req: Request, res: Response) {
         Formatter.questions({
             data: questions,
             sendUnpublished: req.sendUnpublished,
-            prerender: true
+            prerender: req.query["prerender"]?.toString().toLowerCase() == "true"
         })
     );
 }

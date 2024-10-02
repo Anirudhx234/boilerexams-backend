@@ -98,7 +98,8 @@ export async function getTopicQuestions(req: Request, res: Response) {
 
     const formattedQuestionToTopics = Formatter.questionsToTopics({
         data: relations,
-        sendUnpublished: req.sendUnpublished
+        sendUnpublished: req.sendUnpublished,
+        prerender: req.query["prerender"]?.toString().toLowerCase() == "true"
     });
 
     res.status(200).send(formattedQuestionToTopics?.map((relation) => relation.question));
