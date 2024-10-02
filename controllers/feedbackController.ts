@@ -143,7 +143,7 @@ export async function requestCourse(req: Request, res: Response) {
         }
     });
 
-    if (existingCourse) {
+    if (existingCourse?.flags.published) {
         throw new APIError(`Existing Course Requested`, 409);
     }
 

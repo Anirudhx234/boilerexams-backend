@@ -93,14 +93,7 @@ export default prisma
                 }
             },
             courseRequest: {
-                async create({ query, args }) {
-                    const request = await query(args);
-                    const courseRequests = await prisma.courseRequest.findMany({});
-                    await DiscordAPI.updateCourseRequests(courseRequests);
-                    return request;
-                },
-
-                async update({ query, args }) {
+                async upsert({ query, args }) {
                     const request = await query(args);
                     const courseRequests = await prisma.courseRequest.findMany({});
                     await DiscordAPI.updateCourseRequests(courseRequests);
