@@ -194,6 +194,15 @@ export async function setTopicQuestions(req: Request, res: Response) {
         where: await Resolver.topic(req.params)
     });
 
+    console.log(options.map((questionId) => {
+        return {
+            questionId_topicId: {
+                questionId: questionId,
+                topicId: topic.id
+            }
+        };
+    }));
+
     const updatedTopic = await prisma.topic.update({
         where: {
             id: topic.id
