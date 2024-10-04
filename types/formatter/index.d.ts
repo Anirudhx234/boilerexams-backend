@@ -1,8 +1,8 @@
-
 interface FormatterOptions<T> {
     data: T;
     sendUnpublished?: boolean;
     permanentOnly?: boolean;
+    prerender?: boolean;
 }
 
 interface FormattedCourse {
@@ -43,7 +43,10 @@ interface FormattedQuestion {
 }
 
 interface FormattedAnswerChoice {
+    body: string | null;
     question?: FormattedQuestion;
+    renderedBody?: string;
+    resources?: unknown[];
 }
 
 interface FormattedQuestionToTopic {
@@ -58,12 +61,14 @@ interface PotentialQuestionToTopic {
 
 interface PotentialAnswerChoice {
     id?: string;
+    body: string | null;
     question?: PotentialQuestion;
     resources?: unknown[];
 }
 
 interface PotentialQuestion {
     id?: string;
+    type?: string;
     parentId?: string | null;
     course?: PotentialCourse;
     exam?: PotentialExam;

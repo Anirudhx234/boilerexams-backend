@@ -1,6 +1,10 @@
+import KatexRenderer from "./katex/renderer.js";
+import { QuestionType, Resource } from "@prisma/client";
+import { QuestionData } from "../controllers/questionController.js";
+
 /**
  * Formatter
- * he purpose of the formatter class is to take data pulled from prisma and format it to match Frontend Client data
+ * the purpose of the formatter class is to take data pulled from prisma and format it to match Frontend Client data
  * schema. At the same time, it can filter out data that shouldn't be visible to the requester. It introduces helper
  * methods for either a single entity or an array of entities.
  */
@@ -41,7 +45,6 @@ export default class Formatter {
         const topics = questionsToTopics?.map(topic => topic.topic).filter(topic => !!topic) as FormattedTopic[];
         const uniqueTopics = new Set<string>();
         topics.forEach(topic => { if (topic.name) uniqueTopics.add(topic.name) });
-        const value = Array.from(uniqueTopics);
         return {
             ...options.data,
             course: options.data.course ? Formatter.course({ ...options, data: options.data.course }) : undefined,
@@ -72,14 +75,18 @@ export default class Formatter {
 
     public static question(options: FormatterOptions<PotentialQuestion>): FormattedQuestion {
         const topics = Formatter.questionsToTopics({ ...options, data: options.data.topics });
+        const result = QuestionData.safeParse(options.data.data);
         return {
             ...options.data,
             data: options.data.data
                 ? {
-                      ...(options.data.data as object),
-                      explanationText: undefined, // ToDo temporary fix
-                      answerChoices: Formatter.answerChoices({ ...options, data: options.data.answerChoices })
-                  }
+                    ...(options.data.data as object),
+                    renderedBody: options.prerender && result.success
+                        ? KatexRenderer.tryRender(result.data.body, options.data.resources as Resource[], options.data.type as QuestionType)
+                        : undefined,
+                    explanationText: undefined, // ToDo temporary fix
+                    answerChoices: Formatter.answerChoices({ ...options, data: options.data.answerChoices })
+                }
                 : undefined,
             course: options.data.course ? Formatter.course({ ...options, data: options.data.course }) : undefined,
             exam: options.data.exam ? Formatter.exam({ ...options, data: options.data.exam }) : undefined,
@@ -100,6 +107,9 @@ export default class Formatter {
     public static answerChoice(options: FormatterOptions<PotentialAnswerChoice>): FormattedAnswerChoice {
         return {
             ...options.data,
+            renderedBody: options.prerender && options.data.body
+                ? KatexRenderer.tryRender(options.data.body, options.data.resources as Resource[], options.data.question?.type as QuestionType)
+                : undefined,
             question: options.data.question ? Formatter.question({ ...options, data: options.data.question }) : undefined
         };
     }

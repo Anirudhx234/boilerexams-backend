@@ -33,11 +33,17 @@ export const FillInBlankData = BaseQuestionData.extend({
     solution: z.array(z.string())
 });
 
+export const NumericalData = BaseQuestionData.extend({
+    solution: z.number().optional(),
+    errorValue: z.number(),
+    sigfigs: z.number().int().optional()
+});
+
 export const FreeResponseData = BaseQuestionData.extend({
     solution: z.string().optional()
 });
 
-export const QuestionData = z.union([ParentData, MultipleChoiceData, FreeResponseData, FillInBlankData]);
+export const QuestionData = z.union([ParentData, MultipleChoiceData, FreeResponseData, FillInBlankData, NumericalData]);
 
 export const UpsertAnswerChoiceOptions = z.object({
     id: z.string().default(randomUUID),
@@ -177,7 +183,8 @@ export async function createQuestion(req: Request, res: Response) {
     res.status(200).send(
         Formatter.question({
             data: question,
-            sendUnpublished: req.sendUnpublished
+            sendUnpublished: req.sendUnpublished,
+            prerender: req.query["prerender"]?.toString().toLowerCase() == "true"
         })
     );
 }
@@ -195,7 +202,8 @@ export async function getQuestion(req: Request, res: Response) {
     res.status(200).send(
         Formatter.question({
             data: question,
-            sendUnpublished: req.sendUnpublished
+            sendUnpublished: req.sendUnpublished,
+            prerender: req.query["prerender"]?.toString().toLowerCase() == "true"
         })
     );
 }
@@ -287,7 +295,8 @@ export async function updateQuestion(req: Request, res: Response) {
     res.status(200).send(
         Formatter.question({
             data: updatedQuestion,
-            sendUnpublished: req.sendUnpublished
+            sendUnpublished: req.sendUnpublished,
+            prerender: req.query["prerender"]?.toString().toLowerCase() == "true"
         })
     );
 }
