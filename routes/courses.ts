@@ -28,7 +28,7 @@ import {
     updateExam
 } from "../controllers/examController.js";
 import { createQuestion, getQuestion, updateQuestion } from "../controllers/questionController.js";
-import { createTopic, getTopic, getTopicQuestions, reorderTopicQuestions } from "../controllers/topicController.js";
+import { createTopic, getTopic, getTopicQuestions } from "../controllers/topicController.js";
 import {
     createCustomExam, deleteCustomExam,
     getCustomExam,
@@ -98,8 +98,6 @@ router.post("/:course/topics", authHandler(Role.CONTENT), asyncWrapper(createTop
 router.post("/:course/exams/:exam/reorder-questions", authHandler(Role.CONTENT), asyncWrapper(reorderExamQuestions));
 
 router.post("/:course/exams/:exam/questions", authHandler(Role.CONTENT), asyncWrapper(createQuestion));
-
-router.post("/:course/topics/*/reorder-questions", authHandler(Role.CONTENT), asyncWrapper(reorderTopicQuestions));
 
 router.delete("/:course", authHandler(Role.CONTENT), asyncWrapper(deleteCourse));
 
