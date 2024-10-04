@@ -2,7 +2,6 @@ import type { Request, Response } from "express";
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import prisma from "../prisma/prisma.js";
-import { ReorderQuestions } from "../prisma/schema.js";
 import Formatter from "../helpers/formatter.js";
 import Resolver from "../helpers/resolver.js";
 import APIError from "../middleware/errors/APIError.js";
@@ -27,9 +26,6 @@ export async function getAllTopics(req: Request, res: Response) {
                 },
                 include: {
                     question: true
-                },
-                orderBy: {
-                    number: "asc"
                 }
             }
         }
@@ -91,9 +87,6 @@ export async function getTopicQuestions(req: Request, res: Response) {
                 include: FullQuestion
             }
         },
-        orderBy: {
-            number: "asc"
-        }
     });
 
     const formattedQuestionToTopics = Formatter.questionsToTopics({
@@ -151,39 +144,6 @@ export async function updateTopic(req: Request, res: Response) {
     });
 
     res.status(200).send(topic);
-}
-
-export async function reorderTopicQuestions(req: Request, res: Response) {
-    req.params.topic = req.params["0"];
-
-    const topic = await prisma.topic.findUniqueOrThrow({
-        where: await Resolver.topic(req.params),
-        select: {
-            id: true,
-            questions: true
-        }
-    });
-
-    const options = ReorderQuestions.parse(req.body);
-
-    const questions = await prisma.$transaction(
-        topic.questions.map((relation) => {
-            return prisma.questionToTopic.update({
-                where: {
-                    questionId_topicId: {
-                        questionId: relation.questionId,
-                        topicId: relation.topicId
-                    }
-                },
-                data: {
-                    number: options.indexOf(relation.questionId) + 1
-                },
-                select: PartialQuestion
-            });
-        })
-    );
-
-    res.status(200).send(questions);
 }
 
 export async function setTopicQuestions(req: Request, res: Response) {

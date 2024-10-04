@@ -232,9 +232,6 @@ export async function getCourseTopics(req: Request, res: Response) {
                     question: {
                         select: PartialQuestion
                     }
-                },
-                orderBy: {
-                    number: "asc"
                 }
             }
         },
