@@ -225,8 +225,8 @@ export default class Resolver {
 
             const questionToTopic = await prisma.questionToTopic.findUnique({
                 where: {
-                    number_topicId: {
-                        number: Number(question),
+                    questionId_topicId: {
+                        questionId: question,
                         topicId: topic.id
                     }
                 }
