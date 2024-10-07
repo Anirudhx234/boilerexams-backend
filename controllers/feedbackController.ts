@@ -31,7 +31,7 @@ export const VideoFeedbackData = z.object({
 
 export const CourseRequestOptions = z.object({
     abbreviation: z.string().toUpperCase(),
-    number: z.coerce.number().min(100).max(99999)
+    number: z.coerce.number().min(100).max(99999, "Invalid Course Number")
 });
 
 const FeedbackInclude = {
