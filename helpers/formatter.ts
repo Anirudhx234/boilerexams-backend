@@ -44,7 +44,7 @@ export default class Formatter {
         const questionsToTopics = Formatter.questionsToTopics({ ...options, data: options.data.questions?.map(question => question.topics ?? []).flat() });
         const topics = questionsToTopics?.map(topic => topic.topic).filter(topic => !!topic) as FormattedTopic[];
         const uniqueTopics = new Set<string>();
-        topics.forEach(topic => { if (topic.name) uniqueTopics.add(topic.name) });
+        topics?.forEach(topic => { if (topic.name) uniqueTopics.add(topic.name) });
         return {
             ...options.data,
             course: options.data.course ? Formatter.course({ ...options, data: options.data.course }) : undefined,

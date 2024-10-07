@@ -54,7 +54,6 @@ const applicationTemplate = (id: string, name: string) => {
                 <p>Thank you for submitting your application. We have successfully received it and are looking forward to reviewing it. Below are the details of your submission:</p>
                 <p><strong>Application ID:</strong> <span class="highlight">${id}</span></p>
                 <p>We will be in touch shortly to proceed to the next steps. We appreciate your interest in joining our team!</p>
-                <p>Thank you for choosing us.</p>
             </div>
             <div class="email-footer">
                 This is an automated message. Please do not reply directly to this email.
