@@ -1,0 +1,7 @@
+-- CreateEnum
+CREATE TYPE "Team" AS ENUM ('FRONTEND', 'BACKEND', 'CONTENT', 'DATA_ANALYSIS', 'RELATIONS', 'GRAPHIC_DESIGN', 'NONE');
+
+-- AlterTable
+ALTER TABLE "Application" ADD COLUMN     "courses" TEXT,
+ADD COLUMN     "team" "Team" NOT NULL DEFAULT 'NONE',
+ADD COLUMN     "video" TEXT;

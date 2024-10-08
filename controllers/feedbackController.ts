@@ -97,7 +97,7 @@ export async function getManyFeedback(req: Request, res: Response) {
 }
 
 export async function createApplication(req: Request, res: Response) {
-    const { name, email, year, why } = req.body;
+    const { name, email, year, why, video, team, courses } = req.body;
     const file = req.file;
 
     if (!file) {
@@ -108,10 +108,13 @@ export async function createApplication(req: Request, res: Response) {
 
     const application = await prisma.application.create({
         data: {
+            team: team,
             name: name,
             email: email,
             content: why,
             year: year,
+            video: video,
+            courses: courses,
             resume: {
                 create: {
                     type: ResourceType.PDF,

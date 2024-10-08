@@ -188,10 +188,13 @@ model CourseRequest {
 model Application {
   id      String         @id @default(uuid())
   status  FeedbackStatus @default(OPEN)
+  team    Team           @default(NONE)
   name    String
   email   String
   content String
   year    String
+  video   String?
+  courses String?
   resume  Resource?
 }
 
@@ -276,6 +279,16 @@ enum FeedbackType {
   QUESTION_REPORT
   FEATURE_REQUEST
   VIDEO_FEEDBACK
+}
+
+enum Team {
+  FRONTEND
+  BACKEND
+  CONTENT
+  DATA_ANALYSIS
+  RELATIONS
+  GRAPHIC_DESIGN
+  NONE
 }
 
 enum EventType {
