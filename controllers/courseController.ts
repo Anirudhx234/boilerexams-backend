@@ -181,10 +181,6 @@ export async function getCourseCustomExams(req: Request, res: Response) {
         throw new APIError("Course not found", 404);
     }
 
-    if (!req.sendUnpublished) {
-        throw new APIError("Route disabled for this course", 403);
-    }
-
     const { permanentOnly } = req.query;
 
     const customExams = await prisma.customExam.findMany({
