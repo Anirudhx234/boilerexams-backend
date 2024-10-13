@@ -181,7 +181,7 @@ export async function getCourseCustomExams(req: Request, res: Response) {
         throw new APIError("Course not found", 404);
     }
 
-    if (!course.studyModes.includes(StudyMode.EXAM) && !req.sendUnpublished) {
+    if (!req.sendUnpublished) {
         throw new APIError("Route disabled for this course", 403);
     }
 
