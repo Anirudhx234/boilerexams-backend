@@ -60,8 +60,6 @@ model CustomExam {
   createdAt    DateTime   @default(now())
   referencedAt DateTime   @default(now())
   stats        Json?
-
-  @@unique([name, courseId])
 }
 
 model Question {
