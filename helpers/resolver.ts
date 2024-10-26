@@ -33,17 +33,9 @@ export const ExamResolvable = z.union([
     })
 ]);
 
-export const CustomExamResolvable = z.union([
-    z.object({
-        id: string().uuid()
-    }),
-    z.object({
-        name_courseId: z.object({
-            name: z.string(),
-            courseId: z.string().uuid()
-        })
-    })
-])
+export const CustomExamResolvable = z.object({
+    id: string().uuid()
+})
 
 export const TopicResolvable = z.union([
     z.object({
@@ -146,28 +138,9 @@ export default class Resolver {
     public static async customExam(params: ParamsDictionary) {
         const { customExam, course } = params;
         if (Resolver.uuidRegex.test(customExam)) {
-            // If input matches UUIDv4, return object with id and null for abbreviation and number
+            // If input matches UUIDv4, return object with id
             return CustomExamResolvable.parse({
                 id: customExam
-            });
-        }
-
-        if (course) {
-            const name = customExam;
-
-            const course = await prisma.course.findUnique({
-                where: Resolver.course(params)
-            });
-
-            if (!course) {
-                throw new APIError(`Course not found ${course}`, 404);
-            }
-
-            return CustomExamResolvable.parse({
-                name_courseId: {
-                    name: name,
-                    courseId: course.id
-                }
             });
         }
 
