@@ -9,7 +9,7 @@ import { FullQuestion, PartialQuestion } from "./questionController.js";
 
 export const UpsertTopic = z.object({
     id: z.string().uuid().default(randomUUID),
-    name: z.string().max(50, "Topic name must be <= 50 characters"),
+    name: z.string().max(64, "Topic name must be <= 64 characters"),
     examNumbers: z.array(z.number().int()).optional()
 });
 
