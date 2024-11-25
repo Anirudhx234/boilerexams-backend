@@ -4,6 +4,8 @@ import { z } from "zod";
 import prisma from "../prisma/prisma.js";
 import { Epoch } from "../prisma/schema.js";
 import { NumericalData, QuestionData } from "./questionController.js";
+import { randomUUID } from "node:crypto";
+import APIError from "../middleware/errors/APIError.js";
 
 export const MultipleChoiceSubmissionData = z.array(z.number());
 
@@ -71,6 +73,18 @@ export async function createSubmission(req: Request, res: Response) {
     const data = QuestionData.parse(question.data);
     const correct = await checkUserSolution(question.type, options.userSolution, data.solution);
 
+    if (req.submissionLimited) { // Create a fake submission
+        res.status(210).send({
+            ...options,
+            id: randomUUID(),
+            type: question.type,
+            correct: correct,
+            questionId: question.id,
+            question: question
+        })
+        return;
+    }
+
     const submission = await prisma.submission.create({
         data: {
             ...options,
@@ -90,6 +104,56 @@ export async function batchCreateSubmission(req: Request, res: Response) {
     const options: z.infer<typeof CreateSubmissionOptions>[] = req.body.map((option: unknown) => {
         return CreateSubmissionOptions.parse(option);
     });
+
+    const exam = await prisma.exam.findFirst({
+        where: {
+            questions: {
+                some: {
+                    id: options[0].id
+                }
+            }
+        },
+        include: {
+            questions: {
+                select: {
+                    id: true
+                }
+            }
+        }
+    })
+
+    if (!exam) {
+        throw new APIError("Question with no exam", 400)
+    }
+
+    if (options.length > exam.questions.length) {
+        throw new APIError("Too many questions", 400)
+    }
+
+    if (req.submissionLimited) { // Create fake submissions
+        const submissions = options.map(async (option) => {
+            const question = await prisma.question.findUniqueOrThrow({
+                where: {
+                    id: option.questionId
+                }
+            });
+
+            const data = QuestionData.parse(question.data);
+            const correct = await checkUserSolution(question.type, option.userSolution, data.solution);
+
+            return {
+                ...options,
+                id: randomUUID(),
+                type: question.type,
+                correct: correct,
+                questionId: question.id,
+                question: question
+            };
+        });
+
+        res.status(210).send(submissions);
+        return;
+    }
 
     const submissions = await prisma.$transaction(async (prisma) => {
         const submissionPromises = options.map(async (option) => {

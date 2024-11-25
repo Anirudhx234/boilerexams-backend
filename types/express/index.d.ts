@@ -3,6 +3,7 @@ declare namespace Express {
     type User = import("@prisma/client").User;
     export interface Request {
         sendUnpublished: boolean;
+        submissionLimited: boolean;
         // @ts-ignore
         user: User;
         // @ts-ignore
