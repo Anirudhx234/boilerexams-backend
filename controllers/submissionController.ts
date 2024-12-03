@@ -105,11 +105,11 @@ export async function batchCreateSubmission(req: Request, res: Response) {
         return CreateSubmissionOptions.parse(option);
     });
 
-    const exam = await prisma.exam.findFirst({
+    const exam = await prisma.exam.findFirstOrThrow({
         where: {
             questions: {
                 some: {
-                    id: options[0].id
+                    id: options[0].questionId
                 }
             }
         },
