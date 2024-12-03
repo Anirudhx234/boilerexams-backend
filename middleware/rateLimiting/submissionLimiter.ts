@@ -3,7 +3,7 @@ import isWhitelisted from "../auth/isWhiteListed.js";
 import keyGen from "./keyGen.js";
 
 const submissionLimiter = rateLimit({
-    windowMs: 5000,
+    windowMs: 1000,
     max: 1,
     standardHeaders: "draft-7",
     legacyHeaders: false,
