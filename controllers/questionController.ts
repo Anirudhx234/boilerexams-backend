@@ -71,7 +71,7 @@ export const CreateQuestionOptions = z.object({
 export const UpdateQuestionOptions = z.object({
     type: z.nativeEnum(QuestionType).optional(),
     data: QuestionData.optional(),
-    disclaimer: z.string().optional(),
+    disclaimer: z.string().optional().nullable(),
     flags: QuestionFlags.optional(),
     topics: z.array(UpsertTopic).optional(),
     resources: z.array(UpsertResourceOptions).optional(),
