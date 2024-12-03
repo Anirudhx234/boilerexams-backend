@@ -126,8 +126,9 @@ export async function batchCreateSubmission(req: Request, res: Response) {
         throw new APIError("Question with no exam", 400)
     }
 
-    if (options.length > exam.questions.length) {
-        throw new APIError("Too many questions", 400)
+    if (options.length > 50) {
+        // ToDo new route for custom exam
+        // throw new APIError("Too many questions", 400)
     }
 
     if (req.submissionLimited) { // Create fake submissions
