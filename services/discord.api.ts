@@ -14,7 +14,7 @@ export class DiscordAPI {
         await axios.post(`${process.env["DISCORD_URL"]}/course-requests`, courseRequests);
     }
 
-    public static async reportError(error: Error, path: string, agent?: string, origin?: string, ip?: string) {
+    public static async reportError(error: Error, path: string, client: string, agent?: string, origin?: string) {
         try {
             await axios.post(`${process.env["DISCORD_URL"]}/error`, {
                 error: {
@@ -22,7 +22,7 @@ export class DiscordAPI {
                     path: path,
                     agent: agent,
                     origin: origin,
-                    ip: ip
+                    client: client
                 },
                 env: process.env["NODE_ENV"],
                 location: "BACKEND"

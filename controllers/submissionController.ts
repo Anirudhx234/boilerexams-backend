@@ -244,23 +244,6 @@ export async function batchCreateSubmission(req: Request, res: Response) {
         return CreateSubmissionOptions.parse(option);
     });
 
-    const exam = await prisma.exam.findFirstOrThrow({
-        where: {
-            questions: {
-                some: {
-                    id: options[0].questionId
-                }
-            }
-        },
-        include: {
-            questions: {
-                select: {
-                    id: true
-                }
-            }
-        }
-    })
-
     const submissions = await prisma.$transaction(async (prisma) => {
         const submissionPromises = options.map(async (submission) => {
             const question = await prisma.question.findUniqueOrThrow({
@@ -282,12 +265,18 @@ export async function batchCreateSubmission(req: Request, res: Response) {
                     question: question
                 };
             } else {
-                return prisma.submission.create({
-                    data: {
+                return prisma.submission.upsert({
+                    where: {
+                        id: submission.id
+                    },
+                    create: {
                         ...submission,
                         type: question.type,
                         correct: correct,
                         questionId: question.id
+                    },
+                    update: {
+
                     },
                     include: {
                         question: true
