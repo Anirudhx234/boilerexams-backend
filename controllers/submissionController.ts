@@ -131,7 +131,7 @@ export async function batchCreateSubmission(req: Request, res: Response) {
     }
 
     if (req.submissionLimited) { // Create fake submissions
-        const submissions = options.map(async (option) => {
+        const submissionPromises = options.map(async (option) => {
             const question = await prisma.question.findUniqueOrThrow({
                 where: {
                     id: option.questionId
@@ -142,7 +142,7 @@ export async function batchCreateSubmission(req: Request, res: Response) {
             const correct = await checkUserSolution(question.type, option.userSolution, data.solution);
 
             return {
-                ...options,
+                ...option,
                 id: randomUUID(),
                 type: question.type,
                 correct: correct,
@@ -151,7 +151,7 @@ export async function batchCreateSubmission(req: Request, res: Response) {
             };
         });
 
-        res.status(210).send(submissions);
+        res.status(210).send(await Promise.all(submissionPromises));
         return;
     }
 
