@@ -12,11 +12,13 @@ import sendMail from "../utils/sendMail.js";
 import { deleteFileFromS3 } from "../utils/uploadFileToS3.js";
 import { QuestionData } from "../controllers/questionController.js";
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({
+    log: ['warn', 'error']
+});
 
 export default prisma
     .$extends({
-        model: {}
+        model: {},
     })
     .$extends({
         query: {
