@@ -75,13 +75,14 @@ export async function createSubmission(req: Request, res: Response) {
     const correct = await checkUserSolution(question.type, options.userSolution, data.solution);
 
     if (req.submissionLimited) { // Create a fake submission
-        res.status(210).send({
+        res.status(200).send({
             ...options,
             id: randomUUID(),
             type: question.type,
             correct: correct,
             questionId: question.id,
-            question: question
+            question: question,
+            ghost: true
         })
         return;
     }
@@ -143,7 +144,8 @@ export async function timedExamBatchSubmission(req: Request, res: Response) {
                     type: question.type,
                     correct: correct,
                     questionId: question.id,
-                    question: question
+                    question: question,
+                    ghost: true
                 };
             } else {
                 return prisma.submission.create({
@@ -163,11 +165,7 @@ export async function timedExamBatchSubmission(req: Request, res: Response) {
         return await Promise.all(submissionPromises);
     });
 
-    if (req.submissionLimited) {
-        res.status(210).send(submissions);
-    } else {
-        res.status(200).send(submissions);
-    }
+    res.status(200).send(submissions);
 }
 
 export async function customExamBatchSubmission(req: Request, res: Response) {
@@ -212,7 +210,8 @@ export async function customExamBatchSubmission(req: Request, res: Response) {
                     type: question.type,
                     correct: correct,
                     questionId: question.id,
-                    question: question
+                    question: question,
+                    ghost: true
                 };
             } else {
                 return prisma.submission.create({
@@ -232,11 +231,7 @@ export async function customExamBatchSubmission(req: Request, res: Response) {
         return await Promise.all(submissionPromises);
     });
 
-    if (req.submissionLimited) {
-        res.status(210).send(submissions);
-    } else {
-        res.status(200).send(submissions);
-    }
+    res.status(200).send(submissions);
 }
 
 export async function batchCreateSubmission(req: Request, res: Response) {
@@ -262,7 +257,8 @@ export async function batchCreateSubmission(req: Request, res: Response) {
                     type: question.type,
                     correct: correct,
                     questionId: question.id,
-                    question: question
+                    question: question,
+                    ghost: true
                 };
             } else {
                 return prisma.submission.upsert({
@@ -288,11 +284,7 @@ export async function batchCreateSubmission(req: Request, res: Response) {
         return await Promise.all(submissionPromises);
     });
 
-    if (req.submissionLimited) {
-        res.status(210).send(submissions);
-    } else {
-        res.status(200).send(submissions);
-    }
+    res.status(200).send(submissions);
 }
 
 export async function updateSubmission(req: Request, res: Response) {
