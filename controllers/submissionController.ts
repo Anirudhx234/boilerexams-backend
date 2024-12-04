@@ -267,7 +267,7 @@ export async function batchCreateSubmission(req: Request, res: Response) {
             } else {
                 return prisma.submission.upsert({
                     where: {
-                        id: submission.id
+                        id: submission.id ?? randomUUID()
                     },
                     create: {
                         ...submission,
