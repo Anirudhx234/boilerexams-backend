@@ -4,7 +4,7 @@ import keyGen from "./keyGen.js";
 
 const batchSubmissionLimiter = rateLimit({
     windowMs: 1000 * 60 * 10,
-    max: 1000, // 2 << 4
+    max: 1, // 2 << 4
     standardHeaders: "draft-7",
     legacyHeaders: false,
     keyGenerator: keyGen,
