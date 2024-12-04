@@ -6,6 +6,7 @@ import { Epoch } from "../prisma/schema.js";
 import { NumericalData, QuestionData } from "./questionController.js";
 import { randomUUID } from "node:crypto";
 import APIError from "../middleware/errors/APIError.js";
+import Resolver from "../helpers/resolver.js";
 
 export const MultipleChoiceSubmissionData = z.array(z.number());
 
@@ -100,19 +101,13 @@ export async function createSubmission(req: Request, res: Response) {
     res.status(200).send(submission);
 }
 
-export async function batchCreateSubmission(req: Request, res: Response) {
+export async function timedExamBatchSubmission(req: Request, res: Response) {
     const options: z.infer<typeof CreateSubmissionOptions>[] = req.body.map((option: unknown) => {
         return CreateSubmissionOptions.parse(option);
     });
 
-    const exam = await prisma.exam.findFirstOrThrow({
-        where: {
-            questions: {
-                some: {
-                    id: options[0].questionId
-                }
-            }
-        },
+    const exam = await prisma.exam.findUniqueOrThrow({
+        where: await Resolver.exam(req.params),
         include: {
             questions: {
                 select: {
@@ -122,66 +117,182 @@ export async function batchCreateSubmission(req: Request, res: Response) {
         }
     })
 
-    if (!exam) {
-        throw new APIError("Question with no exam", 400)
-    }
-
     if (options.length > exam.questions.length) {
         throw new APIError("Too many questions", 400)
     }
 
-    if (req.submissionLimited) { // Create fake submissions
-        const submissionPromises = options.map(async (option) => {
-            const question = await prisma.question.findUniqueOrThrow({
-                where: {
-                    id: option.questionId
-                }
-            });
-
-            const data = QuestionData.parse(question.data);
-            const correct = await checkUserSolution(question.type, option.userSolution, data.solution);
-
-            return {
-                ...option,
-                id: randomUUID(),
-                type: question.type,
-                correct: correct,
-                questionId: question.id,
-                question: question
-            };
-        });
-
-        res.status(210).send(await Promise.all(submissionPromises));
-        return;
-    }
-
     const submissions = await prisma.$transaction(async (prisma) => {
-        const submissionPromises = options.map(async (option) => {
+        const submissionPromises = options.map(async (submission) => {
             const question = await prisma.question.findUniqueOrThrow({
                 where: {
-                    id: option.questionId
+                    id: submission.questionId
                 }
             });
-            const data = QuestionData.parse(question.data);
-            const correct = await checkUserSolution(question.type, option.userSolution, data.solution);
 
-            return prisma.submission.create({
-                data: {
-                    ...option,
+            if (question.examId != exam.id) {
+                throw new APIError("Question not in exam", 400)
+            }
+
+            const data = QuestionData.parse(question.data);
+            const correct = await checkUserSolution(question.type, submission.userSolution, data.solution);
+
+            if (req.submissionLimited) { // Create fake submissions
+                return {
+                    ...submission,
+                    id: randomUUID(),
                     type: question.type,
                     correct: correct,
-                    questionId: question.id
-                },
-                include: {
-                    question: true
-                }
-            });
+                    questionId: question.id,
+                    question: question
+                };
+            } else {
+                return prisma.submission.create({
+                    data: {
+                        ...submission,
+                        type: question.type,
+                        correct: correct,
+                        questionId: question.id
+                    },
+                    include: {
+                        question: true
+                    }
+                });
+            }
         });
 
         return await Promise.all(submissionPromises);
     });
 
-    res.status(200).send(submissions);
+    if (req.submissionLimited) {
+        res.status(210).send(submissions);
+    } else {
+        res.status(200).send(submissions);
+    }
+}
+
+export async function customExamBatchSubmission(req: Request, res: Response) {
+    const options: z.infer<typeof CreateSubmissionOptions>[] = req.body.map((option: unknown) => {
+        return CreateSubmissionOptions.parse(option);
+    });
+
+    const customExam = await prisma.customExam.findUniqueOrThrow({
+        where: await Resolver.customExam(req.params),
+        include: {
+            questions: {
+                select: {
+                    id: true
+                }
+            }
+        }
+    })
+
+    if (options.length > customExam.questions.length) {
+        throw new APIError("Too many questions", 400)
+    }
+
+    const submissions = await prisma.$transaction(async (prisma) => {
+        const submissionPromises = options.map(async (submission) => {
+            const question = await prisma.question.findUniqueOrThrow({
+                where: {
+                    id: submission.questionId
+                }
+            });
+
+            if (!customExam.questions.some(q => q.id == question.id)) {
+                throw new APIError("Question not in exam", 400)
+            }
+
+            const data = QuestionData.parse(question.data);
+            const correct = await checkUserSolution(question.type, submission.userSolution, data.solution);
+
+            if (req.submissionLimited) { // Create fake submissions
+                return {
+                    ...submission,
+                    id: randomUUID(),
+                    type: question.type,
+                    correct: correct,
+                    questionId: question.id,
+                    question: question
+                };
+            } else {
+                return prisma.submission.create({
+                    data: {
+                        ...submission,
+                        type: question.type,
+                        correct: correct,
+                        questionId: question.id
+                    },
+                    include: {
+                        question: true
+                    }
+                });
+            }
+        });
+
+        return await Promise.all(submissionPromises);
+    });
+
+    if (req.submissionLimited) {
+        res.status(210).send(submissions);
+    } else {
+        res.status(200).send(submissions);
+    }
+}
+
+export async function batchCreateSubmission(req: Request, res: Response) {
+    const options: z.infer<typeof CreateSubmissionOptions>[] = req.body.map((option: unknown) => {
+        return CreateSubmissionOptions.parse(option);
+    });
+
+    const submissions = await prisma.$transaction(async (prisma) => {
+        const submissionPromises = options.map(async (submission) => {
+            const question = await prisma.question.findUniqueOrThrow({
+                where: {
+                    id: submission.questionId
+                }
+            });
+
+            const data = QuestionData.parse(question.data);
+            const correct = await checkUserSolution(question.type, submission.userSolution, data.solution);
+
+            if (req.submissionLimited) { // Create fake submissions
+                return {
+                    ...submission,
+                    id: randomUUID(),
+                    type: question.type,
+                    correct: correct,
+                    questionId: question.id,
+                    question: question
+                };
+            } else {
+                return prisma.submission.upsert({
+                    where: {
+                        id: submission.id ?? randomUUID()
+                    },
+                    create: {
+                        ...submission,
+                        type: question.type,
+                        correct: correct,
+                        questionId: question.id
+                    },
+                    update: {
+
+                    },
+                    include: {
+                        question: true
+                    }
+                });
+            }
+        });
+
+        return await Promise.all(submissionPromises);
+    });
+
+    if (req.submissionLimited) {
+        res.status(210).send(submissions);
+    } else {
+        res.status(200).send(submissions);
+    }
 }
 
 export async function updateSubmission(req: Request, res: Response) {
@@ -284,9 +395,9 @@ function coerceBigIntSafely(input?: unknown) {
     return BigInt(String(input));
 }
 
-function getSignificantDigitCount(n) {
-    if (n == undefined) return;
-    n = Math.abs(n.toString().replace(".", "")); //remove decimal and make positive
+function getSignificantDigitCount(n?: number) {
+    if (!n) return;
+    n = Math.abs(Number.parseFloat(n.toString().replace(".", ""))); //remove decimal and make positive
     if (n == 0) return 0;
     while (n != 0 && n % 10 == 0) n /= 10; //kill the 0s at the end of n
 

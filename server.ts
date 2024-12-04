@@ -27,7 +27,7 @@ app.use(cookieParser());
 app.use(express.json());
 
 if (process.env["REMOTE"] === "enabled") {
-    app.set("trust proxy", 1);
+    app.set("trust proxy", 2);
 }
 
 app.use(session(sessionOptions));
