@@ -63,7 +63,7 @@ model CustomExam {
 }
 
 model Question {
-  id            String                  @id @default(uuid())
+  id            String                   @id @default(uuid())
   type          QuestionType
   data          Json
   bodyVector    Unsupported("tsvector")?
@@ -75,15 +75,15 @@ model Question {
   flags         Int
   feedback      Feedback[]
   explanation   Explanation?
-  course        Course                  @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  exam          Exam                    @relation(fields: [examId], references: [id], onDelete: Cascade)
-  parent        Question?               @relation("QuestionToQuestion", fields: [parentId], references: [id], onDelete: Cascade)
-  children      Question[]              @relation("QuestionToQuestion")
+  course        Course                   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  exam          Exam                     @relation(fields: [examId], references: [id], onDelete: Cascade)
+  parent        Question?                @relation("QuestionToQuestion", fields: [parentId], references: [id], onDelete: Cascade)
+  children      Question[]               @relation("QuestionToQuestion")
   topics        QuestionToTopic[]
   submissions   Submission[]
   resources     Resource[]
   answerChoices AnswerChoice[]
-  customExams   CustomExam[]            @relation("CustomExamToQuestion")
+  customExams   CustomExam[]             @relation("CustomExamToQuestion")
   stats         Json?
 
   @@unique([number, examId, parentId])
@@ -184,16 +184,17 @@ model CourseRequest {
 }
 
 model Application {
-  id      String         @id @default(uuid())
-  status  FeedbackStatus @default(OPEN)
-  team    Team           @default(NONE)
-  name    String
-  email   String
-  content String
-  year    String
-  video   String?
-  courses String?
-  resume  Resource?
+  id        String         @id @default(uuid())
+  status    FeedbackStatus @default(OPEN)
+  team      Team           @default(NONE)
+  name      String
+  email     String
+  content   String
+  year      String
+  video     String?
+  courses   String?
+  resume    Resource?
+  createdAt DateTime       @default(now())
 }
 
 model Event {
