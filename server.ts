@@ -24,7 +24,7 @@ initializePassport(passport);
 app.use("/favicon.ico", express.static("images/favicon.ico"));
 
 app.use(cookieParser());
-app.use(express.json());
+app.use(express.json({ limit: '250kb' }));
 
 if (process.env["REMOTE"] === "enabled") {
     app.set("trust proxy", 2);
