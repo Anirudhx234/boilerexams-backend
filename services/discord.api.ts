@@ -2,6 +2,18 @@ import type { Application, CourseRequest, Feedback } from "@prisma/client";
 import axios from "axios";
 
 export class DiscordAPI {
+    public static async start() {
+        await axios.post(`${process.env["DISCORD_URL"]}/start`);
+    }
+
+    public static async stop(message: string, err?: Error) {
+        await axios.post(`${process.env["DISCORD_URL"]}/stop`, {
+            message: message,
+            env: process.env["NODE_ENV"],
+            error: err
+        });
+    }
+
     public static async createApplication(application: Application) {
         await axios.post(`${process.env["DISCORD_URL"]}/applications`, application);
     }

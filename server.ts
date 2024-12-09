@@ -10,6 +10,7 @@ import errorHandler from "./middleware/errors/errorHandler.js";
 import routes from "./routes/index.js";
 import corsOptions from "./utils/corsOptions.js";
 import sessionOptions from "./utils/sessionOptions.js";
+import { DiscordAPI } from "./services/discord.api.js";
 
 (BigInt.prototype as any).toJSON = function () {
     return this.toString();
@@ -49,6 +50,36 @@ const PORT = process.env["PORT"];
 
 scheduleUpdateStats();
 
-app.listen(PORT, async () => {
+const server = app.listen(PORT, async () => {
     console.log(`Server is running at port ${PORT}`);
+    await DiscordAPI.start();
+});
+
+
+async function shutdown(message: string, err?: Error) {
+    console.log(`Shutting down server... ${message}`);
+    await DiscordAPI.stop(message, err).then(() => {
+        server.close(() => {
+            process.exit(0);
+        });
+    });
+}
+
+// Listen for termination signals
+process.on('SIGINT', async () => {
+    await shutdown('Received SIGINT (Ctrl+C).');
+});
+
+process.on('SIGTERM', async () => {
+    await shutdown('Received SIGTERM.').then();
+});
+
+// Handle uncaught exceptions to log errors and exit gracefully
+process.on('uncaughtException', async (err) => {
+    await shutdown('Uncaught Exception:', err);
+});
+
+// Handle unhandled promise rejections
+process.on('unhandledRejection', async (reason, promise) => {
+    await shutdown(`Unhandled Rejection at: ${promise}\nreason: ${reason}`);
 });
