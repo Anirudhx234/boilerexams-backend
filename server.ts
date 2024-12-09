@@ -76,7 +76,11 @@ process.on('SIGTERM', async () => {
 
 // Handle uncaught exceptions to log errors and exit gracefully
 process.on('uncaughtException', async (err) => {
-    await shutdown('Uncaught Exception:', err);
+    const message = `
+    [Uncaught Exception]
+    \n${JSON.stringify(err, null, 2)}
+    `
+    await shutdown(message);
 });
 
 // Handle unhandled promise rejections

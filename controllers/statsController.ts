@@ -127,7 +127,7 @@ export const HourlyStats = z.object({
 
 export async function getActiveUsers(_req: Request, res: Response) {
     const stats = clientCache.getStats();
-    res.status(200).send(stats.keys)
+    res.status(200).send(stats)
 }
 
 export async function generalStats(req: Request, res: Response) {
