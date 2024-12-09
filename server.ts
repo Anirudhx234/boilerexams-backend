@@ -81,5 +81,10 @@ process.on('uncaughtException', async (err) => {
 
 // Handle unhandled promise rejections
 process.on('unhandledRejection', async (reason, promise) => {
-    await shutdown(`Unhandled Rejection at: ${promise}\nreason: ${reason}`);
+    const message = `
+    [Unhandled Rejection]
+    Promise: ${JSON.stringify(promise, null, 2)}
+    Reason: ${reason instanceof Error ? reason.stack : reason}
+    `;
+    await shutdown(message);
 });
