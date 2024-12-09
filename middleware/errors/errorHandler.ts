@@ -28,7 +28,7 @@ export default async function errorHandler(error: unknown, req: Request, res: Re
         return res.status(error.errorCode).json(errorResponse);
     }
 
-    await DiscordAPI.reportError(error, req.path, req.cookies["ClientId"], req.get('User-Agent'), req.get('origin'));
+    await DiscordAPI.reportError(error, req);
 
     if (error instanceof MulterError) {
         const err = error as MulterError;

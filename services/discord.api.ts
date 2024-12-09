@@ -1,5 +1,6 @@
 import type { Application, CourseRequest, Feedback } from "@prisma/client";
 import axios from "axios";
+import { Request } from "express";
 
 export class DiscordAPI {
     public static async start() {
@@ -28,15 +29,16 @@ export class DiscordAPI {
         await axios.post(`${process.env["DISCORD_URL"]}/course-requests`, courseRequests);
     }
 
-    public static async reportError(error: Error, path: string, client: string, agent?: string, origin?: string) {
+    public static async reportError(error: Error, req: Request) {
         try {
             await axios.post(`${process.env["DISCORD_URL"]}/error`, {
                 error: {
-                    ...error,
-                    path: path,
-                    agent: agent,
-                    origin: origin,
-                    client: client
+                    error: error,
+                    request: req.method + ' ' + req.path,
+                    body: req.body,
+                    clientId: req.cookies["ClientId"],
+                    agent: req.get('User-Agent'),
+                    origin: req.get('origin'),
                 },
                 env: process.env["NODE_ENV"],
                 location: "BACKEND"
