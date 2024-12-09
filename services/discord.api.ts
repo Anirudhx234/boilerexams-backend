@@ -3,7 +3,9 @@ import axios from "axios";
 
 export class DiscordAPI {
     public static async start() {
-        await axios.post(`${process.env["DISCORD_URL"]}/start`);
+        await axios.post(`${process.env["DISCORD_URL"]}/start`, {
+            env: process.env["NODE_ENV"]
+        });
     }
 
     public static async stop(message: string, err?: Error) {
