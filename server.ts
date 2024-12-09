@@ -65,10 +65,6 @@ async function shutdown(message: string, err?: Error) {
     });
 }
 
-process.on('SIGKILL', async () => {
-    await shutdown('Received SIGKILL.');
-})
-
 // Listen for termination signals
 process.on('SIGINT', async () => {
     await shutdown('Received SIGINT (Ctrl+C).');
