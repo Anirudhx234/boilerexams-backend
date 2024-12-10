@@ -13,11 +13,6 @@ RUN npm run build
 
 FROM node:20-bullseye
 
-ENV TINI_VERSION v0.19.0
-ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
-RUN chmod +x /tini
-ENTRYPOINT ["/tini", "--"]
-
 ENV NODE_ENV=development
 ENV REMOTE=enabled
 
@@ -30,4 +25,4 @@ COPY --from=builder /app/dist ./dist
 
 EXPOSE 8081
 
-CMD ["npm", "start"]
+CMD ["npm", "run", "deploy", "&&", "node", "dist/server.js"]
