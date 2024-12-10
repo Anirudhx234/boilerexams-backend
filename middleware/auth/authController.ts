@@ -9,6 +9,7 @@ import resetPasswordTemplate from "../../utils/emailTemplates/resetPassword.js";
 import hashString from "../../utils/hashString.js";
 import sendEmail from "../../utils/sendMail.js";
 import APIError from "../errors/APIError.js";
+import sessionOptions from "../../utils/sessionOptions.js";
 
 export const LocalSignupOptions = z.object({
     name: z.string(),
@@ -233,7 +234,7 @@ export async function logout(req: Request, res: Response, next: NextFunction) {
         if (error) {
             next(error);
         }
-        res.clearCookie("sessionId");
+        res.clearCookie(sessionOptions.name ?? "sessionId");
         const url = redirectUrl(req);
         const { redirect } = JSON.parse(Buffer.from(url, "base64").toString());
         return res.json({ redirectUrl: redirect });
