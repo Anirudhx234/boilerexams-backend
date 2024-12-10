@@ -58,37 +58,46 @@ const server = app.listen(PORT, async () => {
 
 async function shutdown(message: string, err?: Error) {
     console.log(`Shutting down server... ${message}`);
-    await DiscordAPI.stop(message, err).then(() => {
-        server.close(() => {
-            process.exit(0);
-        });
-    });
+    server.close();
+    await DiscordAPI.stop(message, err);
 }
 
 // Listen for termination signals
-process.on('SIGINT', async () => {
-    await shutdown('Received SIGINT (Ctrl+C).');
+process.on('SIGINT', () => {
+    shutdown('Received SIGINT (Ctrl+C).').then(() => {
+        process.exit(0);
+    }).catch(() => {
+        process.exit(1);
+    });
 });
 
-process.on('SIGTERM', async () => {
-    await shutdown('Received SIGTERM.').then();
+process.on('SIGTERM', () => {
+    shutdown('Received SIGTERM.').then(() => {
+        process.exit(0);
+    }).catch(() => {
+        process.exit(1);
+    });
 });
 
 // Handle uncaught exceptions to log errors and exit gracefully
-process.on('uncaughtException', async (err) => {
-    const message = `
-    [Uncaught Exception]
-    \n${JSON.stringify(err, null, 2)}
-    `
-    await shutdown(message);
+process.on('uncaughtException', (err) => {
+    shutdown('[Uncaught Exception]', err).then(() => {
+        process.exit(0);
+    }).catch(() => {
+        process.exit(1);
+    });
 });
 
 // Handle unhandled promise rejections
-process.on('unhandledRejection', async (reason, promise) => {
+process.on('unhandledRejection', (reason, promise) => {
     const message = `
     [Unhandled Rejection]
     Promise: ${JSON.stringify(promise, null, 2)}
     Reason: ${reason instanceof Error ? reason.stack : reason}
     `;
-    await shutdown(message);
+    shutdown(message).then(() => {
+        process.exit(0);
+    }).catch(() => {
+        process.exit(1);
+    });
 });
