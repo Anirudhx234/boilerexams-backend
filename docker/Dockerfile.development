@@ -25,4 +25,4 @@ COPY --from=builder /app/dist ./dist
 
 EXPOSE 8081
 
-CMD ["npm", "run", "deploy", "&&", "node", "dist/server.js"]
+CMD ["exec", "npm", "start"]
