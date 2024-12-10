@@ -233,6 +233,7 @@ export async function logout(req: Request, res: Response, next: NextFunction) {
         if (error) {
             next(error);
         }
+        res.clearCookie("sessionId");
         const url = redirectUrl(req);
         const { redirect } = JSON.parse(Buffer.from(url, "base64").toString());
         return res.json({ redirectUrl: redirect });
