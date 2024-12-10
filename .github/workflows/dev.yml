@@ -31,5 +31,5 @@ jobs:
               working-directory: /home/boilerexams/docker
               run: |
                   docker pull ${{ secrets.DOCKERHUB_USERNAME }}/backend:development
-                  docker compose down development
+                  docker compose down development -t 30
                   docker compose up development -d
