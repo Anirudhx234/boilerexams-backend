@@ -2,12 +2,14 @@ import express from "express";
 import cache from "../middleware/cache/caching.js";
 import asyncWrapper from "../middleware/wrappers/asyncWrapper.js";
 import {
-    generalStats, getActiveUsers,
+    generalStats,
     getCourseStats,
-    getExamStats, getFeedbackStats,
+    getExamStats,
+    getFeedbackStats,
     getHourlySubmissionStats,
     getQuestionStats,
-    getTopicStats
+    getTopicStats,
+    getVisitorStats,
 } from "../controllers/statsController.js";
 
 const router = express.Router();
@@ -16,7 +18,7 @@ const minute = 60;
 
 router.get("/", cache(10 * minute), asyncWrapper(generalStats));
 
-router.get("/active-users", asyncWrapper(getActiveUsers));
+router.get("/visitors", asyncWrapper(getVisitorStats));
 
 router.get("/courses", cache(10 * minute), asyncWrapper(getCourseStats));
 
