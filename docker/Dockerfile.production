@@ -24,6 +24,7 @@ COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/dist ./dist
 
+RUN npm run deploy
+
 EXPOSE 8080
-CMD [ "npm", "run", "deploy" ]
 ENTRYPOINT [ "node", "dist/server.js" ]
