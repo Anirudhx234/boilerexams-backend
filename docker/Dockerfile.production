@@ -15,6 +15,7 @@ FROM node:20-bullseye
 
 ENV NODE_ENV=production
 ENV REMOTE=enabled
+COPY .env.production .env
 
 RUN apt-get update -y
 RUN apt-get install -y openssl
