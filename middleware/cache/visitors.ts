@@ -1,6 +1,6 @@
 import redis from "redis";
 
-export const redisClient = redis.createClient();
+export const redisClient = redis.createClient({ socket: { port: 6380 }});
 await redisClient.connect();
 
 export async function getCacheSize(prefix: string) {

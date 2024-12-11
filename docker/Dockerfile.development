@@ -26,4 +26,4 @@ COPY --from=builder /app/dist ./dist
 
 EXPOSE 8081
 CMD [ "npm", "run", "deploy" ]
-CMD [ "node", "dist/server.js" ]
+ENTRYPOINT [ "node", "dist/server.js" ]
