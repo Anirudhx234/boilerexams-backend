@@ -11,6 +11,7 @@ import routes from "./routes/index.js";
 import corsOptions from "./utils/corsOptions.js";
 import sessionOptions from "./utils/sessionOptions.js";
 import { DiscordAPI } from "./services/discord.api.js";
+import redis from "redis";
 
 (BigInt.prototype as any).toJSON = function () {
     return this.toString();

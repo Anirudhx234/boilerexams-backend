@@ -1,9 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { Request, Response } from "express";
-import NodeCache from "node-cache";
-
-export const dailyCache = new NodeCache({ checkperiod: 60 });
-export const activeCache = new NodeCache({ stdTTL: 15 * 60, checkperiod: 60 });
+import { redisClient } from "../cache/visitors.js";
 
 export default function keyGen(req: Request, res: Response) {
     let clientId = req.cookies["ClientId"];
@@ -13,8 +10,8 @@ export default function keyGen(req: Request, res: Response) {
         res.cookie("ClientId", clientId);
     }
 
-    dailyCache.set(clientId, true, secondsToMidnight());
-    activeCache.set(clientId, true);
+    redisClient.set("DAILY:" + clientId, "", { EX: 15 * 60 }).catch((e) => {});
+    redisClient.set("ACTIVE:" + clientId, "", { EX: secondsToMidnight() }).catch((e => {}))
     return clientId;
 }
 

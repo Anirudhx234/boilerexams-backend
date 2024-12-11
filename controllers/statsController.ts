@@ -10,7 +10,7 @@ import { z } from "zod";
 import prisma from "../prisma/prisma.js";
 import Resolver from "../helpers/resolver.js";
 import { FeedbackStatus, FeedbackType } from "@prisma/client";
-import { activeCache, dailyCache } from "../middleware/rateLimiting/keyGen.js";
+import { getCacheSize } from "../middleware/cache/visitors.js";
 
 export const AnswerChoiceStats = z.preprocess(
     (stats) => {
@@ -127,8 +127,8 @@ export const HourlyStats = z.object({
 
 export async function getVisitorStats(_req: Request, res: Response) {
     res.status(200).send({
-        daily: dailyCache.getStats(),
-        active: activeCache.getStats(),
+        daily: await getCacheSize('DAILY'),
+        active: await getCacheSize('ACTIVE'),
     })
 }
 
