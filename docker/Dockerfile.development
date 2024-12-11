@@ -24,7 +24,6 @@ COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/dist ./dist
 
-RUN npx prisma migrate deploy
-
 EXPOSE 8081
-ENTRYPOINT [ "node", "dist/server.js" ]
+ENTRYPOINT [ "npm", "run", "deploy" ]
+CMD [ "node", "dist/server.js" ]
