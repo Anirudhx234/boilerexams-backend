@@ -24,4 +24,5 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/dist ./dist
 
 EXPOSE 8081
-ENTRYPOINT ["npm", "start"]
+RUN npm deploy
+ENTRYPOINT ["node", "dist/server.js"]
