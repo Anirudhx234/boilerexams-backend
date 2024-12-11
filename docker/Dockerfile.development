@@ -10,7 +10,7 @@ RUN npm ci --omit=dev
 COPY . .
 
 RUN npm run build
-RUN npm run deploy
+RUN npx prisma migrate deploy
 
 FROM node:20-bullseye
 
