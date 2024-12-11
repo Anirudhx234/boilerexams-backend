@@ -15,7 +15,6 @@ FROM node:20-bullseye
 
 ENV NODE_ENV=production
 ENV REMOTE=enabled
-COPY .env.production .env
 
 RUN apt-get update -y
 RUN apt-get install -y openssl
@@ -26,5 +25,4 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/dist ./dist
 
 EXPOSE 8080
-RUN npm run deploy
 ENTRYPOINT [ "node", "dist/server.js" ]

@@ -11,6 +11,9 @@ import bugSubmissionTemplate from "../utils/emailTemplates/bugSubmission.js";
 import sendMail from "../utils/sendMail.js";
 import { deleteFileFromS3 } from "../utils/uploadFileToS3.js";
 import { QuestionData } from "../controllers/questionController.js";
+import * as child_process from "node:child_process";
+
+child_process.execSync("npx prisma migrate deploy");
 
 const prisma = new PrismaClient({
     log: ['warn', 'error']
