@@ -135,7 +135,7 @@ export async function createApplication(req: Request, res: Response) {
 
 export async function requestCourse(req: Request, res: Response) {
     const options = CourseRequestOptions.parse(req.body);
-    options.number = options.number < 100 ? options.number * 100 : options.number;
+    options.number = options.number < 10000 ? options.number * 100 : options.number;
 
     const existingCourse = await prisma.course.findUnique({
         where: {
