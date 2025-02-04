@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { FeedbackStatus, FeedbackType, ResourceType } from "@prisma/client";
-import { z } from "zod";
+import { boolean, z } from "zod";
 import prisma from "../prisma/prisma.js";
 import Resolver from "../helpers/resolver.js";
 import APIError from "../middleware/errors/APIError.js";
@@ -23,6 +23,14 @@ export const BugReportData = QuestionReportData.extend({
 });
 
 export const VideoFeedbackData = z.object({
+    reason: z.enum(["TECHNICAL_ISSUE", "POOR_EXPLANATION", "OTHER"]).optional(),
+    goodOrBad: z.enum(["GOOD", "BAD"]).optional(),
+    dismissed: z.boolean(),
+    timestamp: z.coerce.number(),
+    timeSubmitted: z.coerce.date()
+})
+
+export const LegacyVideoFeedbackData = z.object({
     explanationQuality: z.number().min(1).max(5),
     productionQuality: z.number().min(1).max(5),
     recommended: z.boolean(),
@@ -328,4 +336,9 @@ async function getCourseSafe(req: Request) {
     } catch {
         return undefined;
     }
+}
+
+function coerceBigIntSafely(input?: unknown) {
+    if (input == undefined) return;
+    return BigInt(String(input));
 }
