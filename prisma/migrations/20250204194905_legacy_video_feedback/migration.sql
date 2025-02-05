@@ -1,0 +1,2 @@
+-- AlterEnum
+ALTER TYPE "FeedbackType" ADD VALUE 'LEGACY_VIDEO_FEEDBACK';

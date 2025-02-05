@@ -28,7 +28,7 @@ jobs:
                   cache-from: type=gha
                   cache-to: type=gha,mode=max
             - name: Pull Image and Start Container
-              working-directory: /home/boilerexams/docker
+              working-directory: /home/prodadmin/deployment
               run: |
                   docker pull ${{ secrets.DOCKERHUB_USERNAME }}/backend:development
                   docker compose down development -t 30

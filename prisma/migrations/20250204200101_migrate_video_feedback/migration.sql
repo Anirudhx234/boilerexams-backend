@@ -1,0 +1,3 @@
+UPDATE "Feedback"
+SET type = 'LEGACY_VIDEO_FEEDBACK'
+WHERE type = 'VIDEO_FEEDBACK';
