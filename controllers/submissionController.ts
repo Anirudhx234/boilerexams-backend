@@ -92,7 +92,8 @@ export async function createSubmission(req: Request, res: Response) {
             ...options,
             type: question.type,
             correct: correct,
-            questionId: question.id
+            questionId: question.id,
+            clientId: req.cookies["ClientId"]
         },
         include: {
             question: true
@@ -153,7 +154,8 @@ export async function timedExamBatchSubmission(req: Request, res: Response) {
                         ...submission,
                         type: question.type,
                         correct: correct,
-                        questionId: question.id
+                        questionId: question.id,
+                        clientId: req.cookies["ClientId"]
                     },
                     include: {
                         question: true
@@ -219,7 +221,8 @@ export async function customExamBatchSubmission(req: Request, res: Response) {
                         ...submission,
                         type: question.type,
                         correct: correct,
-                        questionId: question.id
+                        questionId: question.id,
+                        clientId: req.cookies["ClientId"]
                     },
                     include: {
                         question: true
