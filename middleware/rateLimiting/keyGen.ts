@@ -1,16 +1,42 @@
 import { randomUUID } from "node:crypto";
 import { Request, Response } from "express";
 import NodeCache from "node-cache";
+import prisma from "../../prisma/prisma.js";
+import { DiscordAPI } from "../../services/discord.api.js";
 
 export const dailyCache = new NodeCache({ checkperiod: 60 });
 export const activeCache = new NodeCache({ stdTTL: 15 * 60, checkperiod: 60 });
 
-export default function keyGen(req: Request, res: Response) {
+const day = 1000 * 60 * 60 * 24;
+
+export default async function keyGen(req: Request, res: Response) {
     let clientId = req.cookies["ClientId"];
 
     if (!clientId) {
         clientId = randomUUID();
-        res.cookie("ClientId", clientId);
+        await prisma.clientId.create({
+            data: {
+                id: clientId
+            }
+        })
+        res.cookie("ClientId", clientId, { maxAge: 400 * day });
+    } else {
+        const client = await prisma.clientId.findUnique({
+            where: {
+                id: clientId
+            }
+        })
+
+        if (!client) {
+            DiscordAPI.reportError(new Error("Unregistered UUID"), clientId).catch((_) => {})
+            clientId = randomUUID();
+            await prisma.clientId.create({
+                data: {
+                    id: clientId
+                }
+            })
+            res.cookie("ClientId", clientId, { maxAge: 400 * day });
+        }
     }
 
     dailyCache.set(clientId, true, secondsToMidnight());
