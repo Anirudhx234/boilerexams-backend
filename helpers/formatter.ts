@@ -88,6 +88,7 @@ export default class Formatter {
                     answerChoices: Formatter.answerChoices({ ...options, data: options.data.answerChoices })
                 }
                 : undefined,
+            explanation: options.data.explanation ? Formatter.explanation({ ...options, data: options.data.explanation }) : undefined,
             course: options.data.course ? Formatter.course({ ...options, data: options.data.course }) : undefined,
             exam: options.data.exam ? Formatter.exam({ ...options, data: options.data.exam }) : undefined,
             answerChoices: undefined,
@@ -102,6 +103,16 @@ export default class Formatter {
         return options.data
             .filter((question) => options.sendUnpublished || question.flags.published)
             .map((question) => Formatter.question({ ...options, data: question }));
+    }
+
+    public static explanation(options: FormatterOptions<PotentialExplanation>): FormattedExplanation {
+        return {
+            ...options.data,
+            renderedBody: options.prerender && options.data.body
+                ? KatexRenderer.tryRender(options.data.body, options.data.resources as Resource[], options.data.question?.type as QuestionType)
+                : undefined,
+            question: options.data.question ? Formatter.question({ ...options, data: options.data.question }) : undefined
+        };
     }
 
     public static answerChoice(options: FormatterOptions<PotentialAnswerChoice>): FormattedAnswerChoice {

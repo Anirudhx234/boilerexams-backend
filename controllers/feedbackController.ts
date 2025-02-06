@@ -25,9 +25,7 @@ export const BugReportData = QuestionReportData.extend({
 export const VideoFeedbackData = z.object({
     reason: z.enum(["TECHNICAL_ISSUE", "POOR_EXPLANATION", "OTHER"]).optional(),
     goodOrBad: z.enum(["GOOD", "BAD"]).optional(),
-    dismissed: z.boolean(),
     timestamp: z.coerce.number(),
-    timeSubmitted: z.coerce.date()
 })
 
 export const LegacyVideoFeedbackData = z.object({

@@ -40,9 +40,17 @@ interface FormattedQuestion {
     topics?: FormattedTopic[];
     resources?: unknown[];
     answerChoices?: undefined;
+    explanation?: FormattedExplanation;
 }
 
 interface FormattedAnswerChoice {
+    body: string | null;
+    question?: FormattedQuestion;
+    renderedBody?: string;
+    resources?: unknown[];
+}
+
+interface FormattedExplanation {
     body: string | null;
     question?: FormattedQuestion;
     renderedBody?: string;
@@ -66,6 +74,13 @@ interface PotentialAnswerChoice {
     resources?: unknown[];
 }
 
+interface PotentialExplanation {
+    id?: string;
+    body: string | null;
+    question?: PotentialQuestion;
+    resources?: unknown[];
+}
+
 interface PotentialQuestion {
     id?: string;
     type?: string;
@@ -75,6 +90,7 @@ interface PotentialQuestion {
     flags: QuestionFlags;
     data?: unknown;
     children?: PotentialQuestion[];
+    explanation?: PotentialExplanation | null;
     answerChoices?: PotentialAnswerChoice[];
     resources?: unknown[];
     topics?: PotentialQuestionToTopic[];
