@@ -28,7 +28,7 @@ export default async function keyGen(req: Request, res: Response) {
         })
 
         if (!client) {
-            DiscordAPI.reportError(new Error("Unregistered UUID"), clientId).catch((_) => {})
+            DiscordAPI.reportError(new Error("Unregistered UUID"), req).catch((_) => {})
             clientId = randomUUID();
             await prisma.clientId.create({
                 data: {
