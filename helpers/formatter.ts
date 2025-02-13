@@ -84,6 +84,9 @@ export default class Formatter {
                     renderedBody: options.prerender && result.success
                         ? KatexRenderer.tryRender(result.data.body, options.data.resources as Resource[], options.data.type as QuestionType)
                         : undefined,
+                    renderedSolution: options.prerender && result.success && typeof result.data.solution == "string"
+                        ? KatexRenderer.tryRender(result.data.solution)
+                        : undefined,
                     explanationText: undefined, // ToDo temporary fix
                     answerChoices: Formatter.answerChoices({ ...options, data: options.data.answerChoices })
                 }
