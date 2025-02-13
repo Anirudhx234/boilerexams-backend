@@ -210,15 +210,15 @@ export async function getQuestionStats(req: Request, res: Response) {
     res.status(200).json(formatStats(stats, options.sort, options.skip, options.limit));
 }
 
-export async function getSubmissionStats(req: Request, res: Response) {
+export async function getSubmissionStats(_: Request, res: Response) {
     type Submissions = { submissions: number, submissionsCorrect: number }
-    const submissions: Submissions = await prisma.$queryRaw`
+    const submissions: Submissions[] = await prisma.$queryRaw`
         select count(*) as "submissions",
         sum(case when s.correct = true then 1 else 0 end) as "submissionsCorrect"
         from "Submission" s;
     `;
 
-    res.status(200).json(submissions);
+    res.status(200).json(submissions[0]);
 }
 
 export async function getHourlySubmissionStats(req: Request, res: Response) {
