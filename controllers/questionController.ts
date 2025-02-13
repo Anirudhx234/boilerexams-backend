@@ -148,7 +148,11 @@ export const PartialQuestion = {
     },
     explanation: {
         select: {
-            resources: true
+            resources: {
+                select: {
+                    type: true
+                }
+            }
         }
     }
 };
