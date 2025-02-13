@@ -210,12 +210,18 @@ export async function getQuestionStats(req: Request, res: Response) {
     res.status(200).json(formatStats(stats, options.sort, options.skip, options.limit));
 }
 
-export async function getSubmissionStats(_: Request, res: Response) {
-    type Submissions = { submissions: number, submissionsCorrect: number }
-    const submissions: Submissions[] = await prisma.$queryRaw`
-        select count(*) as "submissions",
-        sum(case when s.correct = true then 1 else 0 end) as "submissionsCorrect"
-        from "Submission" s;
+export async function getGeneralStats(_: Request, res: Response) {
+    const submissions: unknown[] = await prisma.$queryRaw`
+        select (select count(*) from "Course" c where c.flags & 1 = 1)::int               as "courses",
+               (select count(*) from "Exam" e where e.flags & 1 = 1)::int                 as "exams",
+               (select count(*)
+                from "Topic" t
+                         join "Course" c on t."courseId" = c.id and c.flags & 1 = 1)::int as "topics",
+               (select count(*) from "Question" q where q.flags & 1 = 1)::int             as "questions",
+               (select count(*) from "Submission" s)::int                                 as "submissions",
+               (select count(*) from "Submission" s where s.correct = true)::int          as "submissionsCorrect",
+               (select sum(s."timeSpent") from "Submission" s)::bigint                    as "timeSpent",
+               (select sum(s."timeSpentVideo") from "Submission" s)::bigint               as "timeSpentVideo";
     `;
 
     res.status(200).json(submissions[0]);
