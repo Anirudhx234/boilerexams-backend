@@ -76,7 +76,7 @@ interface PotentialAnswerChoice {
 
 interface PotentialExplanation {
     id?: string;
-    body: string | null;
+    body?: string | null;
     question?: PotentialQuestion;
     resources?: unknown[];
 }
