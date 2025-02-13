@@ -6,8 +6,9 @@ import {
     getCourseStats,
     getExamStats,
     getFeedbackStats,
+    getGeneralStats,
     getHourlySubmissionStats,
-    getQuestionStats, getSubmissionStats,
+    getQuestionStats,
     getTopicStats,
     getVisitorStats
 } from "../controllers/statsController.js";
@@ -64,7 +65,7 @@ router.get("/questions", cache(10 * minute), asyncWrapper(getQuestionStats));
 
 router.get("/questions/:question", cache(10 * minute), asyncWrapper(getQuestionStats));
 
-router.get("/submissions", cache(10 * minute), asyncWrapper(getSubmissionStats));
+router.get("/general", cache(10 * minute), asyncWrapper(getGeneralStats));
 
 router.get("/submissions/time", cache(10 * minute), asyncWrapper(getHourlySubmissionStats));
 
