@@ -145,6 +145,11 @@ export const PartialQuestion = {
             stats: true,
             type: true,
         }
+    },
+    explanation: {
+        include: {
+            resources: true
+        }
     }
 };
 
