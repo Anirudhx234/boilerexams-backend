@@ -7,9 +7,9 @@ import {
     getExamStats,
     getFeedbackStats,
     getHourlySubmissionStats,
-    getQuestionStats,
+    getQuestionStats, getSubmissionStats,
     getTopicStats,
-    getVisitorStats,
+    getVisitorStats
 } from "../controllers/statsController.js";
 
 const router = express.Router();
@@ -63,6 +63,8 @@ router.get("/topics/:topic/questions/:question", cache(10 * minute), asyncWrappe
 router.get("/questions", cache(10 * minute), asyncWrapper(getQuestionStats));
 
 router.get("/questions/:question", cache(10 * minute), asyncWrapper(getQuestionStats));
+
+router.get("/submissions", cache(10 * minute), asyncWrapper(getSubmissionStats));
 
 router.get("/submissions/time", cache(10 * minute), asyncWrapper(getHourlySubmissionStats));
 
