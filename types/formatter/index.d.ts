@@ -51,7 +51,7 @@ interface FormattedAnswerChoice {
 }
 
 interface FormattedExplanation {
-    body: string | null;
+    body?: string | null;
     question?: FormattedQuestion;
     renderedBody?: string;
     resources?: unknown[];
@@ -76,7 +76,7 @@ interface PotentialAnswerChoice {
 
 interface PotentialExplanation {
     id?: string;
-    body: string | null;
+    body?: string | null;
     question?: PotentialQuestion;
     resources?: unknown[];
 }
