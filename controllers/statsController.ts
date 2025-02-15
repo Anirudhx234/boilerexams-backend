@@ -220,8 +220,10 @@ export async function getGeneralStats(_: Request, res: Response) {
                (select count(*) from "Question" q where q.flags & 1 = 1)::int             as "questions",
                (select count(*) from "Submission" s)::int                                 as "submissions",
                (select count(*) from "Submission" s where s.correct = true)::int          as "submissionsCorrect",
-               (select sum(s."timeSpent") from "Submission" s)::bigint                    as "timeSpent",
-               (select sum(s."timeSpentVideo") from "Submission" s)::bigint               as "timeSpentVideo";
+               (select sum(case when s."timeSpent" between 0 and 3600000 then s."timeSpent" else 0 end)
+                from "Submission" s)::bigint                                              as "timeSpent",
+               (select sum(case when s."timeSpentVideo" between 0 and 3600000 then s."timeSpent" else 0 end)
+                from "Submission" s)::bigint                                              as "timeSpentVideo";
     `;
 
     res.status(200).json(submissions[0]);
