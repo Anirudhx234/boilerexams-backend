@@ -33,7 +33,7 @@ export class DiscordAPI {
         try {
             await axios.post(`${process.env["DISCORD_URL"]}/error`, {
                 error: {
-                    error: error,
+                    error: JSON.stringify(error, Object.getOwnPropertyNames(error)),
                     request: req.method + ' ' + req.path,
                     body: req.body,
                     clientId: req.cookies["ClientId"],
