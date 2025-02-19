@@ -15,6 +15,7 @@ import submissions from "./submissions.js";
 import topics from "./topics.js";
 import users from "./users.js";
 import customExams from "./customExams.js";
+import banners from "./banners.js";
 
 const router = express.Router();
 
@@ -44,6 +45,8 @@ router.use("/resources", resources);
 router.use("/users", users);
 
 router.use("/events", events);
+
+router.use("/banners", banners);
 
 router.use("/parser", parsing);
 
