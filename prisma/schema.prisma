@@ -11,6 +11,7 @@ datasource db {
 
 model ClientId {
   id String @id
+  anonymous Boolean @default(false)
 }
 
 model Course {

@@ -93,7 +93,7 @@ export async function createSubmission(req: Request, res: Response) {
             type: question.type,
             correct: correct,
             questionId: question.id,
-            clientId: req.cookies["ClientId"]
+            clientId: req.anonymous ? undefined : req.cookies["ClientId"] // Keeps the submission anonymous
         },
         include: {
             question: true
@@ -155,7 +155,7 @@ export async function timedExamBatchSubmission(req: Request, res: Response) {
                         type: question.type,
                         correct: correct,
                         questionId: question.id,
-                        clientId: req.cookies["ClientId"]
+                        clientId: req.anonymous ? undefined : req.cookies["ClientId"] // Keeps the submission anonymous
                     },
                     include: {
                         question: true
@@ -222,7 +222,7 @@ export async function customExamBatchSubmission(req: Request, res: Response) {
                         type: question.type,
                         correct: correct,
                         questionId: question.id,
-                        clientId: req.cookies["ClientId"]
+                        clientId: req.anonymous ? undefined : req.cookies["ClientId"] // Keeps the submission anonymous
                     },
                     include: {
                         question: true

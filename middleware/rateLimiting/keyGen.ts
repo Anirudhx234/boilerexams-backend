@@ -3,6 +3,7 @@ import { Request, Response } from "express";
 import NodeCache from "node-cache";
 import prisma from "../../prisma/prisma.js";
 import { DiscordAPI } from "../../services/discord.api.js";
+import { ClientId } from "@prisma/client";
 
 export const dailyCache = new NodeCache({ checkperiod: 60 });
 export const activeCache = new NodeCache({ stdTTL: 15 * 60, checkperiod: 60 });
@@ -11,17 +12,18 @@ const day = 1000 * 60 * 60 * 24;
 
 export default async function keyGen(req: Request, res: Response) {
     let clientId = req.cookies["ClientId"];
+    let client: ClientId | null; // Sometimes typescript is burden
 
     if (!clientId) {
         clientId = randomUUID();
-        await prisma.clientId.create({
+        client = await prisma.clientId.create({
             data: {
                 id: clientId
             }
         })
         res.cookie("ClientId", clientId, { maxAge: 400 * day });
     } else {
-        const client = await prisma.clientId.findUnique({
+        client = await prisma.clientId.findUnique({
             where: {
                 id: clientId
             }
@@ -30,7 +32,7 @@ export default async function keyGen(req: Request, res: Response) {
         if (!client) {
             DiscordAPI.reportError(new Error("Unregistered UUID"), req).catch((_) => {})
             clientId = randomUUID();
-            await prisma.clientId.create({
+            client = await prisma.clientId.create({
                 data: {
                     id: clientId
                 }
@@ -39,6 +41,8 @@ export default async function keyGen(req: Request, res: Response) {
         }
     }
 
+    req.clientId = clientId;
+    req.anonymous = client.anonymous;
     dailyCache.set(clientId, true, secondsToMidnight());
     activeCache.set(clientId, true);
     return clientId;
