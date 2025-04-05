@@ -10,7 +10,7 @@ export const UpdatePrivacyBody = z.object({
 export async function validateClientId(req: Request, res: Response) {
     const options = z.object({
         uuid: z.string().uuid(),
-        anonymous: z.boolean().default(true)
+        anonymous: z.boolean().default(false)
     }).parse(req.body);
 
     await prisma.clientId.upsert({ // Create the ClientId entry
