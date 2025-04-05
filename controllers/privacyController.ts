@@ -6,6 +6,29 @@ export const UpdatePrivacyBody = z.object({
     anonymous: z.boolean()
 })
 
+// IOS ONLY
+export async function validateClientId(req: Request, res: Response) {
+    const options = z.object({
+        uuid: z.string().uuid(),
+        anonymous: z.boolean().default(true)
+    }).parse(req.body);
+
+    await prisma.clientId.upsert({ // Create the ClientId entry
+        where: {
+            id: options.uuid,
+        },
+        update: {
+            anonymous: options.anonymous
+        },
+        create: {
+            id: options.uuid,
+            anonymous: options.anonymous
+        }
+    })
+
+    res.sendStatus(200)
+}
+
 export async function getPrivacy(req: Request, res: Response) {
     const anonymous = req.anonymous;
 
