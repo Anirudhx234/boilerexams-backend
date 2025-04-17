@@ -1,11 +1,11 @@
-const bugSubmissionTemplate = (id: string, title: string) => {
+const bugSubmissionTemplate = (id: string, title: string, type: string) => {
     return `
     <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bug Report Confirmation</title>
+    <title>${type} Confirmation</title>
     <style>
         body {
             font-family: 'Arial', sans-serif;
@@ -47,14 +47,14 @@ const bugSubmissionTemplate = (id: string, title: string) => {
 <body>
     <div class="email-container">
         <div class="email-header">
-            <h1>Bug Report Confirmation</h1>
+            <h1>${type} Confirmation</h1>
         </div>
         <div class="email-body">
             <p>Dear Boilerexams User,</p>
-            <p>Thank you for submitting your bug report. Your contribution helps us improve our service. Below are the details of your submission:</p>
-            <p><strong>Bug Report ID:</strong> <span class="highlight">${id}</span></p>
+            <p>Thank you for submitting your ${type}. Your contribution helps us improve our service. Below are the details of your submission:</p>
+            <p><strong>${type} ID:</strong> <span class="highlight">${id}</span></p>
             <p><strong>Title:</strong> <span class="highlight">${title}</span></p>
-            <p>We will review your report and take the necessary steps to address the issue. You may be contacted for further information if needed.</p>
+            <p>We will review your feedback and make any changes deemed necessary. You may be contacted for further information if needed.</p>
             <p>Thank you for helping us make our system better.</p>
         </div>
         <div class="email-footer">

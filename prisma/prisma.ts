@@ -71,11 +71,13 @@ export default prisma
 
                     const emailParse = z.string().email().safeParse(dataParse.data.contact);
 
+                    const reportType = feedback.type.toLowerCase().replace('_', ' ');
+                    const ReportType = reportType[0].toUpperCase() + reportType.slice(1).toLowerCase(); // First Letter to uppercase
                     if (emailParse.success) {
                         const emailOptions = {
                             to: emailParse.data,
-                            subject: `Bug Report: ${feedback.id}`,
-                            html: bugSubmissionTemplate(feedback.id, dataParse.data.title)
+                            subject: `${ReportType}: ${feedback.id}`,
+                            html: bugSubmissionTemplate(feedback.id, dataParse.data.title, ReportType)
                         };
 
                         await sendMail(emailOptions);
